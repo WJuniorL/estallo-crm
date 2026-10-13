@@ -17,19 +17,27 @@
 - O job `Estallo VPS` verificou a receita pelo `docker stack config` no Linux.
 - DNS de `crm.estallo.com.br` resolve via Cloudflare. O registro foi criado pelo
   usuário; nenhuma configuração Cloudflare foi alterada pelo agente.
+- A nova Secret Key passou na API administrativa (HTTP 200). O administrador
+  inicial foi criado e entrou pela tela até `/onboarding/welcome`, em ambiente
+  local, com nome Estallo CRM e inicial E. Os buckets do baseline existem;
+  `whatsapp-media` é privado. Site URL e Redirect URL foram confirmados pelo usuário.
+- Primeiro backup validado e copiado para `OneDrive/Documentos/backup-estallo-crm`.
+  Backup local diário agendado às 03:00; a cópia externa diária continua pendente.
+- Os 11 testes da telemetria passaram. O fork desliga coleta por padrão e
+  não registra argumentos das ações de servidor no desenvolvimento.
 
 ## Ainda não medido/concluído
 
 - Conjunto final de CI, build das imagens Estallo e publicação no GHCR.
-- Aplicação e serviços Swarm em produção, autenticação real do administrador,
+- Aplicação e serviços Swarm em produção, autenticação na VPS,
   recuperação de senha, onboarding, pareamento e mensagem real de WhatsApp.
 - Rollback real, restauração de backup e cópia externa diária.
 - Atendimento por IA: nenhuma credencial de provedor foi fornecida.
 
-A chave entregue com o rótulo administrativo continha a role `anon`; a API
-administrativa retornou HTTP 403. O operador recusa esse tipo de chave antes
-de persistir configuração ou criar o administrador. Credenciais e senha inicial
-permanecem fora do Git. A senha foi salva no caminho solicitado pelo usuário.
+A chave administrativa inicialmente tinha a role `anon`, recusada pelo operador.
+O usuário forneceu uma Secret Key válida depois. Credenciais permanecem fora do
+Git. A senha inicial foi substituída após aparecer num diagnóstico do Next em
+desenvolvimento; a senha atual está no arquivo solicitado pelo usuário.
 
 Os testes shell no Windows encontraram limitações de permissões POSIX e do
 executável `python3`; a validação completa do kit deve ser lida no CI Linux.

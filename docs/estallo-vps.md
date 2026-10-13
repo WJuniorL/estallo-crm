@@ -61,10 +61,11 @@ Agendar no host, após o primeiro deploy validado:
 
 ```cron
 */5 * * * * cd /opt/stacks/estallo-crm/repo && python3 scripts/estallo-vps.py agent >> /opt/stacks/estallo-crm/agent.log 2>&1
-0 6 * * * cd /opt/stacks/estallo-crm/repo && python3 scripts/estallo-vps.py backup >> /opt/stacks/estallo-crm/backup.log 2>&1
+0 3 * * * cd /opt/stacks/estallo-crm/repo && python3 scripts/estallo-vps.py backup >> /opt/stacks/estallo-crm/backup.log 2>&1
 ```
 
-O horário do cron é o do host; 06:00 UTC equivale a 03:00 na Bahia.
+O horário do cron é o do host, atualmente `America/Sao_Paulo`, com o mesmo
+deslocamento de `America/Bahia`. O backup local foi agendado às 03:00.
 Backups contêm banco, configuração, objetos do Supabase Storage e volumes de sessões/mídia do WAHA. O dump
 é validado por `pg_restore --list`. Para cópia externa, configurar
 `BACKUP_SSH_TARGET=usuario@servidor:/diretorio` no arquivo protegido, com SSH por chave.
@@ -84,6 +85,8 @@ Rollback volta as três imagens juntas; não desfaz schema nem apaga volumes.
 O login local foi conferido em desktop (`evidence/estallo-crm/login-desktop.png`)
 e celular (`evidence/estallo-crm/login-mobile.png`). Essas capturas comprovam
 a marca no ambiente local; o aceite da instalação na VPS continua separado.
+O login real do administrador chegou às boas-vindas
+(`evidence/estallo-crm/onboarding-welcome.png`), com a marca e o símbolo E.
 
 Verificar login, recuperação, onboarding, nomes e ícone E pela tela. Parear um
 WhatsApp e comprovar mensagem recebida/enviada. Sem chave de IA, cadastrar em

@@ -212,7 +212,7 @@ echo '── 2. Do diretório de cima, `bash deskcommcrm/hostgator-setup-kit/upd
 # do enter_project o caminho relativo passa a apontar para dentro dele mesmo.
 R2="$WORK/caso2"; mkdir -p "$R2"; montar_instalacao "$R2"
 OUT2="$WORK/saida2.txt"
-rodar_de "$R2" deskcommcrm/hostgator-setup-kit/update.sh "$OUT2"; RC2="$RC"
+rodar_de "$R2" estallo-crm/hostgator-setup-kit/update.sh "$OUT2"; RC2="$RC"
 check "o backup.sh do kit foi EXECUTADO (a marca é dele)" test -f "$R2/marca-backup"
 check "e procurado NO KIT, não no diretório do projeto" \
   grep -q "^zero=$R2/estallo-crm/hostgator-setup-kit/backup\.sh$" "$R2/marca-backup"

@@ -249,7 +249,7 @@ preparar_vps() {
 rodar_update() {
   local raiz="$1" saida="$2"; shift 2
   RC=0
-  ( cd "$raiz" && env "$@" bash deskcommcrm/hostgator-setup-kit/update.sh \
+  ( cd "$raiz" && env "$@" bash estallo-crm/hostgator-setup-kit/update.sh \
       --to v0.9.0 --force ) > "$saida" 2>&1 < /dev/null || RC=$?
 }
 

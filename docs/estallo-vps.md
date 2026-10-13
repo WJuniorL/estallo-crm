@@ -81,6 +81,10 @@ Rollback volta as três imagens juntas; não desfaz schema nem apaga volumes.
 
 ## Aceite e continuidade
 
+O login local foi conferido em desktop (`evidence/estallo-crm/login-desktop.png`)
+e celular (`evidence/estallo-crm/login-mobile.png`). Essas capturas comprovam
+a marca no ambiente local; o aceite da instalação na VPS continua separado.
+
 Verificar login, recuperação, onboarding, nomes e ícone E pela tela. Parear um
 WhatsApp e comprovar mensagem recebida/enviada. Sem chave de IA, cadastrar em
 IA → Credenciais antes de testar agente e handoff. Telemetria fica desligada.

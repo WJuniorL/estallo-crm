@@ -32,6 +32,22 @@ def live_containers():
 
 
 class EstalloVpsTests(unittest.TestCase):
+    def setUp(self):
+        sandbox = tempfile.TemporaryDirectory()
+        self.addCleanup(sandbox.cleanup)
+        root = Path(sandbox.name)
+        for name, value in [('ROOT', root), ('RUNTIME', root / 'runtime.env'),
+                            ('STATE', root / 'deployment.json')]:
+            guard = patch.object(vps, name, value)
+            guard.start()
+            self.addCleanup(guard.stop)
+        # Um dublê esquecido deve falhar antes de executar Docker ou fazer HTTP.
+        for target, name in [(vps, 'run'), (vps.urllib.request, 'urlopen'),
+                             (vps.urllib.request, 'build_opener')]:
+            guard = patch.object(target, name, side_effect=AssertionError('I/O sem duble no teste'))
+            guard.start()
+            self.addCleanup(guard.stop)
+
     def test_tag_rejects_mutable_names_and_shell_commands(self):
         for tag in ('latest', 'stable', 'main', 'abc;echo segredo', '', '1' * 39):
             with self.assertRaises(ValueError):

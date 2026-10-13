@@ -54,7 +54,7 @@ class EstalloVpsTests(unittest.TestCase):
                 role='anon', ref='cbeqboyfmwyjsybszaxy')).encode()).decode().rstrip('=')
             path.write_text(f'NEXT_PUBLIC_SUPABASE_URL={vps.PROJECT}\n'
                             f'SUPABASE_SERVICE_ROLE_KEY=test.{claims}.test\n'
-                            'NEXT_PUBLIC_SUPABASE_ANON_KEY=test\n'
+                            'NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_test\n'
                             'SUPABASE_DB_URL=postgresql://example\n'
                             'OWNER_EMAIL=owner@example.test\nOWNER_PASSWORD=senha-de-teste-forte\n')
             with patch.object(vps, 'RUNTIME', Path(directory) / 'runtime'), patch.object(vps, 'save') as save:

@@ -107,6 +107,15 @@ def configure(credentials):
         raise ValueError('Faltam campos: ' + ', '.join(missing))
     if values['NEXT_PUBLIC_SUPABASE_URL'] != PROJECT:
         raise ValueError('Projeto diferente do autorizado')
+    public_key = values['NEXT_PUBLIC_SUPABASE_ANON_KEY']
+    if not public_key.startswith('sb_publishable_'):
+        try:
+            payload = public_key.split('.')[1]
+            claims = json.loads(base64.urlsafe_b64decode(payload + '=' * (-len(payload) % 4)))
+        except Exception as error:
+            raise ValueError('Use a chave pública publishable ou anon no campo público') from error
+        if claims.get('role') != 'anon' or claims.get('ref') != 'cbeqboyfmwyjsybszaxy':
+            raise ValueError('O campo público não pode conter uma chave administrativa')
     admin_key = values['SUPABASE_SERVICE_ROLE_KEY']
     if not admin_key.startswith('sb_secret_'):
         try:

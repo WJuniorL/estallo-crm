@@ -97,7 +97,7 @@ continua sendo uma melhoria operacional recomendada.
 Restauração exige parar somente a stack Estallo e usar banco vazio compatível:
 restaurar o dump por `pg_restore --no-owner`, preservando os grants e revokes, recuperar `runtime.env`
 e os volumes pelos arquivos `.tgz`, e implantar o SHA registrado em `deployment.json`.
-Recuperar também `image-tags.json` e `owner.env`, com permissões 600, quando
+Recuperar também `image-tags.json`, com permissões 600, quando
 presentes no snapshot; isso preserva o artefato AMD64 e o acesso administrativo.
 Recuperar os objetos de `storage/` usando o bucket, nome e tipo registrados em
 `storage/manifest.json`, pela API de upload do Supabase com `x-upsert: true`.
@@ -135,3 +135,7 @@ O cron do agente é o próximo passo para pedido pendente. Marca continua
 configurável em `/admin/marca`. A continuidade IA/humano existente permanece
 no worker e no inbox; esta mudança é infraestrutura. Falha de rollout impede
 o commit novo de virar estado instalado e aciona recuperação do conjunto anterior.
+
+O arquivo de credenciais do administrador fica fora da cópia externa automática.
+Em uma VPS nova, recupere-o pelo arquivo protegido do administrador solicitado
+ao instalar, sem enviar a senha pelo chat ou adicioná-la ao Git.

@@ -384,7 +384,7 @@ def backup():
     shutil.copy2(RUNTIME, destination / 'runtime.env')
     if STATE.exists():
         shutil.copy2(STATE, destination / 'deployment.json')
-    for filename in ('image-tags.json', 'owner.env'):
+    for filename in ('image-tags.json',):
         if (ROOT / filename).exists():
             shutil.copy2(ROOT / filename, destination / filename)
     for file in destination.rglob('*'):

@@ -273,7 +273,7 @@ describe("o kit aponta para o que o CI realmente publica", () => {
         log=$(mktemp)
         trap 'rm -f "$log"' EXIT
         # O dublê registra em arquivo porque a função captura stdout do curl.
-        ghcr_status deskcommcrm 1.2.3
+        ghcr_status estallo-crm 1.2.3
         printf '\\n'
         cat "$log"
       `,

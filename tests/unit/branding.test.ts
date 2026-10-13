@@ -524,6 +524,15 @@ function arquivosVarridos(
 describe("catraca de marca hardcoded", () => {
   const porRaiz = new Map(RAIZES_VARRIDAS.map((r) => [r, arquivosVarridos(r)]));
   const alvos = [...porRaiz.values()].flat();
+  it("a marca Estallo também nasce só no padrão central", () => {
+    const vazamentos = alvos.filter((arquivo) => {
+      if (arquivo === "lib/branding.ts" || /\.(test|spec)\.tsx?$/.test(arquivo)) return false;
+      return linhasQueContam(fs.readFileSync(path.join(RAIZ, arquivo), "utf8")).some((linha) =>
+        /estallo\s*crm/i.test(linha),
+      );
+    });
+    expect(vazamentos, "Use o resolvedor de marca; não fixe Estallo nas saídas.").toEqual([]);
+  });
   const encontrado = new Map<string, string[]>();
   for (const arquivo of alvos) {
     const marcas = marcasNoTexto(fs.readFileSync(path.join(RAIZ, arquivo), "utf8"));
@@ -614,7 +623,7 @@ describe("catraca de marca hardcoded", () => {
     ).toEqual([]);
   });
 
-  it("a Fase 4 fechou: sobra uma dívida, e ela declara por que sobrou", () => {
+  it("não há dívida de marca nos textos emitidos", () => {
     // As três regras acima forçam a lista a ENCOLHER, mas nada impedia que ela
     // voltasse a CRESCER: uma `DIVIDA` nova entra sem ninguém notar, porque
     // acrescentar linha à allowlist é o caminho de menor resistência de quem

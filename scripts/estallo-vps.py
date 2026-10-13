@@ -116,6 +116,15 @@ def configure(credentials):
             raise ValueError('Chave administrativa Supabase inválida') from error
         if claims.get('role') != 'service_role' or claims.get('ref') != 'cbeqboyfmwyjsybszaxy':
             raise ValueError('Use a chave service_role do projeto autorizado, não a chave anon')
+    try:
+        request = urllib.request.Request(PROJECT + '/auth/v1/admin/users?per_page=1',
+                                         headers={'apikey': admin_key,
+                                                  'Authorization': 'Bearer ' + admin_key})
+        with urllib.request.urlopen(request, timeout=30) as response:
+            if response.status != 200:
+                raise ValueError('Chave administrativa recusada pelo Supabase')
+    except urllib.error.HTTPError as error:
+        raise ValueError('Chave administrativa recusada pelo Supabase') from error
     connection = urllib.parse.urlsplit(values['SUPABASE_DB_URL'])
     if (connection.scheme not in ('postgres', 'postgresql')
             or not (connection.hostname or '').endswith('.pooler.supabase.com')
@@ -145,17 +154,27 @@ def configure(credentials):
 
 
 def bootstrap(sha):
-    # Instalação fresca: recusa qualquer schema público preexistente.
+    # Retoma só uma instalação cujo baseline completo foi confirmado neste host.
+    # Nunca trata um banco alheio ou uma aplicação parcial como bootstrap válido.
+    marker = ROOT / 'database-bootstrap.json'
+    baseline = (REPO / 'supabase/baseline.sql').read_bytes()
+    digest = hashlib.sha256(baseline).hexdigest()
     check = pg(['psql', '-At', '-v', 'ON_ERROR_STOP=1'],
                b"select count(*) from pg_tables where schemaname='public';\n")
     if int(check.strip()) != 0:
-        raise ValueError('Banco já tem tabelas; bootstrap recusado para preservar os dados')
+        if not marker.exists() or json.loads(marker.read_text()) != dict(project=PROJECT, baseline_sha256=digest):
+            raise ValueError('Banco já tem tabelas; bootstrap recusado para preservar os dados')
+        fresh = False
+    else:
+        fresh = True
     pull(sha)
-    pg(['psql', '-v', 'ON_ERROR_STOP=1'],
-       b'create extension if not exists vector with schema public; '
-       b'create extension if not exists citext with schema public; '
-       b'create extension if not exists pg_trgm with schema public;\n')
-    pg(['psql', '-v', 'ON_ERROR_STOP=1'], (REPO / 'supabase/baseline.sql').read_bytes())
+    if fresh:
+        pg(['psql', '-v', 'ON_ERROR_STOP=1'],
+           b'create extension if not exists vector with schema public; '
+           b'create extension if not exists citext with schema public; '
+           b'create extension if not exists pg_trgm with schema public;\n')
+        pg(['psql', '-v', 'ON_ERROR_STOP=1'], baseline)
+        save(marker, json.dumps(dict(project=PROJECT, baseline_sha256=digest)))
     run(['docker', 'run', '--rm', '--env-file', str(RUNTIME),
          '--env-file', str(ROOT / 'owner.env'),
          f'{image_namespace()}/estallo-crm-worker:{sha}',
@@ -216,26 +235,35 @@ def status_code(path):
         return error.code
 
 
-def healthy():
+def healthy(expected_sha=None):
     live = containers()
     if len(live) != 6 or any(not c['State']['Running'] or c['State'].get('OOMKilled')
                              or c['State'].get('Health', {}).get('Status', 'healthy') != 'healthy'
                              for c in live):
         return False
-    return status_code('/') == 200 and status_code('/app') == 307 and status_code('/api/v1/health') == 200
+    try:
+        if status_code('/') != 200 or status_code('/app') != 307:
+            return False
+        with urllib.request.urlopen(ORIGIN + '/api/v1/health', timeout=15) as response:
+            health = json.load(response)['data']
+        return health['status'] == 'healthy' and (not expected_sha or health['version'] == expected_sha)
+    except (urllib.error.URLError, OSError, json.JSONDecodeError, KeyError):
+        # Emissão do certificado e dependências aquecendo não abortam a primeira
+        # tentativa; o prazo e a margem de memória continuam obrigatórios.
+        return False
 
 
-def wait_healthy():
+def wait_healthy(sha):
     low_memory = 0
     for _ in range(36):
         low_memory = low_memory + 1 if available_memory() < 512 else 0
         if low_memory >= 3:
             raise RuntimeError('Memória disponível abaixo de 512 MB por 30 segundos')
-        if healthy():
+        if healthy(sha):
             # Observe também após a convergência, não apenas na primeira resposta.
             for _ in range(6):
                 time.sleep(10)
-                if available_memory() < 512 or not healthy():
+                if available_memory() < 512 or not healthy(sha):
                     raise RuntimeError('Piloto não manteve saúde e margem de memória')
             return
         time.sleep(10)
@@ -328,21 +356,21 @@ def backup():
     return destination
 
 
-def deploy(sha):
+def deploy(sha, backup_ready=False):
     validate_sha(sha)
     previous = state()
     if available_memory() < 1024:
         raise RuntimeError('Menos de 1 GB disponível antes do deploy; piloto recusado')
     pull(sha)
-    if previous.get('sha'):
+    if previous.get('sha') and not backup_ready:
         backup()
     try:
         stack(sha)
-        wait_healthy()
+        wait_healthy(sha)
     except Exception as error:
         if previous.get('sha'):
             stack(previous['sha'])
-            wait_healthy()
+            wait_healthy(previous['sha'])
             raise DeploymentFailure(str(error), rolled_back=True) from error
         else:
             # Interrompe somente o piloto; volumes e serviços alheios permanecem.
@@ -399,7 +427,7 @@ def agent():
         run(['git', 'merge', '--ff-only', latest])
         post(dict(kind='run_progress', run_id=run_id, step='banco'))
         migrate(current, latest)
-        deploy(latest)
+        deploy(latest, backup_ready=True)
         status, message = 'success', 'Banco e três imagens atualizados; saúde conferida.'
     except Exception as error:
         message = str(error)
@@ -437,7 +465,7 @@ def main():
             backup()
         elif args.action == 'agent':
             agent()
-        elif not healthy():
+        elif not healthy(state().get('sha')):
             raise RuntimeError('Verificação de saúde reprovada')
         else:
             print('Saúde e domínio conferidos.')

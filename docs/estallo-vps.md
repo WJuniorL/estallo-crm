@@ -33,7 +33,8 @@ python3 scripts/estallo-vps.py deploy --sha COMMIT_COMPLETO
 ```
 
 O configure gera as chaves internas e grava `runtime.env` fora do clone.
-Bootstrap recusa tabelas públicas preexistentes, habilita extensões, aplica
+Bootstrap recusa bancos alheios, retoma somente um baseline confirmado neste host,
+habilita extensões, aplica
 o baseline e cria o administrador. Nenhuma credencial entra nas imagens.
 
 No Supabase, configurar Site URL `https://crm.estallo.com.br` e Redirect URL

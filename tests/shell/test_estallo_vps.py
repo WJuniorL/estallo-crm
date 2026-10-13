@@ -2,6 +2,7 @@
 import importlib.util
 import base64
 import json
+import io
 from pathlib import Path
 import tempfile
 import unittest
@@ -54,6 +55,7 @@ class EstalloVpsTests(unittest.TestCase):
 
     @patch.object(vps, 'pg', return_value=b'1\n')
     @patch.object(vps, 'pull')
+    @patch.object(vps, 'REPO', Path(__file__).resolve().parents[2])
     def test_bootstrap_refuses_existing_database_before_pull(self, pull, _pg):
         with self.assertRaises(ValueError):
             vps.bootstrap(NEW)
@@ -118,6 +120,20 @@ class EstalloVpsTests(unittest.TestCase):
     @patch.object(vps, 'containers', return_value=[{'State': {'Running': True, 'OOMKilled': True}}] * 6)
     def test_oom_is_not_healthy(self, _containers):
         self.assertFalse(vps.healthy())
+
+    @patch.object(vps, 'containers', return_value=[{'State': {'Running': True}}] * 6)
+    @patch.object(vps, 'status_code', side_effect=[200, 307])
+    def test_a_different_app_on_domain_never_confirms_deploy(self, _status, _containers):
+        response = io.BytesIO(json.dumps(dict(data=dict(status='healthy', version=OLD))).encode())
+        with patch.object(vps.urllib.request, 'urlopen', return_value=response):
+            self.assertFalse(vps.healthy(NEW))
+
+    @patch.object(vps, 'containers', return_value=[{'State': {'Running': True}}] * 6)
+    @patch.object(vps, 'status_code', side_effect=[200, 307])
+    def test_http_200_with_degraded_dependency_is_not_healthy(self, _status, _containers):
+        response = io.BytesIO(json.dumps(dict(data=dict(status='degraded', version=NEW))).encode())
+        with patch.object(vps.urllib.request, 'urlopen', return_value=response):
+            self.assertFalse(vps.healthy(NEW))
 
 
 if __name__ == '__main__':

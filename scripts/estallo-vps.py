@@ -24,6 +24,7 @@ RUNTIME = ROOT / 'runtime.env'
 STATE = ROOT / 'deployment.json'
 IMAGES = ('estallo-crm', 'estallo-crm-worker', 'estallo-crm-scheduler')
 ORIGIN = 'https://crm.estallo.com.br'
+HTTP_HEADERS = {'User-Agent': f'EstalloCRM/1.0 (+{ORIGIN})'}
 PROJECT = 'https://cbeqboyfmwyjsybszaxy.supabase.co'
 PG_IMAGE = 'postgres:17-alpine'
 
@@ -239,7 +240,8 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 
 def status_code(path):
     try:
-        with urllib.request.build_opener(NoRedirect).open(ORIGIN + path, timeout=15) as response:
+        request = urllib.request.Request(ORIGIN + path, headers=HTTP_HEADERS)
+        with urllib.request.build_opener(NoRedirect).open(request, timeout=15) as response:
             return response.status
     except urllib.error.HTTPError as error:
         return error.code
@@ -262,7 +264,8 @@ def healthy(expected_sha=None):
     try:
         if status_code('/') != 200 or status_code('/app') != 307:
             return False
-        with urllib.request.urlopen(ORIGIN + '/api/v1/health', timeout=15) as response:
+        request = urllib.request.Request(ORIGIN + '/api/v1/health', headers=HTTP_HEADERS)
+        with urllib.request.urlopen(request, timeout=15) as response:
             health = json.load(response)['data']
         return health['status'] == 'healthy' and (not expected_sha or health['version'] == expected_sha)
     except (urllib.error.URLError, OSError, json.JSONDecodeError, KeyError):
@@ -405,6 +408,7 @@ def post(payload):
     request = urllib.request.Request(ORIGIN + '/api/v1/system/agent',
                                     data=json.dumps(payload).encode(), method='POST',
                                     headers={'Content-Type': 'application/json',
+                                             **HTTP_HEADERS,
                                              'Authorization': 'Bearer ' + values['INTERNAL_CRON_SECRET']})
     with urllib.request.urlopen(request, timeout=30) as response:
         return json.load(response)['data']

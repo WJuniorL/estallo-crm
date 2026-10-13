@@ -71,6 +71,16 @@ Backups contêm banco, configuração, objetos do Supabase Storage e volumes de 
 `BACKUP_SSH_TARGET=usuario@servidor:/diretorio` no arquivo protegido, com SSH por chave.
 Sem destino externo, o script declara a pendência; backup na mesma VPS não é cópia externa.
 
+No piloto, o computador do proprietário faz a cópia externa pela tarefa Windows
+`Estallo CRM - Backup externo`, às 03:20 e ao entrar no Windows. Ela executa uma
+cópia protegida de `scripts/estallo-backup-pull.ps1`, em
+`C:\Users\junio\.estallo-crm\pull-backups.ps1`, e guarda os backups em
+`C:\Users\junio\OneDrive\Documentos\backup-estallo-crm`. O log fica em
+`C:\Users\junio\.estallo-crm\backup-external.log`; arquivos incompletos são
+tentados novamente, e cada cópia concluída recebe um recibo. A cópia depende
+do computador ligado, conectado e com acesso SSH; um destino permanente
+continua sendo uma melhoria operacional recomendada.
+
 Restauração exige parar somente a stack Estallo e usar banco vazio compatível:
 restaurar o dump por `pg_restore --no-owner`, preservando os grants e revokes, recuperar `runtime.env`
 e os volumes pelos arquivos `.tgz`, e implantar o SHA registrado em `deployment.json`.

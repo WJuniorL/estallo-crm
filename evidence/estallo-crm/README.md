@@ -22,16 +22,26 @@
   local, com nome Estallo CRM e inicial E. Os buckets do baseline existem;
   `whatsapp-media` é privado. Site URL e Redirect URL foram confirmados pelo usuário.
 - Primeiro backup validado e copiado para `OneDrive/Documentos/backup-estallo-crm`.
-  Backup local diário agendado às 03:00; a cópia externa diária continua pendente.
+  Backup local diário agendado às 03:00. A tarefa Windows faz a cópia externa
+  às 03:20 e ao entrar no computador; a execução manual copiou o snapshot.
+  Essa cópia depende do computador ligado e conectado.
 - Os 11 testes da telemetria passaram. O fork desliga coleta por padrão e
   não registra argumentos das ações de servidor no desenvolvimento.
+- Isolamento medido no Supabase real: dois usuários temporários só leram
+  contatos da própria organização e não alteraram contatos da outra. Os
+  usuários e organizações temporários foram removidos ao final.
+- O CI Linux passou no kit shell completo. Restaram expectativas de nome
+  upstream em testes unitários, corrigidas e verificadas localmente.
+- As imagens AMD64 e ARM64 foram construídas e enviadas pelo CI. O job que
+  reúne os manifestos não iniciou: o GitHub informou bloqueio por cobrança
+  ou limite de gastos da organização. A publicação completa está pendente.
 
 ## Ainda não medido/concluído
 
 - Conjunto final de CI, build das imagens Estallo e publicação no GHCR.
 - Aplicação e serviços Swarm em produção, autenticação na VPS,
   recuperação de senha, onboarding, pareamento e mensagem real de WhatsApp.
-- Rollback real, restauração de backup e cópia externa diária.
+- Rollback real, restauração de backup e execução diária da cópia externa.
 - Atendimento por IA: nenhuma credencial de provedor foi fornecida.
 
 A chave administrativa inicialmente tinha a role `anon`, recusada pelo operador.

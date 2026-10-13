@@ -2304,7 +2304,8 @@ jobs:
     # Nenhuma permissão: este job só lê o resultado de `needs` e escreve o
     # summary. Sem o bloco, o token herdaria o default do REPOSITÓRIO, que vive
     # fora do repo e muda num clique.
-    permissions: {}
+    permissions:
+      contents: read
     steps:
       - name: Falhar se qualquer parte não passou
         env:

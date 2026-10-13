@@ -191,7 +191,7 @@ ENV
 
 # rodar_update <raiz> <arch> <0|1 sem imagem publicada> <saída> → RC global
 #
-# A invocação é RELATIVA (`bash deskcommcrm/hostgator-setup-kit/update.sh`) de
+# A invocação é RELATIVA (`bash estallo-crm/hostgator-setup-kit/update.sh`) de
 # propósito: com o caminho absoluto o `cd` do `enter_project` não mudaria nada
 # e a prova mediria menos. `--to v0.9.0 --force` fixa o alvo, para o teste não
 # depender de nenhum tag novo. `< /dev/null` evita travar num `read -p`.
@@ -201,7 +201,7 @@ rodar_update() {
   RC=0
   ( cd "$raiz" && \
     env FAKE_ARCH="$arch" ARM_SEM_IMAGEM="$sem_imagem" \
-        bash deskcommcrm/hostgator-setup-kit/update.sh --to v0.9.0 --force \
+        bash estallo-crm/hostgator-setup-kit/update.sh --to v0.9.0 --force \
   ) > "$saida" 2>&1 < /dev/null || RC=$?
 }
 
@@ -385,7 +385,7 @@ R5="$WORK/caso5"; mkdir -p "$R5"; montar_instalacao "$R5" 0
 OUT5A="$WORK/saida5a.txt"; OUT5B="$WORK/saida5b.txt"
 : > "$DOCKER_LOG"; RC5A=0
 ( cd "$R5" && env FAKE_ARCH=riscv64 ARM_SEM_IMAGEM=1 \
-    bash deskcommcrm/hostgator-setup-kit/update.sh --to v0.9.0 --force \
+    bash estallo-crm/hostgator-setup-kit/update.sh --to v0.9.0 --force \
 ) > "$OUT5A" 2>&1 < /dev/null || RC5A=$?
 check "com o kit velho no disco, nem --to/--force passam da guarda (rc=$RC5A, e != 0)" \
   test "$RC5A" -ne 0

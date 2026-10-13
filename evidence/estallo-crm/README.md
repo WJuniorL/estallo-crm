@@ -35,13 +35,31 @@
 - As imagens AMD64 e ARM64 foram construídas e enviadas pelo CI. O job que
   reúne os manifestos não iniciou: o GitHub informou bloqueio por cobrança
   ou limite de gastos da organização. A publicação completa está pendente.
+- O proprietário autorizou o deploy direto em 13/10/2026. Os workflows foram
+  desativados. A stack foi implantada com as três imagens AMD64 já publicadas
+  de `1692ad9eb367b8cb9bfc39b79c0ca84cf9abc87a`; não houve build na VPS.
+- Os seis serviços estão ativos, com limites de recursos e sem OOM observado.
+  HTTPS, página inicial 200, `/app` 307 e saúde de Supabase, Redis e WAHA
+  foram conferidos. Os 21 endereços preexistentes mantiveram as respostas.
+- Login do administrador e boas-vindas conferidos na VPS, além de login mobile.
+  Recuperação aceitou o pedido de envio e o usuário confirmou o recebimento do
+  e-mail de Supabase Auth. A redefinição da senha ainda precisa de confirmação.
+  WhatsApp pareado pelo usuário; a consulta da sessão retornou `WORKING`.
+  O usuário confirmou recebimento e resposta pela tela, nos dois sentidos.
+- Backup após o deploy validado e copiado para o computador. O operador aceita
+  somente tags do mesmo commit, incluindo o artefato AMD64; 17 testes passaram.
 
 ## Ainda não medido/concluído
 
-- Conjunto final de CI, build das imagens Estallo e publicação no GHCR.
-- Aplicação e serviços Swarm em produção, autenticação na VPS,
-  recuperação de senha, onboarding, pareamento e mensagem real de WhatsApp.
-- Rollback real, restauração de backup e execução diária da cópia externa.
+- Conjunto final completo de CI, interrompido pela cota de Actions. Os testes
+  relevantes das correções foram executados localmente; isso não é o CI completo.
+- Redefinição por e-mail e conclusão do onboarding.
+  O remetente ainda é o padrão do Supabase; SMTP próprio não foi fornecido.
+- Rollback entre versões diferentes, restauração de backup e execução diária
+  da cópia externa. O ensaio Swarm usa a mesma versão; uma oscilação após o
+  reinício foi seguida por oito sondas com dependências saudáveis e memória
+  disponível acima de 1 GB, seguidas por seis verificações finais aprovadas pelo
+  operador. As configurações e os volumes foram preservados.
 - Atendimento por IA: nenhuma credencial de provedor foi fornecida.
 
 A chave administrativa inicialmente tinha a role `anon`, recusada pelo operador.

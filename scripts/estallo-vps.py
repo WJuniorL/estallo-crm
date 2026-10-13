@@ -83,6 +83,26 @@ def runtime():
     return values
 
 
+def image_tag(sha):
+    validate_sha(sha)
+    path = ROOT / 'image-tags.json'
+    tags = json.loads(path.read_text()) if path.exists() else {}
+    tag = tags.get(sha, sha)
+    if tag not in (sha, sha + '-amd64'):
+        raise ValueError('Tag precisa corresponder ao commit, com arquitetura AMD64 opcional')
+    return tag
+
+
+def register_image_tag(sha, tag):
+    validate_sha(sha)
+    if tag not in (sha, sha + '-amd64'):
+        raise ValueError('Tag precisa corresponder ao commit, com arquitetura AMD64 opcional')
+    path = ROOT / 'image-tags.json'
+    tags = json.loads(path.read_text()) if path.exists() else {}
+    tags[sha] = tag
+    save(path, json.dumps(tags))
+
+
 def pg(command, sql=None, output=None):
     url = urllib.parse.urlsplit(runtime()['SUPABASE_DB_URL'])
     if url.scheme not in ('postgres', 'postgresql') or not url.hostname or not url.password:
@@ -188,7 +208,7 @@ def bootstrap(sha):
         save(marker, json.dumps(dict(project=PROJECT, baseline_sha256=digest)))
     run(['docker', 'run', '--rm', '--env-file', str(RUNTIME),
          '--env-file', str(ROOT / 'owner.env'),
-         f'{image_namespace()}/estallo-crm-worker:{sha}',
+         f'{image_namespace()}/estallo-crm-worker:{image_tag(sha)}',
          'pnpm', 'exec', 'tsx', 'scripts/bootstrap-owner.ts'])
     # A org inicial usa o fuso solicitado; nenhuma outra organização é alterada.
     pg(['psql', '-v', 'ON_ERROR_STOP=1'],
@@ -205,7 +225,7 @@ def validate_sha(sha):
 def pull(sha):
     validate_sha(sha)
     for image in IMAGES:
-        run(['docker', 'pull', f'{image_namespace()}/{image}:{sha}'])
+        run(['docker', 'pull', f'{image_namespace()}/{image}:{image_tag(sha)}'])
 
 
 def available_memory():
@@ -259,7 +279,7 @@ def healthy(expected_sha=None):
     if expected_sha:
         for service, image in zip(('app', 'worker', 'scheduler'), IMAGES):
             actual = services['estallo-crm_' + service]['Config'].get('Image', '').split('@')[0]
-            if actual != f'{image_namespace()}/{image}:{expected_sha}':
+            if actual != f'{image_namespace()}/{image}:{image_tag(expected_sha)}':
                 return False
     try:
         if status_code('/') != 200 or status_code('/app') != 307:
@@ -292,7 +312,7 @@ def wait_healthy(sha):
 
 
 def stack(sha):
-    values = dict(os.environ, **runtime(), ESTALLO_IMAGE_TAG=sha)
+    values = dict(os.environ, **runtime(), ESTALLO_IMAGE_TAG=image_tag(sha))
     run(['docker', 'stack', 'deploy', '--with-registry-auth', '--resolve-image', 'always',
          '-c', str(REPO / 'docker-stack.estallo.yml'), 'estallo-crm'], env=values)
 
@@ -364,6 +384,9 @@ def backup():
     shutil.copy2(RUNTIME, destination / 'runtime.env')
     if STATE.exists():
         shutil.copy2(STATE, destination / 'deployment.json')
+    for filename in ('image-tags.json', 'owner.env'):
+        if (ROOT / filename).exists():
+            shutil.copy2(ROOT / filename, destination / filename)
     for file in destination.rglob('*'):
         file.chmod(0o700 if file.is_dir() else 0o600)
     target = runtime().get('BACKUP_SSH_TARGET')
@@ -373,7 +396,7 @@ def backup():
         run(['scp', '-B', '-r', str(destination), target])
         print('Backup criado e copiado para destino externo.')
     else:
-        print('Backup local criado; cópia externa PENDENTE: falta BACKUP_SSH_TARGET.')
+        print('Backup local criado; destino SSH não configurado. Cópia pelo computador é conferida no log externo.')
     return destination
 
 
@@ -425,7 +448,7 @@ def agent():
         candidate = run(['git', 'rev-parse', 'origin/main']).decode().strip()
         # Só anuncia quando TODAS as imagens imutáveis existem no registro.
         for image in IMAGES:
-            run(['docker', 'manifest', 'inspect', f'{image_namespace()}/{image}:{candidate}'])
+            run(['docker', 'manifest', 'inspect', f'{image_namespace()}/{image}:{image_tag(candidate)}'])
         latest = candidate
     except Exception:
         comparison_failed = True
@@ -470,11 +493,16 @@ def main():
     parser.add_argument('action', choices=['configure', 'bootstrap', 'deploy', 'rollback', 'backup', 'agent', 'verify'])
     parser.add_argument('--credentials')
     parser.add_argument('--sha')
+    parser.add_argument('--image-tag')
     args = parser.parse_args()
     ROOT.mkdir(parents=True, exist_ok=True, mode=0o700)
     os.umask(0o077)
     with (ROOT / 'operation.lock').open('w') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        if args.image_tag:
+            if args.action not in ('bootstrap', 'deploy'):
+                raise ValueError('--image-tag só é usado no bootstrap ou deploy')
+            register_image_tag(args.sha or '', args.image_tag)
         if args.action == 'configure':
             configure(args.credentials)
         elif args.action == 'bootstrap':

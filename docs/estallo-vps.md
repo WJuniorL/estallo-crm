@@ -12,9 +12,22 @@ A aplicação participa de `NetPratica` e da rede interna da stack; worker,
 scheduler, WAHA, Redis efêmero e seu adaptador HTTP usam apenas a rede interna.
 Sem Caddy, portas públicas adicionais, serviços de voz ou build na VPS.
 
-As três imagens próprias têm o mesmo SHA completo e são publicadas pelo CI.
+As três imagens próprias têm o mesmo SHA completo e foram publicadas pelo CI.
 O deploy verifica que todas existem antes de trocar qualquer serviço.
 Nenhuma tag móvel é usada na instalação.
+
+Em 13/10/2026, o proprietário autorizou implantar diretamente na VPS após o
+esgotamento da cota de Actions. Todos os workflows deste fork foram desativados.
+O piloto usa as imagens AMD64 já publicadas do commit
+`1692ad9eb367b8cb9bfc39b79c0ca84cf9abc87a`, com sufixo `-amd64`. Não houve build
+na VPS. As alterações posteriores a esse commit só alcançam operação, testes
+e documentação; o código da aplicação e dos workers corresponde às imagens.
+O mapeamento de tags fica protegido em `/opt/stacks/estallo-crm/image-tags.json`
+e acompanha os backups. Ele também é usado ao retornar a uma versão anterior.
+
+```bash
+python3 scripts/estallo-vps.py deploy --sha 1692ad9eb367b8cb9bfc39b79c0ca84cf9abc87a --image-tag 1692ad9eb367b8cb9bfc39b79c0ca84cf9abc87a-amd64
+```
 
 ## Instalação
 
@@ -84,6 +97,8 @@ continua sendo uma melhoria operacional recomendada.
 Restauração exige parar somente a stack Estallo e usar banco vazio compatível:
 restaurar o dump por `pg_restore --no-owner`, preservando os grants e revokes, recuperar `runtime.env`
 e os volumes pelos arquivos `.tgz`, e implantar o SHA registrado em `deployment.json`.
+Recuperar também `image-tags.json` e `owner.env`, com permissões 600, quando
+presentes no snapshot; isso preserva o artefato AMD64 e o acesso administrativo.
 Recuperar os objetos de `storage/` usando o bucket, nome e tipo registrados em
 `storage/manifest.json`, pela API de upload do Supabase com `x-upsert: true`.
 O dump guarda metadados, e os arquivos dessa pasta guardam os bytes dos anexos.
@@ -97,6 +112,12 @@ e celular (`evidence/estallo-crm/login-mobile.png`). Essas capturas comprovam
 a marca no ambiente local; o aceite da instalação na VPS continua separado.
 O login real do administrador chegou às boas-vindas
 (`evidence/estallo-crm/onboarding-welcome.png`), com a marca e o símbolo E.
+A implantação foi conferida por HTTPS em desktop
+(`evidence/estallo-crm/login-vps-desktop.png`) e celular
+(`evidence/estallo-crm/login-vps-mobile.png`). O administrador entrou na VPS
+(`evidence/estallo-crm/onboarding-vps.png`), e a recuperação aceitou o pedido
+(`evidence/estallo-crm/recovery-vps.png`); recebimento e redefinição por e-mail
+ainda dependem da confirmação do proprietário.
 
 Verificar login, recuperação, onboarding, nomes e ícone E pela tela. Parear um
 WhatsApp e comprovar mensagem recebida/enviada. Sem chave de IA, cadastrar em

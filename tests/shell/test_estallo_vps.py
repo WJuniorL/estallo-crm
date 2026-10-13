@@ -48,6 +48,21 @@ class EstalloVpsTests(unittest.TestCase):
             guard.start()
             self.addCleanup(guard.stop)
 
+    @patch.object(vps, 'image_namespace', return_value='registry.example/estallo')
+    @patch.object(vps, 'run')
+    def test_architecture_tag_keeps_same_commit_for_all_services(self, run, _namespace):
+        vps.register_image_tag(NEW, NEW + '-amd64')
+        vps.pull(NEW)
+        self.assertEqual([call.args[0][-1] for call in run.call_args_list],
+                         [f'registry.example/estallo/{name}:{NEW}-amd64' for name in vps.IMAGES])
+        self.assertEqual(vps.image_tag(OLD), OLD)
+
+    def test_architecture_tag_cannot_point_to_another_commit(self):
+        for tag in ('latest', OLD + '-amd64', NEW + ';echo test'):
+            with self.assertRaises(ValueError):
+                vps.register_image_tag(NEW, tag)
+        self.assertFalse((vps.ROOT / 'image-tags.json').exists())
+
     def test_tag_rejects_mutable_names_and_shell_commands(self):
         for tag in ('latest', 'stable', 'main', 'abc;echo segredo', '', '1' * 39):
             with self.assertRaises(ValueError):

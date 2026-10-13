@@ -1,5 +1,7 @@
 """Contrato operacional do piloto, sem Docker nem conexão com produção."""
 import importlib.util
+import base64
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -34,6 +36,21 @@ class EstalloVpsTests(unittest.TestCase):
             path.write_text('export TOKEN=segredo\n')
             with self.assertRaises(ValueError):
                 vps.load_env(path)
+
+    def test_anon_key_cannot_be_configured_as_administrator(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'credentials'
+            claims = base64.urlsafe_b64encode(json.dumps(dict(
+                role='anon', ref='cbeqboyfmwyjsybszaxy')).encode()).decode().rstrip('=')
+            path.write_text(f'NEXT_PUBLIC_SUPABASE_URL={vps.PROJECT}\n'
+                            f'SUPABASE_SERVICE_ROLE_KEY=test.{claims}.test\n'
+                            'NEXT_PUBLIC_SUPABASE_ANON_KEY=test\n'
+                            'SUPABASE_DB_URL=postgresql://example\n'
+                            'OWNER_EMAIL=owner@example.test\nOWNER_PASSWORD=senha-de-teste-forte\n')
+            with patch.object(vps, 'RUNTIME', Path(directory) / 'runtime'), patch.object(vps, 'save') as save:
+                with self.assertRaisesRegex(ValueError, 'não a chave anon'):
+                    vps.configure(path)
+                save.assert_not_called()
 
     @patch.object(vps, 'pg', return_value=b'1\n')
     @patch.object(vps, 'pull')

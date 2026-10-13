@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Operação da stack Estallo; segredos ficam fora do clone, nunca nos logs."""
 import argparse
+import base64
 import datetime
 import fcntl
 import hashlib
@@ -106,6 +107,15 @@ def configure(credentials):
         raise ValueError('Faltam campos: ' + ', '.join(missing))
     if values['NEXT_PUBLIC_SUPABASE_URL'] != PROJECT:
         raise ValueError('Projeto diferente do autorizado')
+    admin_key = values['SUPABASE_SERVICE_ROLE_KEY']
+    if not admin_key.startswith('sb_secret_'):
+        try:
+            payload = admin_key.split('.')[1]
+            claims = json.loads(base64.urlsafe_b64decode(payload + '=' * (-len(payload) % 4)))
+        except Exception as error:
+            raise ValueError('Chave administrativa Supabase inválida') from error
+        if claims.get('role') != 'service_role' or claims.get('ref') != 'cbeqboyfmwyjsybszaxy':
+            raise ValueError('Use a chave service_role do projeto autorizado, não a chave anon')
     connection = urllib.parse.urlsplit(values['SUPABASE_DB_URL'])
     if (connection.scheme not in ('postgres', 'postgresql')
             or not (connection.hostname or '').endswith('.pooler.supabase.com')

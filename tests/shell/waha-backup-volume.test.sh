@@ -43,7 +43,7 @@ snapshot_tem() { tar tzf "$1" 2>/dev/null | grep -qxF "./noweb/waha.sqlite3"; }
 # $VOLSTORE/<nome>, criado vazio quando não existe (o defeito da issue nasce
 # aqui). $WAHA_ID e $WAHA_MONTAGEM entram por ambiente em cada cenário.
 export VOLSTORE="$WORK/volumes" DUBLE_LOG="$WORK/docker.log"
-mkdir -p "$WORK/bin" "$VOLSTORE" "$WORK/sessoes/noweb" "$VOLSTORE/deskcommcrm_waha-data/noweb"
+mkdir -p "$WORK/bin" "$VOLSTORE" "$WORK/sessoes/noweb" "$VOLSTORE/estallo-crm_waha-data/noweb"
 cat > "$WORK/bin/docker" <<'STUB'
 #!/usr/bin/env bash
 set -uo pipefail
@@ -115,7 +115,7 @@ mkdir -p "$PROJ/backups"
 : > "$PROJ/docker-compose.prod.yml"
 printf '%s\n' 'SUPABASE_DB_URL="postgresql://postgres:senha@db.exemplo.supabase.co:5432/postgres"' > "$PROJ/.env"
 head -c 4096 /dev/urandom > "$WORK/sessoes/noweb/waha.sqlite3"
-head -c 4096 /dev/urandom > "$VOLSTORE/deskcommcrm_waha-data/noweb/waha.sqlite3"
+head -c 4096 /dev/urandom > "$VOLSTORE/estallo-crm_waha-data/noweb/waha.sqlite3"
 
 backup() {  # backup <arquivo-de-saída> [WAHA_ID] [WAHA_MONTAGEM]
   rm -f "$PROJ"/backups/waha-*.tgz

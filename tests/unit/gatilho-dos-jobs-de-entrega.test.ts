@@ -129,7 +129,7 @@ const GATILHO_ESPERADO: Record<string, { condicao: string | null; efeito: string
       "Sem `tag`, um dispatch numa branch moveria o canal. Sem o `v`, uma tag de teste o move.",
   },
 
-  // As imagens de FUNDO (#604): `deskcomm-worker` e `deskcomm-scheduler`
+  // As imagens de FUNDO (#604): `estallo-crm-worker` e `estallo-crm-scheduler`
   // construíam, publicavam e recebiam tag sem que job nenhum as executasse. Na
   // #648 o resultado foi dez dias de `event_log` parado com o `/healthz` verde.
   // Desligá-lo devolve exatamente esse buraco: a imagem publica, o canal anda,

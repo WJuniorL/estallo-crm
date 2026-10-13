@@ -90,7 +90,7 @@ def pg(command, sql=None, output=None):
                   PGUSER=urllib.parse.unquote(url.username or ''),
                   PGPASSWORD=urllib.parse.unquote(url.password),
                   PGDATABASE=url.path.lstrip('/') or 'postgres', PGSSLMODE='require')
-    args = ['docker', 'run', '--rm', '-i', '--network', 'host']
+    args = ['docker', 'run', '--rm', '-i', '--cpus', '0.5', '--memory', '256m', '--network', 'host']
     for key in ('PGHOST', 'PGPORT', 'PGUSER', 'PGPASSWORD', 'PGDATABASE', 'PGSSLMODE'):
         args += ['-e', key]
     return run(args + [PG_IMAGE] + command, env=pg_env, input=sql, output=output)
@@ -144,7 +144,8 @@ def configure(credentials):
                 'WAHA_BYO_ENCRYPTION_KEY', 'AI_CRED_AES_KEY', 'IMPERSONATE_COOKIE_SECRET',
                 'LGPD_SIGNING_KEY', 'NUVEMSHOP_OAUTH_ENCRYPTION_KEY', 'WAHA_HMAC_SECRET',
                 'WAHA_API_KEY', 'SRH_TOKEN'):
-        values.setdefault(key, secrets.token_hex(32))
+        if not values.get(key):
+            values[key] = secrets.token_hex(32)
     values['WAHA_API_KEY_SHA512'] = hashlib.sha512(values['WAHA_API_KEY'].encode()).hexdigest()
     values['UPSTASH_REDIS_REST_TOKEN'] = values['SRH_TOKEN']
     save(ROOT / 'owner.env', ''.join(f'{key}={values.pop(key)}\n'
@@ -241,6 +242,14 @@ def healthy(expected_sha=None):
                              or c['State'].get('Health', {}).get('Status', 'healthy') != 'healthy'
                              for c in live):
         return False
+    services = {c.get('Config', {}).get('Labels', {}).get('com.docker.swarm.service.name'): c for c in live}
+    if set(services) != {'estallo-crm_' + name for name in ('app', 'worker', 'scheduler', 'waha', 'redis', 'srh')}:
+        return False
+    if expected_sha:
+        for service, image in zip(('app', 'worker', 'scheduler'), IMAGES):
+            actual = services['estallo-crm_' + service]['Config'].get('Image', '').split('@')[0]
+            if actual != f'{image_namespace()}/{image}:{expected_sha}':
+                return False
     try:
         if status_code('/') != 200 or status_code('/app') != 307:
             return False
@@ -327,7 +336,7 @@ def backup():
     destination.mkdir(parents=True, mode=0o700)
     partial = destination / 'database.partial'
     with partial.open('wb') as stream:
-        pg(['pg_dump', '--format=custom', '--no-owner', '--no-privileges'], output=stream)
+        pg(['pg_dump', '--format=custom', '--no-owner'], output=stream)
     run(['docker', 'run', '--rm', '-v', f'{partial}:/backup:ro',
          PG_IMAGE, 'pg_restore', '--list', '/backup'])
     partial.rename(destination / 'database.dump')

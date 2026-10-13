@@ -12,7 +12,7 @@
   visível e um único botão com o rótulo exato `Entrar`. Capturas nesta pasta.
 - Typecheck passou com Node 22 e heap de 6 GB. Lint: zero erros; avisos herdados.
 - Gates de canal e papel passaram; 54 casos de marca e 85 casos das correções de
-  distribuição/CI passaram. Os 13 casos do operador são testes com dublês:
+  distribuição/CI passaram. Os 15 casos do operador são testes com dublês:
   **não são um ensaio de rollback na VPS**.
 - O job `Estallo VPS` verificou a receita pelo `docker stack config` no Linux.
 - DNS de `crm.estallo.com.br` resolve via Cloudflare. O registro foi criado pelo

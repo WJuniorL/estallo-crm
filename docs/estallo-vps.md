@@ -71,7 +71,7 @@ Backups contêm banco, configuração, objetos do Supabase Storage e volumes de 
 Sem destino externo, o script declara a pendência; backup na mesma VPS não é cópia externa.
 
 Restauração exige parar somente a stack Estallo e usar banco vazio compatível:
-restaurar o dump por `pg_restore --no-owner --no-privileges`, recuperar `runtime.env`
+restaurar o dump por `pg_restore --no-owner`, preservando os grants e revokes, recuperar `runtime.env`
 e os volumes pelos arquivos `.tgz`, e implantar o SHA registrado em `deployment.json`.
 Recuperar os objetos de `storage/` usando o bucket, nome e tipo registrados em
 `storage/manifest.json`, pela API de upload do Supabase com `x-upsert: true`.

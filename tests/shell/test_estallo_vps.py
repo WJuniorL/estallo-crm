@@ -22,6 +22,15 @@ OLD = '1' * 40
 NEW = '2' * 40
 
 
+def live_containers():
+    return [dict(State=dict(Running=True), Config=dict(
+        Labels={'com.docker.swarm.service.name': 'estallo-crm_' + service},
+        Image=(f'registry.example/estallo/{image}:{NEW}' if image else 'upstream:fixed')))
+        for service, image in [('app', 'estallo-crm'), ('worker', 'estallo-crm-worker'),
+                               ('scheduler', 'estallo-crm-scheduler'), ('waha', None),
+                               ('redis', None), ('srh', None)]]
+
+
 class EstalloVpsTests(unittest.TestCase):
     def test_tag_rejects_mutable_names_and_shell_commands(self):
         for tag in ('latest', 'stable', 'main', 'abc;echo segredo', '', '1' * 39):
@@ -66,7 +75,8 @@ class EstalloVpsTests(unittest.TestCase):
     def test_all_images_are_pulled_at_same_sha(self, run, _namespace):
         vps.pull(NEW)
         self.assertEqual([call.args[0][-1] for call in run.call_args_list],
-                         [f'registry.example/estallo/{name}:{NEW}' for name in vps.IMAGES])
+                         [f'registry.example/estallo/{name}:{NEW}' for name in
+                          ('estallo-crm', 'estallo-crm-worker', 'estallo-crm-scheduler')])
 
     @patch.object(vps, 'available_memory', return_value=100)
     @patch.object(vps, 'pull')
@@ -121,18 +131,35 @@ class EstalloVpsTests(unittest.TestCase):
     def test_oom_is_not_healthy(self, _containers):
         self.assertFalse(vps.healthy())
 
-    @patch.object(vps, 'containers', return_value=[{'State': {'Running': True}}] * 6)
+    @patch.object(vps, 'image_namespace', return_value='registry.example/estallo')
+    @patch.object(vps, 'containers', side_effect=live_containers)
     @patch.object(vps, 'status_code', side_effect=[200, 307])
-    def test_a_different_app_on_domain_never_confirms_deploy(self, _status, _containers):
+    def test_a_different_app_on_domain_never_confirms_deploy(self, _status, _containers, _namespace):
         response = io.BytesIO(json.dumps(dict(data=dict(status='healthy', version=OLD))).encode())
         with patch.object(vps.urllib.request, 'urlopen', return_value=response):
             self.assertFalse(vps.healthy(NEW))
 
-    @patch.object(vps, 'containers', return_value=[{'State': {'Running': True}}] * 6)
+    @patch.object(vps, 'image_namespace', return_value='registry.example/estallo')
+    @patch.object(vps, 'containers', side_effect=live_containers)
     @patch.object(vps, 'status_code', side_effect=[200, 307])
-    def test_http_200_with_degraded_dependency_is_not_healthy(self, _status, _containers):
+    def test_http_200_with_degraded_dependency_is_not_healthy(self, _status, _containers, _namespace):
         response = io.BytesIO(json.dumps(dict(data=dict(status='degraded', version=NEW))).encode())
         with patch.object(vps.urllib.request, 'urlopen', return_value=response):
+            self.assertFalse(vps.healthy(NEW))
+
+    @patch.object(vps, 'image_namespace', return_value='registry.example/estallo')
+    @patch.object(vps, 'containers', side_effect=live_containers)
+    @patch.object(vps, 'status_code', side_effect=[200, 307])
+    def test_correct_images_and_domain_confirm_health(self, _status, _containers, _namespace):
+        response = io.BytesIO(json.dumps(dict(data=dict(status='healthy', version=NEW))).encode())
+        with patch.object(vps.urllib.request, 'urlopen', return_value=response):
+            self.assertTrue(vps.healthy(NEW))
+
+    @patch.object(vps, 'image_namespace', return_value='registry.example/estallo')
+    def test_paused_worker_update_cannot_pass_as_new_version(self, _namespace):
+        live = live_containers()
+        live[1]['Config']['Image'] = f'registry.example/estallo/estallo-crm-worker:{OLD}'
+        with patch.object(vps, 'containers', return_value=live):
             self.assertFalse(vps.healthy(NEW))
 
 

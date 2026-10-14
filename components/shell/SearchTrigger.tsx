@@ -20,7 +20,7 @@ export function SearchTrigger() {
         variant="outline"
         size="sm"
         // ponytail: largura fixa = conteúdo antigo (~150px) × 1,3. Medir de novo se o texto mudar.
-        className="gap-2 text-muted-foreground md:w-[195px] md:justify-start"
+        className="gap-2 text-muted-foreground md:w-[293px] md:justify-start"
         onClick={() => setOpen(true)}
       >
         <MagnifyingGlass size={14} aria-hidden />

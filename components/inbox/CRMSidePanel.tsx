@@ -13,17 +13,31 @@ import { useT } from "@/hooks/i18n/useT";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { ChipDeEtiqueta } from "@/components/tags/ChipDeEtiqueta";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
-import { Tag, Receipt, Users, ArrowRight } from "@/lib/ui/icons";
+import {
+  Tag,
+  Receipt,
+  ArrowRight,
+  Check,
+  X,
+  UserCircle,
+  Funnel,
+  Flag,
+  Brain,
+  ClockCounterClockwise,
+  BookOpen,
+  Plus,
+} from "@/lib/ui/icons";
+import { BlocoRecolhivel } from "@/components/ui/bloco-recolhivel";
+import { ROLE_RANK } from "@/lib/auth/types";
+import { useWinLead } from "@/hooks/kanban/useUpdateLead";
+import { LoseLeadDialog } from "@/components/kanban/LoseLeadDialog";
 import { apiClient } from "@/lib/api/client";
 import { toast } from "sonner";
 import type { ConversationWithContact } from "@/hooks/inbox/useConversationsRealtime";
 import { activityLabel, actorLabel, actorShape } from "@/lib/leads/activity-vocabulary";
-import { ConversationTagsEditor } from "./ConversationTagsEditor";
 import { ContactTagsEditor } from "./ContactTagsEditor";
 import { useDefaultPipeline } from "@/hooks/pipelines/useDefaultPipeline";
 import { NewLeadDialog } from "@/components/kanban/NewLeadDialog";
@@ -285,9 +299,9 @@ function SemLista({
   onTentarDeNovo: () => void;
 }) {
   const t = useT();
-  if (!erro) return <p className="mt-2 text-xs text-muted-foreground">{t(vazio)}</p>;
+  if (!erro) return <p className="text-xs text-muted-foreground">{t(vazio)}</p>;
   return (
-    <div className="mt-2 space-y-1">
+    <div className="space-y-1">
       <p className="text-xs text-error-fg">{t("Não consegui ler estes dados.")}</p>
       <Button size="sm" variant="outline" onClick={onTentarDeNovo}>
         {t("Tentar de novo")}
@@ -343,42 +357,113 @@ function ondeEstaOLead(l: LeadRow): string {
  */
 const CLASSES_DE_ONDE_ESTA = "line-clamp-2 text-muted-foreground";
 
+const COR_DO_STATUS: Record<string, string> = {
+  open: "bg-accent/10 text-accent",
+  won: "bg-success/15 text-success",
+  lost: "bg-destructive/10 text-destructive",
+};
+
 /**
  * Os negócios do contato, do mais recente para o mais antigo. Clicar abre o
  * MESMO dossiê do quadro (`LeadDossierDoFunil`) — lá ficam etapa, campos,
- * tarefas e histórico. Por isso este bloco não edita nada: é a porta.
+ * tarefas e histórico. Ganhar e perder ficam AQUI, no card, para fechar o
+ * negócio sem abrir o dossiê (mesmas rotas /win e /lose do quadro).
  */
 function LeadsRecentes({
   leads,
   onAbrir,
+  podeFechar,
+  onPerder,
+  onFechado,
 }: {
   leads: LeadRow[];
   onAbrir: (lead: LeadRow) => void;
+  podeFechar: boolean;
+  onPerder: (lead: LeadRow) => void;
+  onFechado: () => void;
 }) {
-  const t = useT();
-  const status = (l: LeadRow) => t(STATUS_DO_LEAD[l.status] ?? l.status);
-
   return (
-    <ul className="mt-2 space-y-1">
+    <ul className="space-y-1.5">
       {leads.map((l) => (
-        <li key={l.id}>
-          <button
-            type="button"
-            data-testid={`inbox-lead-${l.id}`}
-            onClick={() => onAbrir(l)}
-            className="w-full rounded-md border border-border p-2 text-left text-xs hover:border-accent hover:bg-accent/10"
-          >
-            <div className="truncate font-medium">{l.title}</div>
-            <div className={CLASSES_DE_ONDE_ESTA} title={ondeEstaOLead(l)}>
-              {ondeEstaOLead(l)}
-            </div>
-            <div className="text-muted-foreground">
-              {status(l)} · {formatMoney(l.value_cents, l.currency)}
-            </div>
-          </button>
-        </li>
+        <CardDoNegocio
+          key={l.id}
+          lead={l}
+          onAbrir={onAbrir}
+          podeFechar={podeFechar && l.status === "open"}
+          onPerder={onPerder}
+          onFechado={onFechado}
+        />
       ))}
     </ul>
+  );
+}
+
+function CardDoNegocio({
+  lead: l,
+  onAbrir,
+  podeFechar,
+  onPerder,
+  onFechado,
+}: {
+  lead: LeadRow;
+  onAbrir: (lead: LeadRow) => void;
+  podeFechar: boolean;
+  onPerder: (lead: LeadRow) => void;
+  onFechado: () => void;
+}) {
+  const t = useT();
+  // `useWinLead` é por funil, e cada negócio da lista pode estar num funil.
+  const ganhar = useWinLead(l.pipeline_id);
+  return (
+    <li className="flex items-stretch overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-accent/60">
+      <button
+        type="button"
+        data-testid={`inbox-lead-${l.id}`}
+        onClick={() => onAbrir(l)}
+        className="min-w-0 flex-1 p-2.5 text-left text-xs hover:bg-accent/5"
+      >
+        <div className="truncate text-[13px] font-medium text-text">{l.title}</div>
+        <div className={CLASSES_DE_ONDE_ESTA} title={ondeEstaOLead(l)}>
+          {ondeEstaOLead(l)}
+        </div>
+        <div className="mt-1.5 flex items-center gap-2">
+          <span
+            className={cn(
+              "rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+              COR_DO_STATUS[l.status] ?? "bg-muted text-muted-foreground",
+            )}
+          >
+            {t(STATUS_DO_LEAD[l.status] ?? l.status)}
+          </span>
+          <span className="font-medium tabular-nums text-text">{formatMoney(l.value_cents, l.currency)}</span>
+        </div>
+      </button>
+      {podeFechar && (
+        <div className="flex flex-col items-center justify-center gap-1 border-l border-border px-1.5">
+          <button
+            type="button"
+            aria-label={t("Marcar como ganho")}
+            title={t("Marcar como ganho")}
+            data-testid={`inbox-lead-ganhar-${l.id}`}
+            disabled={ganhar.isPending}
+            onClick={() => ganhar.mutate({ leadId: l.id }, { onSuccess: onFechado })}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-success/15 hover:text-success disabled:opacity-50"
+          >
+            <Check size={15} weight="bold" aria-hidden />
+          </button>
+          <button
+            type="button"
+            aria-label={t("Marcar como perdido")}
+            title={t("Marcar como perdido")}
+            data-testid={`inbox-lead-perder-${l.id}`}
+            onClick={() => onPerder(l)}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+          >
+            <X size={15} weight="bold" aria-hidden />
+          </button>
+        </div>
+      )}
+    </li>
   );
 }
 
@@ -428,6 +513,10 @@ export function CRMSidePanel({ conversation }: Props) {
   const limiteLeads = limitePorContato.contato === contactId ? limitePorContato.n : 3;
   const [leadsTotal, setLeadsTotal] = useState(0);
   const [leadAberto, setLeadAberto] = useState<LeadRow | null>(null);
+  const [perdendo, setPerdendo] = useState<LeadRow | null>(null);
+  // Ganhar/perder: a régua das rotas /win e /lose (agent+, sem suporte só-leitura).
+  const podeFechar =
+    !readonly && (user.is_platform_admin || (activeOrg ? ROLE_RANK[activeOrg.role] >= ROLE_RANK.agent : false));
   const defaultPipeline = useDefaultPipeline(leadDialogOpen);
 
   useEffect(() => {
@@ -545,12 +634,9 @@ export function CRMSidePanel({ conversation }: Props) {
   }
 
   return (
-    <aside className="flex h-full flex-col gap-4 overflow-y-auto border-l border-border bg-background p-4">
-      <section>
-        <h3 className="text-xs font-semibold text-text">
-          {t("Contato")}
-        </h3>
-        <Card className="mt-2 space-y-2 p-3 text-sm">
+    <aside className="flex h-full flex-col gap-3 overflow-y-auto border-l border-border bg-muted/20 p-3">
+      <BlocoRecolhivel id="inbox-contato" titulo={t("Contato")} icone={<UserCircle size={14} aria-hidden />}>
+        <div className="space-y-2 text-sm">
           <div className="font-medium">{displayName}</div>
           {contact?.phone_number && (
             <div className="text-xs text-muted-foreground">{phoneForDisplay(contact.phone_number)}</div>
@@ -574,16 +660,6 @@ export function CRMSidePanel({ conversation }: Props) {
             >
               <Tag size={12} className="mr-1" weight="regular" aria-hidden /> {t("Tags do contato")}
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-7 px-2 text-xs"
-              disabled={readonly || !contactId || (leadDialogOpen && defaultPipeline.isLoading)}
-              onClick={() => setLeadDialogOpen(true)}
-            >
-              <Users size={12} className="mr-1" weight="regular" aria-hidden />
-              {leadDialogOpen && defaultPipeline.isLoading ? t("Carregando…") : t("Novo Lead")}
-            </Button>
             {contactId && (
               <Button asChild size="sm" variant="ghost" className="h-7 px-2 text-xs">
                 <Link href={`/app/contacts/${contactId}`}>
@@ -594,18 +670,39 @@ export function CRMSidePanel({ conversation }: Props) {
             )}
           </div>
           {tagEditorOpen && contactId && <ContactTagsEditor contactId={contactId} orgId={conversation.organization_id} tags={tags} />}
-        </Card>
-      </section>
+        </div>
+      </BlocoRecolhivel>
 
-      <section data-testid="inbox-campos-lead">
-        <h3 className="text-xs font-semibold text-text">
-          {t("Leads recentes")}
-        </h3>
+      <BlocoRecolhivel
+        id="inbox-oportunidades"
+        data-testid="inbox-campos-lead"
+        titulo={t("Leads recentes")}
+        icone={<Funnel size={14} aria-hidden />}
+        contagem={leadsTotal}
+        acoes={
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 px-1.5 text-xs text-accent"
+            disabled={readonly || !contactId || (leadDialogOpen && defaultPipeline.isLoading)}
+            onClick={() => setLeadDialogOpen(true)}
+          >
+            <Plus size={12} className="mr-0.5" weight="bold" aria-hidden />
+            {leadDialogOpen && defaultPipeline.isLoading ? t("Carregando…") : t("Novo Lead")}
+          </Button>
+        }
+      >
         {sectionsLoading ? (
-          <Skeleton className="mt-2 h-14 w-full" />
+          <Skeleton className="h-14 w-full" />
         ) : leads && leads.length > 0 ? (
           <>
-            <LeadsRecentes leads={leads} onAbrir={setLeadAberto} />
+            <LeadsRecentes
+              leads={leads}
+              onAbrir={setLeadAberto}
+              podeFechar={podeFechar}
+              onPerder={setPerdendo}
+              onFechado={recarregar}
+            />
             {leadsTotal > leads.length && (
               <Button
                 size="sm"
@@ -631,7 +728,20 @@ export function CRMSidePanel({ conversation }: Props) {
             }}
           />
         )}
-      </section>
+        {perdendo && (
+          <LoseLeadDialog
+            open
+            onOpenChange={(v) => {
+              if (!v) {
+                setPerdendo(null);
+                recarregar();
+              }
+            }}
+            leadId={perdendo.id}
+            pipelineId={perdendo.pipeline_id}
+          />
+        )}
+      </BlocoRecolhivel>
 
       <LeadEnrichment
         data={summaryContactId === contactId && !erro && !contact?.is_anonymized ? enrichment : null}
@@ -653,28 +763,21 @@ export function CRMSidePanel({ conversation }: Props) {
         />
       )}
 
-      <Separator />
-
-      {!readonly && <ConversationTagsEditor
-        conversationId={conversation.id}
-        orgId={conversation.organization_id}
-        tags={conversation.tags ?? []}
-      />}
-
-      <Separator />
-
       {/* ANTES dos negócios de propósito (doutrina cap. 5): lead é o negócio,
           conversa é o canal, demanda é o que precisa acabar. Quem abre esta
           conversa está atendendo alguém que pediu alguma coisa — a primeira
           pergunta a responder é o que ainda está pendente, não quanto vale. */}
-      <section data-testid="inbox-demandas">
-        <h3 className="text-xs font-semibold text-text">
-          {t("Demandas abertas")}
-        </h3>
+      <BlocoRecolhivel
+        id="inbox-demandas"
+        data-testid="inbox-demandas"
+        titulo={t("Demandas abertas")}
+        icone={<Flag size={14} aria-hidden />}
+        contagem={demandas?.length ?? null}
+      >
         {sectionsLoading ? (
-          <Skeleton className="mt-2 h-14 w-full" />
+          <Skeleton className="h-14 w-full" />
         ) : demandas && demandas.length > 0 ? (
-          <ul className="mt-2 space-y-1.5">
+          <ul className="space-y-1.5">
             {demandas.map((d) => {
               const semPasso = !d.proximo_passo;
               return (
@@ -725,32 +828,36 @@ export function CRMSidePanel({ conversation }: Props) {
             onTentarDeNovo={() => setTentativa((n) => n + 1)}
           />
         )}
-      </section>
+      </BlocoRecolhivel>
 
-      <Separator />
-
-      <section data-testid="inbox-memoria">
-        <h3 className="text-xs font-semibold">{t("Memória do contato")}</h3>
-        <p className="mt-1 text-xs text-muted-foreground">{t("Fatos duráveis registrados nas notas. Pendências pertencem à demanda vigente.")}</p>
+      <BlocoRecolhivel
+        id="inbox-memoria"
+        data-testid="inbox-memoria"
+        titulo={t("Memória do contato")}
+        icone={<Brain size={14} aria-hidden />}
+        contagem={fatos.length}
+      >
+        <p className="text-xs text-muted-foreground">{t("Fatos duráveis registrados nas notas. Pendências pertencem à demanda vigente.")}</p>
         {!sectionsLoading && fatos.map((f) => <details key={f.id} className="mt-2 text-xs"><summary className="wrap-anywhere">{f.headline}</summary><p className="mt-1 whitespace-pre-wrap wrap-anywhere">{f.body}</p></details>)}
         {!sectionsLoading && fatos.length === 0 && <p className="mt-2 text-xs text-muted-foreground">{t("Nenhum fato durável registrado.")}</p>}
         {!sectionsLoading && historico.length > 0 && <div className="mt-3 text-xs"><h4>{t("Histórico encerrado — sem tarefas pendentes")}</h4>{historico.map((h) => <p key={h.id}>{t(DESFECHO_LEGIVEL[h.desfecho] ?? h.desfecho)}{h.fechada_em ? ` · ${shortDate(h.fechada_em, localeDaData)}` : ""}</p>)}</div>}
-      </section>
-      <Separator />
+      </BlocoRecolhivel>
 
       {/* O que os roteiros de atendimento coletaram (módulo opcional; desligado
           ou sem roteiro, não desenha nada). */}
       {contactId && !contact?.is_anonymized && <RoteirosDoContato contactId={contactId} variante="painel" />}
 
 
-      <section>
-        <h3 className="text-xs font-semibold text-text">
-          {t("Pedidos recentes")}
-        </h3>
+      <BlocoRecolhivel
+        id="inbox-pedidos"
+        titulo={t("Pedidos recentes")}
+        icone={<Receipt size={14} aria-hidden />}
+        contagem={orders?.length ?? null}
+      >
         {sectionsLoading ? (
-          <Skeleton className="mt-2 h-14 w-full" />
+          <Skeleton className="h-14 w-full" />
         ) : orders && orders.length > 0 ? (
-          <ul className="mt-2 space-y-1.5">
+          <ul className="space-y-1.5">
             {orders.map((o) => (
               <li
                 key={o.id}
@@ -771,18 +878,17 @@ export function CRMSidePanel({ conversation }: Props) {
         ) : (
           <SemLista vazio="Sem pedidos." erro={erro} onTentarDeNovo={() => setTentativa((n) => n + 1)} />
         )}
-      </section>
+      </BlocoRecolhivel>
 
-      <Separator />
-
-      <section>
-        <h3 className="text-xs font-semibold text-text">
-          {t("Atividade")}
-        </h3>
+      <BlocoRecolhivel
+        id="inbox-atividade"
+        titulo={t("Atividade")}
+        icone={<ClockCounterClockwise size={14} aria-hidden />}
+      >
         {sectionsLoading ? (
-          <Skeleton className="mt-2 h-14 w-full" />
+          <Skeleton className="h-14 w-full" />
         ) : activities && activities.length > 0 ? (
-          <ul className="mt-2 space-y-1.5">
+          <ul className="space-y-1.5">
             {activities.map((a) => (
               <li key={a.id} className="rounded-md border border-border p-2 text-xs">
                 {/* Rótulo do vocabulário único (activity-vocabulary), nunca o
@@ -812,22 +918,19 @@ export function CRMSidePanel({ conversation }: Props) {
         ) : (
           <SemLista vazio="Sem atividade." erro={erro} onTentarDeNovo={() => setTentativa((n) => n + 1)} />
         )}
-      </section>
-
-      <Separator />
+      </BlocoRecolhivel>
 
       {/* Perguntar ao acervo — a MESMA busca que a IA faz, com a origem de cada
           trecho. Não é busca própria: o componente só pergunta e mostra, e quem
           decide limiar/top-K é a rota, que chama `buscarConhecimento`. Colocada
           DEPOIS das seções de trabalho: é consulta, não é o que o atendente abre
           a conversa para fazer. */}
-      <section>
-        <h3 className="text-xs font-semibold">{t("Acervo")}</h3>
-        <p className="mt-1 mb-2 text-xs text-muted-foreground">
+      <BlocoRecolhivel id="inbox-acervo" titulo={t("Acervo")} icone={<BookOpen size={14} aria-hidden />}>
+        <p className="mb-2 text-xs text-muted-foreground">
           {t("Pergunte como a IA perguntaria — a resposta vem com a origem de cada trecho.")}
         </p>
         <AcervoSearch />
-      </section>
+      </BlocoRecolhivel>
     </aside>
   );
 }

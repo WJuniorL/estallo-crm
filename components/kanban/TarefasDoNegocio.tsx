@@ -64,15 +64,15 @@ export function TarefasDoNegocio({ leadId, contactId, podeEditar, aberto }: Prop
   }
 
   return (
-    <section className="border-b border-border py-3" aria-labelledby="dossie-tarefas">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <h3
-          id="dossie-tarefas"
-          className="text-xs font-medium uppercase tracking-wide text-text-muted"
-        >
+    <section
+      className="shrink-0 overflow-hidden rounded-lg border border-border bg-card"
+      aria-labelledby="dossie-tarefas"
+    >
+      <div className="flex items-center justify-between gap-2 border-b border-border bg-muted/40 px-3 py-2">
+        <h3 id="dossie-tarefas" className="text-xs font-semibold text-text">
           {t("Tarefas")}
           {resumo.abertas > 0 ? (
-            <span className="ml-1.5 normal-case tracking-normal">
+            <span className="ml-1.5 font-normal text-text-muted">
               · {resumo.abertas} {resumo.abertas === 1 ? t("aberta") : t("abertas")}
               {resumo.atrasadas > 0 ? (
                 <span className="font-semibold text-destructive">
@@ -96,6 +96,7 @@ export function TarefasDoNegocio({ leadId, contactId, podeEditar, aberto }: Prop
         ) : null}
       </div>
 
+      <div className="p-3">
       {falhou ? (
         <p className="text-xs text-destructive">{t("Não foi possível carregar as tarefas.")}</p>
       ) : carregando ? (
@@ -120,6 +121,7 @@ export function TarefasDoNegocio({ leadId, contactId, podeEditar, aberto }: Prop
           />
         </div>
       )}
+      </div>
 
       <FormularioDeTarefa
         key={aberturas}

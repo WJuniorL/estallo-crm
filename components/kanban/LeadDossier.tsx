@@ -20,10 +20,9 @@ import { OwnerBadge } from "./OwnerBadge";
 import { resolveLeadOwner } from "@/lib/kanban/owner";
 import type { Stage } from "@/lib/kanban/types";
 import { Button } from "@/components/ui/button";
-import { Check, Funnel, X } from "@/lib/ui/icons";
-import { useWinLead } from "@/hooks/kanban/useUpdateLead";
+import { ClockCounterClockwise, Funnel, ListChecks, UserCircle } from "@/lib/ui/icons";
+import { BlocoRecolhivel } from "@/components/ui/bloco-recolhivel";
 import { TrilhoDeEtapas } from "./TrilhoDeEtapas";
-import { LoseLeadDialog } from "./LoseLeadDialog";
 import { MoveToOtherPipelineDialog } from "./MoveToOtherPipelineDialog";
 import { formatValorDoNegocio, MOEDA_PADRAO } from "@/lib/money";
 import type { CustomFieldDef } from "@/components/contacts/CustomFieldsEditor";
@@ -91,15 +90,13 @@ export function LeadDossier({
   // suporte só-leitura) das rotas de mover, ganhar, perder e trocar de funil.
   const podeMover = podeEditarTarefas;
   const aberto = lead.status === "open";
-  const ganhar = useWinLead(pipelineId);
-  const [perderAberto, setPerderAberto] = useState(false);
   const [moverAberto, setMoverAberto] = useState(false);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="flex w-full flex-col gap-0 overflow-y-auto sm:max-w-md"
+        className="flex w-full flex-col gap-3 overflow-y-auto bg-muted/20 sm:max-w-2xl"
         // Observável pelo mesmo motivo do board: "a assinatura morreu" e "nada
         // aconteceu" têm a mesma aparência, que é silêncio.
         data-realtime-status={timeline.realtimeStatus.toLowerCase()}
@@ -127,42 +124,13 @@ export function LeadDossier({
         </SheetHeader>
 
         {stages && stages.length > 0 && (
-          <div className="flex items-center gap-2 pb-3">
-            <div className="min-w-0 flex-1">
-              <TrilhoDeEtapas
-                lead={lead}
-                stages={stages}
-                pipelineId={pipelineId}
-                podeMover={podeMover && aberto}
-              />
-            </div>
-            {podeMover && aberto && (
-              <div className="flex shrink-0 gap-1 pb-2">
-                <Button
-                  size="icon"
-                  variant="outline"
-                  className="h-8 w-8 border-destructive/40 text-destructive hover:bg-destructive/10"
-                  aria-label={t("Marcar como perdido")}
-                  title={t("Marcar como perdido")}
-                  onClick={() => setPerderAberto(true)}
-                  data-testid="dossie-perder"
-                >
-                  <X size={16} weight="bold" aria-hidden />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="outline"
-                  className="h-8 w-8 border-success/40 text-success hover:bg-success/10"
-                  aria-label={t("Marcar como ganho")}
-                  title={t("Marcar como ganho")}
-                  disabled={ganhar.isPending}
-                  onClick={() => ganhar.mutate({ leadId: lead.id })}
-                  data-testid="dossie-ganhar"
-                >
-                  <Check size={16} weight="bold" aria-hidden />
-                </Button>
-              </div>
-            )}
+          <div className="pb-3">
+            <TrilhoDeEtapas
+              lead={lead}
+              stages={stages}
+              pipelineId={pipelineId}
+              podeMover={podeMover && aberto}
+            />
           </div>
         )}
 
@@ -220,17 +188,14 @@ export function LeadDossier({
 
         {/* Os dados do CLIENTE: telefone e e-mail numa aba, links (Instagram,
             site, Google Meu Negócio…) na outra. Vêm do contato, não do lead. */}
-        <section className="border-b border-border py-3">
-          <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-text-muted">
-            {t("Contato")}
-          </h3>
+        <BlocoRecolhivel id="dossie-contato" titulo={t("Contato")} icone={<UserCircle size={14} aria-hidden />}>
           <ContatoDoNegocio
             contactId={lead.contact_id}
             pipelineId={pipelineId}
             leadId={lead.id}
             lead={{ pipeline_id: lead.pipeline_id, stage_id: lead.stage_id }}
           />
-        </section>
+        </BlocoRecolhivel>
 
         {/* As tarefas ANTES da linha do tempo: a timeline conta o que já
             aconteceu, a tarefa é o que ainda falta fazer — e quem abre o card
@@ -243,24 +208,28 @@ export function LeadDossier({
         />
 
         {/* ② timeline */}
-        <section className="flex-1 py-3">
-          <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-text-muted">
-            {t("Linha do tempo")}
-          </h3>
+        <BlocoRecolhivel
+          id="dossie-linha-do-tempo"
+          titulo={t("Linha do tempo")}
+          icone={<ClockCounterClockwise size={14} aria-hidden />}
+        >
           <LeadTimeline
             itens={timeline.itens}
             chegouAoVivo={timeline.chegouAoVivo}
             isLoading={timeline.isLoading}
             isError={timeline.isError}
           />
-        </section>
+        </BlocoRecolhivel>
 
         {/* ③ campos, por último */}
-        <div ref={campos} className="border-t border-border pt-3">
-          <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-text-muted">
-            {t("Dados do negócio")}
-          </h3>
-          <LeadFieldsForm lead={lead} pipelineId={pipelineId} fieldDefs={fieldDefs} />
+        <div ref={campos}>
+          <BlocoRecolhivel
+            id="dossie-dados"
+            titulo={t("Dados do negócio")}
+            icone={<ListChecks size={14} aria-hidden />}
+          >
+            <LeadFieldsForm lead={lead} pipelineId={pipelineId} fieldDefs={fieldDefs} />
+          </BlocoRecolhivel>
         </div>
 
         {/* N1 — seção "Propostas", depois de "Dados do negócio". Some sozinha
@@ -269,12 +238,6 @@ export function LeadDossier({
           leadId={lead.id}
           pipelineId={pipelineId}
           podeCriar={podeCriarProposta}
-        />
-        <LoseLeadDialog
-          open={perderAberto}
-          onOpenChange={setPerderAberto}
-          leadId={lead.id}
-          pipelineId={pipelineId}
         />
         <MoveToOtherPipelineDialog
           open={moverAberto}

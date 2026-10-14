@@ -26,6 +26,7 @@ page.setDefaultTimeout(120_000);
 const errors = [];
 page.on("pageerror", (error) => errors.push(error.message.replace(/https?:\/\/\S+/g, "[url]")));
 const checks = {};
+let stage = "acesso público";
 
 async function capture(name, fullPage = true) {
   await page.evaluate(() => document.fonts.ready);
@@ -40,6 +41,7 @@ async function capture(name, fullPage = true) {
 
 try {
   if (deployMode) {
+    stage = "saúde e revisão";
     const response = await context.request.get(`${origin}/api/v1/health`);
     const health = (await response.json()).data;
     if (
@@ -52,6 +54,7 @@ try {
     checks.revision = health.version;
     checks.dependencies = health.checks;
   }
+  stage = "login e temas";
   await page.goto(`${origin}/login`, { waitUntil: "domcontentloaded", timeout: 300_000 });
   await page.getByRole("button", { name: "Entrar", exact: true }).waitFor({ timeout: 120_000 });
   checks.title = await page.title();
@@ -70,6 +73,7 @@ try {
 
   const credentialsPath = process.env.ESTALLO_QA_CREDENTIALS;
   if (credentialsPath) {
+    stage = "autenticação";
     const raw = await fs.readFile(credentialsPath, "utf8");
     const credentials = Object.fromEntries(
       raw
@@ -98,6 +102,7 @@ try {
       waitUntil: "domcontentloaded",
       timeout: 300_000,
     });
+    stage = "planos e navegação";
     checks.billingPath = new URL(page.url()).pathname;
     if (deployMode && checks.billingPath !== "/app/settings/billing")
       throw new Error("A sessão não alcançou a tela de planos autenticada.");
@@ -109,6 +114,8 @@ try {
       });
       if ((await page.getByRole("button", { name: "Contratação em breve" }).count()) !== 3)
         throw new Error("Planos demonstrativos ausentes.");
+      for (const button of await page.getByRole("button", { name: "Contratação em breve" }).all())
+        if (!(await button.isDisabled())) throw new Error("Contratação demonstrativa está ativa.");
       await capture("planos-desktop.png");
       checks.navColor = await page
         .locator("aside.estallo-navigation")
@@ -136,6 +143,10 @@ try {
     JSON.stringify(checks, null, 2) + "\n",
   );
   process.stdout.write(JSON.stringify(checks) + "\n");
+} catch (error) {
+  // Erros do Playwright podem incluir o valor de fill(); jamais imprimir a senha.
+  process.stderr.write(JSON.stringify({ ok: false, stage, errorType: error.name }) + "\n");
+  process.exitCode = 1;
 } finally {
   await browser.close();
 }

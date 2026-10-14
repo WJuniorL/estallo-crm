@@ -67,6 +67,21 @@ carregá-los com `docker load` e recuperar `local-images.json` antes do deploy.
 
 ## Instalação
 
+**Estado publicado em 14/10/2026:** identidade e navegação Estallo estão em produção
+com imagens Linux/AMD64 do commit `8563e3b720c8c34a07f4360f51f1023897885312`.
+A receita operacional no clone é `3184834d5`; essas alterações posteriores afetam
+somente a operação/QA, sem mudar o código da aplicação ou worker nas imagens.
+Build realizado no Docker local e arquivos transferidos por SSH, sem Actions.
+Prova de HTTPS, login autenticado, temas, planos e navegação está em
+[`evidence/estallo-deploy-2026-10-14/README.md`](../evidence/estallo-deploy-2026-10-14/README.md).
+
+O primeiro rollout manual recriou o WAHA por normalização da especificação Swarm
+(defaults, ordem dos mounts e metadados de plataforma). O digest e os volumes
+foram preservados, e a sessão voltou a `WORKING` sem novo pareamento. Os containers
+dos demais projetos permaneceram os mesmos; 20 domínios públicos mantiveram as
+respostas HTTP. Preservar digests impede troca da versão, mas não garante que o
+Swarm nunca recrie uma dependência ao normalizar sua especificação.
+
 1. Apontar o registro A de `crm.estallo.com.br` para `178.156.231.35`.
 2. Clonar o repositório por deploy key read-only em `/opt/stacks/estallo-crm/repo`.
 3. Guardar as credenciais em `/opt/stacks/estallo-crm/credentials.env`, com modo 600:
@@ -155,7 +170,7 @@ A implantação foi conferida por HTTPS em desktop
 (`evidence/estallo-crm/recovery-vps.png`); recebimento e redefinição por e-mail
 ainda dependem da confirmação do proprietário.
 
-Verificar login, recuperação, onboarding, nomes e ícone E pela tela. Parear um
+Verificar login, recuperação, onboarding, nomes e ícone do produto pela tela. Parear um
 WhatsApp e comprovar mensagem recebida/enviada. Sem chave de IA, cadastrar em
 IA → Credenciais antes de testar agente e handoff. Telemetria fica desligada.
 

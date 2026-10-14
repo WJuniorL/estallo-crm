@@ -52244,6 +52244,22 @@ create trigger trg_crm_stages_projeta_campos
   after insert or update of position, is_archived, is_won, is_lost on public.crm_stages
   for each row execute function public.fn_trg_projetar_campos_do_funil();
 
+-- ---- o Estallo não usa Google Meet (migration 0658) ----
+-- O produto deixou de oferecer o local "Google Meet" e a opção "Meet com acesso
+-- aberto". Tipo de agendamento que estava em Google Meet passa a WhatsApp (o
+-- único local online que não pede dado extra na marcação), e a chave da opção
+-- sai das organizações. Idempotente: re-aplicar não acha mais nada.
+-- As colunas e funções `meeting_*`/`fn_meet_*` ficam no banco, sem uso: elas
+-- são lidas por funções do envio de resposta e da sincronização com o Google,
+-- e reescrevê-las é uma mudança à parte.
+update public.calendar_event_types
+   set location_kind = 'whatsapp'
+ where location_kind = 'google_meet';
+
+update public.organizations
+   set settings = settings - 'google_meet_acesso_aberto'
+ where settings ? 'google_meet_acesso_aberto';
+
 -- ---- VARREDURA anon: função nova nasce exposta em quem ATUALIZA (migration 0116) ----
 --
 -- ⚠️ DE PROPÓSITO, NENHUMA FUNÇÃO É CRIADA DEPOIS DESTE BLOCO. Apêndice que cria

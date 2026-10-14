@@ -29,8 +29,8 @@ describe("tabToFilter — o que cada aba significa", () => {
     expect(tabToFilter("mine")).toEqual({ assigned_to: "me", exclude_finished: true });
   });
 
-  it("Fechadas continua mostrando as fechadas — senão não sobra onde vê-las", () => {
-    expect(tabToFilter("closed")).toEqual({ status: "closed" });
+  it("Fechadas mostra as fechadas e as arquivadas de antes (o Estallo tirou o Arquivar)", () => {
+    expect(tabToFilter("closed")).toEqual({ status: ["closed", "archived"] });
   });
 
   it("a Fila pergunta QUEM MANDA, não o status — e o valor mudou por medição", () => {

@@ -167,6 +167,15 @@ export const replySaveToSchema = z.discriminatedUnion('kind', [
       .max(60)
       .regex(/^[a-z][a-z0-9_{}]*$/i, 'Use letras, números, underscore ou {{volta}}'),
   }),
+  // Campo personalizado do CONTATO (cadastro central, migration 0657).
+  z.strictObject({
+    kind: z.literal('contact_custom'),
+    key: z
+      .string()
+      .min(1)
+      .max(60)
+      .regex(/^[a-z][a-z0-9_{}]*$/i, 'Use letras, números, underscore ou {{volta}}'),
+  }),
 ]);
 export type ReplySaveTo = z.infer<typeof replySaveToSchema>;
 

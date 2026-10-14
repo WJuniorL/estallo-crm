@@ -203,6 +203,8 @@ export const NAV_CATALOG = [
     icon: "CalendarBlank",
     group: "atendimento",
     sidebar: true,
+    // Liga/desliga em /app/crm (padrão: desligada).
+    capacidade: "agenda",
   },
   {
     // Renomeado de "Templates": estes são scripts do atendente, consumidos pelo
@@ -215,6 +217,17 @@ export const NAV_CATALOG = [
     // Estallo: mora no hub do CRM (/app/crm), não no menu lateral.
     group: "crm",
     section: "Preparar a venda",
+  },
+  {
+    // Estallo: o cadastro central de campos (lead e contato), com visibilidade
+    // por funil/etapa e obrigatoriedade. Substitui o editor por funil.
+    href: "/app/crm/campos",
+    label: "Campos personalizados",
+    description: "Os dados extras do negócio e do contato — onde aparecem e quando são obrigatórios.",
+    icon: "ListChecks",
+    group: "crm",
+    section: "Preparar a venda",
+    minRole: "admin",
   },
 
   // ---- CRM — o funil ----
@@ -415,6 +428,7 @@ export const NAV_CATALOG = [
     // tem hub, e se chega às telas dele por "Configurações". Eu tinha posto
     // `sidebar: true` e a cerca reprovou dizendo "a tela existe e não tem porta
     // na navegação" — a porta existia, era outra.
+    capacidade: "agenda",
   },
   {
     href: "/app/settings/tenant/proposals",

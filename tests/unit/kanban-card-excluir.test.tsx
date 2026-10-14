@@ -208,23 +208,23 @@ describe("menu do card — Excluir", () => {
     expect(screen.queryByRole("menuitem", { name: "Excluir" })).toBeNull();
   });
 
-  it("sem permissão de mexer no funil, 'Levar para outro funil' também some", async () => {
+  it("sem permissão de mexer no funil, 'Mover de funil' também some", async () => {
     estado.podeMover = false;
     const user = userEvent.setup();
     renderMenu();
 
     await user.click(screen.getByRole("button", { name: "Ações do lead" }));
     await screen.findByRole("menuitem", { name: "Editar" });
-    expect(screen.queryByRole("menuitem", { name: "Levar para outro funil" })).toBeNull();
+    expect(screen.queryByRole("menuitem", { name: "Mover de funil" })).toBeNull();
   });
 
-  it("com permissão, 'Levar para outro funil' aparece no menu — mesmo gate do Excluir", async () => {
+  it("com permissão, 'Mover de funil' aparece no menu — mesmo gate do Excluir", async () => {
     const user = userEvent.setup();
     renderMenu();
 
     await user.click(screen.getByRole("button", { name: "Ações do lead" }));
     expect(
-      await screen.findByRole("menuitem", { name: "Levar para outro funil" }),
+      await screen.findByRole("menuitem", { name: "Mover de funil" }),
     ).toBeTruthy();
   });
 

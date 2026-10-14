@@ -88,7 +88,7 @@ export function LeadDossier({
     (user.is_platform_admin && !user.support) ||
     (activeOrg ? ROLE_RANK[activeOrg.role] >= ROLE_RANK.agent : false);
   // Mover, ganhar, perder e trocar de funil: a mesma régua (agent+, sem
-  // suporte só-leitura) das rotas `/leads/bulk`, `/win`, `/lose` e `/move-pipeline`.
+  // suporte só-leitura) das rotas de mover, ganhar, perder e trocar de funil.
   const podeMover = podeEditarTarefas;
   const aberto = lead.status === "open";
   const ganhar = useWinLead(pipelineId);
@@ -228,6 +228,7 @@ export function LeadDossier({
             contactId={lead.contact_id}
             pipelineId={pipelineId}
             leadId={lead.id}
+            lead={{ pipeline_id: lead.pipeline_id, stage_id: lead.stage_id }}
           />
         </section>
 

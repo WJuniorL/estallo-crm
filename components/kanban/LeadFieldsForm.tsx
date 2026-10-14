@@ -50,7 +50,11 @@ function centsToReais(cents: number | null | undefined): string {
  * registro justamente de quem o produziu — a funcionalidade que prova "sua ação
  * fica registrada" provaria isso para todo mundo menos para o autor.
  */
-export function LeadFieldsForm({ lead, pipelineId, fieldDefs = [], onSaved, onCancel }: Props) {
+export function LeadFieldsForm({ lead, pipelineId, fieldDefs: todosOsCampos = [], onSaved, onCancel }: Props) {
+  // Campo restrito a etapas (cadastro central, 0657) só aparece na etapa do lead.
+  const fieldDefs = todosOsCampos.filter(
+    (f) => !f.etapas_visiveis || f.etapas_visiveis.includes(lead.stage_id),
+  );
   const t = useT();
   const org = useActiveOrg();
   // A moeda do negócio JÁ GRAVADO vence: trocar a moeda da empresa não

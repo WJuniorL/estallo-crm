@@ -10,6 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useContact } from "@/hooks/contacts/useContact";
+import { useCamposPersonalizados } from "@/hooks/campos/useCamposPersonalizados";
+import { campoVisivelNoLead } from "@/lib/campos/definicao";
+import { CustomFieldsEditor, type CustomFieldDef } from "@/components/contacts/CustomFieldsEditor";
 import { useUpdateContact } from "@/hooks/contacts/useUpdateContact";
 import { useT } from "@/hooks/i18n/useT";
 import { chaveDoQuadro } from "@/hooks/kanban/useBoard";
@@ -36,6 +39,8 @@ interface Props {
    * `useContatosRelacionados` segura a chamada sem `leadId`.
    */
   leadId?: string | null;
+  /** Onde o negócio está — decide quais campos de CONTATO aparecem (cadastro central). */
+  lead?: { pipeline_id: string; stage_id: string } | null;
 }
 
 /**
@@ -54,12 +59,12 @@ interface Props {
  * As PESSOAS RELACIONADAS são só leitura nesta fatia: escrever (adicionar,
  * remover, dar papel) é a F2 da mesma issue, com `POST`/`DELETE` nesta rota.
  */
-export function ContatoDoNegocio({ contactId, pipelineId, leadId }: Props) {
+export function ContatoDoNegocio({ contactId, pipelineId, leadId, lead = null }: Props) {
   const t = useT();
   return (
     <>
       {contactId ? (
-        <ContatoVinculado contactId={contactId} pipelineId={pipelineId} />
+        <ContatoVinculado contactId={contactId} pipelineId={pipelineId} lead={lead} />
       ) : (
         <p className="text-xs text-text-muted">{t("Este negócio não tem contato vinculado.")}</p>
       )}
@@ -68,10 +73,28 @@ export function ContatoDoNegocio({ contactId, pipelineId, leadId }: Props) {
   );
 }
 
-function ContatoVinculado({ contactId, pipelineId }: { contactId: string; pipelineId: string }) {
+function ContatoVinculado({
+  contactId,
+  pipelineId,
+  lead,
+}: {
+  contactId: string;
+  pipelineId: string;
+  lead: { pipeline_id: string; stage_id: string } | null;
+}) {
   const t = useT();
   const { data, isLoading, isError } = useContact(contactId);
   const contato = data?.data;
+  const cadastro = useCamposPersonalizados("contact");
+  const camposDoContato: CustomFieldDef[] = (cadastro.data?.definicoes ?? [])
+    .filter((d) => campoVisivelNoLead(d, lead))
+    .map((d) => ({
+      key: d.key,
+      label: d.label,
+      type: d.type,
+      required: d.obrigatorio !== "nao",
+      options: d.options,
+    }));
 
   if (isLoading) {
     return <p className="text-xs text-text-muted">{t("Carregando…")}</p>;
@@ -85,6 +108,7 @@ function ContatoVinculado({ contactId, pipelineId }: { contactId: string; pipeli
       <TabsList>
         <TabsTrigger value="dados">{t("Dados")}</TabsTrigger>
         <TabsTrigger value="links">{t("Links")}</TabsTrigger>
+        {camposDoContato.length > 0 && <TabsTrigger value="campos">{t("Campos")}</TabsTrigger>}
       </TabsList>
       <TabsContent value="dados">
         <DadosDoContato contato={contato} />
@@ -96,6 +120,11 @@ function ContatoVinculado({ contactId, pipelineId }: { contactId: string; pipeli
             pessoa está digitando. */}
         <FormularioDeLinks key={contato.updated_at} contato={contato} pipelineId={pipelineId} />
       </TabsContent>
+      {camposDoContato.length > 0 && (
+        <TabsContent value="campos">
+          <CamposDoContato key={contato.updated_at} contato={contato} campos={camposDoContato} />
+        </TabsContent>
+      )}
     </Tabs>
   );
 }
@@ -194,6 +223,44 @@ function DadosDoContato({ contato }: { contato: Contact }) {
         {t("Ver ficha completa do contato")}
       </Link>
     </div>
+  );
+}
+
+/** Os campos personalizados de CONTATO (cadastro central) que valem para este negócio. */
+function CamposDoContato({ contato, campos }: { contato: Contact; campos: CustomFieldDef[] }) {
+  const t = useT();
+  const atualizar = useUpdateContact(contato.id);
+  const [valores, setValores] = useState<Record<string, unknown>>(
+    () => (contato.custom_fields ?? {}) as Record<string, unknown>,
+  );
+
+  async function salvar(e: FormEvent) {
+    e.preventDefault();
+    try {
+      // O PATCH troca o `custom_fields` INTEIRO: mescla com o que já existe
+      // (links e campos de outras etapas ficam).
+      await atualizar.mutateAsync({
+        custom_fields: { ...((contato.custom_fields ?? {}) as Record<string, unknown>), ...valores },
+      });
+      toast.success(t("Campos atualizados"));
+    } catch {
+      // `useUpdateContact` já mostra o erro da API.
+    }
+  }
+
+  return (
+    <form onSubmit={salvar} className="space-y-3" data-testid="campos-do-contato">
+      <CustomFieldsEditor
+        fields={campos}
+        value={valores}
+        onChange={setValores}
+        mode="contact"
+        className="gap-3 md:grid-cols-1"
+      />
+      <Button type="submit" size="sm" disabled={atualizar.isPending}>
+        {atualizar.isPending ? t("Salvando…") : t("Salvar")}
+      </Button>
+    </form>
   );
 }
 

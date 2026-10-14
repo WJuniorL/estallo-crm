@@ -190,6 +190,7 @@ describe("hubSections", () => {
       "/app/comandas",
       // Estallo: Respostas rápidas saiu do menu lateral e mora aqui.
       "/app/templates",
+      "/app/crm/campos",
       "/app/products",
       "/app/imports",
       "/app/settings/tenant/pipelines",

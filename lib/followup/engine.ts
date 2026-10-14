@@ -137,6 +137,7 @@ export interface AdminClient {
     tags: string[];
     contact_name?: string | null;
     custom_fields?: Record<string, unknown>;
+    contact_custom_fields?: Record<string, unknown>;
   }>;
   loadEnrollmentEvents(enrollmentId: string): Promise<EnrollmentEventRef[]>;
   /**
@@ -818,6 +819,7 @@ async function processEnrollment(
     last_outcome: null,
     contact_name: leadRow.contact_name ?? null,
     custom_fields: leadRow.custom_fields,
+    contact_custom_fields: leadRow.contact_custom_fields,
   };
 
   let waitElapsed: boolean | undefined;
@@ -1053,7 +1055,12 @@ export function createSupabaseAdminClient(admin: SupabaseClient): AdminClient {
           .order("updated_at", { ascending: false })
           .limit(1)
           .maybeSingle(),
-        admin.from("contacts").select("name").eq("organization_id", orgId).eq("id", contactId).maybeSingle(),
+        admin
+          .from("contacts")
+          .select("name, custom_fields")
+          .eq("organization_id", orgId)
+          .eq("id", contactId)
+          .maybeSingle(),
       ]);
       if (leadErr) throw new Error(leadErr.message);
       if (contactErr) throw new Error(contactErr.message);
@@ -1066,6 +1073,10 @@ export function createSupabaseAdminClient(admin: SupabaseClient): AdminClient {
         tags: lead?.tags ?? [],
         contact_name: contact?.name ?? null,
         custom_fields: custom,
+        contact_custom_fields:
+          contact?.custom_fields && typeof contact.custom_fields === "object" && !Array.isArray(contact.custom_fields)
+            ? (contact.custom_fields as Record<string, unknown>)
+            : {},
       };
     },
     /**

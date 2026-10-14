@@ -198,6 +198,11 @@ export const customFieldSchema = z.object({
   options: z
     .array(z.object({ value: z.string().min(1), label: z.string().min(1) }))
     .optional(),
+  /**
+   * Etapas DESTE funil em que o campo aparece (projeção do cadastro central,
+   * migration 0657). Ausente = aparece em todas.
+   */
+  etapas_visiveis: z.array(z.string().uuid()).optional(),
 });
 export type CustomFieldDef = z.infer<typeof customFieldSchema>;
 

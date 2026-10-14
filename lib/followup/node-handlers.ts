@@ -95,6 +95,8 @@ export interface LeadFacts {
   last_outcome: string | null;
   contact_name?: string | null;
   custom_fields?: Record<string, unknown>;
+  /** `contacts.custom_fields` — destino `contact_custom` do `save_to`. */
+  contact_custom_fields?: Record<string, unknown>;
 }
 
 /** Reference to a `followup_enrollment_events` row — only what `resolveWaitPhase` needs. */
@@ -179,7 +181,10 @@ export const MAX_ACTION_RECHECKS = 14;
  */
 export function destinoJaPreenchido(lead: LeadFacts, saveTo: ReplySaveTo): boolean {
   if (saveTo.kind === "contact_name") return Boolean(lead.contact_name?.trim());
-  const v = lead.custom_fields?.[saveTo.key];
+  const v =
+    saveTo.kind === "contact_custom"
+      ? lead.contact_custom_fields?.[saveTo.key]
+      : lead.custom_fields?.[saveTo.key];
   if (typeof v === "string") return v.trim().length > 0;
   return v !== undefined && v !== null && v !== "";
 }
@@ -720,7 +725,11 @@ export function processNode(input: {
             const valor =
               node.config.save_to.kind === "contact_name"
                 ? (lead.contact_name ?? "").trim()
-                : String(lead.custom_fields?.[node.config.save_to.key] ?? "").trim();
+                : String(
+                    (node.config.save_to.kind === "contact_custom"
+                      ? lead.contact_custom_fields
+                      : lead.custom_fields)?.[node.config.save_to.key] ?? "",
+                  ).trim();
             return {
               kind: "enqueue_turn",
               purpose: "send_message",

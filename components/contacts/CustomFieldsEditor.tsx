@@ -41,6 +41,8 @@ export interface CustomFieldDef {
   type: CustomFieldType;
   required?: boolean;
   options?: Array<{ value: string; label: string }>;
+  /** Etapas em que o campo aparece (cadastro central). Ausente = todas. */
+  etapas_visiveis?: string[];
 }
 
 interface Props {

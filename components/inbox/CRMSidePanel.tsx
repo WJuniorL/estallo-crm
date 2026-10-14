@@ -383,8 +383,10 @@ function LeadsRecentes({
 }
 
 export function CRMSidePanel({ conversation }: Props) {
-  const { user } = useAuth();
+  const { user, activeOrg } = useAuth();
   const readonly = user.support?.access_mode === "support_readonly";
+  // Com a Agenda desligada na empresa (/app/crm), o atalho de marcar some.
+  const agendaLigada = activeOrg?.capacidades_ligadas?.includes("agenda") ?? false;
   const localeDaData = useLocaleDeData();
   const t = useT();
   const contact = conversation?.contacts ?? null;
@@ -418,14 +420,15 @@ export function CRMSidePanel({ conversation }: Props) {
   const [tagEditorOpen, setTagEditorOpen] = useState(false);
   const [leadDialogOpen, setLeadDialogOpen] = useState(false);
   // "Ver mais" abre de 3 em 3 (o total vem da rota, `leads_total`).
-  const [limiteLeads, setLimiteLeads] = useState(3);
+  // Guardado JUNTO do contato: trocar de conversa volta a 3 sem efeito de reset.
+  const [limitePorContato, setLimitePorContato] = useState<{ contato: string | null; n: number }>({
+    contato: null,
+    n: 3,
+  });
+  const limiteLeads = limitePorContato.contato === contactId ? limitePorContato.n : 3;
   const [leadsTotal, setLeadsTotal] = useState(0);
   const [leadAberto, setLeadAberto] = useState<LeadRow | null>(null);
   const defaultPipeline = useDefaultPipeline(leadDialogOpen);
-  useEffect(() => {
-    setLimiteLeads(3);
-    setLeadAberto(null);
-  }, [contactId]);
 
   useEffect(() => {
     if (leadDialogOpen && defaultPipeline.isError) {
@@ -560,7 +563,7 @@ export function CRMSidePanel({ conversation }: Props) {
             </div>
           )}
           <div className="flex flex-wrap gap-2 pt-1">
-            {contactId&&conversation?<Link className="underline" href={`/app/agenda?contato=${contactId}&conversa=${conversation.id}`}>{t("Marcar compromisso")}</Link>:null}
+            {agendaLigada&&contactId&&conversation?<Link className="underline" href={`/app/agenda?contato=${contactId}&conversa=${conversation.id}`}>{t("Marcar compromisso")}</Link>:null}
             <Button
               size="sm"
               variant="outline"
@@ -609,7 +612,7 @@ export function CRMSidePanel({ conversation }: Props) {
                 variant="ghost"
                 className="mt-1 h-7 w-full text-xs"
                 data-testid="inbox-leads-ver-mais"
-                onClick={() => setLimiteLeads((n) => n + 3)}
+                onClick={() => setLimitePorContato({ contato: contactId ?? null, n: limiteLeads + 3 })}
               >
                 {t("Ver mais")}
               </Button>
@@ -618,7 +621,7 @@ export function CRMSidePanel({ conversation }: Props) {
         ) : (
           <SemLista vazio="Sem leads." erro={erro} onTentarDeNovo={() => setTentativa((n) => n + 1)} />
         )}
-        {leadAberto && (
+        {leadAberto && leads?.some((l) => l.id === leadAberto.id) && (
           <LeadDossierDoFunil
             pipelineId={leadAberto.pipeline_id}
             leadId={leadAberto.id}

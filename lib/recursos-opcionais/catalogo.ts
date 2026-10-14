@@ -617,6 +617,23 @@ const DA_EMPRESA: RecursoOpcional[] = [
           ? "ligado"
           : "desligado",
   },
+  {
+    id: "agenda_da_empresa",
+    nome: "Agenda",
+    oQueFaz:
+      "Compromissos, horários livres e agendamento pelo agente de IA. Desligada, some do menu e o agente não marca horários.",
+    nivel: "organizacao",
+    padrao: "desligado",
+    quemDecide: "admin",
+    href: "/app/crm",
+    capacidade: "agenda",
+    ler: (f) =>
+      f.settings === null || f.modulos === null
+        ? "nao_lido"
+        : capacidadesLigadas(f.settings, f.modulos).includes("agenda")
+          ? "ligado"
+          : "desligado",
+  },
 ];
 
 const DE_CADA_AGENTE: RecursoOpcional[] = [

@@ -104,11 +104,11 @@ describe("o desenho na barra lateral", () => {
     expect(document.querySelector("svg[role=img]")).toBeNull();
   });
 
-  it("com nome da ORGANIZAÇÃO sobre a instalação padrão, o nome dela vence o desenho", () => {
+  it("com marca legada da organização, a identidade do produto permanece", () => {
     contexto = { user: usuario, activeOrg: { ...org, marca: { nome: "Loja da Ana" } } };
     renderSidebar(PADRAO, false);
-    expect(screen.getByText("Loja da Ana")).toBeTruthy();
-    expect(document.querySelector("svg[role=img]")).toBeNull();
+    expect(screen.queryByText("Loja da Ana")).toBeNull();
+    expect(screen.getByRole("img", { name: DEFAULT_APP_NAME })).toBeTruthy();
   });
 
   it("com logo da instalação, a imagem vence o desenho", () => {
@@ -154,7 +154,7 @@ describe("o favicon segue a mesma regra", () => {
 
   it("desenha o símbolo quando a marca é a do produto, e a inicial quando não é", () => {
     expect(icone).toMatch(/marcaEhADoProduto\(\{ name: marca\.nome, logoUrl: marca\.logoUrl \}\)/);
-    expect(icone).toMatch(/<path d=\{SIMBOLO\.d\}/);
+    expect(icone).toMatch(/SIMBOLO\.paths\.map/);
     expect(icone).toMatch(/letraDoIcone\(marca\.nome\)/);
   });
 });

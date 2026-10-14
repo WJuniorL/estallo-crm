@@ -1,3 +1,4 @@
+// @vitest-environment node
 import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -46,7 +47,7 @@ describe("resolveBranding", () => {
   });
 });
 
-describe("guarda de white-label (self-host)", () => {
+describe("identidade da plataforma no servidor e navegador", () => {
   const branding = fs.readFileSync(path.join(RAIZ, "lib/branding.ts"), "utf8");
   const publicEnvScript = fs.readFileSync(path.join(RAIZ, "app/public-env-script.tsx"), "utf8");
   const layoutRaiz = fs.readFileSync(path.join(RAIZ, "app/layout.tsx"), "utf8");

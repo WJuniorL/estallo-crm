@@ -3,7 +3,14 @@ import Link from "next/link";
 import { useT } from "@/hooks/i18n/useT";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { ArrowRight, CaretDoubleLeft, CaretDoubleRight, CaretDown, Gear } from "@/lib/ui/icons";
+import {
+  ArrowRight,
+  CaretDoubleLeft,
+  CaretDoubleRight,
+  CaretDown,
+  Gear,
+  Receipt,
+} from "@/lib/ui/icons";
 import { cn } from "@/lib/utils";
 import { toggleSidebar } from "@/app/actions/shell/toggleSidebar";
 import { useAuth } from "@/hooks/auth/AuthProvider";
@@ -54,6 +61,9 @@ export function SidebarContent({
   // 1280x768, ele caía fora da dobra mesmo em telas de 1080px.
   const grupos = todos.filter((g) => g.group.id !== GRUPO_NO_RODAPE);
   const rodape = todos.find((g) => g.group.id === GRUPO_NO_RODAPE)?.group.hub;
+  const plano = todos
+    .find((g) => g.group.id === GRUPO_NO_RODAPE)
+    ?.items.find((item) => item.href === "/app/settings/billing");
 
   /**
    * Grupo fechado é preferência POR NAVEGADOR, não por conta: começa vazio (tudo
@@ -86,35 +96,9 @@ export function SidebarContent({
   }
 
   const brand = useMarcaDaInstalacao();
-  /**
-   * O CONSUMIDOR do nome por organização.
-   *
-   * Sem ele, `settings.branding.app_name` seria campo decorativo: medido, o nome
-   * da org não aparece em lugar nenhum da casca para o cliente típico de um
-   * revendedor — o único leitor é o `TenantSwitcher`, e ele devolve `null` com
-   * uma organização só.
-   *
-   * A marca da INSTALAÇÃO continua embaixo: a organização que não definiu nome
-   * vê exatamente o que via antes. O que mudou é POR ONDE ela chega — era
-   * `branding()`, que no navegador lê `window.__PUBLIC_ENV__` e no servidor lê
-   * `process.env`, e essas duas fontes passaram a divergir quando o layout raiz
-   * começou a injetar a marca do BANCO. Divergência entre SSR e cliente aqui não
-   * é detalhe: com logo no banco e `APP_LOGO_URL` vazio, o servidor desenhava o
-   * `<span>` de baixo e o cliente desenhava o `<img>` — React #418 em toda tela.
-   * Hoje a marca vem por PROP do servidor (`useMarcaDaInstalacao`), pela mesma
-   * rota de `activeOrg`, e os dois lados leem o mesmo objeto por construção.
-   */
-  const nome = activeOrg?.marca?.nome ?? brand.name;
-  /**
-   * O mesmo desenho para o LOGO — e é este par de linhas que fecha o caminho do
-   * `logo_url` gravado até a tela.
-   *
-   * `||` e não `??`: vazio é AUSÊNCIA de logo, não "logo em branco". É a regra
-   * que `resolveBranding` e `primeiroDefinido` já aplicam nas camadas de baixo, e
-   * com `??` um `""` vindo de cima apagaria o logo do revendedor em vez de
-   * descer para ele — que é o contrário do que a precedência por campo promete.
-   */
-  const logo = activeOrg?.marca?.logoUrl || brand.logoUrl;
+  // A organização aparece na barra superior; a marca vem do layout da plataforma.
+  const nome = brand.name;
+  const logo = brand.logoUrl;
   const logoEscuro =
     activeOrg?.marca?.logoDarkUrl !== undefined
       ? activeOrg.marca.logoDarkUrl
@@ -198,10 +182,7 @@ export function SidebarContent({
           )
         ) : (
           <span
-            className={cn(
-              "min-w-0 truncate font-semibold tracking-tight",
-              collapsed && "sr-only",
-            )}
+            className={cn("min-w-0 truncate font-semibold tracking-tight", collapsed && "sr-only")}
             title={nome}
           >
             {nome}
@@ -384,15 +365,35 @@ export function SidebarContent({
         })}
       </nav>
       <div className="border-t p-2">
+        {plano && (
+          <Link
+            href={plano.href}
+            title={collapsed ? t(plano.label) : undefined}
+            aria-current={pathname === plano.href ? "page" : undefined}
+            onClick={onNavigate}
+            className={cn(
+              "mb-1 flex items-center gap-3 rounded-md px-3 py-1 text-sm transition-colors",
+              pathname === plano.href
+                ? "bg-accent text-accent-foreground"
+                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+              collapsed && "justify-center px-2",
+            )}
+          >
+            <Receipt size={18} aria-hidden />
+            {!collapsed && <span className="truncate">{t(plano.label)}</span>}
+          </Link>
+        )}
         {rodape && (
           <Link
             href={rodape.href}
             title={collapsed ? t(rodape.label) : undefined}
-            aria-current={pathname.startsWith(rodape.href) ? "page" : undefined}
+            aria-current={
+              pathname.startsWith(rodape.href) && pathname !== plano?.href ? "page" : undefined
+            }
             onClick={onNavigate}
             className={cn(
               "mb-1 flex items-center gap-3 rounded-md px-3 py-1 text-sm transition-colors",
-              pathname.startsWith(rodape.href)
+              pathname.startsWith(rodape.href) && pathname !== plano?.href
                 ? "bg-accent text-accent-foreground"
                 : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
               collapsed && "justify-center px-2",
@@ -493,7 +494,7 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
         // `duration-base` em vez do `duration-200` literal: 200ms é o mesmo
         // número, mas vindo de `--duration-base`. A Lei de movimento fecha a
         // tabela de durações, e número solto é o que a faz apodrecer.
-        "sticky top-0 z-30 flex h-dvh shrink-0 flex-col border-r bg-card transition-[width] duration-base",
+        "estallo-navigation sticky top-0 z-30 flex h-dvh shrink-0 flex-col border-r transition-[width] duration-base",
         collapsed ? "w-16" : "w-60",
       )}
     >

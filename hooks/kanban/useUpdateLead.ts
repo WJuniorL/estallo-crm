@@ -86,38 +86,37 @@ export function useLoseLead(pipelineId: string) {
 
 interface MoveToPipelineArgs {
   leadId: string;
-  targetPipelineId: string;
+  /** Etapa ABERTA do funil de destino. */
+  stageId: string;
+  /** Trava otimista: o `updated_at` que a tela leu. */
+  expectedUpdatedAt: string;
 }
 
 /**
- * Levar o negócio para OUTRO funil — `POST /api/v1/leads/[id]/clone`.
+ * Levar o negócio para OUTRO funil — `POST /api/v1/leads/[id]/move-pipeline`.
  *
- * A origem (ESTE quadro) fecha como perdida com o motivo canônico
- * `moved_to_another_pipeline` (o servidor grava sozinho quando nenhum motivo é
- * enviado — `lib/leads/motivo-da-perda.ts`); é `res.data.origem`, não
- * `res.data.lead` (o clone novo, que vive no funil de DESTINO e não pertence a
- * este cache), que volta para o quadro atual — mesmo padrão de
- * `gravaLeadNoQuadro` que `useLoseLead` já usa, então o card sai visualmente
- * para a etapa de perda deste funil, com o motivo na linha do tempo.
+ * É o MESMO negócio que muda de funil (decisão do Estallo): o card sai deste
+ * quadro e aparece no de destino, com id, conversa, tarefas e campos intactos.
  */
 export function useMoveLeadToPipeline(pipelineId: string) {
   const qc = useQueryClient();
   const queryKey = ["board", pipelineId] as const;
   return useMutation({
-    mutationFn: async ({ leadId, targetPipelineId }: MoveToPipelineArgs) => {
+    // O MESMO negócio muda de funil (`/move-pipeline`) — não há mais cópia.
+    mutationFn: async ({ leadId, stageId, expectedUpdatedAt }: MoveToPipelineArgs) => {
       marcarEcoLocal(leadId);
-      return apiClient.post<{ data: { lead: Lead; origem: Lead } }>(
-        `/api/v1/leads/${leadId}/clone`,
-        { pipeline_id: targetPipelineId },
-      );
-    },
-    onSuccess: (res, { leadId }) => {
-      gravaLeadNoQuadro(qc, queryKey, leadId, res?.data?.origem);
+      return apiClient.post<{ data: Lead }>(`/api/v1/leads/${leadId}/move-pipeline`, {
+        stage_id: stageId,
+        expected_updated_at: expectedUpdatedAt,
+      });
     },
     onError: showApiError,
-    onSettled: (_data, _err, { leadId }) => {
+    onSettled: (res, _err, { leadId }) => {
       liberarEcoLocal(leadId);
       qc.invalidateQueries({ queryKey });
+      if (res?.data?.pipeline_id) {
+        qc.invalidateQueries({ queryKey: ["board", res.data.pipeline_id] });
+      }
     },
   });
 }

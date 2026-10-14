@@ -1,7 +1,7 @@
 "use client";
 
 import { useTagDeIdioma } from "@/hooks/i18n/useLocaleDeData";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 import { useT } from "@/hooks/i18n/useT";
 import { useActiveOrg, useUser } from "@/hooks/auth/AuthProvider";
@@ -18,6 +18,13 @@ import { PropostasDoNegocio } from "./PropostasDoNegocio";
 import { TarefasDoNegocio } from "./TarefasDoNegocio";
 import { OwnerBadge } from "./OwnerBadge";
 import { resolveLeadOwner } from "@/lib/kanban/owner";
+import type { Stage } from "@/lib/kanban/types";
+import { Button } from "@/components/ui/button";
+import { Check, Funnel, X } from "@/lib/ui/icons";
+import { useWinLead } from "@/hooks/kanban/useUpdateLead";
+import { TrilhoDeEtapas } from "./TrilhoDeEtapas";
+import { LoseLeadDialog } from "./LoseLeadDialog";
+import { MoveToOtherPipelineDialog } from "./MoveToOtherPipelineDialog";
 import { formatValorDoNegocio, MOEDA_PADRAO } from "@/lib/money";
 import type { CustomFieldDef } from "@/components/contacts/CustomFieldsEditor";
 
@@ -29,6 +36,8 @@ interface Props {
   fieldDefs?: CustomFieldDef[];
   stageName: string;
   ownerNames?: Map<string, string | null>;
+  /** As etapas do funil — alimentam o trilho do topo. Sem elas, não há trilho. */
+  stages?: Stage[];
 }
 
 function formatValor(cents: number | null, currency: string | null): string {
@@ -58,6 +67,7 @@ export function LeadDossier({
   fieldDefs = [],
   stageName,
   ownerNames,
+  stages,
 }: Props) {
   const tagDoIdioma = useTagDeIdioma();
   const t = useT();
@@ -77,6 +87,13 @@ export function LeadDossier({
   const podeEditarTarefas =
     (user.is_platform_admin && !user.support) ||
     (activeOrg ? ROLE_RANK[activeOrg.role] >= ROLE_RANK.agent : false);
+  // Mover, ganhar, perder e trocar de funil: a mesma régua (agent+, sem
+  // suporte só-leitura) das rotas `/leads/bulk`, `/win`, `/lose` e `/move-pipeline`.
+  const podeMover = podeEditarTarefas;
+  const aberto = lead.status === "open";
+  const ganhar = useWinLead(pipelineId);
+  const [perderAberto, setPerderAberto] = useState(false);
+  const [moverAberto, setMoverAberto] = useState(false);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -91,9 +108,63 @@ export function LeadDossier({
         // negócio sem novidade é um estado normal.
         data-refetch-divergencias={timeline.seguranca.divergencias}
       >
-        <SheetHeader className="pb-3">
-          <SheetTitle className="text-base leading-6">{lead.title}</SheetTitle>
+        <SheetHeader className="pb-3 pr-8">
+          <div className="flex items-start justify-between gap-2">
+            <SheetTitle className="text-base leading-6">{lead.title}</SheetTitle>
+            {podeMover && aberto && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 shrink-0 px-2 text-xs"
+                onClick={() => setMoverAberto(true)}
+                data-testid="dossie-mover-de-funil"
+              >
+                <Funnel size={12} className="mr-1" aria-hidden />
+                {t("Mover de funil")}
+              </Button>
+            )}
+          </div>
         </SheetHeader>
+
+        {stages && stages.length > 0 && (
+          <div className="flex items-center gap-2 pb-3">
+            <div className="min-w-0 flex-1">
+              <TrilhoDeEtapas
+                lead={lead}
+                stages={stages}
+                pipelineId={pipelineId}
+                podeMover={podeMover && aberto}
+              />
+            </div>
+            {podeMover && aberto && (
+              <div className="flex shrink-0 gap-1 pb-2">
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="h-8 w-8 border-destructive/40 text-destructive hover:bg-destructive/10"
+                  aria-label={t("Marcar como perdido")}
+                  title={t("Marcar como perdido")}
+                  onClick={() => setPerderAberto(true)}
+                  data-testid="dossie-perder"
+                >
+                  <X size={16} weight="bold" aria-hidden />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="h-8 w-8 border-success/40 text-success hover:bg-success/10"
+                  aria-label={t("Marcar como ganho")}
+                  title={t("Marcar como ganho")}
+                  disabled={ganhar.isPending}
+                  onClick={() => ganhar.mutate({ leadId: lead.id })}
+                  data-testid="dossie-ganhar"
+                >
+                  <Check size={16} weight="bold" aria-hidden />
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ① cabeçalho vivo */}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-border pb-3 text-xs">
@@ -197,6 +268,19 @@ export function LeadDossier({
           leadId={lead.id}
           pipelineId={pipelineId}
           podeCriar={podeCriarProposta}
+        />
+        <LoseLeadDialog
+          open={perderAberto}
+          onOpenChange={setPerderAberto}
+          leadId={lead.id}
+          pipelineId={pipelineId}
+        />
+        <MoveToOtherPipelineDialog
+          open={moverAberto}
+          onOpenChange={setMoverAberto}
+          leadId={lead.id}
+          pipelineId={pipelineId}
+          expectedUpdatedAt={lead.updated_at}
         />
       </SheetContent>
     </Sheet>

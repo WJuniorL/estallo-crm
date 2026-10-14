@@ -39,6 +39,7 @@ export function LeadDossierDoFunil({
       fieldDefs={camposDoFunil(data.pipeline.settings ?? null)}
       stageName={data.stages.find((s) => s.id === lead.stage_id)?.name ?? "—"}
       ownerNames={ownerNames}
+      stages={data.stages}
     />
   );
 }

@@ -182,7 +182,7 @@ export function KanbanCardActions({ lead, pipelineId }: KanbanCardActionsProps) 
           </DropdownMenuItem>
           {/*
             `canAssign` já É `usePermission("pipeline.move_card")` — a MESMA
-            permissão que `POST /api/v1/leads/[id]/clone` exige no servidor
+            permissão que `POST /api/v1/leads/[id]/move-pipeline` exige no servidor
             (`requireRole("agent")`). Mostrar o item a quem o servidor
             recusaria seria prometer o que não se cumpre.
           */}
@@ -192,7 +192,7 @@ export function KanbanCardActions({ lead, pipelineId }: KanbanCardActionsProps) 
                 setMoveOpen(true);
               }}
             >
-              {t("Levar para outro funil")}
+              {t("Mover de funil")}
             </DropdownMenuItem>
           )}
           {canAssign && (
@@ -274,6 +274,7 @@ export function KanbanCardActions({ lead, pipelineId }: KanbanCardActionsProps) 
         onOpenChange={setMoveOpen}
         leadId={lead.id}
         pipelineId={pipelineId}
+        expectedUpdatedAt={lead.updated_at}
       />
       <EditLeadDialog
         open={editOpen}

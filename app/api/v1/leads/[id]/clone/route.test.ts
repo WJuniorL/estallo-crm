@@ -223,10 +223,10 @@ describe("GET /api/v1/leads/[id]/clone", () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body.data.pipelines).toEqual([{ id: P2, name: "Suporte" }]);
+    expect(body.data.pipelines).toEqual([{ id: P2, name: "Suporte", etapas: expect.any(Array) }]);
   });
 
-  it("payload mínimo: nunca settings/description, só id e name", async () => {
+  it("payload mínimo: nunca settings/description, só id, name e as etapas abertas", async () => {
     const base = seed();
     db = fakeDb({
       ...base,
@@ -242,7 +242,7 @@ describe("GET /api/v1/leads/[id]/clone", () => {
     const response = await GET(getRequest(), params);
     const body = await response.json();
 
-    expect(Object.keys(body.data.pipelines[0])).toEqual(["id", "name"]);
+    expect(Object.keys(body.data.pipelines[0])).toEqual(["id", "name", "etapas"]);
   });
 
   it("recusa lead inexistente na organização", async () => {

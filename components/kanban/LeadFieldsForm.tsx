@@ -16,13 +16,13 @@ import { updateLeadSchema, type UpdateLeadInput } from "@/lib/schemas/leads";
 import { MOEDA_PADRAO, parseReaisToCents, simboloDaMoeda } from "@/lib/money";
 import { soChavesAlteradas } from "@/lib/leads/custom-fields-so-diff";
 import { CustomFieldsEditor, type CustomFieldDef } from "@/components/contacts/CustomFieldsEditor";
+import { SeletorDeTags } from "@/components/tags/SeletorDeTags";
 import { EcoDoValor } from "./EcoDoValor";
 
 interface FormShape {
   title: string;
   description: string;
   valueReais: string;
-  tagsRaw: string;
   expected_close_date: string;
 }
 
@@ -69,12 +69,14 @@ export function LeadFieldsForm({ lead, pipelineId, fieldDefs: todosOsCampos = []
     lead.custom_fields ?? {},
   );
 
+  // Etiquetas de OPORTUNIDADE: as cadastradas (tela Tags) ou criadas na hora.
+  const [tags, setTags] = useState<string[]>(lead.tags ?? []);
+
   const form = useForm<FormShape>({
     defaultValues: {
       title: lead.title,
       description: lead.description ?? "",
       valueReais: centsToReais(lead.value_cents),
-      tagsRaw: (lead.tags ?? []).join(", "),
       expected_close_date: lead.expected_close_date ?? "",
     },
   });
@@ -84,20 +86,15 @@ export function LeadFieldsForm({ lead, pipelineId, fieldDefs: todosOsCampos = []
       title: lead.title,
       description: lead.description ?? "",
       valueReais: centsToReais(lead.value_cents),
-      tagsRaw: (lead.tags ?? []).join(", "),
       expected_close_date: lead.expected_close_date ?? "",
     });
     setCustomFields(lead.custom_fields ?? {});
     setCamposCarregados(lead.custom_fields ?? {});
+    setTags(lead.tags ?? []);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lead.id]);
 
   async function onSubmit(values: FormShape) {
-    const tags = values.tagsRaw
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-
     const reais = values.valueReais.trim();
     let valueCents: number | null = null;
     if (reais.length > 0) {
@@ -187,8 +184,8 @@ export function LeadFieldsForm({ lead, pipelineId, fieldDefs: todosOsCampos = []
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="tagsRaw">{t("Tags (separadas por vírgula)")}</Label>
-          <Input id="tagsRaw" placeholder="vip, recompra" {...form.register("tagsRaw")} />
+          <Label>{t("Tags")}</Label>
+          <SeletorDeTags entidade="lead" valor={tags} onChange={setTags} rotulo={t("Tags da oportunidade")} />
         </div>
 
         {fieldDefs.length > 0 && (

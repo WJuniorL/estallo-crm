@@ -39,11 +39,18 @@ vi.mock("@/hooks/channels/useChannelSessions", async (original) => {
 /** `undefined` = vocabulário em voo (ou chave nova) — não é "zero etiquetas". */
 const tagsRef: { current: string[] | undefined } = { current: undefined };
 const tagsDoContatoRef: { current: string[] | undefined } = { current: undefined };
-vi.mock("@/hooks/inbox/useConversationTags", () => ({
-  useConversationTagVocabulary: () => ({ data: tagsRef.current }),
-}));
+// Desde a 0659 o filtro tem uma fonte só (o contato). O teste ainda alimenta as
+// duas refs; a união sai ESTÁVEL entre renders, como o `data` do react-query.
+let ultimaUniao: { chave: string; valor: string[] | undefined } = { chave: "", valor: undefined };
+function vocabularioUnico(): string[] | undefined {
+  if (tagsRef.current === undefined && tagsDoContatoRef.current === undefined) return undefined;
+  const valor = [...new Set([...(tagsRef.current ?? []), ...(tagsDoContatoRef.current ?? [])])];
+  const chave = JSON.stringify(valor);
+  if (chave !== ultimaUniao.chave) ultimaUniao = { chave, valor };
+  return ultimaUniao.valor;
+}
 vi.mock("@/hooks/contacts/useContactTagVocabulary", () => ({
-  useContactTagVocabulary: () => ({ data: tagsDoContatoRef.current }),
+  useContactTagVocabulary: () => ({ data: vocabularioUnico() }),
 }));
 vi.mock("@/hooks/inbox/useConversationCounts", () => ({
   useConversationCounts: () => ({ data: { fila: 3, mine: 2, all: 5 } }),

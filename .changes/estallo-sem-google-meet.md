@@ -1,6 +1,6 @@
 ---
 impacto: nada_mudou
-secao: removido
+secao: alterado
 titulo: Google Meet saiu do produto
 ---
 

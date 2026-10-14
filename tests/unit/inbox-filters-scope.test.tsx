@@ -38,11 +38,18 @@ vi.mock("@/hooks/channels/useChannelSessions", async (original) => {
 const tagsRef: { current: string[] | undefined } = { current: [] };
 /** A OUTRA caixa: marcadores do contato. Separada para os casos da união. */
 const tagsDoContatoRef: { current: string[] | undefined } = { current: [] };
-vi.mock("@/hooks/inbox/useConversationTags", () => ({
-  useConversationTagVocabulary: () => ({ data: tagsRef.current }),
-}));
+// Desde a 0659 o filtro tem uma fonte só (o contato). O teste ainda alimenta as
+// duas refs; a união sai ESTÁVEL entre renders, como o `data` do react-query.
+let ultimaUniao: { chave: string; valor: string[] | undefined } = { chave: "", valor: undefined };
+function vocabularioUnico(): string[] | undefined {
+  if (tagsRef.current === undefined && tagsDoContatoRef.current === undefined) return undefined;
+  const valor = [...new Set([...(tagsRef.current ?? []), ...(tagsDoContatoRef.current ?? [])])];
+  const chave = JSON.stringify(valor);
+  if (chave !== ultimaUniao.chave) ultimaUniao = { chave, valor };
+  return ultimaUniao.valor;
+}
 vi.mock("@/hooks/contacts/useContactTagVocabulary", () => ({
-  useContactTagVocabulary: () => ({ data: tagsDoContatoRef.current }),
+  useContactTagVocabulary: () => ({ data: vocabularioUnico() }),
 }));
 vi.mock("@/hooks/inbox/useConversationCounts", () => ({
   useConversationCounts: () => ({ data: { unassigned: 3, mine: 2, all: 5 } }),
@@ -248,7 +255,7 @@ describe("InboxFilters — seletor de número e o filtro órfão", () => {
     expect(screen.getByLabelText("Filtrar por tag")).toBeInTheDocument();
   });
 
-  it("marcador que só existe na CONVERSA faz o seletor aparecer", () => {
+  it("marcador do vocabulário faz o seletor aparecer", () => {
     setOrg("manager", "all");
     tagsRef.current = ["reclamacao"];
     render(<InboxFilters value={VALUE} onChange={() => {}} />);

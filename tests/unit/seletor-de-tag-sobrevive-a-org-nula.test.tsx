@@ -40,11 +40,6 @@ vi.mock("@/hooks/channels/useChannelSessions", async (original) => {
   return { ...real, useChannelSessions: () => ({ data: [] }) };
 });
 /** Sem orgId (`enabled: !!orgId`) o hook devolve `data: undefined`. */
-vi.mock("@/hooks/inbox/useConversationTags", () => ({
-  useConversationTagVocabulary: (orgId: string | null) => ({
-    data: orgId ? tagsRef.current : undefined,
-  }),
-}));
 vi.mock("@/hooks/contacts/useContactTagVocabulary", () => ({
   useContactTagVocabulary: (orgId: string | null) => ({
     data: orgId ? tagsRef.current : undefined,

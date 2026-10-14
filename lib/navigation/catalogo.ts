@@ -229,6 +229,18 @@ export const NAV_CATALOG = [
     section: "Preparar a venda",
     minRole: "admin",
   },
+  {
+    // Estallo (0659): o cadastro de etiquetas de oportunidade e de contato, com
+    // cor por entidade. Substitui /app/settings/tags (que redireciona para cá).
+    // `manager`, a mesma régua da rota e da função do banco.
+    href: "/app/crm/tags",
+    label: "Tags",
+    description: "As etiquetas de oportunidade e de contato: nome, cor e onde estão em uso.",
+    icon: "Tag",
+    group: "crm",
+    section: "Preparar a venda",
+    minRole: "manager",
+  },
 
   // ---- CRM — o funil ----
   {
@@ -939,27 +951,6 @@ export const NAV_CATALOG = [
     description:
       "O freio único do passo em que a IA escolhe entre as opções de uma regra, para a empresa inteira.",
     icon: "FlowArrow",
-    group: "organizacao",
-    section: "Sua empresa",
-    minRole: "manager",
-  },
-  {
-    // A porta que faltava para o vocabulário de etiquetas (issue #852). Até
-    // aqui a etiqueta só ENTRAva no vocabulário — cada agente escrevia a que
-    // quisesse em `add_tag` — e não havia por onde corrigir, juntar as duas
-    // grafias que a operação criou, nem tirar a que ninguém mais usa. O
-    // vocabulário dava para LER (`/api/v1/conversation-tags`) e não para
-    // AJUSTAR, então a única saída era digitar errado para sempre.
-    //
-    // `manager` e não `admin`, pelo mesmo critério da vizinha acima: quem
-    // escreve a etiqueta é quem monta a regra do agente, e a tela existe para
-    // quem monta a regra. Nada aqui apaga conversa ou muda dinheiro — o
-    // alcance da operação é ao lado do de "Distribuição de atendimento".
-    href: "/app/settings/tags",
-    label: "Tags",
-    description:
-      "O vocabulário de etiquetas da empresa: onde cada uma é usada e como renomear, juntar ou excluir.",
-    icon: "Tag",
     group: "organizacao",
     section: "Sua empresa",
     minRole: "manager",

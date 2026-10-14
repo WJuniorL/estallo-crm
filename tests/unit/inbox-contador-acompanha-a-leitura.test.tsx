@@ -56,9 +56,6 @@ vi.mock("@/hooks/channels/useChannelSessions", async (original) => {
   const real = await original<typeof CanaisModule>();
   return { ...real, useChannelSessions: () => ({ data: [] }) };
 });
-vi.mock("@/hooks/inbox/useConversationTags", () => ({
-  useConversationTagVocabulary: () => ({ data: [] }),
-}));
 vi.mock("@/lib/api/client", () => ({
   apiClient: {
     get: (url: string) => {

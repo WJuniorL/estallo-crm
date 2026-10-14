@@ -126,10 +126,6 @@ vi.mock("@/lib/api/client", () => ({
 }));
 vi.mock("@/hooks/pipelines/useDefaultPipeline", () => ({ useDefaultPipeline: () => ({ data: null, isError: false }) }));
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn() } }));
-vi.mock("@/hooks/inbox/useConversationTags", () => ({
-  useUpdateConversationTags: () => ({ mutate: vi.fn(), isPending: false }),
-  useConversationTagVocabulary: () => ({ data: [] }),
-}));
 vi.mock("@/hooks/contacts/useContactTagVocabulary", () => ({ useContactTagVocabulary: () => ({ data: [] }) }));
 vi.mock("@/hooks/contacts/useUpdateContact", () => ({ useUpdateContact: () => ({ mutate: vi.fn(), isPending: false }) }));
 vi.mock("@/hooks/auth/AuthProvider", () => ({ useAuth: () => ({ user: { support: null } }) }));

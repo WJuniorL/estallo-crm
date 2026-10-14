@@ -39,9 +39,6 @@ vi.mock("@/hooks/channels/useChannelSessions", () => ({
   useChannelSessions: () => ({ data: [] }),
   channelLabel: () => "canal",
 }));
-vi.mock("@/hooks/inbox/useConversationTags", () => ({
-  useConversationTagVocabulary: () => ({ data: [] }),
-}));
 vi.mock("@/hooks/contacts/useContactTagVocabulary", () => ({
   useContactTagVocabulary: () => ({ data: [] }),
 }));

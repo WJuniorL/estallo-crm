@@ -998,7 +998,6 @@ jobs:
         qa-equipe-pinta-na-hora.spec.ts
         qa-sugestao-rejeitada-e-motivo.spec.ts
         qa-l12-agenda-contatos.spec.ts
-        qa-l12-tags-radar.spec.ts
         extensoes-recuperacao.spec.ts
         extensoes-portas-novas.spec.ts
         motivo-do-publicar-na-tela.spec.ts
@@ -1008,7 +1007,6 @@ jobs:
         trunk-sip-config.spec.ts
         fotos-no-catalogo.spec.ts
         catalogo-busca-no-catalogo-inteiro.spec.ts
-        relatorio-por-etiqueta.spec.ts
 
       # ─── PARTE 4 — a spec de VPS fresca, e quem pode entrar ao lado dela ───
       #

@@ -41,7 +41,6 @@ export interface Conversation {
   unread_count_for_assignee: number;
   is_group: boolean;
   group_chat_id: string | null;
-  tags: string[];
   metadata: Record<string, unknown>;
   snooze_until: string | null;
   /**

@@ -153,4 +153,9 @@ export {
   ArrowsOutSimple,
   // /admin/modulos: módulo opcional com tabela própria (ADR-0002)
   Stack,
+  // CRM › Tags: oportunidade, contato, nome e salvar (diálogo "Nova Tag")
+  Target,
+  User,
+  TextT,
+  FloppyDisk,
 } from "@phosphor-icons/react/dist/ssr";

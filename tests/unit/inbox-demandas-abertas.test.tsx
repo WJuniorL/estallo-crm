@@ -111,10 +111,6 @@ vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 // Os editores de tag buscam vocabulário por react-query. Sem isto o painel
 // estoura em `(vocabulary ?? []).filter` e o teste falharia por MONTAGEM — um
 // vermelho que não diz nada sobre demanda.
-vi.mock("@/hooks/inbox/useConversationTags", () => ({
-  useUpdateConversationTags: () => ({ mutate: vi.fn(), isPending: false }),
-  useConversationTagVocabulary: () => ({ data: [] }),
-}));
 vi.mock("@/hooks/contacts/useContactTagVocabulary", () => ({
   useContactTagVocabulary: () => ({ data: [] }),
 }));

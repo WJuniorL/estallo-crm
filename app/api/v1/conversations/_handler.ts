@@ -88,7 +88,7 @@ const SELECT_COLS = `
   id, organization_id, contact_id, channel_session_id, channel, status,
   status_changed_at, service_revision, service_closed_at, service_started_at, current_demanda_id, assigned_to_user_id, assigned_to_user_name, assignee_kind, assigned_at, last_inbound_at, awaiting_since,
   last_outbound_at, last_message_at, last_message_preview,
-  unread_count_for_assignee, is_group, group_chat_id, tags, metadata,
+  unread_count_for_assignee, is_group, group_chat_id, metadata,
   snooze_until, created_at, updated_at,
   bot_silenced_until, last_handoff_at, last_handoff_reason,
   comando_da_conversa,
@@ -259,7 +259,8 @@ export async function listConversationsHandler(
   // `if (q.is_group)`, porque `"false"` é um valor válido e verdadeiro-truthy
   // como string.
   if (q.is_group !== undefined) query = query.eq("is_group", q.is_group === "true");
-  // ⚠️ O MARCADOR FILTRADO É O DA CONVERSA **OU** O DO CONTATO.
+  // ⚠️ O MARCADOR FILTRADO É O DO CONTATO (Estallo, 0659: conversa não tem mais
+  // etiqueta). Histórico: era o da conversa OU o do contato.
   //
   // Era só `conversations.tags`, e o relato mede o buraco: *"adicionei a tag nele
   // para testar e ele n aparece no filtro"* — o marcador fora posto no CONTATO
@@ -571,9 +572,6 @@ export async function patchConversationHandler(
       conflito ? "conflict" : statusError.code === "P0002" ? "not_found" : "internal_error", undefined, ctx.requestId,
       conflito ? traduzir("O atendimento mudou. Atualize e tente novamente.", ctx.idioma ?? "pt-BR") : statusError.message);
   }
-  if (input.tags !== undefined) {
-    update.tags = input.tags;
-  }
 
   const query = Object.keys(update).length > 0
     ? supabase.from("conversations").update(update)
@@ -615,17 +613,6 @@ export async function patchConversationHandler(
       resourceId: conv.id,
       requestId: ctx.requestId,
       metadata: { ...a.metadataActor, status: input.status },
-    });
-  }
-  if (input.tags !== undefined) {
-    await audit({
-      action: "conversation.tags_changed",
-      actorUserId: a.actorUserId,
-      organizationId: conv.organization_id,
-      resourceType: "conversation",
-      resourceId: conv.id,
-      requestId: ctx.requestId,
-      metadata: { ...a.metadataActor, tags: input.tags },
     });
   }
 

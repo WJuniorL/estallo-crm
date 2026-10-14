@@ -345,7 +345,7 @@ export function ConversationListItem({
         {temSelos && (
           <div className="mt-1.5 flex flex-wrap items-center gap-1">
             {visibleTags.map((t) => (
-              <ChipDeEtiqueta key={t} tag={t} className="h-4 px-1.5 text-[10px]" />
+              <ChipDeEtiqueta key={t} tag={t} entidade="contact" className="h-4 px-1.5 text-[10px]" />
             ))}
             {overflow > 0 && (
               <span className="text-[10px] text-text-muted">+{overflow}</span>

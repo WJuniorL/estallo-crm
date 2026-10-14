@@ -32,7 +32,6 @@ import {
 } from "@/lib/inbox/marcador-da-conversa";
 import { useAuth } from "@/hooks/auth/AuthProvider";
 import { useContactTagVocabulary } from "@/hooks/contacts/useContactTagVocabulary";
-import { useConversationTagVocabulary } from "@/hooks/inbox/useConversationTags";
 import { useConversationCounts } from "@/hooks/inbox/useConversationCounts";
 import type { Role, VisibilityMode } from "@/lib/auth/types";
 
@@ -171,16 +170,11 @@ export function InboxFilters({ value, onChange }: Props) {
    * marcador que funciona nunca é oferecido.
    */
   const orgId = activeOrg?.orgId ?? null;
-  const { data: tagsDeConversa } = useConversationTagVocabulary(orgId);
+  // Estallo (0659): conversa não tem mais etiqueta — o filtro é pela do contato.
   const { data: tagsDeContato } = useContactTagVocabulary(orgId);
   const tagVocabulary = useMemo(
-    () =>
-      tagsDeConversa == null && tagsDeContato == null
-        ? undefined
-        : [...new Set([...(tagsDeConversa ?? []), ...(tagsDeContato ?? [])])].sort((a, b) =>
-            a.localeCompare(b),
-          ),
-    [tagsDeConversa, tagsDeContato],
+    () => (tagsDeContato == null ? undefined : [...tagsDeContato].sort((a, b) => a.localeCompare(b))),
+    [tagsDeContato],
   );
   // A lista de etiquetas escolhida, normalizada pelo MESMO caminho do servidor
   // (`marcadoresEscolhidos`): sem vazio, sem repetido, com a ordem da primeira

@@ -87,10 +87,6 @@ vi.mock("@/components/kanban/LeadDossierDoFunil", () => ({
     <div data-testid="dossie-do-funil">{`${pipelineId}:${leadId}`}</div>
   ),
 }));
-vi.mock("@/hooks/inbox/useConversationTags", () => ({
-  useUpdateConversationTags: () => ({ mutate: vi.fn(), isPending: false }),
-  useConversationTagVocabulary: () => ({ data: [] }),
-}));
 vi.mock("@/hooks/contacts/useContactTagVocabulary", () => ({
   useContactTagVocabulary: () => ({ data: [] }),
 }));

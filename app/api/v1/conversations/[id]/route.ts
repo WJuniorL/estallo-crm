@@ -1,7 +1,7 @@
 import { requireSupportWrite } from "@/lib/impersonate/support";
 /**
  * GET   /api/v1/conversations/[id] — single conversation (handler em ../_handler.ts)
- * PATCH /api/v1/conversations/[id] — update status e/ou tags (handler em ../_handler.ts)
+ * PATCH /api/v1/conversations/[id] — update status (handler em ../_handler.ts)
  */
 import { randomUUID } from "node:crypto";
 import { type NextRequest } from "next/server";

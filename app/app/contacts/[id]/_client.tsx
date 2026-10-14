@@ -183,7 +183,7 @@ export function ContactDetailClient({ contactId, paineisDeModulo = [] }: Props) 
           </div>
           <div className="mt-2 flex flex-wrap gap-1">
             {contact.tags.map((t) => (
-              <ChipDeEtiqueta key={t} tag={t} />
+              <ChipDeEtiqueta key={t} tag={t} entidade="contact" />
             ))}
             {contact.is_blocked && <Badge variant="warning">{t("Bloqueado")}</Badge>}
             {/* Selo lido da COLUNA, nunca da etiqueta (critério 5): editar
@@ -409,7 +409,7 @@ export function ContactDetailClient({ contactId, paineisDeModulo = [] }: Props) 
                   {contact.tags.length === 0
                     ? "—"
                     : contact.tags.map((t) => (
-                        <ChipDeEtiqueta key={t} tag={t} />
+                        <ChipDeEtiqueta key={t} tag={t} entidade="contact" />
                       ))}
                 </dd>
               </div>

@@ -130,13 +130,6 @@ export interface Lead {
   contact_email?: string;
   contact_links?: Array<{ tipo: string; href: string }>;
   /**
-   * Derivado (não é coluna): os marcadores das CONVERSAS do contato deste
-   * negócio — a terceira caixa, "Tags da conversa" no painel do Inbox, onde a
-   * IA também escreve. União de TODAS as conversas do contato, não só da mais
-   * recente. Filtrar por ela é decisão do dono (doc 40, item 7, 19/09).
-   */
-  conversation_tags?: string[];
-  /**
    * Derivado (não é coluna): as tarefas EM ABERTO presas a este negócio
    * (`crm_tasks.lead_id`), e quantas delas já passaram do prazo — o selo do
    * card do quadro. Ausente quando não há nenhuma em aberto: o payload do

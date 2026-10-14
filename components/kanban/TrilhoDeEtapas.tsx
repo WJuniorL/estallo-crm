@@ -2,8 +2,13 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useT } from "@/hooks/i18n/useT";
-import { useBulkAction } from "@/hooks/kanban/useBulkAction";
-import type { Stage } from "@/lib/kanban/types";
+import { useQueryClient } from "@tanstack/react-query";
+import { chaveDoQuadro } from "@/hooks/kanban/useBoard";
+import { useMoveCard, type RecusaDeCampos, type RetomadaPendente } from "@/hooks/kanban/useMoveCard";
+import { midpoint } from "@/lib/kanban/fractional-indexing";
+import type { BoardData, Stage } from "@/lib/kanban/types";
+import { CamposObrigatoriosDialog } from "./CamposObrigatoriosDialog";
+import { RetomarComoNovoNegocioDialog } from "./RetomarComoNovoNegocioDialog";
 import type { Lead } from "@/lib/types/leads";
 import { cn } from "@/lib/utils";
 
@@ -15,9 +20,10 @@ const SETA_INICIAL = "polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10
 
 /**
  * As etapas ABERTAS do funil, em fila, no topo do dossiê. Um clique move o
- * negócio (mesmo caminho do "Mover para…" do quadro, `/leads/bulk`, que aplica
- * campos obrigatórios, atividade e auditoria). Ganho e perda ficam fora: têm
- * botões próprios, porque perda pede motivo.
+ * negócio pelo MESMO caminho do arrasto (`useMoveCard` → `/leads/{id}/move`,
+ * com `expected_updated_at`): a recusa de campos obrigatórios abre o mesmo
+ * diálogo do quadro e reenvia o mesmo move, em vez de virar toast de erro.
+ * Ganho e perda ficam fora: têm botões próprios, porque perda pede motivo.
  *
  * Funil comprido rola na horizontal, e a etapa atual entra centralizada.
  */
@@ -33,7 +39,10 @@ export function TrilhoDeEtapas({
   podeMover: boolean;
 }) {
   const t = useT();
-  const mover = useBulkAction(pipelineId);
+  const qc = useQueryClient();
+  const [recusa, setRecusa] = useState<RecusaDeCampos | null>(null);
+  const [retomada, setRetomada] = useState<RetomadaPendente | null>(null);
+  const mover = useMoveCard(pipelineId, { onCamposFaltando: setRecusa, onRetomada: setRetomada });
   const atualRef = useRef<HTMLButtonElement | null>(null);
   // Lido uma vez por abertura: contar dias não precisa de relógio vivo.
   const [agora] = useState(() => Date.now());
@@ -49,14 +58,22 @@ export function TrilhoDeEtapas({
 
   if (abertas.length === 0) return null;
 
-  async function escolher(stageId: string) {
-    if (stageId === lead.stage_id || !podeMover) return;
-    try {
-      await mover.mutateAsync({ action: "move", lead_ids: [lead.id], params: { stage_id: stageId } });
-      toast.success(t("Etapa atualizada."));
-    } catch {
-      // o hook já mostrou o erro (ex.: campos obrigatórios da etapa)
-    }
+  function escolher(stageId: string) {
+    if (stageId === lead.stage_id || !podeMover || mover.isPending) return;
+    // O negócio entra no TOPO da etapa: antes do primeiro card dela.
+    const primeiro = qc
+      .getQueryData<BoardData>(chaveDoQuadro(pipelineId))
+      ?.leads.filter((l) => l.stage_id === stageId && l.id !== lead.id)
+      .reduce<number | null>((min, l) => (min === null || l.position_in_stage < min ? l.position_in_stage : min), null);
+    mover.mutate(
+      {
+        leadId: lead.id,
+        stageId,
+        positionInStage: midpoint(null, primeiro ?? null),
+        expectedUpdatedAt: lead.updated_at,
+      },
+      { onSuccess: () => toast.success(t("Etapa atualizada.")) },
+    );
   }
 
   return (
@@ -72,7 +89,7 @@ export function TrilhoDeEtapas({
                 type="button"
                 disabled={!podeMover || mover.isPending}
                 aria-current={atual ? "step" : undefined}
-                onClick={() => void escolher(s.id)}
+                onClick={() => escolher(s.id)}
                 title={s.name}
                 data-testid={`trilho-etapa-${s.id}`}
                 className={cn(
@@ -97,6 +114,27 @@ export function TrilhoDeEtapas({
           );
         })}
       </ol>
+      <CamposObrigatoriosDialog
+        open={recusa !== null}
+        onOpenChange={(aberto) => !aberto && setRecusa(null)}
+        recusa={recusa}
+        isPending={mover.isPending}
+        onConfirmar={({ customFields, wonReason }) => {
+          if (!recusa) return;
+          const { args } = recusa;
+          setRecusa(null);
+          mover.mutate({ ...args, customFields, ...(wonReason !== undefined ? { wonReason } : {}) });
+        }}
+      />
+      {retomada && (
+        <RetomarComoNovoNegocioDialog
+          open
+          onOpenChange={(v: boolean) => !v && setRetomada(null)}
+          leadId={retomada.leadId}
+          stageId={retomada.stageId}
+          pipelineId={pipelineId}
+        />
+      )}
     </div>
   );
 }

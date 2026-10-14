@@ -12,7 +12,9 @@ A aplicação participa de `NetPratica` e da rede interna da stack; worker,
 scheduler, WAHA, Redis efêmero e seu adaptador HTTP usam apenas a rede interna.
 Sem Caddy, portas públicas adicionais, serviços de voz ou build na VPS.
 
-As três imagens próprias têm o mesmo SHA completo e foram publicadas pelo CI.
+As três imagens próprias têm o mesmo SHA completo. O caminho inicial usou
+imagens publicadas pelo CI; com Actions desativado, é permitido gerar imagens
+Linux/AMD64 no computador da Estallo e transferi-las por SSH.
 O deploy verifica que todas existem antes de trocar qualquer serviço.
 Nenhuma tag móvel é usada na instalação.
 
@@ -28,6 +30,38 @@ e acompanha os backups. Ele também é usado ao retornar a uma versão anterior.
 ```bash
 python3 scripts/estallo-vps.py deploy --sha 1692ad9eb367b8cb9bfc39b79c0ca84cf9abc87a --image-tag 1692ad9eb367b8cb9bfc39b79c0ca84cf9abc87a-amd64
 ```
+
+## Deploy direto, sem GitHub Actions
+
+Para uma revisão nova, construir as três imagens pelos Dockerfiles do projeto
+em um Docker Linux externo à VPS compartilhada. Usar o SHA completo em
+`APP_VERSION`, na tag e no label OCI `org.opencontainers.image.revision`;
+o label de origem dos Dockerfiles deve ser preservado. Nenhuma credencial
+operacional entra no build. O build local Windows do Next serve como verificação,
+mas o artefato implantado é gerado novamente para Linux pelo Dockerfile.
+
+Transferir o código por um bundle Git e as imagens por um arquivo produzido
+com `docker save`, para `/opt/stacks/estallo-crm/images/`. Conferir o SHA-256
+do arquivo nos dois lados antes de `docker load`, e manter os artefatos de ambas
+as versões para rollback. Depois de colocar o clone na revisão exata, executar:
+
+```bash
+python3 scripts/estallo-vps.py deploy --sha COMMIT_COMPLETO --local-images
+python3 scripts/estallo-vps.py verify
+```
+
+Esse modo recusa Swarm com mais de um nó, arquitetura diferente de Linux/AMD64,
+label de outra revisão e substituição de uma imagem já registrada. Os IDs das
+três imagens ficam no arquivo protegido `local-images.json`, incluído nos backups.
+O Swarm usa as imagens já carregadas, sem consultar tags inexistentes no registro.
+Backup prévio, verificações de saúde, margem de memória e rollback automático
+continuam ativos. Somente app, worker e scheduler recebem imagens novas;
+WAHA, Redis, rede e volumes mantêm suas configurações.
+
+Uma versão transferida manualmente não é oferecida pelo atualizador automático,
+que continua exigindo imagens publicadas no registro. Para restaurar em outra VPS,
+recuperar também os arquivos de imagens guardados no computador da Estallo,
+carregá-los com `docker load` e recuperar `local-images.json` antes do deploy.
 
 ## Instalação
 

@@ -1,6 +1,11 @@
 flowchart LR
-  GitHub[GitHub Actions] --> GHCR[Imagens Estallo por SHA]
+  GitHub[GitHub Actions - desativado] -. artefatos anteriores .-> GHCR[Imagens Estallo por SHA]
   GHCR --> Swarm[Stack estallo-crm]
+  Local[Docker Linux no computador Estallo] --> Transfer[Arquivo de imagens e bundle Git por SSH]
+  Transfer --> Images[Origem, revisão e arquitetura conferidas no host]
+  Images --> Swarm
+  Images --> LocalRecords[IDs imutáveis em local-images.json]
+  LocalRecords --> Backup
   DNS[crm.estallo.com.br] --> Traefik[Traefik existente]
   Traefik --> App[Aplicação]
   Swarm --> App

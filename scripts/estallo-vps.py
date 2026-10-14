@@ -222,8 +222,46 @@ def validate_sha(sha):
     return sha
 
 
+def local_images():
+    path = ROOT / 'local-images.json'
+    return json.loads(path.read_text()) if path.exists() else {}
+
+
+def inspect_local_images(sha):
+    validate_sha(sha)
+    # Imagens transferidas por SSH só estão disponíveis neste único nó.
+    if len(run(['docker', 'node', 'ls', '-q']).decode().split()) != 1:
+        raise ValueError('Deploy sem registro exige Swarm de um único nó')
+    records = {}
+    for image in IMAGES:
+        reference = f'{image_namespace()}/{image}:{image_tag(sha)}'
+        data = json.loads(run(['docker', 'image', 'inspect', reference]))[0]
+        labels = data.get('Config', {}).get('Labels', {}) or {}
+        if (data.get('Os') != 'linux' or data.get('Architecture') != 'amd64'
+                or labels.get('org.opencontainers.image.revision') != sha
+                or labels.get('org.opencontainers.image.source') !=
+                'https://github.com/estallosolucoes/estallo-crm'):
+            raise ValueError('Imagem local sem arquitetura ou procedência do commit autorizado')
+        records[image] = data['Id']
+    return records
+
+
+def register_local_images(sha):
+    records = inspect_local_images(sha)
+    known = local_images()
+    if sha in known and known[sha] != records:
+        raise ValueError('Imagem local imutável foi substituída; operação recusada')
+    known[sha] = records
+    save(ROOT / 'local-images.json', json.dumps(known))
+
+
 def pull(sha):
     validate_sha(sha)
+    known = local_images()
+    if sha in known:
+        if inspect_local_images(sha) != known[sha]:
+            raise ValueError('Imagem local imutável foi substituída; operação recusada')
+        return
     for image in IMAGES:
         run(['docker', 'pull', f'{image_namespace()}/{image}:{image_tag(sha)}'])
 
@@ -313,7 +351,8 @@ def wait_healthy(sha):
 
 def stack(sha):
     values = dict(os.environ, **runtime(), ESTALLO_IMAGE_TAG=image_tag(sha))
-    run(['docker', 'stack', 'deploy', '--with-registry-auth', '--resolve-image', 'always',
+    resolution = 'never' if sha in local_images() else 'always'
+    run(['docker', 'stack', 'deploy', '--with-registry-auth', '--resolve-image', resolution,
          '-c', str(REPO / 'docker-stack.estallo.yml'), 'estallo-crm'], env=values)
 
 
@@ -384,7 +423,7 @@ def backup():
     shutil.copy2(RUNTIME, destination / 'runtime.env')
     if STATE.exists():
         shutil.copy2(STATE, destination / 'deployment.json')
-    for filename in ('image-tags.json',):
+    for filename in ('image-tags.json', 'local-images.json'):
         if (ROOT / filename).exists():
             shutil.copy2(ROOT / filename, destination / filename)
     for file in destination.rglob('*'):
@@ -494,6 +533,8 @@ def main():
     parser.add_argument('--credentials')
     parser.add_argument('--sha')
     parser.add_argument('--image-tag')
+    parser.add_argument('--local-images', action='store_true',
+                        help='Usa as três imagens Linux/AMD64 transferidas por SSH, sem registro')
     args = parser.parse_args()
     ROOT.mkdir(parents=True, exist_ok=True, mode=0o700)
     os.umask(0o077)
@@ -503,6 +544,10 @@ def main():
             if args.action not in ('bootstrap', 'deploy'):
                 raise ValueError('--image-tag só é usado no bootstrap ou deploy')
             register_image_tag(args.sha or '', args.image_tag)
+        if args.local_images:
+            if args.action != 'deploy':
+                raise ValueError('--local-images só é usado no deploy')
+            register_local_images(validate_sha(args.sha or ''))
         if args.action == 'configure':
             configure(args.credentials)
         elif args.action == 'bootstrap':

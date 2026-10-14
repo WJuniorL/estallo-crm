@@ -21,7 +21,7 @@ export interface ConversationCounts {
   all: number;
   /** Opcional pelo mesmo motivo dos de cima: cache gravado antes deste deploy não tem. */
   closed?: number;
-  /** A aba "Arquivadas" (#923). Opcional pelo mesmo motivo: cache antigo não tem. */
+  /** Ainda devolvido pela rota versionada; a tela não tem mais a aba (as arquivadas contam em `closed`). */
   archived?: number;
 }
 

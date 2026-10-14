@@ -188,6 +188,10 @@ async function entrar(page: Page, f: Fixture) {
 }
 
 const painel = (page: Page) => page.locator('section[aria-label="Assistência do agente"]');
+// O painel mora num popover atrás do botão de IA do composer.
+async function abrirAssistencia(page: Page) {
+  await page.getByRole("button", { name: "Assistência do agente (IA)" }).click();
+}
 
 test.afterAll(async () => {
   for (const org of orgs) {
@@ -208,6 +212,7 @@ test("rejeitar tira a sugestão da tela e diz que rejeitou; sem agente publicado
     const f = await fixture(pool);
     await entrar(page, f);
     await page.goto(`/app/inbox/${f.conversation}`);
+    await abrirAssistencia(page);
 
     // ── 1) Gera pelo caminho real da rota ──────────────────────────────────
     const gerada = page.waitForResponse(

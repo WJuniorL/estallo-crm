@@ -225,7 +225,7 @@ describe("painel do inbox — demandas abertas", () => {
     expect(campo.value).toBe("Ligar amanhã");
   });
 
-  it("a demanda vem ANTES do negócio — a unidade é ela (cap. 5)", async () => {
+  it("Leads recentes vem logo abaixo do Contato — antes das demandas (pedido do Estallo)", async () => {
     get.mockResolvedValue({ data: RESPOSTA });
     renderPainel();
 
@@ -234,7 +234,7 @@ describe("painel do inbox — demandas abertas", () => {
     // `compareDocumentPosition` mede a ordem no documento, não a aparência —
     // medida por ferramenta, nunca a olho.
     const posicao = secao.compareDocumentPosition(leads);
-    expect(posicao & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(posicao & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
   });
 });
 

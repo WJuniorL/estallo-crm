@@ -105,8 +105,8 @@ describe("faixa da Inbox — quebra em vez de esconder aba (#2745)", () => {
     // a saída fácil para \"não cabe\" é encurtar rótulo ou tirar aba, e aí a
     // catraca de classe continua verde com a tela errada.
     const abas = screen.getAllByRole("tab");
-    expect(abas).toHaveLength(6);
-    for (const rotulo of ["Automático", "Fila", "Minhas", "Todas", "Fechadas", "Arquivadas"]) {
+    expect(abas).toHaveLength(5);
+    for (const rotulo of ["Automático", "Fila", "Minhas", "Todas", "Fechadas"]) {
       expect(
         screen.getByRole("tab", { name: new RegExp(rotulo) }),
         `a aba "${rotulo}" não está na faixa`,
@@ -114,13 +114,13 @@ describe("faixa da Inbox — quebra em vez de esconder aba (#2745)", () => {
     }
   });
 
-  it("quebrar a linha não muda o FILTRO: clicar em Arquivadas manda tab=archived", () => {
+  it("quebrar a linha não muda o FILTRO: clicar em Fechadas manda tab=closed", () => {
     const onChange = vi.fn();
     render(<InboxFilters value={VALUE} onChange={onChange} />);
     // A quebra é de layout; o valor continua o MESMO contrato de antes.
     // O Radix `TabsTrigger` aciona no `mousedown`, não no `click`.
-    fireEvent.mouseDown(screen.getByRole("tab", { name: /Arquivadas/ }));
-    expect(onChange).toHaveBeenCalledWith({ ...VALUE, tab: "archived" });
+    fireEvent.mouseDown(screen.getByRole("tab", { name: /Fechadas/ }));
+    expect(onChange).toHaveBeenCalledWith({ ...VALUE, tab: "closed" });
   });
 
   it("a ordem e os valores das abas não mudaram (#2498)", () => {
@@ -133,7 +133,6 @@ describe("faixa da Inbox — quebra em vez de esconder aba (#2745)", () => {
       "mine",
       "all",
       "closed",
-      "archived",
     ]);
     expect(screen.getAllByRole("tab").map((a) => a.textContent?.replace(/\s+/g, ""))).toEqual([
       "Automático12",
@@ -141,7 +140,6 @@ describe("faixa da Inbox — quebra em vez de esconder aba (#2745)", () => {
       "Minhas8",
       "Todas130",
       "Fechadas25",
-      "Arquivadas9",
     ]);
   });
 });

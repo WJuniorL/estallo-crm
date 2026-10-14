@@ -68,7 +68,7 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("as seis abas, na ordem pedida pela #2498", () => {
-  it("Automático, Fila, Minhas, Todas, Fechadas, Arquivadas — nessa ordem", () => {
+  it("Automático, Fila, Minhas, Todas, Fechadas — nessa ordem", () => {
     render(<InboxFilters value={VALUE} onChange={() => {}} />);
     expect(abasRenderizadas()).toEqual([
       "Automático",
@@ -76,7 +76,6 @@ describe("as seis abas, na ordem pedida pela #2498", () => {
       "Minhas",
       "Todas",
       "Fechadas",
-      "Arquivadas",
     ]);
   });
 
@@ -96,7 +95,6 @@ describe("as seis abas, na ordem pedida pela #2498", () => {
       "mine=Minhas",
       "all=Todas",
       "closed=Fechadas",
-      "archived=Arquivadas",
     ]);
   });
 
@@ -107,7 +105,6 @@ describe("as seis abas, na ordem pedida pela #2498", () => {
     expect(screen.getByRole("tab", { name: /^Minhas/ })).toHaveTextContent("2");
     expect(screen.getByRole("tab", { name: /^Todas/ })).toHaveTextContent("5");
     expect(screen.getByRole("tab", { name: /^Fechadas/ })).toHaveTextContent("4");
-    expect(screen.getByRole("tab", { name: /^Arquivadas/ })).toHaveTextContent("1");
   });
 });
 
@@ -119,7 +116,6 @@ describe("só a ordem muda — as permissões continuam quem eram", () => {
       "mine",
       "all",
       "closed",
-      "archived",
     ]);
   });
 
@@ -131,7 +127,6 @@ describe("só a ordem muda — as permissões continuam quem eram", () => {
       "unassigned",
       "mine",
       "closed",
-      "archived",
     ]);
   });
 
@@ -142,7 +137,6 @@ describe("só a ordem muda — as permissões continuam quem eram", () => {
       "mine",
       "all",
       "closed",
-      "archived",
     ]);
   });
 

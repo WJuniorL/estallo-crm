@@ -23,15 +23,12 @@ import { apiClient } from "@/lib/api/client";
 import { toast } from "sonner";
 import type { ConversationWithContact } from "@/hooks/inbox/useConversationsRealtime";
 import { activityLabel, actorLabel, actorShape } from "@/lib/leads/activity-vocabulary";
-import { soChavesAlteradas } from "@/lib/leads/custom-fields-so-diff";
 import { ConversationTagsEditor } from "./ConversationTagsEditor";
 import { ContactTagsEditor } from "./ContactTagsEditor";
 import { useDefaultPipeline } from "@/hooks/pipelines/useDefaultPipeline";
 import { NewLeadDialog } from "@/components/kanban/NewLeadDialog";
-import { CustomFieldsEditor, type CustomFieldDef } from "@/components/contacts/CustomFieldsEditor";
-import { useEditLead } from "@/hooks/kanban/useUpdateLead";
-import { useBulkAction } from "@/hooks/kanban/useBulkAction";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { CustomFieldDef } from "@/components/contacts/CustomFieldsEditor";
+import { LeadDossierDoFunil } from "@/components/kanban/LeadDossierDoFunil";
 import { cn } from "@/lib/utils";
 import { PROXIMO_PASSO_DA_MENSAGEM_NOVA } from "@/lib/atendimento/proximo-passo-padrao";
 import { rotuloDoContato } from "@/lib/contacts/rotulo-do-contato";
@@ -346,177 +343,42 @@ function ondeEstaOLead(l: LeadRow): string {
  */
 const CLASSES_DE_ONDE_ESTA = "line-clamp-2 text-muted-foreground";
 
-function InboxLeadEditor({
+/**
+ * Os negócios do contato, do mais recente para o mais antigo. Clicar abre o
+ * MESMO dossiê do quadro (`LeadDossierDoFunil`) — lá ficam etapa, campos,
+ * tarefas e histórico. Por isso este bloco não edita nada: é a porta.
+ */
+function LeadsRecentes({
   leads,
-  selecionadoId,
-  onSelecionar,
-  onSalvo,
+  onAbrir,
 }: {
   leads: LeadRow[];
-  selecionadoId: string | null;
-  onSelecionar: (id: string) => void;
-  onSalvo: () => void;
+  onAbrir: (lead: LeadRow) => void;
 }) {
   const t = useT();
-  const ativo = leads.find((l) => l.id === selecionadoId) ?? leads[0]!;
   const status = (l: LeadRow) => t(STATUS_DO_LEAD[l.status] ?? l.status);
 
   return (
-    <div className="mt-2 space-y-2">
-      {leads.length > 1 && (
-        <ul className="space-y-1">
-          {leads.map((l) => {
-            const marcado = l.id === ativo.id;
-            return (
-              <li key={l.id}>
-                <button
-                  type="button"
-                  data-testid={`inbox-lead-${l.id}`}
-                  aria-pressed={marcado}
-                  onClick={() => onSelecionar(l.id)}
-                  className={cn(
-                    "w-full rounded-md border p-2 text-left text-xs",
-                    marcado ? "border-accent bg-accent/10" : "border-border",
-                  )}
-                >
-                  <div className="truncate font-medium">{l.title}</div>
-                  <div className={CLASSES_DE_ONDE_ESTA} title={ondeEstaOLead(l)}>
-                    {ondeEstaOLead(l)}
-                  </div>
-                  <div className="text-muted-foreground">
-                    {status(l)} · {formatMoney(l.value_cents, l.currency)}
-                  </div>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-      {leads.length === 1 && (
-        <div data-testid="inbox-lead-unico" className="text-xs text-muted-foreground">
-          <p>{ativo.title} · {status(ativo)}</p>
-          <p className={CLASSES_DE_ONDE_ESTA} title={ondeEstaOLead(ativo)}>
-            {ondeEstaOLead(ativo)}
-          </p>
-        </div>
-      )}
-      <EtapaDoNegocio key={`etapa-${ativo.id}`} lead={ativo} onMovido={onSalvo} />
-      <CamposDoFunil
-        key={ativo.id}
-        leadId={ativo.id}
-        pipelineId={ativo.pipeline_id}
-        fieldDefs={ativo.field_defs ?? []}
-        valores={ativo.custom_fields ?? {}}
-        onSalvo={onSalvo}
-      />
-    </div>
-  );
-}
-
-/**
- * Mover o negócio de etapa SEM sair da conversa — ex.: passar a "Pedido
- * confirmado" quando o cliente confirma pelo WhatsApp. Antes só dava pelo quadro
- * do funil: quem atendia tinha de sair da conversa, achar o card e arrastá-lo.
- *
- * Usa o MESMO caminho do "Mover para…" do quadro (`/api/v1/leads/bulk`, que
- * posiciona o card no banco e emite atividade, evento e auditoria), então a
- * etapa que avisa na Central avisa igual. Etapa de PERDA fica de fora: ela pede
- * o motivo, e esse diálogo mora no quadro.
- */
-function EtapaDoNegocio({ lead, onMovido }: { lead: LeadRow; onMovido: () => void }) {
-  const t = useT();
-  const mover = useBulkAction(lead.pipeline_id);
-  const etapas = (lead.etapas_do_funil ?? []).filter((e) => !e.is_lost || e.id === lead.stage_id);
-  if (!lead.stage_id || etapas.length === 0) return null;
-
-  async function escolher(stageId: string) {
-    if (stageId === lead.stage_id) return;
-    try {
-      await mover.mutateAsync({ action: "move", lead_ids: [lead.id], params: { stage_id: stageId } });
-      toast.success(t("Etapa atualizada."));
-      onMovido();
-    } catch {
-      // o hook já mostrou o erro
-    }
-  }
-
-  return (
-    <div className="space-y-1" data-testid="inbox-etapa-do-negocio">
-      <label className="block text-xs font-medium text-text" htmlFor={`etapa-${lead.id}`}>
-        {t("Etapa do funil")}
-      </label>
-      <Select value={lead.stage_id} onValueChange={(v) => void escolher(v)} disabled={mover.isPending}>
-        <SelectTrigger id={`etapa-${lead.id}`} className="h-8 w-full text-xs" data-testid="inbox-etapa-select">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {etapas.map((e) => (
-            <SelectItem key={e.id} value={e.id} className="text-xs">
-              {e.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
-}
-
-function CamposDoFunil({
-  leadId,
-  pipelineId,
-  fieldDefs,
-  valores,
-  onSalvo,
-}: {
-  leadId: string;
-  pipelineId: string;
-  fieldDefs: CustomFieldDef[];
-  valores: Record<string, unknown>;
-  onSalvo: () => void;
-}) {
-  const t = useT();
-  const edit = useEditLead(pipelineId);
-  const [customFields, setCustomFields] = useState(valores);
-  // A RÉGUA do diff (issue #2132): o valor carregado quando o painel abriu.
-  // Só o que a pessoa mudar daqui vai viajar — o merge é do servidor.
-  const [camposCarregados, setCamposCarregados] = useState(valores);
-
-  if (fieldDefs.length === 0) {
-    return <p className="text-xs text-muted-foreground">{t("Este funil não tem campos extras.")}</p>;
-  }
-
-  async function salvar() {
-    const payload = soChavesAlteradas(camposCarregados, customFields);
-    try {
-      await edit.mutateAsync({ leadId, patch: { custom_fields: payload } });
-      // O que acabou de gravar vira a nova régua: o próximo salvamento não
-      // reenvia este, e uma limpeza alheia no intervalo não é atropelada.
-      setCamposCarregados({ ...customFields });
-      toast.success(t("Campos atualizados"));
-      onSalvo();
-    } catch {
-      // toast already shown
-    }
-  }
-
-  return (
-    <div className="space-y-3">
-      <CustomFieldsEditor
-        fields={fieldDefs}
-        value={customFields}
-        onChange={setCustomFields}
-        mode="lead"
-        className="gap-3 md:grid-cols-1"
-      />
-      <Button
-        size="sm"
-        className="h-7 w-full text-xs"
-        disabled={edit.isPending}
-        onClick={() => void salvar()}
-      >
-        {edit.isPending ? "Salvando…" : "Salvar"}
-      </Button>
-    </div>
+    <ul className="mt-2 space-y-1">
+      {leads.map((l) => (
+        <li key={l.id}>
+          <button
+            type="button"
+            data-testid={`inbox-lead-${l.id}`}
+            onClick={() => onAbrir(l)}
+            className="w-full rounded-md border border-border p-2 text-left text-xs hover:border-accent hover:bg-accent/10"
+          >
+            <div className="truncate font-medium">{l.title}</div>
+            <div className={CLASSES_DE_ONDE_ESTA} title={ondeEstaOLead(l)}>
+              {ondeEstaOLead(l)}
+            </div>
+            <div className="text-muted-foreground">
+              {status(l)} · {formatMoney(l.value_cents, l.currency)}
+            </div>
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -555,8 +417,15 @@ export function CRMSidePanel({ conversation }: Props) {
 
   const [tagEditorOpen, setTagEditorOpen] = useState(false);
   const [leadDialogOpen, setLeadDialogOpen] = useState(false);
-  const [leadAtivoId, setLeadAtivoId] = useState<string | null>(null);
+  // "Ver mais" abre de 3 em 3 (o total vem da rota, `leads_total`).
+  const [limiteLeads, setLimiteLeads] = useState(3);
+  const [leadsTotal, setLeadsTotal] = useState(0);
+  const [leadAberto, setLeadAberto] = useState<LeadRow | null>(null);
   const defaultPipeline = useDefaultPipeline(leadDialogOpen);
+  useEffect(() => {
+    setLimiteLeads(3);
+    setLeadAberto(null);
+  }, [contactId]);
 
   useEffect(() => {
     if (leadDialogOpen && defaultPipeline.isError) {
@@ -572,7 +441,7 @@ export function CRMSidePanel({ conversation }: Props) {
       setActivities(null);
       setDemandas(null);
       setFatos([]); setHistorico([]);
-      setLeadAtivoId(null);
+      setLeadAberto(null);
       return;
     }
     let cancelled = false;
@@ -589,18 +458,20 @@ export function CRMSidePanel({ conversation }: Props) {
             enrichment?: (ProspectEnrichment & { collected_at: string }) | null;
             enrichment_error?: boolean;
             leads: LeadRow[];
+            leads_total?: number;
             orders: OrderRow[];
             activities: ActivityRow[];
             demandas: DemandaRow[];
             fatos?: Array<{ id: string; headline: string; body: string }>;
             historico?: Array<{ id: string; desfecho: string; fechada_em: string }>;
           };
-        }>(`/api/v1/contacts/${contactId}/crm-summary`);
+        }>(`/api/v1/contacts/${contactId}/crm-summary?leads_limit=${limiteLeads}`);
         if (cancelled) return;
         setSummaryContactId(contactId);
         setEnrichment(r.data.enrichment ?? null);
         setEnrichmentError(r.data.enrichment_error ?? false);
         setLeads(r.data.leads);
+        setLeadsTotal(r.data.leads_total ?? r.data.leads.length);
         setOrders(r.data.orders);
         setActivities(r.data.activities);
         // `?? []` e não `?? null`: aqui a leitura DEU CERTO. Cair em `null`
@@ -638,7 +509,7 @@ export function CRMSidePanel({ conversation }: Props) {
     // Depender do DADO que muda é mais honesto que um contador de invalidação:
     // `assigned_to_user_id` cobre assumir/transferir/liberar e `bot_silenced_until`
     // cobre pausar e devolver — que são exatamente os quatro gestos que geram linha.
-  }, [contactId, contact?.is_anonymized, tentativa, conversation?.assigned_to_user_id, conversation?.bot_silenced_until, conversation?.service_revision, conversation?.current_demanda_id]);
+  }, [contactId, contact?.is_anonymized, tentativa, limiteLeads, conversation?.assigned_to_user_id, conversation?.bot_silenced_until, conversation?.service_revision, conversation?.current_demanda_id]);
 
   // Recarrega o resumo pelo MESMO caminho do "Tentar de novo": o efeito depende
   // de `tentativa`, então a demanda recém-marcada volta do servidor em vez de
@@ -723,6 +594,42 @@ export function CRMSidePanel({ conversation }: Props) {
         </Card>
       </section>
 
+      <section data-testid="inbox-campos-lead">
+        <h3 className="text-xs font-semibold text-text">
+          {t("Leads recentes")}
+        </h3>
+        {sectionsLoading ? (
+          <Skeleton className="mt-2 h-14 w-full" />
+        ) : leads && leads.length > 0 ? (
+          <>
+            <LeadsRecentes leads={leads} onAbrir={setLeadAberto} />
+            {leadsTotal > leads.length && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="mt-1 h-7 w-full text-xs"
+                data-testid="inbox-leads-ver-mais"
+                onClick={() => setLimiteLeads((n) => n + 3)}
+              >
+                {t("Ver mais")}
+              </Button>
+            )}
+          </>
+        ) : (
+          <SemLista vazio="Sem leads." erro={erro} onTentarDeNovo={() => setTentativa((n) => n + 1)} />
+        )}
+        {leadAberto && (
+          <LeadDossierDoFunil
+            pipelineId={leadAberto.pipeline_id}
+            leadId={leadAberto.id}
+            onClose={() => {
+              setLeadAberto(null);
+              recarregar();
+            }}
+          />
+        )}
+      </section>
+
       <LeadEnrichment
         data={summaryContactId === contactId && !erro && !contact?.is_anonymized ? enrichment : null}
         loading={sectionsLoading}
@@ -738,7 +645,6 @@ export function CRMSidePanel({ conversation }: Props) {
           stages={defaultPipeline.data.stages}
           contactId={contactId}
           onCreated={() => {
-            setLeadAtivoId(null);
             recarregar();
           }}
         />
@@ -833,25 +739,6 @@ export function CRMSidePanel({ conversation }: Props) {
           ou sem roteiro, não desenha nada). */}
       {contactId && !contact?.is_anonymized && <RoteirosDoContato contactId={contactId} variante="painel" />}
 
-      <section data-testid="inbox-campos-lead">
-        <h3 className="text-xs font-semibold text-text">
-          {t("Leads recentes")}
-        </h3>
-        {sectionsLoading ? (
-          <Skeleton className="mt-2 h-14 w-full" />
-        ) : leads && leads.length > 0 ? (
-          <fieldset disabled={readonly}><InboxLeadEditor
-            leads={leads}
-            selecionadoId={leadAtivoId}
-            onSelecionar={setLeadAtivoId}
-            onSalvo={recarregar}
-          /></fieldset>
-        ) : (
-          <SemLista vazio="Sem leads." erro={erro} onTentarDeNovo={() => setTentativa((n) => n + 1)} />
-        )}
-      </section>
-
-      <Separator />
 
       <section>
         <h3 className="text-xs font-semibold text-text">

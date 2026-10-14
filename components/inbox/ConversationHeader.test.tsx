@@ -158,42 +158,9 @@ describe("ConversationHeader — Fechar e Arquivar por AlertDialog", () => {
     });
   });
 
-  it("Arquivar, numa conversa aberta, avisa que o atendimento é encerrado junto", async () => {
-    const user = userEvent.setup();
+  it("não oferece Arquivar (o Estallo encerra só por Fechar)", () => {
     render(<ConversationHeader conversation={conversa("open")} />);
-
-    await user.click(screen.getByRole("button", { name: "Arquivar" }));
-
-    const dialogo = await screen.findByRole("alertdialog");
-    expect(within(dialogo).getByText("Arquivar esta conversa?")).toBeTruthy();
-    expect(
-      within(dialogo).getByText(
-        "Arquivar encerra este atendimento e guarda a conversa no histórico. Se o cliente escrever de novo, ela volta.",
-      ),
-    ).toBeTruthy();
-    expect(arquivarMutate).not.toHaveBeenCalled();
-
-    await user.click(within(dialogo).getByRole("button", { name: "Arquivar" }));
-    await waitFor(() => expect(arquivarMutate).toHaveBeenCalledTimes(1));
-    expect(arquivarMutate).toHaveBeenCalledWith({
-      conversation_id: "conv-1",
-      expected_revision: 3,
-    });
-  });
-
-  it("Arquivar, numa conversa já encerrada, não repete o aviso de encerramento", async () => {
-    const user = userEvent.setup();
-    render(<ConversationHeader conversation={conversa("closed")} />);
-
-    await user.click(screen.getByRole("button", { name: "Arquivar" }));
-
-    const dialogo = await screen.findByRole("alertdialog");
-    expect(within(dialogo).getByText("Arquivar esta conversa?")).toBeTruthy();
-    expect(
-      screen.queryByText(
-        "Arquivar encerra este atendimento e guarda a conversa no histórico. Se o cliente escrever de novo, ela volta.",
-      ),
-    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Arquivar" })).toBeNull();
   });
 });
 

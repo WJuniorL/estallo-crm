@@ -606,9 +606,7 @@ export async function patchConversationHandler(
         ? "conversation.claimed"
         : input.status === "closed"
           ? "conversation.closed"
-          : input.status === "archived"
-            ? "conversation.archived"
-            : "conversation.released";
+          : "conversation.released";
     await audit({
       action,
       actorUserId: a.actorUserId,

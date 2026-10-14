@@ -172,7 +172,9 @@ export type ConversationTags = z.infer<typeof conversationTagsSchema>;
 /** G3-05: PATCH /conversations/[id] aceita status e/ou tags (ao menos um). */
 export const patchConversationSchema = z
   .object({
-    status: conversationStatusSchema.optional(),
+    // Sem `archived`: o Estallo não arquiva conversa (encerrar é "Fechar").
+    // O status segue no CHECK do banco para as que já estavam arquivadas.
+    status: conversationStatusSchema.exclude(["archived"]).optional(),
     expected_revision: z.number().int().positive().optional(),
     tags: conversationTagsSchema.optional(),
   })

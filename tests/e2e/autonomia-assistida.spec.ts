@@ -207,6 +207,10 @@ async function receiver() {
   };
 }
 const panel = (page: Page) => page.locator('section[aria-label="Assistência do agente"]');
+// O painel mora num popover atrás do botão de IA do composer.
+async function abrirAssistencia(page: Page) {
+  await page.getByRole("button", { name: "Assistência do agente (IA)" }).click();
+}
 async function generate(page: Page) {
   const response = page.waitForResponse(
     (r) => r.url().endsWith("/draft-reply") && r.request().method() === "POST",
@@ -300,6 +304,7 @@ test("testa sem enviar, pausa preserva publicação e duas aprovações entregam
       ).rows[0],
     ).toMatchObject({ published_version_id: f.version, paused_at: expect.any(Date) });
     await page.goto(`/app/inbox/${f.conversation}`);
+    await abrirAssistencia(page);
     const first = await generate(page);
     expect(channel.bodies).toHaveLength(0);
     await panel(page)

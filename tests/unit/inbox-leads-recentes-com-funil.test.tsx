@@ -133,7 +133,7 @@ describe("painel do inbox — leads recentes dizem funil, etapa e status traduzi
     get.mockResolvedValue(resposta([leadRow("l-1", "GMN Advogados", "Novo", "lost")]));
     renderPainel();
 
-    const linha = await screen.findByTestId("inbox-lead-unico");
+    const linha = await screen.findByTestId("inbox-lead-l-1");
     expect(linha.textContent).toContain("GMN Advogados · Novo");
     expect(linha.textContent).toContain("Perdido");
     expect(linha.textContent).not.toMatch(/\blost\b/);

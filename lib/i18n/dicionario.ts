@@ -994,6 +994,8 @@ export const DICIONARIO: Traducoes = {
   "Confirmar liberação": { es: "Confirmar habilitación" },
   "Novos canais começam em modo de teste, sem respostas automáticas até você autorizar números ou liberar o público.": { es: "Los canales nuevos empiezan en modo de prueba, sin respuestas automáticas hasta que autorices números o habilites al público." },
   "Assistência do agente": { es: "Asistencia del agente" },
+  "Assistência do agente (IA)": { es: "Asistencia del agente (IA)" },
+  "Ver mais": { es: "Ver más" },
   "Resposta aprovada. Acompanhe o envio aqui.": { es: "Respuesta aprobada. Sigue el envío aquí." },
   "Sugestão rejeitada. O feedback será usado na próxima sugestão.": {
     es: "Sugerencia rechazada. Los comentarios se usarán en la próxima sugerencia.",

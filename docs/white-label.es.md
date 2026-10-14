@@ -1,3 +1,5 @@
+> **Referência visual substituída (14/10/2026):** o único padrão vigente é o [Design System Estallo](design-system/README.md). Cores, fontes, regras de marca e restrições estéticas herdadas neste documento não orientam novas implementações. Contratos técnicos e registros históricos permanecem em seu escopo; não copiar escolhas visuais do upstream.
+
 <!-- traduzido-de: docs/white-label.md@e862cd45e445 -->
 
 [🇧🇷 Português](white-label.md) · [🇺🇸 English](white-label.en.md) · 🇪🇸 Español
@@ -30,11 +32,11 @@ Ejemplo:
 
 ```css
 .text-muted-foreground {
-	color: #52645a;
+  color: #52645a;
 }
 
 .rounded-md {
-	border-radius: 12px;
+  border-radius: 12px;
 }
 ```
 
@@ -85,12 +87,12 @@ La configuración sobrevive a toda actualización. Por eso la marca se lee en ti
 
 La frontera, que es deliberada:
 
-| Dónde | Qué marca aparece |
-|---|---|
-| `/login`, registro, recuperación de contraseña, verificación en dos pasos | La de la **instalación** (la tuya) |
-| Dentro del sistema (`/app/...`), después de entrar | La de la **organización**, si la tiene; si no, la de la instalación |
-| Correos de acceso (confirmación de cuenta, recuperación de contraseña) | La de la **instalación** |
-| Invitación de equipo, correos de LGPD | La de la **organización** que los envió |
+| Dónde                                                                     | Qué marca aparece                                                   |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `/login`, registro, recuperación de contraseña, verificación en dos pasos | La de la **instalación** (la tuya)                                  |
+| Dentro del sistema (`/app/...`), después de entrar                        | La de la **organización**, si la tiene; si no, la de la instalación |
+| Correos de acceso (confirmación de cuenta, recuperación de contraseña)    | La de la **instalación**                                            |
+| Invitación de equipo, correos de LGPD                                     | La de la **organización** que los envió                             |
 
 El motivo de que el login quede fuera no es una limitación: **antes de que la persona entre, el sistema no sabe de qué organización es.** Pintar el login con el color de alguna de ellas sería elegir una a ciegas.
 
@@ -170,14 +172,14 @@ El sistema es multi-tenant desde la primera línea: una instalación atiende a v
 
 Aun así, los dos modelos sirven a propósitos diferentes:
 
-| | Una instalación por cliente | Una instalación para todos |
-|---|---|---|
-| **Marca** | La de cada cliente, incluso en la pantalla de entrada | La tuya en el login; la de cada organización dentro del sistema |
-| **Coste de infraestructura** | Una VPS por cliente | Una VPS |
-| **Fallo** | Aislado | Alcanza a todos |
-| **Actualización** | Una por vez, se puede escalonar | Todos de una vez |
-| **Datos del cliente** | Físicamente separados | Separados por RLS |
-| **Mejor para** | Revender con la marca del cliente | Tu propia operación atendiendo varias cuentas |
+|                              | Una instalación por cliente                           | Una instalación para todos                                      |
+| ---------------------------- | ----------------------------------------------------- | --------------------------------------------------------------- |
+| **Marca**                    | La de cada cliente, incluso en la pantalla de entrada | La tuya en el login; la de cada organización dentro del sistema |
+| **Coste de infraestructura** | Una VPS por cliente                                   | Una VPS                                                         |
+| **Fallo**                    | Aislado                                               | Alcanza a todos                                                 |
+| **Actualización**            | Una por vez, se puede escalonar                       | Todos de una vez                                                |
+| **Datos del cliente**        | Físicamente separados                                 | Separados por RLS                                               |
+| **Mejor para**               | Revender con la marca del cliente                     | Tu propia operación atendiendo varias cuentas                   |
 
 Si tu cliente pregunta "¿dónde quedan mis datos?", la instalación dedicada tiene la respuesta más simple de dar — y de defender.
 
@@ -199,13 +201,13 @@ Todo cliente tuyo que use un CRM extranjero realiza esa transferencia y necesita
 
 Cada instalación trae los scripts en `hostgator-setup-kit/`:
 
-| Comando | Qué hace |
-|---|---|
-| `bash update.sh` | Actualiza. Hace copia de seguridad de la base de datos **antes**, reaplica el esquema de forma idempotente y verifica la salud al final |
-| `bash backup.sh` / `restore.sh` | Copia de seguridad y restauración |
-| `bash reset-password.sh` | Redefine la contraseña de un usuario |
-| `bash reset-mfa.sh` | Quita la verificación en dos pasos a quien perdió el aparato |
-| `bash healthcheck.sh` | Diagnóstico de la instalación |
+| Comando                         | Qué hace                                                                                                                                |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `bash update.sh`                | Actualiza. Hace copia de seguridad de la base de datos **antes**, reaplica el esquema de forma idempotente y verifica la salud al final |
+| `bash backup.sh` / `restore.sh` | Copia de seguridad y restauración                                                                                                       |
+| `bash reset-password.sh`        | Redefine la contraseña de un usuario                                                                                                    |
+| `bash reset-mfa.sh`             | Quita la verificación en dos pasos a quien perdió el aparato                                                                            |
+| `bash healthcheck.sh`           | Diagnóstico de la instalación                                                                                                           |
 
 El `reset-mfa.sh` es el que más vas a usar: la verificación en dos pasos es obligatoria para administradores, y cambiar de móvil sin guardar los códigos de recuperación es la llamada de soporte más común.
 
@@ -219,11 +221,11 @@ Guía completa de instalación: [`hostgator-setup-kit/README.md`](../hostgator-s
 
 ---
 
-*Última actualización: 14 de agosto de 2026 — revisión completa después del épico de marca propia. Las dos frases más citadas de este documento ("colores, tipografías y tema no son configurables" y "la marca es por instalación, no por organización") dejaron de ser verdaderas y fueron reescritas con el límite honesto de hoy.*
+_Última actualización: 14 de agosto de 2026 — revisión completa después del épico de marca propia. Las dos frases más citadas de este documento ("colores, tipografías y tema no son configurables" y "la marca es por instalación, no por organización") dejaron de ser verdaderas y fueron reescritas con el límite honesto de hoy._
 
-*Este documento existe en tres idiomas, y el requisito que la versión anterior de este pie nombraba fue pagado: las traducciones llevan en la primera línea un sello con el hash del original, y editar `docs/white-label.md` sin volver a sellar reprueba `pnpm test:unit`. Después de traducir, vuelve a sellar con `pnpm exec tsx scripts/selar-traducao.ts --todas`.*
+_Este documento existe en tres idiomas, y el requisito que la versión anterior de este pie nombraba fue pagado: las traducciones llevan en la primera línea un sello con el hash del original, y editar `docs/white-label.md` sin volver a sellar reprueba `pnpm test:unit`. Después de traducir, vuelve a sellar con `pnpm exec tsx scripts/selar-traducao.ts --todas`._
 
-*Los tres README quedaron **fuera** del sello a propósito. Son el archivo más editado del repositorio: con sello, cada arreglo se volvería un PR bloqueado hasta que ~490 líneas fueran retraducidas dos veces — y el desenlace realista de eso no es traducción al día, es alguien volviendo a sellar sin traducir, que es la única manera de que el sello muera. Entran cuando alguien quiera pagar ese coste con los ojos abiertos.*
+_Los tres README quedaron **fuera** del sello a propósito. Son el archivo más editado del repositorio: con sello, cada arreglo se volvería un PR bloqueado hasta que ~490 líneas fueran retraducidas dos veces — y el desenlace realista de eso no es traducción al día, es alguien volviendo a sellar sin traducir, que es la única manera de que el sello muera. Entran cuando alguien quiera pagar ese coste con los ojos abiertos._
 
 ## Un logo para cada tema
 

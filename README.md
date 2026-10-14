@@ -32,7 +32,7 @@ Os gates complementares de banco, shell e E2E estão descritos em [AGENTS.md](AG
 
 ## Operação atual
 
-O piloto usa Supabase e Docker Swarm na VPS da Estallo. Deploy, backups, recuperação e limitações são descritos em [docs/estallo-vps.md](docs/estallo-vps.md). A primeira etapa do redesign está em [docs/estallo-produto.md](docs/estallo-produto.md).
+O piloto usa Supabase e Docker Swarm na VPS da Estallo. Deploy, backups, recuperação e limitações são descritos em [docs/estallo-vps.md](docs/estallo-vps.md). A primeira etapa do redesign está em [docs/estallo-produto.md](docs/estallo-produto.md). O [Design System Estallo](docs/design-system/README.md) é a única referência visual vigente para todos os módulos.
 
 ## Origem e licença
 

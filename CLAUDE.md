@@ -175,6 +175,14 @@ Estallo CRM é o SaaS comercial da Estallo para atendimento e vendas por WhatsAp
 - Grupos: entram **só os ligados** em Conexões › Grupos (`channel_session_groups`). O grupo ligado vira conversa `is_group` com um contato `kind = 'whatsapp_group'` que nunca entra em funil, lista, campanha ou IA; o remetente é `p.author` (nunca `p.from`), gravado em `messages.metadata.group_sender` (`lib/messaging/remetente-de-grupo.ts`). Para conversa de grupo o banco emite `message.group_received`, e não `message.received`, e o roteamento automático pula grupo. O filtro `ignore.groups` do WAHA é propriedade desta funcionalidade (`definirRecebimentoDeGrupos`); compatibilidade e convergência não o tocam. Spec: `docs/superpowers/specs/2026-09-23-grupos-na-inbox-design.md`
 - Cron `recover-stuck-messages` (`app/api/v1/cron/recover-stuck-messages/route.ts`, agendado no `scheduler` do `docker-compose.prod.yml`): marca `status='sending'` há >5min como `failed` **e abre aviso na Central** (`agent_inbox_items` kind `message_send_stuck`). Não toca em `queued`: esse estado tem dono (o agent-engine reagenda por `SEND_QUEUED_RETRY_MS`), e falhá-lo perderia mensagem que ia sair. Não reenvia — envio em dobro é pior que não-envio
 
+### Design System Estallo — padrão único
+
+- A única referência visual vigente é o Design System da Estallo, documentado em [`docs/design-system/README.md`](docs/design-system/README.md), a partir do Estallo Brand System v1.0 fornecido pelo proprietário.
+- Usar Sora para títulos, Manrope para leitura e controles, JetBrains Mono para dados técnicos; Estallo Blue para ação, Estallo Green para resultado e Ink para texto e navegação.
+- Tokens do produto vivem em `app/globals.css`; `lib/branding/regua-do-produto.ts` é o espelho runtime. O laboratório em `app/design/` e documentos históricos não são fontes normativas de identidade.
+- Specs, planos e handoffs que mencionam escolhas visuais do upstream estão superados nesse aspecto. Seus contratos técnicos permanecem válidos; não restaurar marca, fontes ou paleta antigas.
+- O padrão vale para todos os módulos. O redesenho é progressivo e a existência de uma tela antiga não autoriza um padrão concorrente. Validar contraste, mobile e ambos os temas ao alterar UI.
+
 ### Identidade fixa do SaaS
 
 - A marca do produto é Estallo CRM; nome centralizado em `lib/branding.ts`, política em `lib/branding/plataforma.ts`.

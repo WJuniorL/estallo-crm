@@ -8,6 +8,12 @@ O Estallo CRM é um SaaS da Estallo para empresas que atendem e vendem por Whats
 
 A identidade do aplicativo é sempre Estallo CRM. O cliente mantém seu nome, cadastro, dados legais e identidade nos documentos comerciais. Esses dados não substituem o logo, as cores, os títulos ou a navegação do produto. As estruturas de white-label herdadas permanecem como compatibilidade técnica, sem participação na identidade do SaaS.
 
+## Referência visual única
+
+O [Design System Estallo](design-system/README.md), baseado no Estallo Brand System v1.0 fornecido pelo proprietário, é o único padrão visual deste produto. Substitui a identidade herdada em documentação, specs e decisões futuras. Tokens operacionais vivem em `app/globals.css`; adaptações do CRM devem manter a identidade e a acessibilidade. O laboratório antigo não é referência normativa.
+
+A implantação do padrão é progressiva: a primeira etapa abaixo está entregue; o redesenho interno dos módulos continua pendente, sob essa mesma referência.
+
 ## Identidade e navegação — primeira etapa
 
 - Símbolo e logotipo oficiais da Estallo, com descritor CRM; fontes Sora, Manrope e JetBrains Mono servidas pelo aplicativo.

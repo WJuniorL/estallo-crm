@@ -1,3 +1,5 @@
+> **Referência visual substituída (14/10/2026):** o único padrão vigente é o [Design System Estallo](design-system/README.md). Cores, fontes, regras de marca e restrições estéticas herdadas neste documento não orientam novas implementações. Contratos técnicos e registros históricos permanecem em seu escopo; não copiar escolhas visuais do upstream.
+
 <!-- traduzido-de: docs/white-label.md@e862cd45e445 -->
 
 [🇧🇷 Português](white-label.md) · 🇺🇸 English · [🇪🇸 Español](white-label.es.md)
@@ -30,11 +32,11 @@ Example:
 
 ```css
 .text-muted-foreground {
-	color: #52645a;
+  color: #52645a;
 }
 
 .rounded-md {
-	border-radius: 12px;
+  border-radius: 12px;
 }
 ```
 
@@ -85,12 +87,12 @@ Configuration survives every update. That is why the brand is read at runtime an
 
 The boundary, which is deliberate:
 
-| Where | Which brand shows up |
-|---|---|
-| `/login`, sign-up, password recovery, two-step verification | The **installation's** (yours) |
-| Inside the system (`/app/...`), after signing in | The **organization's**, if it has one; otherwise the installation's |
-| Access e-mails (account confirmation, password recovery) | The **installation's** |
-| Team invite, LGPD e-mails | The **organization's** that sent them |
+| Where                                                       | Which brand shows up                                                |
+| ----------------------------------------------------------- | ------------------------------------------------------------------- |
+| `/login`, sign-up, password recovery, two-step verification | The **installation's** (yours)                                      |
+| Inside the system (`/app/...`), after signing in            | The **organization's**, if it has one; otherwise the installation's |
+| Access e-mails (account confirmation, password recovery)    | The **installation's**                                              |
+| Team invite, LGPD e-mails                                   | The **organization's** that sent them                               |
 
 The reason login is left out is not a limitation: **before the person signs in, the system does not know which organization they belong to.** Painting the login with the color of one of them would be picking one in the dark.
 
@@ -170,14 +172,14 @@ The system is multi-tenant from the first line: one installation serves several 
 
 Even so, the two models serve different purposes:
 
-| | One installation per client | One installation for everyone |
-|---|---|---|
-| **Brand** | Each client's, including on the sign-in screen | Yours at login; each organization's inside the system |
-| **Infrastructure cost** | One VPS per client | One VPS |
-| **Failure** | Isolated | Hits everyone |
-| **Update** | One at a time, can be staggered | Everyone at once |
-| **Client data** | Physically separated | Separated by RLS |
-| **Best for** | Reselling under the client's brand | Your own operation serving several accounts |
+|                         | One installation per client                    | One installation for everyone                         |
+| ----------------------- | ---------------------------------------------- | ----------------------------------------------------- |
+| **Brand**               | Each client's, including on the sign-in screen | Yours at login; each organization's inside the system |
+| **Infrastructure cost** | One VPS per client                             | One VPS                                               |
+| **Failure**             | Isolated                                       | Hits everyone                                         |
+| **Update**              | One at a time, can be staggered                | Everyone at once                                      |
+| **Client data**         | Physically separated                           | Separated by RLS                                      |
+| **Best for**            | Reselling under the client's brand             | Your own operation serving several accounts           |
 
 If your client asks "where does my data live?", the dedicated installation has the simpler answer to give — and to defend.
 
@@ -199,13 +201,13 @@ Every client of yours who uses a foreign CRM performs such a transfer and needs 
 
 Every installation ships the scripts in `hostgator-setup-kit/`:
 
-| Command | What it does |
-|---|---|
-| `bash update.sh` | Updates. Backs up the database **first**, reapplies the schema idempotently and checks health at the end |
-| `bash backup.sh` / `restore.sh` | Backup and restore |
-| `bash reset-password.sh` | Resets a user's password |
-| `bash reset-mfa.sh` | Removes two-step verification from whoever lost the device |
-| `bash healthcheck.sh` | Diagnoses the installation |
+| Command                         | What it does                                                                                             |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `bash update.sh`                | Updates. Backs up the database **first**, reapplies the schema idempotently and checks health at the end |
+| `bash backup.sh` / `restore.sh` | Backup and restore                                                                                       |
+| `bash reset-password.sh`        | Resets a user's password                                                                                 |
+| `bash reset-mfa.sh`             | Removes two-step verification from whoever lost the device                                               |
+| `bash healthcheck.sh`           | Diagnoses the installation                                                                               |
 
 `reset-mfa.sh` is the one you will use the most: two-step verification is mandatory for administrators, and changing phones without saving the recovery codes is the most common support call.
 
@@ -219,11 +221,11 @@ Full installation guide: [`hostgator-setup-kit/README.md`](../hostgator-setup-ki
 
 ---
 
-*Last updated: 14 August 2026 — full revision after the own-brand epic. The two most quoted sentences in this document ("colors, fonts and theme are not configurable" and "the brand is per installation, not per organization") stopped being true and were rewritten with today's honest limit.*
+_Last updated: 14 August 2026 — full revision after the own-brand epic. The two most quoted sentences in this document ("colors, fonts and theme are not configurable" and "the brand is per installation, not per organization") stopped being true and were rewritten with today's honest limit._
 
-*This document exists in three languages, and the prerequisite that the previous version of this footer named has been paid for: the translations carry, on their first line, a seal with the hash of the original, and editing `docs/white-label.md` without re-sealing fails `pnpm test:unit`. After translating, re-seal with `pnpm exec tsx scripts/selar-traducao.ts --todas`.*
+_This document exists in three languages, and the prerequisite that the previous version of this footer named has been paid for: the translations carry, on their first line, a seal with the hash of the original, and editing `docs/white-label.md` without re-sealing fails `pnpm test:unit`. After translating, re-seal with `pnpm exec tsx scripts/selar-traducao.ts --todas`._
 
-*The three READMEs were deliberately left **out** of the seal. They are the most edited file in the repository: with a seal, every fix would become a PR blocked until ~490 lines were re-translated twice — and the realistic outcome of that is not up-to-date translations, it is somebody re-sealing without translating, which is the only way for the seal to die. They come in when someone chooses to pay that cost with their eyes open.*
+_The three READMEs were deliberately left **out** of the seal. They are the most edited file in the repository: with a seal, every fix would become a PR blocked until ~490 lines were re-translated twice — and the realistic outcome of that is not up-to-date translations, it is somebody re-sealing without translating, which is the only way for the seal to die. They come in when someone chooses to pay that cost with their eyes open._
 
 ## A logo for each theme
 

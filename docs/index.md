@@ -1,6 +1,6 @@
 ---
 type: index
-project: DeskcommCRM
+project: Estallo CRM
 status: draft
 last_updated: 2026-07-29
 generated_by: auditoria documental (Claude Code)
@@ -10,7 +10,7 @@ audited_against: origin/main @ 789dfa6 (v1.0.0, 2026-07-27)
 
 > **Direção atual do fork:** [Estallo CRM SaaS](estallo-produto.md). Marca fixa, Stripe futuro e planos demonstrativos. Textos históricos de monetização/self-host do upstream não definem a oferta Estallo.
 
-# Índice da documentação — DeskcommCRM
+# Índice da documentação — Estallo CRM
 
 Mapa dos **154** arquivos `.md` de `docs/`, espalhados por **20** subpastas — medido em
 2026-08-14, com as réguas ao lado: `git ls-files 'docs/**/*.md' | wc -l` e
@@ -24,7 +24,7 @@ reescrevem por cima.
 **Regra de precedência quando dois docs discordam:**
 `CLAUDE.md` (doutrina) > `docs/specs/` (contrato técnico) > `docs/prd/` (intenção) >
 `HANDOFF-*.md` (estado de sessão) > README. Se achou divergência, corrija a fonte
-de menor precedência e registre.
+de menor precedência e registre. Para identidade visual, consultar sempre o [Design System Estallo](design-system/README.md); decisões visuais históricas do upstream foram substituídas.
 
 ---
 
@@ -120,12 +120,9 @@ Detalham schema SQL e payloads exatos. **Consulte antes de modelar qualquer cois
 
 ## 5. Design system
 
-[`design-system/README.md`](design-system/README.md) é o ponto de entrada (v1.0, 5 escolhas
-visuais lockadas: paleta Sage, Atkinson Hyperlegible, densidade aerada, Phosphor duotone,
-IBM Plex Mono). Numerados `00`–`09`: overview, tokens, paleta, tipografia, densidade,
-iconografia, componentes, motion, voice & tone, **anti-patterns**.
-Fluxo de tela em `design-system/screen-flow/` (jornadas, clickflows, máquinas de estado,
-acessibilidade).
+[`design-system/README.md`](design-system/README.md) é a única referência visual vigente: Design System Estallo, baseado no Brand System v1.0 fornecido pelo proprietário. Cores Blue / Green / Ink e fontes Sora / Manrope / JetBrains Mono. A [paleta Estallo](design-system/02-palette-estallo.md) substitui a antiga paleta do upstream.
+
+Numerados `00`–`09`: princípios, fundamentos, paleta, tipografia, densidade, iconografia, componentes, movimento, voz e anti-patterns. Fluxos em `design-system/screen-flow/` orientam jornadas e acessibilidade; contratos técnicos são preservados. Escolhas visuais antigas em specs, planos e handoffs não definem o produto. O laboratório `app/design/` é histórico, com adaptação pendente, e não é fonte normativa.
 
 ## 6. Operar e instalar
 

@@ -255,6 +255,14 @@ função aparece várias vezes, e quem vale é a **última**. Pergunte ao banco 
 (`pg_get_functiondef`) ou ancore no último `create or replace` (`rfind`, nunca `find`).
 Contar no arquivo responde "o arquivo menciona", não "o banco faz".
 
+### Design System Estallo — padrão único
+
+- A única referência visual vigente é o Design System da Estallo, documentado em [`docs/design-system/README.md`](docs/design-system/README.md), a partir do Estallo Brand System v1.0 fornecido pelo proprietário.
+- Usar Sora para títulos, Manrope para leitura e controles, JetBrains Mono para dados técnicos; Estallo Blue para ação, Estallo Green para resultado e Ink para texto e navegação.
+- Tokens do produto vivem em `app/globals.css`; `lib/branding/regua-do-produto.ts` é o espelho runtime. O laboratório em `app/design/` e documentos históricos não são fontes normativas de identidade.
+- Specs, planos e handoffs que mencionam escolhas visuais do upstream estão superados nesse aspecto. Seus contratos técnicos permanecem válidos; não restaurar marca, fontes ou paleta antigas.
+- O padrão vale para todos os módulos. O redesenho é progressivo e a existência de uma tela antiga não autoriza um padrão concorrente. Validar contraste, mobile e ambos os temas ao alterar UI.
+
 **Identidade fixa do SaaS** — a marca pertence à plataforma Estallo. **Nunca** escreva
 "Deskcomm"/"Estallo CRM" em código que alcança o usuário: `tests/unit/branding.test.ts` varre
 `app|components|lib|workers|hooks` e reprova (a allowlist só encolhe). A identidade resolve pela política fixa em `lib/branding/plataforma.ts`.

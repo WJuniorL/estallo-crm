@@ -16,7 +16,7 @@ A Estallo hospeda e administra a plataforma. Clientes contratam planos com capac
 
 ## Etapa atual
 
-O piloto está implantado. A primeira etapa de identidade e navegação adota o Design System oficial da Estallo. Os planos apresentados usam preços fictícios e não geram cobrança. A integração comercial será adaptada da referência Stripe do Nutrigg; credenciais e catálogo final estão pendentes.
+O piloto está implantado. A primeira etapa de identidade e navegação adota o [Design System oficial da Estallo](docs/design-system/README.md), única referência visual para todos os módulos e próximos redesenhos. Os planos apresentados usam preços fictícios e não geram cobrança. A integração comercial será adaptada da referência Stripe do Nutrigg; credenciais e catálogo final estão pendentes.
 
 Escopo, identidade, catálogo demonstrativo, pendências comerciais e critérios de aceite estão em [docs/estallo-produto.md](docs/estallo-produto.md).
 

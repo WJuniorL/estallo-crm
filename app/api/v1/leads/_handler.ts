@@ -332,6 +332,8 @@ export interface ListLeadsQuery {
   lost_reason_category?: string;
   /** Só os negócios deste contato — o escopo do turno do agente, no WHERE, antes do limite. */
   contact_id?: string;
+  /** Trecho do título (sem diferenciar maiúsculas) — o seletor de negócio das Tarefas. */
+  search?: string;
   limit?: number;
   cursor?: string | null;
 }
@@ -386,6 +388,10 @@ export async function listLeadsHandler(
   if (q.status) query = query.eq("status", q.status);
   if (q.owner_user_id) query = query.eq("owner_user_id", q.owner_user_id);
   if (q.contact_id) query = query.eq("contact_id", q.contact_id);
+  if (q.search) {
+    // `%` e `_` digitados são texto, não curinga.
+    query = query.ilike("title", `%${q.search.replace(/[\\%_]/g, (c) => `\\${c}`)}%`);
+  }
   // Negócio de pessoal não é listado (spec 21, etapa 12 — leitura exclui):
   // a MESMA primitiva de ids da lista do inbox (`conversations/_handler.ts`),
   // antes do limite, para cursor e `has_more` descreverem o conjunto visível.

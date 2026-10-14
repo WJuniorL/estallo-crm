@@ -1004,6 +1004,13 @@ export const DICIONARIO: Traducoes = {
   "O negócio já está neste funil.": { es: "El negocio ya está en este embudo." },
   "Escolha uma etapa aberta. Para ganhar ou perder, use os botões do negócio.": { es: "Elige una etapa abierta. Para ganar o perder, usa los botones del negocio." },
   "Só um negócio aberto muda de funil.": { es: "Solo un negocio abierto cambia de embudo." },
+  "Selecionar Oportunidade": { es: "Seleccionar oportunidad" },
+  "Buscar por oportunidade...": { es: "Buscar oportunidad..." },
+  Oportunidades: { es: "Oportunidades" },
+  "Nenhuma oportunidade encontrada.": { es: "No se encontró ninguna oportunidad." },
+  Oportunidade: { es: "Oportunidad" },
+  "Remover oportunidade": { es: "Quitar oportunidad" },
+  "Vincular a uma oportunidade": { es: "Vincular a una oportunidad" },
   "Resposta aprovada. Acompanhe o envio aqui.": { es: "Respuesta aprobada. Sigue el envío aquí." },
   "Sugestão rejeitada. O feedback será usado na próxima sugestão.": {
     es: "Sugerencia rechazada. Los comentarios se usarán en la próxima sugerencia.",

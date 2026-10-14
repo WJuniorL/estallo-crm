@@ -22,8 +22,8 @@ Em 13/10/2026, o proprietário autorizou implantar diretamente na VPS após o
 esgotamento da cota de Actions. Todos os workflows deste fork foram desativados.
 O piloto usa as imagens AMD64 já publicadas do commit
 `1692ad9eb367b8cb9bfc39b79c0ca84cf9abc87a`, com sufixo `-amd64`. Não houve build
-na VPS. As alterações posteriores a esse commit só alcançam operação, testes
-e documentação; o código da aplicação e dos workers corresponde às imagens.
+na VPS. Até aquele deploy, as alterações posteriores a esse commit só alcançavam
+operação, testes e documentação; o código em execução correspondia às imagens.
 O mapeamento de tags fica protegido em `/opt/stacks/estallo-crm/image-tags.json`
 e acompanha os backups. Ele também é usado ao retornar a uma versão anterior.
 
@@ -56,7 +56,9 @@ três imagens ficam no arquivo protegido `local-images.json`, incluído nos back
 O Swarm usa as imagens já carregadas, sem consultar tags inexistentes no registro.
 Backup prévio, verificações de saúde, margem de memória e rollback automático
 continuam ativos. Somente app, worker e scheduler recebem imagens novas;
-WAHA, Redis, rede e volumes mantêm suas configurações.
+WAHA, Redis, rede e volumes mantêm suas configurações. O deploy e o rollback
+preservam os digests instalados dessas dependências, para não recriá-las pela
+retirada de um digest ou pela resolução de uma tag móvel.
 
 Uma versão transferida manualmente não é oferecida pelo atualizador automático,
 que continua exigindo imagens publicadas no registro. Para restaurar em outra VPS,
@@ -165,8 +167,8 @@ O resultado não é sucesso se HTTPS, `/app`, saúde ou memória falharem.
 Living System Checklist: o commit e a configuração alimentam a stack; ela
 alimenta aplicação, worker e scheduler. Os recibos de atualização existentes
 aparecem na tela de atualização; falhas ficam no log do host e no run da tela.
-O cron do agente é o próximo passo para pedido pendente. Marca continua
-configurável em `/admin/marca`. A continuidade IA/humano existente permanece
+O cron do agente é o próximo passo para pedido pendente. Marca é fixa na plataforma,
+com política visível em `/admin/marca`. A continuidade IA/humano existente permanece
 no worker e no inbox; esta mudança é infraestrutura. Falha de rollout impede
 o commit novo de virar estado instalado e aciona recuperação do conjunto anterior.
 

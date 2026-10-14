@@ -1,12 +1,23 @@
-// Prova visual local, sem operações de pagamento, mensagens ou alterações cadastrais.
+// Prova visual sem operações de pagamento, mensagens ou alterações cadastrais.
 import fs from "node:fs/promises";
 import path from "node:path";
 import { chromium } from "@playwright/test";
 
 const origin = process.env.ESTALLO_QA_URL ?? "http://127.0.0.1:3001";
-if (!["127.0.0.1", "localhost"].includes(new URL(origin).hostname))
-  throw new Error("QA visual só aceita ambiente local.");
-const destination = path.resolve("evidence/estallo-identidade");
+const deployMode = process.env.ESTALLO_QA_DEPLOY === "1";
+if (
+  deployMode
+    ? origin !== "https://crm.estallo.com.br"
+    : !["127.0.0.1", "localhost"].includes(new URL(origin).hostname)
+)
+  throw new Error(
+    "QA aceita localhost ou, no modo deploy explícito, o domínio Estallo autorizado.",
+  );
+if (deployMode && (!process.env.ESTALLO_QA_CREDENTIALS || !process.env.ESTALLO_QA_SHA))
+  throw new Error("Prova de deploy exige arquivo protegido e revisão esperada.");
+const destination = path.resolve(
+  deployMode ? "evidence/estallo-deploy-2026-10-14" : "evidence/estallo-identidade",
+);
 await fs.mkdir(destination, { recursive: true });
 const browser = await chromium.launch({ headless: true });
 const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
@@ -28,6 +39,19 @@ async function capture(name, fullPage = true) {
 }
 
 try {
+  if (deployMode) {
+    const response = await context.request.get(`${origin}/api/v1/health`);
+    const health = (await response.json()).data;
+    if (
+      !response.ok() ||
+      health.status !== "healthy" ||
+      health.version !== process.env.ESTALLO_QA_SHA
+    )
+      throw new Error("Versão ou saúde do deploy não corresponde ao aceite.");
+    checks.origin = origin;
+    checks.revision = health.version;
+    checks.dependencies = health.checks;
+  }
   await page.goto(`${origin}/login`, { waitUntil: "domcontentloaded", timeout: 300_000 });
   await page.getByRole("button", { name: "Entrar", exact: true }).waitFor({ timeout: 120_000 });
   checks.title = await page.title();
@@ -75,6 +99,8 @@ try {
       timeout: 300_000,
     });
     checks.billingPath = new URL(page.url()).pathname;
+    if (deployMode && checks.billingPath !== "/app/settings/billing")
+      throw new Error("A sessão não alcançou a tela de planos autenticada.");
     if (checks.billingPath === "/app/settings/billing") {
       await page.getByRole("heading", { name: "Plano e cobrança", exact: true }).waitFor();
       await page.waitForFunction(() => {

@@ -132,6 +132,32 @@ class EstalloVpsTests(unittest.TestCase):
         args = run.call_args.args[0]
         self.assertEqual(args[args.index('--resolve-image') + 1], 'always')
 
+    @patch.object(vps, 'state', return_value={'sha': OLD})
+    @patch.object(vps, 'runtime', return_value={})
+    def test_updates_and_rollback_keep_installed_dependency_digests(self, _runtime, _state):
+        captured = []
+        def docker(args, **kwargs):
+            if args[:3] == ['docker', 'service', 'inspect']:
+                return (args[-1] + ':fixed@sha256:' + 'a' * 64).encode()
+            overlay = Path(args[args.index('-c', args.index('-c') + 1) + 1])
+            captured.append(json.loads(overlay.read_text()))
+            return b''
+        vps.save(vps.ROOT / 'local-images.json', json.dumps({NEW: {}}))
+        with patch.object(vps, 'run', side_effect=docker):
+            vps.stack(NEW)
+            vps.stack(OLD)
+        self.assertEqual(captured[0], captured[1])
+        self.assertEqual(set(captured[0]['services']), {'waha', 'redis', 'srh'})
+
+    @patch.object(vps, 'state', return_value={'sha': OLD})
+    @patch.object(vps, 'runtime', return_value={})
+    @patch.object(vps, 'run', return_value=b'upstream:mutable')
+    def test_update_refuses_dependency_without_installed_digest(self, run, _runtime, _state):
+        with self.assertRaises(ValueError):
+            vps.stack(NEW)
+        self.assertFalse(any(call.args[0][:3] == ['docker', 'stack', 'deploy']
+                             for call in run.call_args_list))
+
     def test_tag_rejects_mutable_names_and_shell_commands(self):
         for tag in ('latest', 'stable', 'main', 'abc;echo segredo', '', '1' * 39):
             with self.assertRaises(ValueError):

@@ -13,6 +13,7 @@ import secrets
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.parse
@@ -352,8 +353,25 @@ def wait_healthy(sha):
 def stack(sha):
     values = dict(os.environ, **runtime(), ESTALLO_IMAGE_TAG=image_tag(sha))
     resolution = 'never' if sha in local_images() else 'always'
-    run(['docker', 'stack', 'deploy', '--with-registry-auth', '--resolve-image', resolution,
-         '-c', str(REPO / 'docker-stack.estallo.yml'), 'estallo-crm'], env=values)
+    args = ['docker', 'stack', 'deploy', '--with-registry-auth', '--resolve-image', resolution,
+            '-c', str(REPO / 'docker-stack.estallo.yml')]
+    if state().get('sha'):
+        # O modo "never" não deve retirar o digest já instalado e recriar WAHA.
+        # O rollback também mantém dependências, em vez de resolver Redis:7 outra vez.
+        services = {}
+        for service in ('waha', 'redis', 'srh'):
+            reference = run(['docker', 'service', 'inspect', '--format',
+                             '{{.Spec.TaskTemplate.ContainerSpec.Image}}',
+                             'estallo-crm_' + service]).decode().strip()
+            if not reference or '@sha256:' not in reference:
+                raise ValueError('Dependência instalada sem digest; rollout recusado')
+            services[service] = {'image': reference}
+        with tempfile.TemporaryDirectory(dir=ROOT, prefix='stack-local-') as directory:
+            overlay = Path(directory) / 'dependencies.json'
+            overlay.write_text(json.dumps({'version': '3.8', 'services': services}))
+            run(args + ['-c', str(overlay), 'estallo-crm'], env=values)
+    else:
+        run(args + ['estallo-crm'], env=values)
 
 
 def storage_backup(destination):

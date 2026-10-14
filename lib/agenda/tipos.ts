@@ -56,6 +56,9 @@ export const LOCAIS_DE_AGENDAMENTO = [
   "phone",
   "whatsapp",
   "video_link",
+  // Legado: compromissos antigos podem ter o valor. O Estallo não oferece mais
+  // Google Meet (a API de tipos e a tela não aceitam; migration 0658).
+  "google_meet",
 ] as const;
 export type LocalDeAgendamento = (typeof LOCAIS_DE_AGENDAMENTO)[number];
 
@@ -64,6 +67,7 @@ export const ROTULO_DO_LOCAL: Record<LocalDeAgendamento, string> = {
   phone: "Telefone",
   whatsapp: "WhatsApp",
   video_link: "Link de vídeo",
+  google_meet: "Google Meet",
 };
 
 /** O que cada local exige que a pessoa preencha ao marcar. */
@@ -72,6 +76,7 @@ export const CAMPO_EXIGIDO_PELO_LOCAL: Record<LocalDeAgendamento, "endereco" | "
   phone: null,
   whatsapp: null,
   video_link: "url",
+  google_meet: null,
 };
 
 /**

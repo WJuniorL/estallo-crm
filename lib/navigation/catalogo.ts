@@ -212,8 +212,9 @@ export const NAV_CATALOG = [
     label: "Respostas rápidas",
     description: "Scripts salvos para responder mais rápido, seus ou da equipe.",
     icon: "FileText",
-    group: "atendimento",
-    sidebar: true,
+    // Estallo: mora no hub do CRM (/app/crm), não no menu lateral.
+    group: "crm",
+    section: "Preparar a venda",
   },
 
   // ---- CRM — o funil ----

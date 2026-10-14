@@ -24,6 +24,10 @@ import { useMarcaDaInstalacao } from "@/lib/branding/contexto";
 import { GRUPO_NO_RODAPE, sidebarGroups } from "@/lib/navigation/registry";
 
 const CHAVE_GRUPOS_FECHADOS = "sidebar-grupos-fechados";
+/** Fechados quando o navegador não tem preferência salva. */
+const GRUPOS_FECHADOS_POR_PADRAO = ["ia", "canais", "analise"];
+/** Os únicos grupos desenhados com o menu recolhido. */
+const GRUPOS_NO_RAIL = ["atendimento", "crm"];
 
 interface SidebarContentProps {
   collapsed: boolean;
@@ -59,20 +63,28 @@ export function SidebarContent({
   );
   // Configurações sai da área que rola e vai para o rodapé fixo: medido em
   // 1280x768, ele caía fora da dobra mesmo em telas de 1080px.
-  const grupos = todos.filter((g) => g.group.id !== GRUPO_NO_RODAPE);
+  // No rail recolhido (só ícones) ficam só os grupos do dia a dia; os outros
+  // seguem a um clique de expandir o menu.
+  const grupos = todos.filter(
+    (g) =>
+      g.group.id !== GRUPO_NO_RODAPE &&
+      (!collapsed || GRUPOS_NO_RAIL.includes(g.group.id)),
+  );
   const rodape = todos.find((g) => g.group.id === GRUPO_NO_RODAPE)?.group.hub;
   const plano = todos
     .find((g) => g.group.id === GRUPO_NO_RODAPE)
     ?.items.find((item) => item.href === "/app/settings/billing");
 
   /**
-   * Grupo fechado é preferência POR NAVEGADOR, não por conta: começa vazio (tudo
-   * aberto) em toda renderização — servidor, primeira pintura do cliente e nos
-   * testes, que nunca clicam em nada — e só muda depois do mount, se o
-   * `localStorage` tiver algo salvo. Guardar o CONJUNTO DOS FECHADOS, e não dos
-   * abertos, é o que faz "sem preferência salva" já significar "tudo aberto".
+   * Grupo fechado é preferência POR NAVEGADOR, não por conta. Sem nada salvo,
+   * Agente de IA, Canais e Análise começam FECHADOS (padrão do Estallo: o dia a
+   * dia é Atendimento e CRM) — o mesmo conjunto no servidor e na primeira
+   * pintura, então não há troca de layout na hidratação. Depois do mount, a
+   * escolha salva no `localStorage` (o conjunto dos FECHADOS) manda.
    */
-  const [gruposFechados, setGruposFechados] = useState<Set<string>>(() => new Set());
+  const [gruposFechados, setGruposFechados] = useState<Set<string>>(
+    () => new Set(GRUPOS_FECHADOS_POR_PADRAO),
+  );
   useEffect(() => {
     try {
       const salvo = window.localStorage.getItem(CHAVE_GRUPOS_FECHADOS);

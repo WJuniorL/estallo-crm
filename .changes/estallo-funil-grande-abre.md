@@ -13,3 +13,5 @@ Funis com mais de mil negócios mostravam só os mil primeiros. Agora aparecem t
 Os funis fixados no menu passaram a ser de cada organização. Quem já tinha fixado precisa fixar de novo, uma vez em cada organização.
 
 Toda consulta do servidor ao banco ganhou prazo (20 s; 60 s para arquivos). Antes, uma consulta pendurada esperava para sempre, e o sistema inteiro ficava em carregamento infinito até alguém reiniciar o app. Agora a ação mostra o erro e a próxima tentativa funciona. Se o app ainda assim perder o contato com o banco, ele se reinicia sozinho em cerca de 2 minutos.
+
+A conferência de quem pode ver cada negócio passou a ser calculada uma vez por consulta, e não para cada negócio. Quem vê o quê continua igual. Num funil com mais de mil negócios, a leitura caía de cerca de 4 segundos no banco, e eram esses picos que deixavam o sistema inteiro lento e davam "Erro inesperado" ao ganhar um negócio ou enviar uma mensagem.

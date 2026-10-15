@@ -31,17 +31,21 @@ services:
       EVENT_LOG_WORKER_DRAINS: "true"
     networks: [internal, NetPratica]
     logging: *logging
+    # Reprova quando o app não responde OU não alcança o Supabase (só esse check:
+    # WAHA ou Redis fora não são defeito do app). Em 15/10/2026 o processo ficou
+    # minutos com toda consulta ao Supabase pendurada e a porta aberta — o probe
+    # TCP de antes seguia verde. Com isto o Swarm reinicia o app em ~2 min.
     healthcheck:
       test:
         [
           CMD,
           node,
           -e,
-          "require('net').connect(3000,'127.0.0.1').on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))",
+          "fetch('http://127.0.0.1:3000/api/v1/health',{signal:AbortSignal.timeout(8000)}).then(r=>r.json()).then(j=>process.exit(j?.data?.checks?.supabase?.status==='down'?1:0)).catch(()=>process.exit(1))",
         ]
       interval: 30s
-      timeout: 5s
-      retries: 5
+      timeout: 10s
+      retries: 4
       start_period: 60s
     deploy:
       <<: *deploy

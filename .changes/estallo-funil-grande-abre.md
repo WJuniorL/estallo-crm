@@ -11,3 +11,5 @@ Mudanças que chegam em sequência, como mensagens e atualizações da IA, viram
 Funis com mais de mil negócios mostravam só os mil primeiros. Agora aparecem todos.
 
 Os funis fixados no menu passaram a ser de cada organização. Quem já tinha fixado precisa fixar de novo, uma vez em cada organização.
+
+Toda consulta do servidor ao banco ganhou prazo (20 s; 60 s para arquivos). Antes, uma consulta pendurada esperava para sempre, e o sistema inteiro ficava em carregamento infinito até alguém reiniciar o app. Agora a ação mostra o erro e a próxima tentativa funciona. Se o app ainda assim perder o contato com o banco, ele se reinicia sozinho em cerca de 2 minutos.

@@ -1,4 +1,5 @@
 "use client";
+import { BotaoFixarFunil } from "@/components/kanban/BotaoFixarFunil";
 import { useState } from "react";
 import Link from "next/link";
 
@@ -580,6 +581,7 @@ export function FunisClient({
                 </div>
 
                 <span className="shrink-0 text-xs text-muted-foreground">/{funil.slug}</span>
+                {!renomeandoAqui && <BotaoFixarFunil id={funil.id} nome={funil.name} />}
 
                 {podeGerenciar && !renomeandoAqui && (
                   <div className="flex shrink-0 flex-wrap gap-1">

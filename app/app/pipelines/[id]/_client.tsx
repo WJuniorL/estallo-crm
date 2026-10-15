@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useT } from "@/hooks/i18n/useT";
 import { useBoard } from "@/hooks/kanban/useBoard";
@@ -23,6 +23,8 @@ function formatError(err: unknown, t: (texto: string) => string): string {
 import { KanbanBoard } from "@/components/kanban/KanbanBoard";
 import { CalendarioDoFunil } from "@/components/kanban/CalendarioDoFunil";
 import { FilterBar } from "@/components/kanban/FilterBar";
+import { BotaoFixarFunil } from "@/components/kanban/BotaoFixarFunil";
+import { useFunisFixados } from "@/hooks/kanban/useFunisFixados";
 import { BulkActionBar } from "@/components/kanban/BulkActionBar";
 import { NewLeadDialog } from "@/components/kanban/NewLeadDialog";
 import { Button } from "@/components/ui/button";
@@ -103,6 +105,11 @@ export function PipelinePageClient({
     [data?.leads],
   );
   const nomeAtual = data?.pipeline.name ?? initialName;
+  // Funil fixado no menu leva o nome de quando foi fixado; abrir o quadro o atualiza.
+  const { renomear: renomearFixado } = useFunisFixados();
+  useEffect(() => {
+    if (data?.pipeline.name) renomearFixado({ id: pipelineId, nome: data.pipeline.name });
+  }, [data?.pipeline.name, pipelineId, renomearFixado]);
   // Um funil só = nada para trocar: o seletor seria ruído permanente.
   const podeTrocar = funis.length > 1;
 
@@ -205,6 +212,7 @@ export function PipelinePageClient({
           é a mesma lógica do interruptor Lista/Calendário da tela de Tarefas.
         */}
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+          <BotaoFixarFunil id={pipelineId} nome={nomeAtual} />
           <div className="flex items-center gap-0.5 rounded-md border bg-muted p-0.5">
             <button
               type="button"

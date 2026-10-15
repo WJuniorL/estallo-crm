@@ -461,6 +461,40 @@ async function withTarefas(
   };
 }
 
+/**
+ * Anexa os produtos do catálogo de cada negócio (0660) — o filtro por produto
+ * do quadro. Uma leitura para o quadro inteiro, em lotes, como as tarefas.
+ */
+async function withProdutos(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  organizationId: string,
+  leads: Lead[],
+): Promise<{ leads: Lead[]; error: string | null }> {
+  const leadIds = leads.map((l) => l.id);
+  if (leadIds.length === 0) return { leads, error: null };
+
+  const { data, error } = await buscaEmLotes(leadIds, (lote) =>
+    supabase
+      .from("crm_lead_products")
+      .select("lead_id, product_id")
+      .eq("organization_id", organizationId)
+      .in("lead_id", lote)
+      .not("product_id", "is", null),
+  );
+  if (error) return { leads, error: error.message };
+
+  const porLead = new Map<string, string[]>();
+  for (const linha of (data ?? []) as { lead_id: string; product_id: string }[]) {
+    const lista = porLead.get(linha.lead_id) ?? [];
+    if (!lista.includes(linha.product_id)) lista.push(linha.product_id);
+    porLead.set(linha.lead_id, lista);
+  }
+  return {
+    leads: leads.map((l) => (porLead.has(l.id) ? { ...l, produtos_ids: porLead.get(l.id) } : l)),
+    error: null,
+  };
+}
+
 export async function GET(_req: NextRequest, ctx: RouteCtx): Promise<Response> {
   const requestId = randomUUID();
   const { id: pipelineId } = await ctx.params;
@@ -565,10 +599,19 @@ export async function GET(_req: NextRequest, ctx: RouteCtx): Promise<Response> {
     return fail("internal_error", leadsComTarefas.error, 500, { requestId });
   }
 
-  const leadsComConversa = await withConversas(
+  const leadsComProdutos = await withProdutos(
     supabase,
     (pipeline as Pipeline).organization_id,
     leadsComTarefas.leads,
+  );
+  if (leadsComProdutos.error) {
+    return fail("internal_error", leadsComProdutos.error, 500, { requestId });
+  }
+
+  const leadsComConversa = await withConversas(
+    supabase,
+    (pipeline as Pipeline).organization_id,
+    leadsComProdutos.leads,
   );
   if (leadsComConversa.error) {
     return fail("internal_error", leadsComConversa.error, 500, { requestId });

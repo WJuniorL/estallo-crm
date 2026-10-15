@@ -368,7 +368,8 @@
   --color-accent-900: #07384f;
   --color-accent-950: #051e2b;
   --color-accent: var(--color-accent-400);
-  --color-accent-fg: #17232c;
+  /* Estallo: texto BRANCO sobre o azul em qualquer tema (decisão do dono, 2026-10-14 — legibilidade percebida acima da razão de contraste). */
+  --color-accent-fg: #ffffff;
   --color-accent-soft: rgba(84, 188, 232, 0.16);
   --color-accent-hover: var(--color-accent-300);
 
@@ -1553,4 +1554,102 @@ h4 {
 .estallo-navigation :focus-visible,
 [data-estallo-navigation] :focus-visible {
   outline-color: var(--ring);
+}
+/* Menu lateral "02 · Com presença" (escolha do dono, 2026-10-14): ícone de 20px
+   num suporte de 36px, item ativo em azul com filete claro à esquerda. Prévia:
+   ~/.estallo-crm/previews/sidebar-estallo/previas.html. */
+.nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.6875rem;
+  min-height: 2.75rem;
+  padding: 0.25rem 0.375rem;
+  border-radius: 0.6875rem;
+  border: 1px solid transparent;
+  color: #dce4ea;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition:
+    background-color var(--duration-fast, 150ms),
+    color var(--duration-fast, 150ms);
+}
+.nav-item:hover {
+  background: rgb(255 255 255 / 0.03);
+  color: #ffffff;
+}
+.nav-item-icone {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.625rem;
+  border: 1px solid rgb(255 255 255 / 0.04);
+  background: #34424e;
+  color: #a7daf0;
+  transition:
+    background-color var(--duration-fast, 150ms),
+    border-color var(--duration-fast, 150ms),
+    color var(--duration-fast, 150ms);
+}
+.nav-item:not([aria-current="page"]):hover .nav-item-icone {
+  background: #3e4e5a;
+  border-color: rgb(84 188 232 / 0.3);
+  color: #bcebff;
+}
+.nav-item[aria-current="page"] {
+  background: #0b6e9a;
+  color: #ffffff;
+  font-weight: 650;
+}
+.nav-item[aria-current="page"] .nav-item-icone {
+  background: rgb(255 255 255 / 0.09);
+  border-color: rgb(255 255 255 / 0.12);
+  color: #ffffff;
+}
+.nav-item[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  width: 3px;
+  height: 1.5rem;
+  border-radius: 3px;
+  background: #8fd9f5;
+}
+/* O número do funil fixado, no canto do suporte, com o menu recolhido. */
+.nav-item-numero {
+  position: absolute;
+  top: -0.3rem;
+  right: -0.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 0.2rem;
+  border-radius: 999px;
+  border: 1px solid #26333d;
+  background: #1099d3;
+  color: #ffffff;
+  font-size: 0.625rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.nav-grupo {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 2.25rem;
+  padding: 0 0.75rem;
+  border-radius: 0.5rem;
+  color: #c4cdd4;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+.nav-grupo:hover {
+  color: #ffffff;
 }

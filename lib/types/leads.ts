@@ -137,6 +137,12 @@ export interface Lead {
    * `lib/kanban/tarefas-no-quadro.ts`.
    */
   tarefas?: ResumoDasTarefas;
+  /**
+   * Derivado (não é coluna): os produtos do catálogo vinculados a este negócio
+   * (`crm_lead_products.product_id`, 0660) — é o que o filtro por produto do
+   * quadro lê. Ausente quando não há nenhum.
+   */
+  produtos_ids?: string[];
   created_at: string;
   updated_at: string;
   created_by_user_id: string | null;

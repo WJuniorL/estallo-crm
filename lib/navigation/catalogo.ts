@@ -203,8 +203,18 @@ export const NAV_CATALOG = [
     icon: "CalendarBlank",
     group: "atendimento",
     sidebar: true,
-    // Liga/desliga em /app/crm (padrão: desligada).
+    // Liga/desliga em /app/settings/recursos (padrão: desligada).
     capacidade: "agenda",
+  },
+  {
+    // Estallo: mora em Atendimento (pedido do dono) — o contato é quem está do
+    // outro lado da conversa, e quem atende o abre junto com o Inbox.
+    href: "/app/contacts",
+    label: "Contatos",
+    description: "As pessoas do outro lado da conversa e seu histórico.",
+    icon: "Users",
+    group: "atendimento",
+    sidebar: true,
   },
   {
     // Renomeado de "Templates": estes são scripts do atendente, consumidos pelo
@@ -275,15 +285,6 @@ export const NAV_CATALOG = [
     // SÓ NO HUB, como as demais telas de preparação: o quinto item do sidebar do
     // CRM já fez o menu rolar 13px em 900px (e2e `navegacao.spec.ts`), e a
     // campanha é montada de vez em quando, não aberta todo dia.
-  },
-  {
-    href: "/app/contacts",
-    label: "Contatos",
-    description: "As pessoas do outro lado da conversa e seu histórico.",
-    icon: "Users",
-    group: "crm",
-    section: "O dia a dia da venda",
-    sidebar: true,
   },
   {
     href: "/app/companies",

@@ -15,6 +15,7 @@ export {
   PlugsConnected,
   QrCode,
   Kanban,
+  PushPin,
   Users,
   UsersThree,
   Storefront,

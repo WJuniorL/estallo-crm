@@ -1,6 +1,6 @@
 "use client";
 
-import { useActiveOrg } from "@/hooks/auth/AuthProvider";
+import { useActiveOrg, useUser } from "@/hooks/auth/AuthProvider";
 import { useT } from "@/hooks/i18n/useT";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -13,11 +13,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { useEditLead } from "@/hooks/kanban/useUpdateLead";
 import type { Lead } from "@/lib/types/leads";
 import { updateLeadSchema, type UpdateLeadInput } from "@/lib/schemas/leads";
-import { MOEDA_PADRAO, parseReaisToCents, simboloDaMoeda } from "@/lib/money";
+import { formatCents, MOEDA_PADRAO, parseReaisToCents, simboloDaMoeda } from "@/lib/money";
+import { ROLE_RANK } from "@/lib/auth/types";
+import { useProdutosDoNegocio } from "@/hooks/leads/useProdutosDoNegocio";
+import { totalDoItem } from "@/lib/schemas/produtos-do-negocio";
 import { soChavesAlteradas } from "@/lib/leads/custom-fields-so-diff";
 import { CustomFieldsEditor, type CustomFieldDef } from "@/components/contacts/CustomFieldsEditor";
 import { SeletorDeTags } from "@/components/tags/SeletorDeTags";
 import { EcoDoValor } from "./EcoDoValor";
+import { ProdutosDoNegocio } from "./ProdutosDoNegocio";
 
 interface FormShape {
   title: string;
@@ -61,6 +65,16 @@ export function LeadFieldsForm({ lead, pipelineId, fieldDefs: todosOsCampos = []
   // reescreve o que nasceu antes, e o cartão e o dossiê mostram a persistida.
   const moedaDoValor = lead.currency ?? org?.currency ?? MOEDA_PADRAO;
   const edit = useEditLead(pipelineId);
+  const user = useUser();
+  // Produtos são `agent`+, a régua da rota (e o suporte temporário só lê).
+  const podeEditarProdutos =
+    (user.is_platform_admin && !user.support) ||
+    (org ? ROLE_RANK[org.role] >= ROLE_RANK.agent : false);
+  // Com produtos, o valor do negócio é a SOMA deles (trigger da 0660): o campo
+  // vira leitura e o salvar não manda `value_cents`, senão sobrescreveria a conta.
+  const produtos = useProdutosDoNegocio(lead.id, pipelineId);
+  const itens = produtos.data ?? [];
+  const valorPelosProdutos = itens.length > 0 ? itens.reduce((s, i) => s + totalDoItem(i), 0) : null;
   const [customFields, setCustomFields] = useState<Record<string, unknown>>(lead.custom_fields ?? {});
   // A RÉGUA do diff (issue #2132): o valor carregado ao abrir. Só o que a
   // pessoa mudar daqui vai viajar — devolver o objeto inteiro sobrescrevia o
@@ -108,7 +122,7 @@ export function LeadFieldsForm({ lead, pipelineId, fieldDefs: todosOsCampos = []
     const patch: Record<string, unknown> = {
       title: values.title.trim(),
       description: values.description.trim() ? values.description.trim() : null,
-      value_cents: valueCents,
+      ...(valorPelosProdutos === null ? { value_cents: valueCents } : {}),
       tags,
       expected_close_date: values.expected_close_date || null,
       // Só o que a pessoa alterou (issue #2132) — o merge continua do servidor.
@@ -155,7 +169,26 @@ export function LeadFieldsForm({ lead, pipelineId, fieldDefs: todosOsCampos = []
           <Textarea id="description" rows={3} {...form.register("description")} />
         </div>
 
+        <ProdutosDoNegocio
+          leadId={lead.id}
+          pipelineId={pipelineId}
+          moeda={moedaDoValor}
+          podeEditar={podeEditarProdutos}
+        />
+
         <div className="grid grid-cols-2 gap-3">
+          {valorPelosProdutos !== null ? (
+            <div className="space-y-2">
+              <Label htmlFor="valorPelosProdutos">{t("Valor")} ({simboloDaMoeda(moedaDoValor)})</Label>
+              <Input
+                id="valorPelosProdutos"
+                readOnly
+                value={formatCents(valorPelosProdutos, moedaDoValor)}
+                data-testid="valor-pelos-produtos"
+              />
+              <p className="text-xs text-muted-foreground">{t("Calculado pelos produtos, já com os descontos.")}</p>
+            </div>
+          ) : (
           <div className="space-y-2">
             {/* O rótulo segue a moeda do NEGÓCIO (a organização é a reserva):
                   `R$` em duro mentia para quem opera em euro. */}
@@ -173,6 +206,7 @@ export function LeadFieldsForm({ lead, pipelineId, fieldDefs: todosOsCampos = []
               </p>
             )}
           </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="expected_close_date">{t("Fechamento previsto")}</Label>
             <Input
@@ -190,7 +224,7 @@ export function LeadFieldsForm({ lead, pipelineId, fieldDefs: todosOsCampos = []
 
         {fieldDefs.length > 0 && (
           <div className="space-y-2 border-t border-border pt-4">
-            <p className="text-sm font-medium">{t("Campos do funil")}</p>
+            <p className="text-sm font-medium">{t("Campos personalizados")}</p>
             <CustomFieldsEditor
               fields={fieldDefs}
               value={customFields}

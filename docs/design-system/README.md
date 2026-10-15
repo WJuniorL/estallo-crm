@@ -13,6 +13,7 @@ Este conjunto aplica o Brand System ao CRM, sob a doutrina de `CLAUDE.md`. Specs
 - Marca fixa Estallo CRM com símbolo e logotipo oficiais. A empresa ativa é contexto da conta, sem substituir a identidade da plataforma.
 - Sora para títulos, Manrope para leitura e controles, JetBrains Mono para dados técnicos.
 - Estallo Blue para ação, Estallo Green para resultado e Ink para texto e navegação. Temas claro e escuro com contraste verificado.
+- Texto sobre o Estallo Blue (botão primário, chip de ação, item ativo) é **sempre branco**, nos dois temas (`--color-accent-fg: #ffffff` em `app/globals.css`). Decisão do dono em 2026-10-14: texto escuro sobre azul tinha razão de contraste maior, mas leitura pior aos olhos — a escolha é deliberada, não descuido.
 - Layout claro, hierarquia consistente, respiro e densidade adequada ao atendimento.
 - Gradiente azul → verde e grafismos de marca são permitidos em composição, sem prejudicar leitura ou operação.
 - Componentes compartilhados, tokens semânticos e acessibilidade; nenhuma tela cria uma identidade própria.

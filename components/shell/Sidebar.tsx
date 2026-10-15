@@ -2,15 +2,17 @@
 import Link from "next/link";
 import { useT } from "@/hooks/i18n/useT";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, type ReactNode } from "react";
 import {
   ArrowRight,
   CaretDoubleLeft,
   CaretDoubleRight,
   CaretDown,
   Gear,
+  PushPin,
   Receipt,
 } from "@/lib/ui/icons";
+import { useFunisFixados } from "@/hooks/kanban/useFunisFixados";
 import { cn } from "@/lib/utils";
 import { toggleSidebar } from "@/app/actions/shell/toggleSidebar";
 import { useAuth } from "@/hooks/auth/AuthProvider";
@@ -54,6 +56,7 @@ export function SidebarContent({
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
   const { user, activeOrg } = useAuth();
+  const { fixados } = useFunisFixados();
   const todos = sidebarGroups(
     user.is_platform_admin && !user.support,
     activeOrg?.role ?? null,
@@ -280,7 +283,7 @@ export function SidebarContent({
         o PR: cada linha custa 32px (28px de altura + 4px de `space-y-1`), e
         trocar N destinos do menu por um único link de hub devolve (N-1)×32px.
       */}
-      <nav className="flex-1 space-y-2 overflow-y-auto p-2" aria-label={t("Navegação principal")}>
+      <nav className="flex-1 space-y-3 overflow-y-auto p-2" aria-label={t("Navegação principal")}>
         {grupos.map(({ group, items }) => {
           const tituloId = `nav-grupo-${group.id}`;
           // Recolhido o sidebar inteiro (rail de 64px), o grupo sempre mostra
@@ -298,11 +301,11 @@ export function SidebarContent({
                     type="button"
                     onClick={() => toggleGrupo(group.id)}
                     aria-expanded={aberto}
-                    className="flex w-full items-center justify-between rounded-md px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground"
+                    className="nav-grupo"
                   >
                     {t(group.label)}
                     <CaretDown
-                      size={12}
+                      size={14}
                       weight="bold"
                       className={cn(
                         "shrink-0 text-text-subtle transition-transform",
@@ -317,57 +320,64 @@ export function SidebarContent({
                 <ul
                   aria-labelledby={collapsed ? undefined : tituloId}
                   aria-label={collapsed ? t(group.label) : undefined}
-                  className="space-y-1"
+                  className="space-y-0.5"
                 >
                   {items.map((item) => {
                     const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                     const Icon = item.icon;
                     return (
-                      <li key={item.href}>
-                        <Link
-                          href={item.href}
-                          title={collapsed ? t(item.label) : undefined}
-                          aria-current={isActive ? "page" : undefined}
-                          onClick={onNavigate}
-                          className={cn(
-                            "relative flex items-center gap-3 rounded-md px-3 py-1 text-sm transition-colors",
-                            isActive
-                              ? "bg-accent text-accent-foreground"
-                              : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-                            collapsed && "justify-center px-2",
-                          )}
-                        >
-                          <Icon size={18} weight={isActive ? "fill" : "regular"} aria-hidden />
-                          {!collapsed && <span className="truncate">{t(item.label)}</span>}
-                          {item.healthDot && (
-                            <ConnectionHealthDot
-                              className={cn(collapsed ? "absolute top-1.5 right-1.5" : "ml-auto")}
-                            />
-                          )}
-                          {item.contador === "casos" && <ContadorDeCasos compacto={collapsed} />}
-                          {item.contador === "fila" && <ContadorDaFila compacto={collapsed} />}
-                        </Link>
-                      </li>
+                      <FragmentoDoItem key={item.href}>
+                        {/* Funis fixados (até 3) entram ACIMA de "Funis" (pedido do dono). */}
+                        {item.href === "/app/kanban" &&
+                          fixados.map((f, i) => {
+                            const href = `/app/pipelines/${f.id}`;
+                            return (
+                              <li key={href}>
+                                <ItemDoMenu
+                                  href={href}
+                                  rotulo={f.nome}
+                                  titulo={`${t("Funis fixados")}: ${f.nome}`}
+                                  ativo={pathname === href || pathname.startsWith(href + "/")}
+                                  collapsed={collapsed}
+                                  onNavigate={onNavigate}
+                                  numero={collapsed && fixados.length > 1 ? i + 1 : undefined}
+                                  icone={<PushPin size={20} weight="fill" aria-hidden />}
+                                  testId={`funil-fixado-${f.id}`}
+                                />
+                              </li>
+                            );
+                          })}
+                        <li>
+                          <ItemDoMenu
+                            href={item.href}
+                            rotulo={t(item.label)}
+                            ativo={isActive}
+                            collapsed={collapsed}
+                            onNavigate={onNavigate}
+                            icone={<Icon size={20} weight={isActive ? "fill" : "regular"} aria-hidden />}
+                          >
+                            {item.healthDot && (
+                              <ConnectionHealthDot
+                                className={cn(collapsed ? "absolute top-1.5 right-1.5" : "ml-auto")}
+                              />
+                            )}
+                            {item.contador === "casos" && <ContadorDeCasos compacto={collapsed} />}
+                            {item.contador === "fila" && <ContadorDaFila compacto={collapsed} />}
+                          </ItemDoMenu>
+                        </li>
+                      </FragmentoDoItem>
                     );
                   })}
                   {group.hub && (
                     <li>
-                      <Link
+                      <ItemDoMenu
                         href={group.hub.href}
-                        title={collapsed ? t(group.hub.label) : undefined}
-                        aria-current={pathname === group.hub.href ? "page" : undefined}
-                        onClick={onNavigate}
-                        className={cn(
-                          "flex items-center gap-3 rounded-md px-3 py-1 text-sm transition-colors",
-                          pathname === group.hub.href
-                            ? "bg-accent text-accent-foreground"
-                            : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-                          collapsed && "justify-center px-2",
-                        )}
-                      >
-                        <ArrowRight size={18} aria-hidden />
-                        {!collapsed && <span className="truncate">{t(group.hub.label)}</span>}
-                      </Link>
+                        rotulo={t(group.hub.label)}
+                        ativo={pathname === group.hub.href}
+                        collapsed={collapsed}
+                        onNavigate={onNavigate}
+                        icone={<ArrowRight size={20} aria-hidden />}
+                      />
                     </li>
                   )}
                 </ul>
@@ -376,48 +386,89 @@ export function SidebarContent({
           );
         })}
       </nav>
-      <div className="border-t p-2">
+      <div className="space-y-0.5 border-t p-2">
         {plano && (
-          <Link
+          <ItemDoMenu
             href={plano.href}
-            title={collapsed ? t(plano.label) : undefined}
-            aria-current={pathname === plano.href ? "page" : undefined}
-            onClick={onNavigate}
-            className={cn(
-              "mb-1 flex items-center gap-3 rounded-md px-3 py-1 text-sm transition-colors",
-              pathname === plano.href
-                ? "bg-accent text-accent-foreground"
-                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-              collapsed && "justify-center px-2",
-            )}
-          >
-            <Receipt size={18} aria-hidden />
-            {!collapsed && <span className="truncate">{t(plano.label)}</span>}
-          </Link>
+            rotulo={t(plano.label)}
+            ativo={pathname === plano.href}
+            collapsed={collapsed}
+            onNavigate={onNavigate}
+            icone={<Receipt size={20} aria-hidden />}
+          />
         )}
         {rodape && (
-          <Link
+          <ItemDoMenu
             href={rodape.href}
-            title={collapsed ? t(rodape.label) : undefined}
-            aria-current={
-              pathname.startsWith(rodape.href) && pathname !== plano?.href ? "page" : undefined
-            }
-            onClick={onNavigate}
-            className={cn(
-              "mb-1 flex items-center gap-3 rounded-md px-3 py-1 text-sm transition-colors",
-              pathname.startsWith(rodape.href) && pathname !== plano?.href
-                ? "bg-accent text-accent-foreground"
-                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-              collapsed && "justify-center px-2",
-            )}
-          >
-            <Gear size={18} aria-hidden />
-            {!collapsed && <span className="truncate">{t(rodape.label)}</span>}
-          </Link>
+            rotulo={t(rodape.label)}
+            ativo={pathname.startsWith(rodape.href) && pathname !== plano?.href}
+            collapsed={collapsed}
+            onNavigate={onNavigate}
+            icone={<Gear size={20} aria-hidden />}
+          />
         )}
         <VersionFooter collapsed={collapsed} onNavigate={onNavigate} />
       </div>
     </>
+  );
+}
+
+/** `<>` com `key`: o funil fixado e o item "Funis" saem do mesmo `map`. */
+function FragmentoDoItem({ children }: { children: ReactNode }) {
+  return <>{children}</>;
+}
+
+/**
+ * Um item do menu no estilo "02 · Com presença" — classes `.nav-item*` em
+ * `app/globals.css`. Recolhido (trilho de 64px), só o suporte do ícone aparece,
+ * e o nome vira `title`/`aria-label`.
+ */
+function ItemDoMenu({
+  href,
+  rotulo,
+  titulo,
+  ativo,
+  collapsed,
+  onNavigate,
+  icone,
+  numero,
+  testId,
+  children,
+}: {
+  href: string;
+  rotulo: string;
+  /** Texto do `title` quando difere do rótulo (ex.: o nome completo do funil fixado). */
+  titulo?: string;
+  ativo: boolean;
+  collapsed: boolean;
+  onNavigate?: () => void;
+  icone: ReactNode;
+  /** O "1", "2", "3" dos funis fixados, no canto do suporte (menu recolhido). */
+  numero?: number;
+  testId?: string;
+  children?: ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      title={collapsed || titulo ? (titulo ?? rotulo) : undefined}
+      aria-label={collapsed ? (titulo ?? rotulo) : undefined}
+      aria-current={ativo ? "page" : undefined}
+      onClick={onNavigate}
+      data-testid={testId}
+      className={cn("nav-item", collapsed && "justify-center px-0")}
+    >
+      <span className="nav-item-icone">
+        {icone}
+        {numero !== undefined && (
+          <span className="nav-item-numero" aria-hidden>
+            {numero}
+          </span>
+        )}
+      </span>
+      {!collapsed && <span className="min-w-0 flex-1 truncate">{rotulo}</span>}
+      {children}
+    </Link>
   );
 }
 
@@ -507,7 +558,7 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
         // número, mas vindo de `--duration-base`. A Lei de movimento fecha a
         // tabela de durações, e número solto é o que a faz apodrecer.
         "estallo-navigation sticky top-0 z-30 flex h-dvh shrink-0 flex-col border-r transition-[width] duration-base",
-        collapsed ? "w-16" : "w-60",
+        collapsed ? "w-16" : "w-64",
       )}
     >
       <SidebarContent collapsed={collapsed} />

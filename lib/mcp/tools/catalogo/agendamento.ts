@@ -174,7 +174,7 @@ export const TOOLS_AGENDAMENTO = declararTools([
     oQueToca: "Agenda da equipe",
     risco: "seguro",
     pacotes: ["vender"],
-    // Sem a Agenda ligada na empresa (/app/crm), o agente não marca nada.
+    // Sem a Agenda ligada na empresa (/app/settings/recursos), o agente não marca nada.
     capacidade: "agenda",
   },
   {
@@ -186,7 +186,7 @@ export const TOOLS_AGENDAMENTO = declararTools([
     oQueToca: "Agenda da equipe",
     risco: "seguro",
     pacotes: ["vender"],
-    // Sem a Agenda ligada na empresa (/app/crm), o agente não marca nada.
+    // Sem a Agenda ligada na empresa (/app/settings/recursos), o agente não marca nada.
     capacidade: "agenda",
   },
   {
@@ -198,7 +198,7 @@ export const TOOLS_AGENDAMENTO = declararTools([
     oQueToca: "Agenda da equipe",
     risco: "seguro",
     pacotes: ["vender"],
-    // Sem a Agenda ligada na empresa (/app/crm), o agente não marca nada.
+    // Sem a Agenda ligada na empresa (/app/settings/recursos), o agente não marca nada.
     capacidade: "agenda",
   },
   {
@@ -212,7 +212,7 @@ export const TOOLS_AGENDAMENTO = declararTools([
     // consulta, e o efeito que persiste é o mesmo marcar — que se desfaz.
     risco: "atencao",
     pacotes: ["vender"],
-    // Sem a Agenda ligada na empresa (/app/crm), o agente não marca nada.
+    // Sem a Agenda ligada na empresa (/app/settings/recursos), o agente não marca nada.
     capacidade: "agenda",
   },
   {
@@ -225,7 +225,7 @@ export const TOOLS_AGENDAMENTO = declararTools([
     // `atencao` e não `critico`: marcar errado se desfaz — remarca ou desmarca.
     risco: "atencao",
     pacotes: ["vender"],
-    // Sem a Agenda ligada na empresa (/app/crm), o agente não marca nada.
+    // Sem a Agenda ligada na empresa (/app/settings/recursos), o agente não marca nada.
     capacidade: "agenda",
   },
   {
@@ -237,7 +237,7 @@ export const TOOLS_AGENDAMENTO = declararTools([
     oQueToca: "Agenda da equipe",
     risco: "atencao",
     pacotes: ["vender"],
-    // Sem a Agenda ligada na empresa (/app/crm), o agente não marca nada.
+    // Sem a Agenda ligada na empresa (/app/settings/recursos), o agente não marca nada.
     capacidade: "agenda",
   },
   {
@@ -250,7 +250,7 @@ export const TOOLS_AGENDAMENTO = declararTools([
     // `atencao` e não `critico`: confirmar errado se desfaz — remarca ou desmarca.
     risco: "atencao",
     pacotes: ["vender"],
-    // Sem a Agenda ligada na empresa (/app/crm), o agente não marca nada.
+    // Sem a Agenda ligada na empresa (/app/settings/recursos), o agente não marca nada.
     capacidade: "agenda",
   },
   {
@@ -264,7 +264,7 @@ export const TOOLS_AGENDAMENTO = declararTools([
     // sistema recusa fazer isso antes da hora — a guarda mora no handler.
     risco: "atencao",
     pacotes: ["vender"],
-    // Sem a Agenda ligada na empresa (/app/crm), o agente não marca nada.
+    // Sem a Agenda ligada na empresa (/app/settings/recursos), o agente não marca nada.
     capacidade: "agenda",
   },
   {
@@ -281,7 +281,7 @@ export const TOOLS_AGENDAMENTO = declararTools([
     // desmarca se o dono ligar explicitamente. Falha fechado no lado certo.
     risco: "critico",
     pacotes: ["vender"],
-    // Sem a Agenda ligada na empresa (/app/crm), o agente não marca nada.
+    // Sem a Agenda ligada na empresa (/app/settings/recursos), o agente não marca nada.
     capacidade: "agenda",
   },
 ]);

@@ -240,7 +240,7 @@ export function FormularioDeTarefa({
 
           {!negocioFixo && (
             <div className="space-y-1.5">
-              <Label>{t("Oportunidade")}</Label>
+              <Label>{t("Oportunidade (opcional)")}</Label>
               {negocio ? (
                 <div className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
                   <span className="truncate" data-testid="tarefa-negocio">{negocio.title}</span>

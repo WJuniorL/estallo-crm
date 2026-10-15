@@ -625,7 +625,9 @@ const DA_EMPRESA: RecursoOpcional[] = [
     nivel: "organizacao",
     padrao: "desligado",
     quemDecide: "admin",
-    href: "/app/crm",
+    // A chave mora NA PRÓPRIA linha (`ChaveDaAgenda`, em /app/settings/recursos):
+    // sem tela de assunto para onde levar, não há "Ajustar".
+    href: null,
     capacidade: "agenda",
     ler: (f) =>
       f.settings === null || f.modulos === null

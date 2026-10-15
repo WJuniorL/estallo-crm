@@ -1130,6 +1130,11 @@ export const AUDIT_ACTIONS = [
   // dedicada `PATCH /contacts/[id]/carteira` (#2591) — a escrita é do servidor,
   // então o audit é a única trilha de quem mudou o dono.
   "contact.carteira_changed",
+  // Estallo (0660): produtos do negócio — o valor do lead é recalculado por
+  // trigger a partir deles, então o audit é a trilha de quem mexeu no preço.
+  "lead_product.added",
+  "lead_product.updated",
+  "lead_product.removed",
 ] as const;
 
 /** Um código de auditoria. Derivado de `AUDIT_ACTIONS` — não redigite a lista. */

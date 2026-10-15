@@ -8,8 +8,6 @@ import { traduzir } from "@/lib/i18n/dicionario";
 import { modulosLigados } from "@/lib/instalacao/modulos";
 import { capacidadesDaOrganizacao } from "@/lib/organizacao/capacidades";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ROLE_RANK } from "@/lib/auth/types";
-import { RecursosDoCrm } from "./_components/RecursosDoCrm";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "CRM" };
@@ -73,10 +71,6 @@ export default async function CrmHubPage() {
       locale={idioma}
       extensionGuides={extensionGuides}
       extensionsUnavailable={extensionsUnavailable}
-    >
-      {activeOrg && ROLE_RANK[activeOrg.role] >= ROLE_RANK.admin ? (
-        <RecursosDoCrm agendaLigada={capacidadesLigadas.includes("agenda")} />
-      ) : null}
-    </NavHub>
+    />
   );
 }

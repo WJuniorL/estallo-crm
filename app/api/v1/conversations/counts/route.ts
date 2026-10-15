@@ -19,6 +19,7 @@ import { CONVERSATION_TERMINAL_STATUSES } from "@/lib/schemas";
 import { orgTemAutomatico } from "@/lib/ai/agents/org-tem-automatico";
 import { comandosDaFila } from "@/lib/inbox/comando-da-conversa";
 import { aplicarMarcadores, modoDeEtiqueta } from "@/lib/inbox/marcador-da-conversa";
+import { aplicarPendentes } from "@/lib/inbox/pendentes";
 import { createClient } from "@/lib/supabase/server";
 import { idsDeContatosPessoais } from "../_handler";
 
@@ -99,6 +100,9 @@ export async function GET(req: NextRequest): Promise<Response> {
   const sp = req.nextUrl.searchParams;
   const auxiliares = filtrosAuxiliaresDaContagem(sp);
   const soNaoLidas = contagemSoNaoLidas(sp);
+  // O filtro "Minhas" (ao lado de "Não lidos") recorta TODAS as abas, então
+  // recorta todos os badges — mesma razão dos outros auxiliares.
+  const soMinhas = sp.get("assigned_to") === "me";
   // ⚠️ O badge conta o MESMO que a lista mostra, então o marcador é lido com
   // `getAll` e o `modo` viaja junto (#1274). Ler com `get` aqui deixaria o badge
   // de um filtro de duas etiquetas contando uma só — e a aba diria "Fila 3"
@@ -129,6 +133,7 @@ export async function GET(req: NextRequest): Promise<Response> {
     q = aplicarMarcadores(q, marcadores, modo);
     if (pessoais.length > 0) q = q.not("contact_id", "in", `(${pessoais.join(",")})`);
     if (soNaoLidas) q = q.gt("unread_count_for_assignee", 0);
+    if (soMinhas) q = q.eq("assigned_to_user_id", user.id);
     return q;
   };
 
@@ -143,7 +148,7 @@ export async function GET(req: NextRequest): Promise<Response> {
   // convenção da regra: assume que há automático.
   const automaticoDaOrg = await orgTemAutomatico(supabase, org);
 
-  const [fila, automatico, mine, all, closed, archived] = await Promise.all([
+  const [fila, automatico, mine, all, closed, archived, pendentes] = await Promise.all([
     // A FILA DEIXOU DE SER "sem dono + status de espera".
     //
     // Aquele par contava como trabalho humano pendente tudo que o robô estava
@@ -172,10 +177,18 @@ export async function GET(req: NextRequest): Promise<Response> {
     countExact().in("status", [...CONVERSATION_TERMINAL_STATUSES]),
     // `archived` segue no corpo: é rota `/api/v1/` versionada, campo não some.
     countExact().eq("status", "archived"),
+    // A aba "Pendentes": a mesma régua da lista (`aplicarPendentes`).
+    aplicarPendentes(countExact()),
   ]);
 
   const firstErr =
-    fila.error ?? automatico.error ?? mine.error ?? all.error ?? closed.error ?? archived.error;
+    fila.error ??
+    automatico.error ??
+    mine.error ??
+    all.error ??
+    closed.error ??
+    archived.error ??
+    pendentes.error;
   if (firstErr) {
     return fail("internal_error", firstErr.message, 500, { requestId });
   }
@@ -193,6 +206,7 @@ export async function GET(req: NextRequest): Promise<Response> {
       all: all.count ?? 0,
       closed: closed.count ?? 0,
       archived: archived.count ?? 0,
+      pendentes: pendentes.count ?? 0,
     },
     { requestId },
   );

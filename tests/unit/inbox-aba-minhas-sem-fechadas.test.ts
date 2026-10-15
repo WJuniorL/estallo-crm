@@ -25,8 +25,8 @@ import { CONVERSATION_TERMINAL_STATUSES, listConversationsQuerySchema } from "@/
 // ---------------------------------------------------------------------------
 
 describe("tabToFilter — o que cada aba significa", () => {
-  it("Minhas pede as minhas SEM as terminais", () => {
-    expect(tabToFilter("mine")).toEqual({ assigned_to: "me", exclude_finished: true });
+  it("Pendentes pede quem escreveu e ninguém respondeu (Minhas virou filtro, não aba)", () => {
+    expect(tabToFilter("pending")).toEqual({ pendentes: true });
   });
 
   it("Fechadas mostra as fechadas e as arquivadas de antes (o Estallo tirou o Arquivar)", () => {
@@ -157,6 +157,18 @@ describe("listConversationsHandler — predicado", () => {
     // agora como lista de um.
     expect(chamadas.some((c) => c.metodo === "in" && c.args[0] === "status")).toBe(true);
     expect(temNotTerminal(chamadas)).toBe(true);
+  });
+
+  it("Pendentes: entrada sem nenhuma saída, fora grupo e terminais — no BANCO", async () => {
+    const chamadas = await rodar({ pendentes: true });
+    const f = (col: string, op: string) =>
+      chamadas.some((c) => c.metodo === "filter" && c.args[0] === col && c.args[1] === op);
+    expect(f("last_inbound_at", "not.is")).toBe(true);
+    expect(f("last_outbound_at", "is")).toBe(true);
+    expect(f("is_group", "eq")).toBe(true);
+    expect(f("status", "not.in")).toBe(true);
+    // Controle: sem o parâmetro, nenhuma conversa respondida some da lista.
+    expect((await rodar({})).some((c) => c.metodo === "filter" && c.args[0] === "last_outbound_at")).toBe(false);
   });
 
   it("continua filtrando por organização — o filtro novo não desloca o de tenant", async () => {

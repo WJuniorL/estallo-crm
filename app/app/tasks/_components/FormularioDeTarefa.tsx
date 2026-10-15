@@ -48,6 +48,12 @@ interface Props {
    * ligar. Ausente = ninguém, como antes.
    */
   responsavelPadrao?: string | null;
+  /**
+   * O título do negócio fixo (`leadId`), só para MOSTRAR de qual negócio é a
+   * tarefa — quem abre pelo menu do card no Inbox precisa ver que ela já nasce
+   * presa ao lead que clicou. Ausente = a linha não aparece, como antes.
+   */
+  tituloDoNegocio?: string | null;
 }
 
 /** O valor do "ninguém" no Select — o Radix não aceita item com valor vazio. */
@@ -79,6 +85,7 @@ export function FormularioDeTarefa({
   leadId,
   contactId,
   responsavelPadrao,
+  tituloDoNegocio,
 }: Props) {
   const t = useT();
   const usuario = useUser();
@@ -238,6 +245,17 @@ export function FormularioDeTarefa({
             </div>
           </div>
 
+          {negocioFixo && tituloDoNegocio ? (
+            <div className="space-y-1.5">
+              <Label>{t("Oportunidade")}</Label>
+              <div
+                className="truncate rounded-md border bg-muted/40 px-3 py-2 text-sm"
+                data-testid="tarefa-negocio-fixo"
+              >
+                {tituloDoNegocio}
+              </div>
+            </div>
+          ) : null}
           {!negocioFixo && (
             <div className="space-y-1.5">
               <Label>{t("Oportunidade (opcional)")}</Label>

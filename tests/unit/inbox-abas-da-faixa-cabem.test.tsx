@@ -60,7 +60,7 @@ vi.mock("@/hooks/contacts/useContactTagVocabulary", () => ({
 // com elas que o corte foi medido.
 vi.mock("@/hooks/inbox/useConversationCounts", () => ({
   useConversationCounts: () => ({
-    data: { fila: 47, automatico: 12, mine: 8, all: 130, closed: 25, archived: 9 },
+    data: { fila: 47, automatico: 12, mine: 8, pendentes: 8, all: 130, closed: 25, archived: 9 },
   }),
 }));
 
@@ -103,7 +103,7 @@ describe("faixa da Inbox — quebra em vez de esconder aba (#2745)", () => {
     // catraca de classe continua verde com a tela errada.
     const abas = screen.getAllByRole("tab");
     expect(abas).toHaveLength(5);
-    for (const rotulo of ["Automático", "Fila", "Minhas", "Todas", "Fechadas"]) {
+    for (const rotulo of ["Automático", "Fila", "Pendentes", "Todas", "Fechadas"]) {
       expect(
         screen.getByRole("tab", { name: new RegExp(rotulo) }),
         `a aba "${rotulo}" não está na faixa`,
@@ -127,14 +127,14 @@ describe("faixa da Inbox — quebra em vez de esconder aba (#2745)", () => {
     expect(visibleInboxTabs("manager", "all")).toEqual([
       "ai",
       "unassigned",
-      "mine",
+      "pending",
       "all",
       "closed",
     ]);
     expect(screen.getAllByRole("tab").map((a) => a.textContent?.replace(/\s+/g, ""))).toEqual([
       "Automático12",
       "Fila47",
-      "Minhas8",
+      "Pendentes8",
       "Todas130",
       "Fechadas25",
     ]);

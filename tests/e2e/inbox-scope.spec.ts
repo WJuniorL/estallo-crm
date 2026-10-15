@@ -89,12 +89,16 @@ test.afterAll(async () => {
 });
 
 test.describe("G4-02 — inbox com escopo", () => {
-  test("agent em modo own*: vê Minhas e Fila, NÃO vê Todas", async ({ page }) => {
+  // Desde que "Minhas" virou filtro (2026-10-15), 'Todas' é a caixa do agent —
+  // recortada pela RLS, que é quem garante o escopo (ver o deep-link abaixo).
+  test("agent em modo own*: vê Fila, Pendentes e Todas, e Minhas como filtro", async ({ page }) => {
     await login(page, creds.users.agent!.email);
     await page.goto("/app/inbox");
-    await expect(page.getByRole("tab", { name: /Minhas/ })).toBeVisible();
     await expect(page.getByRole("tab", { name: /Fila/ })).toBeVisible();
-    await expect(page.getByRole("tab", { name: /Todas/ })).toHaveCount(0);
+    await expect(page.getByRole("tab", { name: /Pendentes/ })).toBeVisible();
+    await expect(page.getByRole("tab", { name: /Todas/ })).toBeVisible();
+    await expect(page.getByRole("tab", { name: /Minhas/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Minhas" })).toBeVisible();
     await page.screenshot({ path: path.join(EVIDENCE, "G4-02-inbox-scope-agent.png"), fullPage: true });
   });
 

@@ -6707,16 +6707,7 @@ export const DICIONARIO: Traducoes = {
   "Entre 5 minutos e 24 horas. O padrão é 60. Quem atende o dia inteiro pelo celular costuma preferir um prazo curto, como 15, para a IA voltar a responder entre um atendimento e outro.": {
     es: "Entre 5 minutos y 24 horas. El valor predeterminado es 60. Quien atiende todo el día desde el celular suele preferir un plazo corto, como 15, para que la IA vuelva a responder entre una atención y otra.",
   },
-  "Quando alguém responde, a conversa fica com essa pessoa?": {
-    es: "Cuando alguien responde, ¿la conversación se queda con esa persona?",
-  },
-  "Desligado, vale a regra de sempre: responder pela tela cala a IA por alguns minutos, e a conversa encerrada que recebe mensagem nova volta para a fila.": {
-    es: "Si está desactivado, rige la regla de siempre: responder desde la pantalla silencia a la IA por algunos minutos, y la conversación cerrada que recibe un mensaje nuevo vuelve a la fila.",
-  },
   "A conversa fica com quem atendeu": { es: "La conversación se queda con quien la atendió" },
-  "Responder pelo Inbox numa conversa sem dono passa a assumi-la, e a IA fica calada até alguém devolver. Quando o cliente escreve numa conversa encerrada, ela volta direto para o último atendente, sem passar pela distribuição, se ele ainda faz parte da equipe.": {
-    es: "Responder desde el Inbox en una conversación sin responsable la asigna a quien responde, y la IA queda en silencio hasta que alguien la devuelva. Cuando el cliente escribe en una conversación cerrada, vuelve directo al último asesor, sin pasar por la distribución, si todavía forma parte del equipo.",
-  },
   "Entre 5 minutos e 24 horas. Sessenta minutos é a ordem de grandeza de um atendimento humano.": {
     es: "Entre 5 minutos y 24 horas. Sesenta minutos es el orden de magnitud de una atención humana.",
   },
@@ -14885,7 +14876,6 @@ export const DICIONARIO: Traducoes = {
   "Transcrição de áudio por outro serviço": { es: "Transcripción de audio por otro servicio" },
   "Manda a transcrição dos áudios para um serviço compatível que você escolher.": { es: "Envía la transcripción de los audios a un servicio compatible que elijas." },
   "No arquivo de ambiente, TRANSCRIPTION_BASE_URL.": { es: "En el archivo de entorno, TRANSCRIPTION_BASE_URL." },
-  "Quem responde vira dono da conversa, e a IA se cala até alguém devolver.": { es: "Quien responde se vuelve dueño de la conversación, y la IA se calla hasta que alguien la devuelva." },
   "A IA volta sozinha sem resposta da equipe": { es: "La IA vuelve sola sin respuesta del equipo" },
   "Devolve a conversa ao agente depois de um tempo sem resposta de uma pessoa.": { es: "Devuelve la conversación al agente después de un tiempo sin respuesta de una persona." },
   "Atendente só vê os seus": { es: "El agente solo ve los suyos" },
@@ -15556,6 +15546,18 @@ export const DICIONARIO: Traducoes = {
   "Nenhum negócio com este campo de data neste período.": {
     es: "Ningún negocio con este campo de fecha en este período.",
   },
+  "Pendentes": { es: "Pendientes" },
+  "Excluir lead": { es: "Eliminar lead" },
+  "Excluir lead?": { es: "¿Eliminar lead?" },
+  "O negócio e seu histórico de atividades serão excluídos. O contato e as conversas continuam disponíveis.": { es: "El negocio y su historial de actividades se eliminarán. El contacto y las conversaciones siguen disponibles." },
+  "Conversa encerrada volta para quem atendeu?": { es: "¿La conversación cerrada vuelve a quien la atendió?" },
+  "Responder pelo Inbox numa conversa sem responsável sempre a passa para quem respondeu. Desligado, a conversa encerrada que recebe mensagem nova volta para a fila.": { es: "Responder desde el Inbox en una conversación sin responsable siempre la asigna a quien respondió. Si está desactivado, la conversación cerrada que recibe un mensaje nuevo vuelve a la fila." },
+  "Quando o cliente escreve numa conversa encerrada, ela volta direto para o último atendente, sem passar pela distribuição, se ele ainda faz parte da equipe.": { es: "Cuando el cliente escribe en una conversación cerrada, vuelve directo al último asesor, sin pasar por la distribución, si todavía forma parte del equipo." },
+  "A conversa encerrada que recebe mensagem nova volta direto para o último atendente.": { es: "La conversación cerrada que recibe un mensaje nuevo vuelve directo al último asesor." },
+  "Criar tarefa": { es: "Crear tarea" },
+  "Tarefa criada": { es: "Tarea creada" },
+  "Com produtos, o valor do lead passa a ser a soma deles.": { es: "Con productos, el valor del lead pasa a ser la suma de ellos." },
+  "Lead criado, mas alguns produtos não foram adicionados.": { es: "Lead creado, pero algunos productos no se agregaron." },
 };
 
 /**

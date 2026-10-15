@@ -5582,5 +5582,17 @@
   "Sem intervalo": "不显示区间",
   "Este funil não tem campo de data para montar o calendário.": "该漏斗没有可用于日历的日期字段。",
   "Nenhum negócio com este campo de data.": "此日期字段下没有商机。",
-  "Nenhum negócio com este campo de data neste período.": "此日期字段在此期间没有商机。"
+  "Nenhum negócio com este campo de data neste período.": "此日期字段在此期间没有商机。",
+  "Pendentes": "待回复",
+  "Excluir lead": "删除销售线索",
+  "Excluir lead?": "删除销售线索？",
+  "O negócio e seu histórico de atividades serão excluídos. O contato e as conversas continuam disponíveis.": "该商机及其活动记录将被删除。联系人和对话仍然保留。",
+  "Conversa encerrada volta para quem atendeu?": "已结束的对话是否回到原接待人？",
+  "Responder pelo Inbox numa conversa sem responsável sempre a passa para quem respondeu. Desligado, a conversa encerrada que recebe mensagem nova volta para a fila.": "在收件箱回复无负责人的对话时，该对话总会分配给回复者。关闭时，已结束的对话收到新消息后会回到队列。",
+  "Quando o cliente escreve numa conversa encerrada, ela volta direto para o último atendente, sem passar pela distribuição, se ele ainda faz parte da equipe.": "客户在已结束的对话中发消息时，如果最后的接待人仍在团队中，对话将直接回到该接待人，不经过分配。",
+  "A conversa encerrada que recebe mensagem nova volta direto para o último atendente.": "已结束的对话收到新消息后直接回到最后的接待人。",
+  "Criar tarefa": "创建任务",
+  "Tarefa criada": "任务已创建",
+  "Com produtos, o valor do lead passa a ser a soma deles.": "添加产品后，销售线索的金额将为产品总和。",
+  "Lead criado, mas alguns produtos não foram adicionados.": "销售线索已创建，但部分产品未能添加。"
 }

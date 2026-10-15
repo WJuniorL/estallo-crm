@@ -334,6 +334,12 @@ export const listConversationsQuerySchema = z.object({
    * significar "meu trabalho" para virar "tudo que já toquei".
    */
   exclude_finished: z.boolean().optional(),
+  /**
+   * A aba "Pendentes": o cliente escreveu e NINGUÉM respondeu ainda — nem
+   * pessoa, nem automático, nem envio pelo celular (`last_outbound_at` nulo).
+   * Conversa encerrada e grupo ficam fora: grupo não espera resposta da equipe.
+   */
+  pendentes: z.boolean().optional(),
   assigned_to: z.union([z.string().uuid(), z.literal("me"), z.literal("unassigned")]).optional(),
   channel_session_id: z.string().uuid().optional(),
   /**

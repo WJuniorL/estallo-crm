@@ -4,7 +4,7 @@
  * Fluxo: conversa entra (sem dono) → aparece na Fila com posição + "aguardando
  * há X" → o worker atribui (aqui simulado via fn_conversation_assign(reason=
  * 'routing') com service role — o cron do worker não roda no e2e local) → a
- * conversa some da Fila e aparece em "Minhas" do dono.
+ * conversa some da Fila e aparece em Todas com o filtro "Minhas" do dono.
  *
  * Pré-requisito: scripts/seed-e2e-credentials.ts + scripts/seed-e2e-queue.ts
  * (o beforeAll re-roda o queue seed para restaurar o estado de fila).
@@ -81,7 +81,7 @@ test.describe("G5-03 — fila com posição + atribuição", () => {
     if (erroSilencio) throw new Error(`não consegui escalar a conversa: ${erroSilencio.message}`);
   });
 
-  test("conversa aparece na Fila com posição → worker atribui → move para Minhas", async ({
+  test("conversa aparece na Fila com posição → worker atribui → aparece em Minhas", async ({
     page,
   }) => {
     const q = creds.queue!;
@@ -116,8 +116,9 @@ test.describe("G5-03 — fila com posição + atribuição", () => {
       page.getByRole("button").filter({ hasText: q.contact_name }),
     ).toHaveCount(0, { timeout: 15_000 });
 
-    // (4) Aparece em "Minhas" do dono.
-    await page.getByRole("tab", { name: /Minhas/ }).click();
+    // (4) Aparece em Todas com o filtro "Minhas" do dono.
+    await page.getByRole("tab", { name: /Todas/ }).click();
+    await page.getByRole("button", { name: "Minhas" }).click();
     await expect(
       page.getByRole("button").filter({ hasText: q.contact_name }),
     ).toBeVisible({ timeout: 15_000 });

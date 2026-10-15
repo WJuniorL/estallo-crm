@@ -1,7 +1,8 @@
 /**
- * G4-02 — Inbox com escopo (acceptance 1 e 4). Prova que a visão 'Todas' é
- * ocultada para `agent` em modo own* e visível para manager/admin/viewer, e que
- * as contagens por visão são renderizadas a partir do hook RLS-scoped
+ * G4-02 — Inbox com escopo (acceptance 1 e 4). Desde que "Minhas" virou filtro
+ * (2026-10-15), a visão 'Todas' aparece para todo papel — para o `agent` em
+ * modo own* ela é a caixa dele, recortada pela RLS —, e as contagens por visão
+ * são renderizadas a partir do hook RLS-scoped
  * (useConversationCounts → /api/v1/conversations/counts, client user-scoped).
  *
  * A garantia REAL de escopo (agent forçando ?filter=all não vaza) é da RLS —
@@ -52,7 +53,7 @@ vi.mock("@/hooks/contacts/useContactTagVocabulary", () => ({
   useContactTagVocabulary: () => ({ data: vocabularioUnico() }),
 }));
 vi.mock("@/hooks/inbox/useConversationCounts", () => ({
-  useConversationCounts: () => ({ data: { unassigned: 3, mine: 2, all: 5 } }),
+  useConversationCounts: () => ({ data: { unassigned: 3, mine: 2, pendentes: 4, all: 5 } }),
 }));
 
 const VALUE: InboxFiltersValue = { tab: "unassigned", search: "", onlyUnread: false };
@@ -89,11 +90,13 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("visibleInboxTabs (lógica pura de visões)", () => {
-  it("agent em own_and_unassigned NÃO vê 'all'", () => {
-    expect(visibleInboxTabs("agent", "own_and_unassigned")).not.toContain("all");
+  // Esconder 'Todas' do agent nunca foi segurança (a RLS recorta o escopo), e
+  // sem a aba "Minhas" ele ficaria sem caixa nenhuma além da Fila.
+  it("agent em own_and_unassigned VÊ 'all' (recortada pela RLS)", () => {
+    expect(visibleInboxTabs("agent", "own_and_unassigned")).toContain("all");
   });
-  it("agent em 'own' NÃO vê 'all'", () => {
-    expect(visibleInboxTabs("agent", "own")).not.toContain("all");
+  it("agent em 'own' VÊ 'all' (recortada pela RLS)", () => {
+    expect(visibleInboxTabs("agent", "own")).toContain("all");
   });
   it("agent em 'all' VÊ 'all'", () => {
     expect(visibleInboxTabs("agent", "all")).toContain("all");
@@ -107,9 +110,10 @@ describe("visibleInboxTabs (lógica pura de visões)", () => {
   it("admin sempre vê 'all'", () => {
     expect(visibleInboxTabs("admin", "own")).toContain("all");
   });
-  it("as 3 visões nomeadas existem (Minhas/Fila/Todas) para manager", () => {
+  it("as visões nomeadas existem (Fila/Pendentes/Todas) e 'mine' não é mais aba", () => {
     const tabs = visibleInboxTabs("manager", "own_and_unassigned");
-    expect(tabs).toEqual(expect.arrayContaining(["mine", "unassigned", "all"]));
+    expect(tabs).toEqual(expect.arrayContaining(["pending", "unassigned", "all"]));
+    expect(tabs).not.toContain("mine");
   });
 });
 
@@ -164,12 +168,18 @@ describe("InboxFilters render — 3 visões + escopo", () => {
     expect(disconnect).toHaveBeenCalled();
   });
 
-  it("agent em modo own*: mostra Minhas e Fila, esconde Todas", () => {
+  it("agent em modo own*: Fila, Pendentes e Todas na faixa; Minhas é botão de filtro", () => {
     setOrg("agent", "own_and_unassigned");
-    render(<InboxFilters value={VALUE} onChange={() => {}} />);
-    expect(screen.getByRole("tab", { name: /Minhas/ })).toBeInTheDocument();
+    const onChange = vi.fn();
+    render(<InboxFilters value={VALUE} onChange={onChange} />);
+    expect(screen.getByRole("tab", { name: /Pendentes/ })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Fila/ })).toBeInTheDocument();
-    expect(screen.queryByRole("tab", { name: /Todas/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Todas/ })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: /Minhas/ })).not.toBeInTheDocument();
+    const minhas = screen.getByRole("button", { name: "Minhas" });
+    expect(minhas).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(minhas);
+    expect(onChange).toHaveBeenCalledWith({ ...VALUE, onlyMine: true });
   });
 
   it("manager: mostra Todas", () => {
@@ -178,11 +188,11 @@ describe("InboxFilters render — 3 visões + escopo", () => {
     expect(screen.getByRole("tab", { name: /Todas/ })).toBeInTheDocument();
   });
 
-  it("contagens por visão são renderizadas (Fila=3, Minhas=2)", () => {
+  it("contagens por visão são renderizadas (Fila=3, Pendentes=4)", () => {
     setOrg("manager", "all");
     render(<InboxFilters value={VALUE} onChange={() => {}} />);
     expect(screen.getByRole("tab", { name: /Fila/ })).toHaveTextContent("3");
-    expect(screen.getByRole("tab", { name: /Minhas/ })).toHaveTextContent("2");
+    expect(screen.getByRole("tab", { name: /Pendentes/ })).toHaveTextContent("4");
     expect(screen.getByRole("tab", { name: /Todas/ })).toHaveTextContent("5");
   });
 });

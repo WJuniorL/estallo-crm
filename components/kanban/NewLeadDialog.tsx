@@ -1,6 +1,10 @@
 "use client";
 
-import { useActiveOrg } from "@/hooks/auth/AuthProvider";
+import { useActiveOrg, useUser } from "@/hooks/auth/AuthProvider";
+import { useAssignableMembers } from "@/hooks/inbox/useAssignableMembers";
+import { useCatalogoDeProdutos } from "@/hooks/leads/useProdutosDoNegocio";
+import { apiClient } from "@/lib/api/client";
+import { X } from "@/lib/ui/icons";
 import { useT } from "@/hooks/i18n/useT";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -34,7 +38,7 @@ import {
 } from "@/lib/leads/negocio-aberto-duplicado";
 import type { Lead } from "@/lib/types/leads";
 import { createLeadSchema, type CreateLeadInput } from "@/lib/schemas/leads";
-import { MOEDA_PADRAO, parseReaisToCents, simboloDaMoeda } from "@/lib/money";
+import { MOEDA_PADRAO, formatCents, parseReaisToCents, simboloDaMoeda } from "@/lib/money";
 import { rotuloDoContato } from "@/lib/contacts/rotulo-do-contato";
 import type { Contact } from "@/lib/types/contacts";
 import { EcoDoValor } from "./EcoDoValor";
@@ -71,6 +75,9 @@ interface Props {
   leads?: Lead[];
 }
 
+/** O "ninguém" no Select de responsável — o Radix não aceita item de valor vazio. */
+const SEM_RESPONSAVEL = "__sem_responsavel__";
+
 function defaultStageId(stages: Stage[]): string {
   const open = stages.find((s) => !s.is_won && !s.is_lost && !s.is_archived);
   return open?.id ?? stages[0]?.id ?? "";
@@ -93,6 +100,18 @@ export function NewLeadDialog({
   const initialStage = useMemo(() => defaultStageId(stages), [stages]);
   // Quem abre o diálogo já sabendo o contato (Inbox) não escolhe de novo.
   const [contato, setContato] = useState<Contact | null>(null);
+  // O RESPONSÁVEL nasce como quem está criando, e pode ser trocado (ou tirado).
+  // Os destinos são os mesmos da transferência: membros ativos agent+.
+  const usuario = useUser();
+  const [responsavel, setResponsavel] = useState<string>(usuario.id);
+  const { data: membrosBrutos } = useAssignableMembers(open);
+  const membros = Array.isArray(membrosBrutos) ? membrosBrutos : [];
+  // PRODUTOS: escolhidos aqui, gravados depois do INSERT pela mesma rota do
+  // dossiê (`/leads/[id]/produtos`) — o valor do negócio passa a ser a soma
+  // deles, pela trigger do banco, igual a adicionar pelo card.
+  const { data: catalogoBruto } = useCatalogoDeProdutos(open);
+  const catalogo = Array.isArray(catalogoBruto) ? catalogoBruto : undefined;
+  const [produtos, setProdutos] = useState<string[]>([]);
   // ─── O AVISO DE NEGÓCIO ABERTO DUPLICADO (issue #1751) ─────────────────────
   //
   // Guarda TAMBÉM os valores do formulário: quem chega aqui já preencheu tudo,
@@ -122,6 +141,8 @@ export function NewLeadDialog({
     if (!open) {
       setContato(null);
       setAviso(null);
+      setResponsavel(usuario.id);
+      setProdutos([]);
     }
   }
 
@@ -206,6 +227,7 @@ export function NewLeadDialog({
     if (values.description.trim()) payload.description = values.description.trim();
     if (valueCents !== null) payload.value_cents = valueCents;
     if (values.expected_close_date) payload.expected_close_date = values.expected_close_date;
+    if (responsavel !== SEM_RESPONSAVEL) payload.owner_user_id = responsavel;
 
     const parsed = createLeadSchema.safeParse(payload);
     if (!parsed.success) {
@@ -226,6 +248,21 @@ export function NewLeadDialog({
       // `avisoJaMostrado` evita a segunda chamada de quem já confirmou o aviso
       // no diálogo: a mesma duplicidade contada duas vezes ensina a ignorar.
       const meta = (resposta as RespostaCriacaoDeLead | null | undefined)?.meta;
+      const leadId = (resposta as RespostaCriacaoDeLead | null | undefined)?.data?.id;
+      // O negócio JÁ existe: falha num produto não desfaz nada nem vira erro de
+      // criação — diz quantos não entraram, e o resto se completa pelo card.
+      if (leadId && produtos.length > 0) {
+        const falhas = (
+          await Promise.allSettled(
+            produtos.map((product_id) =>
+              apiClient.post(`/api/v1/leads/${leadId}/produtos`, { product_id }),
+            ),
+          )
+        ).filter((r) => r.status === "rejected").length;
+        if (falhas > 0) {
+          toast.warning(t("Lead criado, mas alguns produtos não foram adicionados."));
+        }
+      }
       const avisos = meta?.avisos ?? [];
       if (!avisoJaMostrado && avisos.includes(AVISO_NEGOCIO_ABERTO_EXISTENTE)) {
         const existente = meta?.negocio_aberto_existente;
@@ -254,6 +291,8 @@ export function NewLeadDialog({
       });
       setContato(null);
       setAviso(null);
+      setResponsavel(usuario.id);
+      setProdutos([]);
       onOpenChange(false);
     } catch {
       // toast already shown
@@ -370,6 +409,90 @@ export function NewLeadDialog({
               placeholder="vip, recompra"
               {...form.register("tagsRaw")}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>{t("Responsável")}</Label>
+            <Select value={responsavel} onValueChange={setResponsavel}>
+              <SelectTrigger data-testid="novo-lead-responsavel">
+                <SelectValue placeholder={t("Sem responsável")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={SEM_RESPONSAVEL}>{t("Sem responsável")}</SelectItem>
+                {/* Quem cria aparece mesmo antes da lista chegar: é o padrão
+                    selecionado, e o gatilho não pode ficar em branco. */}
+                {!membros.some((m) => m.user_id === usuario.id) && (
+                  <SelectItem value={usuario.id}>{usuario.full_name ?? t("Você")}</SelectItem>
+                )}
+                {membros.map((m) => (
+                  <SelectItem key={m.user_id} value={m.user_id}>
+                    {m.full_name ?? t("Sem nome")}
+                    {m.user_id === usuario.id ? ` (${t("você")})` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>{t("Produtos")}</Label>
+            {produtos.length > 0 && (
+              <ul className="space-y-1" data-testid="novo-lead-produtos">
+                {produtos.map((id) => {
+                  const p = catalogo?.find((c) => c.id === id);
+                  return (
+                    <li
+                      key={id}
+                      className="flex items-center justify-between gap-2 rounded-md border px-2.5 py-1.5 text-sm"
+                    >
+                      <span className="truncate">{p?.nome ?? id}</span>
+                      <span className="ml-auto shrink-0 tabular-nums text-muted-foreground">
+                        {p ? formatCents(p.preco_cents, moedaDoValor) : ""}
+                      </span>
+                      <button
+                        type="button"
+                        aria-label={`${t("Remover")} ${p?.nome ?? ""}`}
+                        onClick={() => setProdutos((atual) => atual.filter((x) => x !== id))}
+                        className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-text"
+                      >
+                        <X size={14} aria-hidden />
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            {/* `value=""` mantém o seletor como AÇÃO ("adicionar"), não como
+                estado: cada escolha entra na lista acima e o gatilho volta vazio. */}
+            <Select
+              value=""
+              onValueChange={(id) => setProdutos((atual) => (atual.includes(id) ? atual : [...atual, id]))}
+              disabled={!catalogo || catalogo.length === 0}
+            >
+              <SelectTrigger data-testid="novo-lead-adicionar-produto">
+                <SelectValue
+                  placeholder={
+                    catalogo && catalogo.length === 0
+                      ? t("Nenhum produto no catálogo")
+                      : t("Adicionar produto")
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {(catalogo ?? [])
+                  .filter((c) => c.ativo && !produtos.includes(c.id))
+                  .map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nome} · {formatCents(c.preco_cents, moedaDoValor)}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+            {produtos.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                {t("Com produtos, o valor do lead passa a ser a soma deles.")}
+              </p>
+            )}
           </div>
 
           {/* O AVISO SEM BLOQUEIO (#1751): aparece quando já existe negócio

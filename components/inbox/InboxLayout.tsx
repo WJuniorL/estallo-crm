@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "@/hooks/i18n/useT";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/auth/AuthProvider";
 import { estadoDaJanela } from "@/lib/channels/janela";
 import { motivoDaJanelaFechada, motivoDoContato } from "@/lib/inbox/motivo-do-envio-bloqueado";
@@ -98,11 +98,9 @@ export function tabToFilter(
       // `comandosDaFila` é quem cruza isso com o fato org-wide: numa instalação
       // sem nenhum agente no ar, `automatico` também é "esperando gente".
       return { comando: comandosDaFila(automaticoDaOrg) };
-    case "mine":
-      // Sem `exclude_finished` a aba mostra tudo que o atendente JÁ atendeu —
-      // `Fechar` muda o status mas não solta o dono (de propósito: quem atendeu
-      // é histórico). O lugar de "minhas fechadas" é a aba Fechadas.
-      return { assigned_to: "me", exclude_finished: true };
+    case "pending":
+      // O cliente escreveu e ninguém respondeu ainda — régua em `lib/inbox/pendentes.ts`.
+      return { pendentes: true };
     case "closed":
       // Sem "Arquivar" no Estallo: as arquivadas de antes moram aqui, junto
       // com as fechadas. O badge (`counts`) conta o mesmo par.
@@ -118,13 +116,14 @@ export function tabToFilter(
   }
 }
 
-const FILTER_TABS: InboxTab[] = ["unassigned", "mine", "all", "closed", "ai"];
+const FILTER_TABS: InboxTab[] = ["unassigned", "pending", "all", "closed", "ai"];
 
 /**
- * Lê ?filter= (G4-02, deep-link). ?filter=all é HONRADO mesmo para agent — a
- * lista volta RLS-scoped (a tab só some cosmeticamente); default: fila.
+ * Lê ?filter= (G4-02, deep-link); default: fila. `?filter=mine` é link de antes
+ * de "Minhas" virar filtro: abre em Todas com o filtro "Minhas" ligado.
  */
 function parseFilterParam(v: string | null): InboxTab {
+  if (v === "mine") return "all";
   return v && FILTER_TABS.includes(v as InboxTab) ? (v as InboxTab) : "unassigned";
 }
 
@@ -153,10 +152,10 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
   const supportReadonly = user.support?.access_mode === "support_readonly";
   const orgId = activeOrg?.orgId ?? null;
 
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const tab = parseFilterParam(searchParams.get("filter"));
+  const filterNaUrl = searchParams.get("filter");
+  const tab = parseFilterParam(filterNaUrl);
   const idNaUrl = searchParams.get("id");
   /**
    * `?tag=` é o destino do link de cada linha do relatório Por etiqueta
@@ -175,6 +174,7 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
     search: "",
     onlyUnread: false,
     onlyGroups: false,
+    onlyMine: filterNaUrl === "mine",
     ...(tagNaUrl ? { tag: tagNaUrl } : {}),
   });
   const filterValue: InboxFiltersValue = { tab, ...aux };
@@ -183,18 +183,24 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
       if (next.tab !== tab) {
         const params = new URLSearchParams(searchParams);
         params.set("filter", next.tab);
-        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+        // History API, e não `router.replace`: a página é `force-dynamic`, e o
+        // `router.replace` refazia a renderização no SERVIDOR a cada clique de
+        // aba (auth + org) — a aba só trocava quando essa ida voltava, e a tela
+        // parecia travada. O Next sincroniza `useSearchParams` com o
+        // `replaceState` sem pedir nada ao servidor (mesmo caminho da troca de
+        // conversa, mais abaixo, com `pushState`).
+        window.history.replaceState(null, "", `${pathname}?${params.toString()}`);
       }
       const { tab: _t, ...rest } = next;
       setAux(rest);
     },
-    [tab, searchParams, router, pathname],
+    [tab, searchParams, pathname],
   );
 
   // Desliga só os AUXILIARES e mantém a aba: a aba é onde a pessoa está, e
   // limpá-la junto a tiraria do lugar sem ela ter pedido.
   const limparFiltrosAuxiliares = useCallback(() => {
-    setFilterValue({ tab, search: "", onlyUnread: false, onlyGroups: false });
+    setFilterValue({ tab, search: "", onlyUnread: false, onlyGroups: false, onlyMine: false });
   }, [tab, setFilterValue]);
 
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId ?? idNaUrl);
@@ -268,6 +274,7 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
       tagMode: filterValue.tagMode,
       unread: filterValue.onlyUnread || undefined,
       is_group: filterValue.onlyGroups || undefined,
+      ...(filterValue.onlyMine ? { assigned_to: "me" } : {}),
     }),
     [
       filterValue.tab,
@@ -278,6 +285,7 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
       filterValue.tagMode,
       filterValue.onlyUnread,
       filterValue.onlyGroups,
+      filterValue.onlyMine,
     ],
   );
 

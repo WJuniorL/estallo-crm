@@ -45,8 +45,15 @@ vi.mock("@/hooks/contacts/useContactList", () => ({
   useContactList: (filtros: { search?: string }) => busca(filtros),
 }));
 
+vi.mock("@/hooks/inbox/useAssignableMembers", () => ({
+  useAssignableMembers: () => ({ data: [{ user_id: "0b000000-0000-4000-8000-0000000000aa", role: "agent", full_name: "Quem cria" }] }),
+}));
+vi.mock("@/hooks/leads/useProdutosDoNegocio", () => ({
+  useCatalogoDeProdutos: () => ({ data: [] }),
+}));
 vi.mock("@/hooks/auth/AuthProvider", () => ({
   useActiveOrg: () => ({ currency: "BRL", country: null }),
+  useUser: () => ({ id: "0b000000-0000-4000-8000-0000000000aa", full_name: "Quem cria" }),
 }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 

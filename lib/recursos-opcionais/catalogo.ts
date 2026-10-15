@@ -353,7 +353,7 @@ const DA_EMPRESA: RecursoOpcional[] = [
   {
     id: "conversa_fica_com_quem_atendeu",
     nome: "A conversa fica com quem atendeu",
-    oQueFaz: "Quem responde vira dono da conversa, e a IA se cala até alguém devolver.",
+    oQueFaz: "A conversa encerrada que recebe mensagem nova volta direto para o último atendente.",
     nivel: "organizacao",
     padrao: "desligado",
     quemDecide: "manager",

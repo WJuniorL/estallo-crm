@@ -46,7 +46,7 @@ vi.mock("@/hooks/contacts/useContactTagVocabulary", () => ({
 // chave: `automatico` é a da "Automático", `fila` é a da "Fila".
 vi.mock("@/hooks/inbox/useConversationCounts", () => ({
   useConversationCounts: () => ({
-    data: { fila: 3, mine: 2, all: 5, automatico: 7, closed: 4, archived: 1 },
+    data: { fila: 3, mine: 9, pendentes: 2, all: 5, automatico: 7, closed: 4, archived: 1 },
   }),
 }));
 
@@ -65,12 +65,12 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("as seis abas, na ordem pedida pela #2498", () => {
-  it("Automático, Fila, Minhas, Todas, Fechadas — nessa ordem", () => {
+  it("Automático, Fila, Pendentes, Todas, Fechadas — nessa ordem", () => {
     render(<InboxFilters value={VALUE} onChange={() => {}} />);
     expect(abasRenderizadas()).toEqual([
       "Automático",
       "Fila",
-      "Minhas",
+      "Pendentes",
       "Todas",
       "Fechadas",
     ]);
@@ -89,7 +89,7 @@ describe("as seis abas, na ordem pedida pela #2498", () => {
     expect(pares).toEqual([
       "ai=Automático",
       "unassigned=Fila",
-      "mine=Minhas",
+      "pending=Pendentes",
       "all=Todas",
       "closed=Fechadas",
     ]);
@@ -99,7 +99,7 @@ describe("as seis abas, na ordem pedida pela #2498", () => {
     render(<InboxFilters value={VALUE} onChange={() => {}} />);
     expect(screen.getByRole("tab", { name: /^Automático/ })).toHaveTextContent("7");
     expect(screen.getByRole("tab", { name: /^Fila/ })).toHaveTextContent("3");
-    expect(screen.getByRole("tab", { name: /^Minhas/ })).toHaveTextContent("2");
+    expect(screen.getByRole("tab", { name: /^Pendentes/ })).toHaveTextContent("2");
     expect(screen.getByRole("tab", { name: /^Todas/ })).toHaveTextContent("5");
     expect(screen.getByRole("tab", { name: /^Fechadas/ })).toHaveTextContent("4");
   });
@@ -110,19 +110,19 @@ describe("só a ordem muda — as permissões continuam quem eram", () => {
     expect(visibleInboxTabs("manager", "all")).toEqual([
       "ai",
       "unassigned",
-      "mine",
+      "pending",
       "all",
       "closed",
     ]);
   });
 
-  it("agent em modo own* segue SEM 'Todas' — e com as outras cinco na ordem nova", () => {
-    // A regra de visão é filtrar, não reordenar: quem perde 'all' perde só ela,
-    // e a ordem que sobra é a mesma que todo mundo vê.
+  it("agent em modo own* vê as mesmas abas, na mesma ordem (Minhas virou filtro)", () => {
+    // Sem a aba "Minhas", 'Todas' (recortada pela RLS) é a caixa do agent.
     expect(visibleInboxTabs("agent", "own")).toEqual([
       "ai",
       "unassigned",
-      "mine",
+      "pending",
+      "all",
       "closed",
     ]);
   });
@@ -131,7 +131,7 @@ describe("só a ordem muda — as permissões continuam quem eram", () => {
     expect(visibleInboxTabs("agent", "all")).toEqual([
       "ai",
       "unassigned",
-      "mine",
+      "pending",
       "all",
       "closed",
     ]);

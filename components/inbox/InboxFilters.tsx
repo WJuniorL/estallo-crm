@@ -35,7 +35,7 @@ import { useContactTagVocabulary } from "@/hooks/contacts/useContactTagVocabular
 import { useConversationCounts } from "@/hooks/inbox/useConversationCounts";
 import type { Role, VisibilityMode } from "@/lib/auth/types";
 
-export type InboxTab = "unassigned" | "mine" | "all" | "closed" | "ai";
+export type InboxTab = "unassigned" | "pending" | "all" | "closed" | "ai";
 
 /**
  * A faixa na ORDEM DO TRABALHO (#2498): primeiro o que o robô conduz, depois o
@@ -55,19 +55,21 @@ const INBOX_TABS: { value: InboxTab; label: string }[] = [
   // régua do motor) — e a posição sim: ela era a última fora do padrão.
   { value: "ai", label: "Automático" },
   { value: "unassigned", label: "Fila" },
-  { value: "mine", label: "Minhas" },
+  // "Minhas" deixou de ser aba: virou filtro ao lado de "Não lidos" e recorta
+  // qualquer aba. No lugar dela, quem escreveu e ninguém respondeu ainda.
+  { value: "pending", label: "Pendentes" },
   { value: "all", label: "Todas" },
   { value: "closed", label: "Fechadas" },
 ];
 
 /**
- * Visões visíveis por papel + escopo (G4-02, acceptance 1). 'Todas' fica oculta
- * para `agent` quando visibility_mode ≠ 'all'; viewer/manager/admin sempre veem.
- * É apenas cosmético — a RLS (G4-01) é quem garante o escopo mesmo via ?filter=all.
+ * Visões visíveis por papel + escopo (G4-02). Todas as abas para todo papel:
+ * "Todas" ficava oculta para `agent` em visibility_mode ≠ 'all' porque ele
+ * tinha a aba "Minhas"; agora "Minhas" é filtro e "Todas" + "Minhas" é a
+ * caixa dele. Esconder nunca foi segurança — a RLS (G4-01) recorta o escopo.
  */
-export function visibleInboxTabs(role: Role, mode: VisibilityMode | undefined): InboxTab[] {
-  const hideAll = role === "agent" && mode !== "all";
-  return INBOX_TABS.filter((t) => !(t.value === "all" && hideAll)).map((t) => t.value);
+export function visibleInboxTabs(_role: Role, _mode: VisibilityMode | undefined): InboxTab[] {
+  return INBOX_TABS.map((t) => t.value);
 }
 
 export interface InboxFiltersValue {
@@ -88,6 +90,8 @@ export interface InboxFiltersValue {
   tagMode?: ModoDeEtiqueta;
   /** A aba "Grupos" (Task 10): manda `is_group=true` na listagem. */
   onlyGroups?: boolean;
+  /** "Minhas": só as atribuídas a mim, em qualquer aba (`assigned_to=me`). */
+  onlyMine?: boolean;
 }
 
 interface Props {
@@ -192,6 +196,7 @@ export function InboxFilters({ value, onChange }: Props) {
     tag: etiquetas,
     tagMode: value.tagMode,
     channel_session_id: value.channel_session_id,
+    soMinhas: value.onlyMine,
   });
 
   const tabs = activeOrg
@@ -211,7 +216,7 @@ export function InboxFilters({ value, onChange }: Props) {
     // (47, na instalação onde isto foi medido). Um número que existe na API e não
     // aparece na tela é trabalho feito que ninguém vê.
     ai: counts?.automatico,
-    mine: counts?.mine,
+    pending: counts?.pendentes,
     all: counts?.all,
     closed: counts?.closed,
   };
@@ -359,8 +364,11 @@ export function InboxFilters({ value, onChange }: Props) {
   return (
     <div className="border-b border-border bg-background">
       <div className="space-y-2 px-3 pt-3 pb-2">
-        <div className="flex items-center gap-2">
-          <div className="relative min-w-0 flex-1">
+        {/* `flex-wrap`: com "Minhas", "Não lidos" e "Grupos" a linha não cabe na
+            coluna estreita (240–280px); a busca desce para a linha de cima
+            inteira em vez de encolher até não caber o texto. */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative min-w-40 flex-1 basis-40">
             <MagnifyingGlass
               size={15}
               weight="regular"
@@ -381,6 +389,20 @@ export function InboxFilters({ value, onChange }: Props) {
               aria-label={t("Buscar conversas")}
             />
           </div>
+          <button
+            type="button"
+            aria-pressed={value.onlyMine ?? false}
+            onClick={() => onChange({ ...value, onlyMine: !value.onlyMine })}
+            className={cn(
+              "h-9 shrink-0 rounded-full border px-3 text-xs font-medium transition-colors",
+              "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+              value.onlyMine
+                ? "border-accent bg-accent dark:bg-accent-700 text-accent-foreground"
+                : "border-border bg-transparent text-text-muted hover:bg-surface-elevated",
+            )}
+          >
+            {t("Minhas")}
+          </button>
           {/* Botão pressionável em vez de Switch: o filtro vive na mesma linha
               da busca, e o Switch com rótulo pedia uma linha inteira só para
               si numa coluna de 280px. */}
@@ -392,7 +414,7 @@ export function InboxFilters({ value, onChange }: Props) {
               "h-9 shrink-0 rounded-full border px-3 text-xs font-medium transition-colors",
               "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
               value.onlyUnread
-                ? "border-accent bg-accent text-accent-foreground"
+                ? "border-accent bg-accent dark:bg-accent-700 text-accent-foreground"
                 : "border-border bg-transparent text-text-muted hover:bg-surface-elevated",
             )}
           >
@@ -409,7 +431,7 @@ export function InboxFilters({ value, onChange }: Props) {
               "h-9 shrink-0 rounded-full border px-3 text-xs font-medium transition-colors",
               "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
               value.onlyGroups
-                ? "border-accent bg-accent text-accent-foreground"
+                ? "border-accent bg-accent dark:bg-accent-700 text-accent-foreground"
                 : "border-border bg-transparent text-text-muted hover:bg-surface-elevated",
             )}
           >

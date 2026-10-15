@@ -14,7 +14,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { ChipDeEtiqueta } from "@/components/tags/ChipDeEtiqueta";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tag,
@@ -29,7 +29,31 @@ import {
   ClockCounterClockwise,
   BookOpen,
   Plus,
+  DotsThree,
+  Trash,
+  ListChecks,
 } from "@/lib/ui/icons";
+import { FormularioDeTarefa } from "@/app/app/tasks/_components/FormularioDeTarefa";
+import { useTasks } from "@/hooks/tasks/useTasks";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useBulkAction } from "@/hooks/kanban/useBulkAction";
 import { BlocoRecolhivel } from "@/components/ui/bloco-recolhivel";
 import { ROLE_RANK } from "@/lib/auth/types";
 import { useWinLead } from "@/hooks/kanban/useUpdateLead";
@@ -372,12 +396,18 @@ const COR_DO_STATUS: Record<string, string> = {
  */
 function LeadsRecentes({
   leads,
+  contactId,
+  usuarioId,
   onAbrir,
   podeFechar,
   onPerder,
   onFechado,
 }: {
   leads: LeadRow[];
+  /** O contato da conversa: a tarefa criada pelo card nasce presa a ele também. */
+  contactId: string | null;
+  /** Quem está no painel: nasce como responsável da tarefa criada pelo card. */
+  usuarioId: string | undefined;
   onAbrir: (lead: LeadRow) => void;
   podeFechar: boolean;
   onPerder: (lead: LeadRow) => void;
@@ -390,6 +420,11 @@ function LeadsRecentes({
           key={l.id}
           lead={l}
           onAbrir={onAbrir}
+          // Excluir vale para todo negócio (ganho e perdido inclusive); ganhar e
+          // perder, só para o aberto. Mesmo piso de papel nos dois (agent+).
+          podeExcluir={podeFechar}
+          contactId={contactId}
+          usuarioId={usuarioId}
           podeFechar={podeFechar && l.status === "open"}
           onPerder={onPerder}
           onFechado={onFechado}
@@ -401,13 +436,19 @@ function LeadsRecentes({
 
 function CardDoNegocio({
   lead: l,
+  contactId,
+  usuarioId,
   onAbrir,
+  podeExcluir,
   podeFechar,
   onPerder,
   onFechado,
 }: {
   lead: LeadRow;
+  contactId: string | null;
+  usuarioId: string | undefined;
   onAbrir: (lead: LeadRow) => void;
+  podeExcluir: boolean;
   podeFechar: boolean;
   onPerder: (lead: LeadRow) => void;
   onFechado: () => void;
@@ -415,6 +456,17 @@ function CardDoNegocio({
   const t = useT();
   // `useWinLead` é por funil, e cada negócio da lista pode estar num funil.
   const ganhar = useWinLead(l.pipeline_id);
+  // Excluir é a MESMA ação do card do quadro (`KanbanCardActions`): rota em
+  // lote com um id só — mesmo gate de papel, mesma RLS, mesma auditoria.
+  const excluir = useBulkAction(l.pipeline_id);
+  const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
+  // "Criar tarefa": o MESMO formulário da tela de Tarefas e do dossiê, já preso
+  // ao negócio e ao contato, com quem cria como responsável. A lista não é
+  // buscada (`enabled: false`) — o card só precisa da criação.
+  const { criarTarefa } = useTasks({ lead_id: l.id }, { enabled: false });
+  const [criandoTarefa, setCriandoTarefa] = useState(false);
+  // Chave de remontagem: cada abertura começa com o formulário limpo.
+  const [aberturasDaTarefa, setAberturasDaTarefa] = useState(0);
   return (
     <li className="flex items-stretch overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-accent/60">
       <button
@@ -439,31 +491,137 @@ function CardDoNegocio({
           <span className="font-medium tabular-nums text-text">{formatMoney(l.value_cents, l.currency)}</span>
         </div>
       </button>
-      {podeFechar && (
-        <div className="flex flex-col items-center justify-center gap-1 border-l border-border px-1.5">
-          <button
-            type="button"
-            aria-label={t("Marcar como ganho")}
-            title={t("Marcar como ganho")}
-            data-testid={`inbox-lead-ganhar-${l.id}`}
-            disabled={ganhar.isPending}
-            onClick={() => ganhar.mutate({ leadId: l.id }, { onSuccess: onFechado })}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-success/15 hover:text-success disabled:opacity-50"
-          >
-            <Check size={15} weight="bold" aria-hidden />
-          </button>
-          <button
-            type="button"
-            aria-label={t("Marcar como perdido")}
-            title={t("Marcar como perdido")}
-            data-testid={`inbox-lead-perder-${l.id}`}
-            onClick={() => onPerder(l)}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-          >
-            <X size={15} weight="bold" aria-hidden />
-          </button>
+      {(podeExcluir || podeFechar) && (
+        <div className="flex flex-col items-center justify-start gap-1 border-l border-border px-1.5 py-1.5">
+          {podeExcluir && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={t("Ações do lead")}
+                  title={t("Ações do lead")}
+                  data-testid={`inbox-lead-acoes-${l.id}`}
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent/10 hover:text-text data-[state=open]:bg-accent/10 data-[state=open]:text-accent"
+                >
+                  <DotsThree size={16} weight="bold" aria-hidden />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                  {t("Ações do lead")}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  data-testid={`inbox-lead-criar-tarefa-${l.id}`}
+                  onSelect={() => {
+                    setAberturasDaTarefa((n) => n + 1);
+                    setCriandoTarefa(true);
+                  }}
+                >
+                  <ListChecks size={15} className="mr-2" aria-hidden />
+                  {t("Criar tarefa")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  data-testid={`inbox-lead-excluir-${l.id}`}
+                  disabled={excluir.isPending}
+                  onSelect={() => setConfirmandoExclusao(true)}
+                  className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                >
+                  <Trash size={15} className="mr-2" aria-hidden />
+                  {t("Excluir lead")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          {podeFechar && (
+            <>
+              <button
+                type="button"
+                aria-label={t("Marcar como ganho")}
+                title={t("Marcar como ganho")}
+                data-testid={`inbox-lead-ganhar-${l.id}`}
+                disabled={ganhar.isPending}
+                onClick={() => ganhar.mutate({ leadId: l.id }, { onSuccess: onFechado })}
+                className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-success/15 hover:text-success disabled:opacity-50"
+              >
+                <Check size={15} weight="bold" aria-hidden />
+              </button>
+              <button
+                type="button"
+                aria-label={t("Marcar como perdido")}
+                title={t("Marcar como perdido")}
+                data-testid={`inbox-lead-perder-${l.id}`}
+                onClick={() => onPerder(l)}
+                className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+              >
+                <X size={15} weight="bold" aria-hidden />
+              </button>
+            </>
+          )}
         </div>
       )}
+      {/* Montado só aberto: cada card da lista teria a sua consulta da equipe. */}
+      {criandoTarefa && (
+      <FormularioDeTarefa
+        key={aberturasDaTarefa}
+        aberto={criandoTarefa}
+        aoMudarAbertura={setCriandoTarefa}
+        aoSalvar={async (entrada) => {
+          await criarTarefa(entrada);
+          toast.success(t("Tarefa criada"));
+        }}
+        leadId={l.id}
+        contactId={contactId}
+        responsavelPadrao={usuarioId ?? null}
+        tituloDoNegocio={l.title}
+      />
+      )}
+      {/*
+        `AlertDialog`, e não `Dialog`: excluir é irreversível, e o padrão de
+        `docs/doctrine/destrutivo-pede-confirmacao.md` é a janela que não fecha
+        por clique fora.
+      */}
+      <AlertDialog open={confirmandoExclusao} onOpenChange={setConfirmandoExclusao}>
+        <AlertDialogContent data-testid="inbox-lead-excluir-confirmacao">
+          <AlertDialogHeader>
+            <span
+              aria-hidden
+              className="mb-2 flex h-11 w-11 items-center justify-center rounded-xl bg-destructive/10 text-destructive"
+            >
+              <Trash size={22} />
+            </span>
+            <AlertDialogTitle>{t("Excluir lead?")}</AlertDialogTitle>
+            <p className="text-sm font-medium text-text">{l.title}</p>
+            <AlertDialogDescription>
+              {t("O negócio e seu histórico de atividades serão excluídos. O contato e as conversas continuam disponíveis.")}
+            </AlertDialogDescription>
+            <p className="text-xs text-muted-foreground">{t("Esta ação não pode ser desfeita.")}</p>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluir.isPending}>{t("Cancelar")}</AlertDialogCancel>
+            {/* `preventDefault`: quem fecha é o `onSuccess`, para um erro não
+                chegar sobre uma janela que já sumiu (mesmo padrão do quadro). */}
+            <AlertDialogAction
+              className={buttonVariants({ variant: "destructive" })}
+              disabled={excluir.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                excluir.mutate(
+                  { action: "delete", lead_ids: [l.id], params: {} },
+                  {
+                    onSuccess: () => {
+                      setConfirmandoExclusao(false);
+                      onFechado();
+                    },
+                  },
+                );
+              }}
+            >
+              {excluir.isPending ? t("Excluindo…") : t("Excluir lead")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </li>
   );
 }
@@ -700,6 +858,8 @@ export function CRMSidePanel({ conversation }: Props) {
           <>
             <LeadsRecentes
               leads={leads}
+              contactId={contactId}
+              usuarioId={user.id}
               onAbrir={setLeadAberto}
               podeFechar={podeFechar}
               onPerder={setPerdendo}

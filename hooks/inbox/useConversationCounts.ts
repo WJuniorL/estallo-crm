@@ -23,6 +23,8 @@ export interface ConversationCounts {
   closed?: number;
   /** Ainda devolvido pela rota versionada; a tela não tem mais a aba (as arquivadas contam em `closed`). */
   archived?: number;
+  /** A aba "Pendentes". Opcional pelo mesmo motivo dos de cima. */
+  pendentes?: number;
 }
 
 /** Os filtros auxiliares ligados na barra, que a contagem tem de aplicar junto. */
@@ -40,6 +42,8 @@ export interface FiltrosDaContagem {
   /** E ou OU entre as etiquetas escolhidas (#1274). `e` é o padrão. */
   tagMode?: ModoDeEtiqueta;
   channel_session_id?: string;
+  /** O filtro "Minhas", ao lado de "Não lidos": recorta todas as abas. */
+  soMinhas?: boolean;
 }
 
 /**
@@ -60,6 +64,7 @@ export function useConversationCounts(
   // URL sem mudar o sentido do filtro.
   if (filtros.tagMode === "ou") qs.set("modo", "ou");
   if (filtros.channel_session_id) qs.set("channel_session_id", filtros.channel_session_id);
+  if (filtros.soMinhas) qs.set("assigned_to", "me");
   const sufixo = qs.toString();
 
   return useQuery({

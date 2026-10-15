@@ -236,7 +236,7 @@ export function MessageBubble({
                 "rounded-2xl px-3 py-2 shadow-sm",
                 temMenu && "pr-8",
                 isOutbound
-                  ? "rounded-br-sm bg-primary text-primary-foreground"
+                  ? "rounded-br-sm bg-primary dark:bg-accent-700 text-primary-foreground"
                   : "rounded-bl-sm bg-muted text-foreground",
               ),
           isFailed && "border border-destructive",
@@ -317,7 +317,7 @@ export function MessageBubble({
                 : "border-primary bg-background/60",
             )}
           >
-            <div className="font-medium opacity-80">
+            <div className={cn("font-medium", isOutbound ? "text-primary-foreground" : "opacity-80")}>
               {citada.direction === "outbound" ? t("Você") : t("Cliente")}
             </div>
             {/*
@@ -330,7 +330,7 @@ export function MessageBubble({
               continuava legível dentro de cada resposta que a citou. O fio
               permanece (a citação some, não a resposta); o conteúdo, não.
             */}
-            <div className={cn("line-clamp-2 wrap-anywhere opacity-70", Boolean(citada.revoked_at || citada.metadata?.crm_hidden_at) && "italic")}>
+            <div className={cn("line-clamp-2 wrap-anywhere", isOutbound ? "text-primary-foreground" : "opacity-70", Boolean(citada.revoked_at || citada.metadata?.crm_hidden_at) && "italic")}>
               {citada.revoked_at
                 ? t("Esta mensagem foi apagada")
                 : citada.metadata?.crm_hidden_at
@@ -347,7 +347,7 @@ export function MessageBubble({
           </p>
         )}
         {senderLabel && (
-          <div className="mb-0.5 flex items-center gap-1 text-[11px] font-semibold opacity-80">
+          <div className="mb-0.5 flex items-center gap-1 text-[11px] font-semibold text-primary-foreground">
             {senderLabel === "IA" ? (
               <Robot size={10} weight="duotone" aria-hidden />
             ) : null}

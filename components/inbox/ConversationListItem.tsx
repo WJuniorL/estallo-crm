@@ -340,7 +340,7 @@ export function ConversationListItem({
             {truncated}
           </p>
           {unread > 0 && (
-            <span className="inline-flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-accent px-1.5 text-[10px] font-semibold tabular-nums text-accent-foreground">
+            <span className="inline-flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-accent dark:bg-accent-700 px-1.5 text-[10px] font-semibold tabular-nums text-accent-foreground">
               {unread}
             </span>
           )}

@@ -668,7 +668,7 @@ export function ProposalEditorClient({ id, podeEditar, podeRevisar = false }: { 
                 {resultadosProdutos.map((produto) => (
                   <button
                     key={produto.id}
-                    className="block w-full border-b px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground last:border-b-0"
+                    className="block w-full border-b px-3 py-2 text-left text-sm hover:bg-accent dark:hover:bg-accent-800 hover:text-accent-foreground last:border-b-0"
                     onClick={() => adicionarItemDoCatalogo(produto)}
                   >
                     <div className="font-medium">{produto.nome}</div>

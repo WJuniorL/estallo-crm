@@ -163,7 +163,7 @@ export function TagsClient() {
             <span
               className={cn(
                 "rounded-full px-1.5 text-xs",
-                aba === e ? "bg-accent text-accent-foreground" : "bg-muted",
+                aba === e ? "bg-accent dark:bg-accent-700 text-accent-foreground" : "bg-muted",
               )}
             >
               {contagem(e)}

@@ -22,6 +22,8 @@ Componentes consomem tokens semânticos de `app/globals.css`, não hex literais.
 
 O tema escuro tem tokens próprios; não inverter cores automaticamente. Verificar ao menos 4,5:1 para texto normal e 3:1 para texto grande e elementos gráficos de interface relevantes. Nenhum número de contraste de documentos antigos constitui prova da paleta atual.
 
+No tema escuro, superfícies azuis sólidas com texto ou ícone branco usam `accent-700` (`#095A7F`), conforme o modelo 02 aprovado pelo proprietário em 15/10/2026. O hover usa `accent-800` (`#084866`). Isso vale para balões enviados, botões primários, opções selecionadas, badges e itens de menu realçados. O branco tem contraste de 7,55:1 e 9,86:1 nesses fundos, respectivamente. Nome do remetente, horário e duração do áudio permanecem brancos, sem transparência. Os tokens claros `accent`/`primary` continuam disponíveis para links, foco e indicadores; não usá-los como fundo sólido com branco no tema escuro. O tema claro mantém suas cores atuais.
+
 Combinar cor com rótulo, ícone ou forma para indicar estados. Verde comunica resultado e azul comunica ação.
 
 ## Gradientes e composição

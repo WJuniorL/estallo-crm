@@ -88,7 +88,7 @@ export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
     type: "ai_classify",
     paletteLabel: "Classificar (IA)",
     icon: Brain,
-    chipClassName: "bg-accent text-accent-foreground",
+    chipClassName: "bg-accent text-accent-foreground dark:bg-accent-700",
     borderClassName: "border-l-accent-700",
     defaultLabel: "Classificar resposta",
     defaultConfig: () => ({

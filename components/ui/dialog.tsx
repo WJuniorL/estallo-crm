@@ -73,7 +73,7 @@ const DialogContent = React.forwardRef<
           `docs/design-system/screen-flow/07-responsive-strategy.md`, sem
           redesenhar os ~27 diálogos. `lg:m-0 lg:p-0` devolve o desktop idêntico.
         */}
-        <DialogPrimitive.Close className="absolute top-4 right-4 -m-3.5 rounded-sm p-3.5 opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-accent-foreground lg:m-0 lg:p-0">
+        <DialogPrimitive.Close className="absolute top-4 right-4 -m-3.5 rounded-sm p-3.5 opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none data-[state=open]:bg-accent dark:data-[state=open]:bg-accent-700 data-[state=open]:text-accent-foreground lg:m-0 lg:p-0">
           <X className="h-4 w-4" />
           <span className="sr-only">{t("Fechar")}</span>
         </DialogPrimitive.Close>

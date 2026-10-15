@@ -7,6 +7,8 @@ import { REGUA_DO_PRODUTO } from "@/lib/branding/regua-do-produto";
 import { razaoDeContraste } from "@/lib/branding/contraste";
 import { PLANOS_DEMONSTRATIVOS } from "@/lib/planos/catalogo";
 import { PlanosDemonstrativos } from "@/components/plans/PlanosDemonstrativos";
+import { buttonVariants } from "@/components/ui/button";
+import { GRAUS } from "@/lib/branding/rampa";
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -22,9 +24,28 @@ describe("identidade fixa do SaaS", () => {
     expect(marcaDaPlataforma().cor).toBeNull();
   });
   it.each(["claro", "escuro"] as const)("texto de ação permanece legível no tema %s", (tema) => {
-    const fundo = REGUA_DO_PRODUTO.rampaDoProduto[REGUA_DO_PRODUTO[tema].indices.accent]!;
-    const frente = tema === "claro" ? "#ffffff" : "#17232c";
-    expect(razaoDeContraste(fundo, frente)).toBeGreaterThanOrEqual(4.5);
+    // Mede a superfície realmente usada pelo botão, incluindo o override escuro.
+    // Links usam o accent claro; usá-lo como fundo com branco causava 2,16:1.
+    for (const variant of ["default", "primary"] as const) {
+      const classes = buttonVariants({ variant });
+      expect(classes).toContain("text-accent-foreground");
+      for (const hover of [false, true]) {
+        const prefixo = `${tema === "escuro" ? "dark:" : ""}${hover ? "hover:" : ""}`;
+        const grau = classes
+          .split(" ")
+          .find((c) => c.startsWith(`${prefixo}bg-accent-`))
+          ?.slice(`${prefixo}bg-accent-`.length);
+        const indice =
+          grau && /^\d+$/.test(grau)
+            ? GRAUS.findIndex((g) => String(g) === grau)
+            : REGUA_DO_PRODUTO[tema].indices[hover ? "hover" : "accent"];
+        const fundo = REGUA_DO_PRODUTO.rampaDoProduto[indice]!;
+        expect(
+          razaoDeContraste(fundo, "#ffffff"),
+          `${variant}, hover=${hover}`,
+        ).toBeGreaterThanOrEqual(4.5);
+      }
+    }
   });
 });
 

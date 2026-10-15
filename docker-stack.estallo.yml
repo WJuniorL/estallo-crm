@@ -17,9 +17,14 @@ x-deploy: &deploy
   rollback_config:
     parallelism: 1
     order: stop-first
+# DNS do host (systemd-resolved com cache e TLS, ouvindo no docker_gwbridge):
+# os DNS da Locaweb perdem ~5-12% das consultas, e cada perda travava a chamada
+# ao Supabase por 5-10s. Receita em docs/estallo-vps.md, seção "DNS".
+x-dns: &dns [172.18.0.1]
 services:
   app:
     image: ghcr.io/estallosolucoes/estallo-crm:${ESTALLO_IMAGE_TAG}
+    dns: *dns
     env_file: /opt/stacks/estallo-crm/runtime.env
     environment:
       SUPABASE_DB_ADMIN_URL: ""
@@ -53,6 +58,7 @@ services:
         traefik.http.services.estallo-crm.loadbalancer.server.port: "3000"
   worker:
     image: ghcr.io/estallosolucoes/estallo-crm-worker:${ESTALLO_IMAGE_TAG}
+    dns: *dns
     env_file: /opt/stacks/estallo-crm/runtime.env
     environment:
       SUPABASE_DB_ADMIN_URL: ""
@@ -71,6 +77,7 @@ services:
         reservations: { memory: 128M }
   scheduler:
     image: ghcr.io/estallosolucoes/estallo-crm-scheduler:${ESTALLO_IMAGE_TAG}
+    dns: *dns
     env_file: /opt/stacks/estallo-crm/runtime.env
     networks: [internal]
     logging: *logging

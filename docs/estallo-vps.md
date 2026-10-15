@@ -66,6 +66,30 @@ volumes:
   certificates:
 ```
 
+### DNS
+
+Os DNS que a Locaweb entrega por DHCP (`186.202.26.26` e `186.202.27.27`)
+perdem de 5% a 12% das consultas, e cada perda custa 5–10s. Medido em
+15/10/2026: era a causa de "A requisição não respondeu em 10000ms" ao abrir um
+funil, e de rajadas de `EAI_AGAIN`/`fetch failed` nos crons. DNS externo por
+UDP/53 é bloqueado na rede; por TLS/853 passa. A receita aplicada no host:
+
+```ini
+# /etc/systemd/resolved.conf.d/estallo-dns.conf
+[Resolve]
+DNS=1.1.1.1#cloudflare-dns.com 1.0.0.1#cloudflare-dns.com 8.8.8.8#dns.google 186.202.26.26 186.202.27.27
+DNSOverTLS=opportunistic
+Cache=yes
+DNSStubListenerExtra=172.18.0.1
+```
+
+`/etc/docker/daemon.json` com `{"dns": ["172.18.0.1"]}` faz todo container usar
+esse resolvedor (o arquivo de upstream do host lista 1.1.1.1 por UDP, que não
+responde aqui), e o `docker-stack.estallo.yml` repete o `dns:` nos três serviços
+do CRM. O firewall libera só `docker_gwbridge → 172.18.0.1:53` (UDP e TCP). Para
+conferir: `docker exec <container do app> getent hosts cbeqboyfmwyjsybszaxy.supabase.co`
+e `resolvectl statistics` (acertos de cache).
+
 Não agendar `docker image prune -a` nesta VPS. As imagens do CRM não existem em
 registro, então a limpeza apagaria a versão anterior e o rollback deixaria de funcionar.
 

@@ -107,10 +107,10 @@ describe("os pontos de chamada — a regra só vale se quem a usa a chama", () =
   it("a rota do quadro anexa os marcadores do contato e os devolve", () => {
     const fonte = readFileSync("app/api/v1/pipelines/[id]/board/route.ts", "utf8");
     expect(fonte, "withMarcadoresDoContato não é chamada na rota").toMatch(
-      /leadsComMarcadores\s*=\s*await withMarcadoresDoContato\(/,
+      /etapas\s*=\s*await Promise\.all\(\[[\s\S]*?withMarcadoresDoContato\(supabase, organizationId, leadsVisiveis\)/,
     );
     expect(fonte, "o resultado de withMarcadoresDoContato não chega à resposta").toMatch(
-      /leads:\s*leadsComMarcadores\.leads/,
+      /etapas\.map\(\(e\) => e\.leads\[i\]\)[\s\S]*?leads:\s*leadsEnriquecidos/,
     );
   });
 

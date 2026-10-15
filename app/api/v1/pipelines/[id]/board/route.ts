@@ -495,6 +495,34 @@ async function withProdutos(
   };
 }
 
+/**
+ * Os negócios do funil, em páginas. O PostgREST devolve no máximo `max_rows`
+ * (1.000 no Supabase) por consulta, em silêncio: o "Funil de Vendas" da Prática
+ * tinha 1.135 e o quadro mostrava só os 1.000 primeiros. A ordem global sai de
+ * `position_in_stage` com `id` de desempate, para a paginação não repetir nem
+ * pular linha.
+ */
+const LEADS_POR_PAGINA = 1000;
+async function leadsDoFunil(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  pipelineId: string,
+): Promise<{ data: Lead[]; error: { message: string } | null }> {
+  const todos: Lead[] = [];
+  for (let desde = 0; ; desde += LEADS_POR_PAGINA) {
+    const { data, error } = await supabase
+      .from("crm_leads")
+      .select("*")
+      .eq("pipeline_id", pipelineId)
+      .neq("status", "archived")
+      .order("position_in_stage")
+      .order("id")
+      .range(desde, desde + LEADS_POR_PAGINA - 1);
+    if (error) return { data: [], error };
+    todos.push(...((data ?? []) as Lead[]));
+    if ((data ?? []).length < LEADS_POR_PAGINA) return { data: todos, error: null };
+  }
+}
+
 export async function GET(_req: NextRequest, ctx: RouteCtx): Promise<Response> {
   const requestId = randomUUID();
   const { id: pipelineId } = await ctx.params;
@@ -522,12 +550,7 @@ export async function GET(_req: NextRequest, ctx: RouteCtx): Promise<Response> {
       .eq("pipeline_id", pipelineId)
       .eq("is_archived", false)
       .order("position"),
-    supabase
-      .from("crm_leads")
-      .select("*")
-      .eq("pipeline_id", pipelineId)
-      .neq("status", "archived")
-      .order("position_in_stage"),
+    leadsDoFunil(supabase, pipelineId),
   ]);
 
   if (pipelineErr) return fail("internal_error", pipelineErr.message, 500, { requestId });
@@ -535,101 +558,58 @@ export async function GET(_req: NextRequest, ctx: RouteCtx): Promise<Response> {
   if (leadsErr) return fail("internal_error", leadsErr.message, 500, { requestId });
   if (!pipeline) return fail("resource_not_found", t("Pipeline não encontrado."), 404, { requestId });
 
+  const organizationId = (pipeline as Pipeline).organization_id;
+
   // Contato pessoal some do board mas a linha continua no banco (spec 21, etapa
   // 8, decisão 2 — critério 4): o card não é listado e volta ao desmarcar, com
   // o histórico intacto. Filtro em memória sobre a lista já lida: o board não
   // pagina, então nada se perde por filtrar depois de ler. NUNCA `delete`.
-  const pessoais = await idsDeContatosPessoais(
-    supabase,
-    (pipeline as Pipeline).organization_id,
-  );
+  const [pessoais, { data: pipelinePadrao }] = await Promise.all([
+    idsDeContatosPessoais(supabase, organizationId),
+    supabase
+      .from("crm_pipelines")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("is_default", true)
+      .maybeSingle(),
+  ]);
   const leadsVisiveis =
     pessoais.length > 0
-      ? ((leads ?? []) as Lead[]).filter(
-          (l) => l.contact_id === null || !pessoais.includes(l.contact_id),
-        )
-      : ((leads ?? []) as Lead[]);
+      ? leads.filter((l) => l.contact_id === null || !pessoais.includes(l.contact_id))
+      : leads;
 
-  const leadsWithOwner = await withOwnerAgents(
-    supabase,
-    (pipeline as Pipeline).organization_id,
-    leadsVisiveis,
+  // As etapas de enriquecimento correm EM PARALELO, todas sobre a mesma lista:
+  // cada uma só acrescenta o próprio campo ao lead (e preserva ordem e tamanho),
+  // então o resultado é a soma dos campos, posição a posição. Em fila, um funil de
+  // 1.135 negócios (Prática, 15/10/2026) somava 7 rodadas de ~12 lotes e passava
+  // dos 10s do cliente. A resposta continua saindo com os campos de
+  // `withMarcadoresDoContato`, que as cercas do quadro vigiam
+  // (`kanban-atalho-conversa`, `funil-mostra-dados-do-cliente`,
+  // `funil-filtro-de-tag-le-as-duas-caixas`).
+  const etapas = await Promise.all([
+    withOwnerAgents(supabase, organizationId, leadsVisiveis),
+    withNextActions(
+      supabase,
+      organizationId,
+      leadsVisiveis,
+      (pipelinePadrao as { id: string } | null)?.id ?? null,
+    ),
+    withScores(supabase, organizationId, leadsVisiveis),
+    withTarefas(supabase, organizationId, leadsVisiveis),
+    withProdutos(supabase, organizationId, leadsVisiveis),
+    withConversas(supabase, organizationId, leadsVisiveis),
+    withMarcadoresDoContato(supabase, organizationId, leadsVisiveis),
+  ]);
+  const erro = etapas.find((e) => e.error)?.error;
+  if (erro) return fail("internal_error", erro, 500, { requestId });
+  const leadsEnriquecidos = leadsVisiveis.map((lead, i) =>
+    Object.assign({}, lead, ...etapas.map((e) => e.leads[i])),
   );
-  if (leadsWithOwner.error) {
-    return fail("internal_error", leadsWithOwner.error, 500, { requestId });
-  }
-
-  const { data: pipelinePadrao } = await supabase
-    .from("crm_pipelines")
-    .select("id")
-    .eq("organization_id", (pipeline as Pipeline).organization_id)
-    .eq("is_default", true)
-    .maybeSingle();
-
-  const leadsComAcao = await withNextActions(
-    supabase,
-    (pipeline as Pipeline).organization_id,
-    leadsWithOwner.leads,
-    (pipelinePadrao as { id: string } | null)?.id ?? null,
-  );
-  if (leadsComAcao.error) {
-    return fail("internal_error", leadsComAcao.error, 500, { requestId });
-  }
-
-  const leadsComScore = await withScores(
-    supabase,
-    (pipeline as Pipeline).organization_id,
-    leadsComAcao.leads,
-  );
-  if (leadsComScore.error) {
-    return fail("internal_error", leadsComScore.error, 500, { requestId });
-  }
-
-  // As tarefas entram NO MEIO da cadeia, e não no fim: a resposta continua
-  // saindo de `withMarcadoresDoContato`, a última etapa que as cercas do quadro
-  // vigiam (`kanban-atalho-conversa`, `funil-mostra-dados-do-cliente`,
-  // `funil-filtro-de-tag-le-as-duas-caixas`). A ordem não muda o resultado: cada
-  // etapa só acrescenta o próprio campo ao lead.
-  const leadsComTarefas = await withTarefas(
-    supabase,
-    (pipeline as Pipeline).organization_id,
-    leadsComScore.leads,
-  );
-  if (leadsComTarefas.error) {
-    return fail("internal_error", leadsComTarefas.error, 500, { requestId });
-  }
-
-  const leadsComProdutos = await withProdutos(
-    supabase,
-    (pipeline as Pipeline).organization_id,
-    leadsComTarefas.leads,
-  );
-  if (leadsComProdutos.error) {
-    return fail("internal_error", leadsComProdutos.error, 500, { requestId });
-  }
-
-  const leadsComConversa = await withConversas(
-    supabase,
-    (pipeline as Pipeline).organization_id,
-    leadsComProdutos.leads,
-  );
-  if (leadsComConversa.error) {
-    return fail("internal_error", leadsComConversa.error, 500, { requestId });
-  }
-
-  const leadsComMarcadores = await withMarcadoresDoContato(
-    supabase,
-    (pipeline as Pipeline).organization_id,
-    leadsComConversa.leads,
-  );
-  if (leadsComMarcadores.error) {
-    return fail("internal_error", leadsComMarcadores.error, 500, { requestId });
-  }
 
   const board: BoardData = {
     pipeline: pipeline as Pipeline,
     stages: (stages ?? []) as Stage[],
-    leads: leadsComMarcadores.leads,
+    leads: leadsEnriquecidos,
   };
 
   return ok(board, { requestId });

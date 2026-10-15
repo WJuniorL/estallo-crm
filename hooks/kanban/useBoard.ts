@@ -16,8 +16,11 @@ import type { BoardData } from "@/lib/kanban/types";
  * uses the server-side cookie reader, identical to every other authed query.
  */
 async function fetchBoard(pipelineId: string): Promise<BoardData> {
+  // 30s, não os 10s padrão: o quadro devolve o funil inteiro (ganhos e perdidos
+  // inclusos), e funil de mais de mil negócios é real.
   const res = await apiClient.get<{ data: BoardData }>(
     `/api/v1/pipelines/${pipelineId}/board`,
+    { timeoutMs: 30_000 },
   );
   // apiClient unwraps { data, meta } envelope already in some helpers;
   // ours returns the parsed JSON literally. Handle both shapes safely.
@@ -38,6 +41,9 @@ async function fetchBoard(pipelineId: string): Promise<BoardData> {
  * divergência" apaga a pista de acessibilidade.
  */
 const PULSE_MS = 1_200;
+
+/** Eventos do canal dentro desta janela viram uma releitura só. */
+const JANELA_DE_RELEITURA_MS = 800;
 
 /** O id do lead dentro do payload do postgres_changes (new, ou old no delete). */
 function idDoEvento(payload: unknown): string | null {
@@ -81,12 +87,35 @@ export function useBoard(pipelineId: string | null) {
     enabled: !!pipelineId,
   });
 
+  /**
+   * RELEITURA AGRUPADA, e nunca abandonando a que está em voo.
+   *
+   * Antes, cada evento do canal invalidava o quadro na hora — e o padrão do
+   * TanStack é CANCELAR a leitura em curso e começar outra. O navegador
+   * abandona, o servidor não: num funil de 1.135 negócios com conversa ativa
+   * (Prática, 15/10/2026) as leituras se empilhavam no app, o quadro nunca
+   * chegava ("não respondeu em 10000ms") e o Inbox ficava lento junto.
+   *
+   * Agora os eventos de uma janela curta viram UMA releitura; se já houver uma
+   * em voo, espera-se ela e lê-se de novo (a que estava em voo pode ter saído
+   * antes da mudança).
+   */
+  const releitura = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const agendarReleitura = useCallback(() => {
+    if (releitura.current) clearTimeout(releitura.current);
+    releitura.current = setTimeout(async () => {
+      releitura.current = null;
+      const emVoo = qc.isFetching({ queryKey }) > 0;
+      await qc.invalidateQueries({ queryKey }, { cancelRefetch: false });
+      if (emVoo) await qc.invalidateQueries({ queryKey }, { cancelRefetch: false });
+    }, JANELA_DE_RELEITURA_MS);
+  }, [qc, queryKey]);
+
   const onChange = useCallback(
     (payload: unknown) => {
-      // Conservative: invalidate the board on any change. Optimistic patches
-      // arrive faster via useMoveCard's onMutate; this just reconciles
-      // cross-user changes within ~250ms.
-      qc.invalidateQueries({ queryKey });
+      // Optimistic patches arrive faster via useMoveCard's onMutate; this just
+      // reconciles cross-user changes.
+      agendarReleitura();
 
       const leadId = idDoEvento(payload);
       // Janela, não marca gasta por evento: uma ação minha chega aqui em DUAS
@@ -121,7 +150,7 @@ export function useBoard(pipelineId: string | null) {
         }, PULSE_MS),
       );
     },
-    [qc, queryKey],
+    [agendarReleitura],
   );
 
   // O STATUS DO CANAL NÃO PODE SER DESCARTADO. `useRealtimeChannel` calcula
@@ -154,6 +183,7 @@ export function useBoard(pipelineId: string | null) {
     return () => {
       for (const t of pendentes.values()) clearTimeout(t);
       pendentes.clear();
+      if (releitura.current) clearTimeout(releitura.current);
     };
   }, []);
 

@@ -260,9 +260,11 @@ describe("a fiação — quem usa a regra a chama", () => {
     expect(etapa, "anexarDadosDoContato não é chamada na etapa").toMatch(
       /anexarDadosDoContato\(\s*leadsDoQuadro,\s*linhas\s*\)/,
     );
-    // sem etapa nova na cadeia: `funil-filtro-de-tag-le-as-duas-caixas` e
-    // `kanban-atalho-conversa` vigiam withConversas → withMarcadoresDoContato → resposta
-    expect(rota).toMatch(/leads:\s*leadsComMarcadores\.leads/);
+    // a etapa roda no Promise.all das etapas e o resultado dela entra na soma
+    // que vira a resposta (`funil-filtro-de-tag-le-as-duas-caixas` e
+    // `kanban-atalho-conversa` vigiam o mesmo elo)
+    expect(rota).toMatch(/etapas\s*=\s*await Promise\.all\(\[[\s\S]*?withMarcadoresDoContato\(supabase, organizationId, leadsVisiveis\)/);
+    expect(rota).toMatch(/etapas\.map\(\(e\) => e\.leads\[i\]\)[\s\S]*?leads:\s*leadsEnriquecidos/);
   });
 
   it("o card e o dossiê renderizam os componentes novos", () => {

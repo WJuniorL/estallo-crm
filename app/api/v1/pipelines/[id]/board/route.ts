@@ -28,6 +28,7 @@ import { anexarDadosDoContato, type LinhaDoContatoNoQuadro } from "@/lib/kanban/
 import { anexarTarefasAosNegocios, type LinhaDaTarefaNoQuadro } from "@/lib/kanban/tarefas-no-quadro";
 import { buscaEmLotes } from "@/lib/supabase/em-lotes";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { idsDeContatosPessoais } from "@/app/api/v1/conversations/_handler";
 import type { BoardData, Pipeline, Stage } from "@/lib/kanban/types";
 import type { Lead } from "@/lib/types/leads";
@@ -464,9 +465,19 @@ async function withTarefas(
 /**
  * Anexa os produtos do catálogo de cada negócio (0660) — o filtro por produto
  * do quadro. Uma leitura para o quadro inteiro, em lotes, como as tarefas.
+ *
+ * Lê com o cliente de SERVIÇO, e isso é deliberado (15/10/2026). A policy de
+ * SELECT de `crm_lead_products` roda, POR LINHA, um `EXISTS` em `crm_leads` mais
+ * `fn_can_view_lead` (SECURITY DEFINER, não inlinável, com 4-5 subconsultas) —
+ * e a policy de `crm_leads` dentro do EXISTS roda a mesma função de novo. Medido
+ * no banco de produção: 3,2s de média por lote de 100, 595 chamadas, e o pico de
+ * um quadro grande saturava o banco a ponto de o `/auth/v1/user` de todo mundo
+ * pendurar. A autorização já aconteceu: os ids saem da leitura de `crm_leads`
+ * feita COM a RLS do usuário, e a organização vem do pipeline que a RLS deixou
+ * ver — nunca do request. O filtro de `organization_id` continua explícito.
  */
 async function withProdutos(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: ReturnType<typeof createAdminClient>,
   organizationId: string,
   leads: Lead[],
 ): Promise<{ leads: Lead[]; error: string | null }> {
@@ -596,7 +607,7 @@ export async function GET(_req: NextRequest, ctx: RouteCtx): Promise<Response> {
     ),
     withScores(supabase, organizationId, leadsVisiveis),
     withTarefas(supabase, organizationId, leadsVisiveis),
-    withProdutos(supabase, organizationId, leadsVisiveis),
+    withProdutos(createAdminClient(), organizationId, leadsVisiveis),
     withConversas(supabase, organizationId, leadsVisiveis),
     withMarcadoresDoContato(supabase, organizationId, leadsVisiveis),
   ]);

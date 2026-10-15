@@ -64,11 +64,11 @@ export function BlocoRecolhivel({
 
   return (
     <section
-      className={cn("shrink-0 overflow-hidden rounded-lg border border-border bg-card", className)}
+      className={cn("shrink-0 overflow-hidden rounded-[14px] border border-border bg-card shadow-xs", className)}
       data-bloco={id}
       {...resto}
     >
-      <div className="flex items-center gap-2 bg-muted/40 px-3 py-2">
+      <div className="flex min-h-[34px] items-center gap-2 bg-muted/40 px-3 py-2">
         <button
           type="button"
           onClick={alternar}
@@ -76,7 +76,7 @@ export function BlocoRecolhivel({
           className="flex min-w-0 flex-1 items-center gap-2 text-left"
         >
           {icone && <span className="shrink-0 text-accent">{icone}</span>}
-          <h3 className="truncate text-xs font-semibold text-text">{titulo}</h3>
+          <h3 className="truncate font-sans text-xs font-semibold text-text">{titulo}</h3>
           {contagem != null && contagem > 0 && (
             <span className="rounded-full bg-background px-1.5 text-[10px] font-medium tabular-nums text-muted-foreground">
               {contagem}

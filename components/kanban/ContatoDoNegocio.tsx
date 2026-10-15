@@ -28,6 +28,7 @@ import {
   type TipoDeLink,
 } from "@/lib/leads/links-de-contato";
 import { nomeDoContato } from "@/lib/contacts/rotulo-do-contato";
+import { ArrowSquareOut } from "@/lib/ui/icons";
 import type { Contact } from "@/lib/types/contacts";
 
 interface Props {
@@ -156,8 +157,8 @@ function PessoasRelacionadas({ leadId }: { leadId: string | null }) {
   const pessoas = data?.data ?? [];
   if (pessoas.length === 0) return null;
   return (
-    <div className="mt-3 space-y-1" data-testid="pessoas-relacionadas">
-      <p className="text-[11px] font-medium tracking-wide text-text-muted uppercase">
+    <div className="mt-3 space-y-1 border-t border-border pt-3" data-testid="pessoas-relacionadas">
+      <p className="text-[11px] leading-4 font-semibold tracking-[0.035em] text-text-muted uppercase">
         {t("Pessoas relacionadas")}
       </p>
       <ul className="space-y-1">
@@ -328,9 +329,9 @@ function FormularioDeLinks({ contato, pipelineId }: { contato: Contact; pipeline
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={`${t("Abrir")} ${t(rotulo)}`}
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border text-text-muted hover:text-text"
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-background text-text-muted hover:bg-accent-soft hover:text-accent"
                   >
-                    ↗
+                    <ArrowSquareOut size={16} aria-hidden />
                   </a>
                 )}
               </div>

@@ -281,7 +281,7 @@ export function ConversationListItem({
             >
               {queuePosition}º
             </span>
-            <span className="text-[11px] text-text-muted">
+            <span className={cn("text-[11px] text-text-muted", isSelected && "text-neutral-600")}>
               {waitingLabel(conversation, t, localeDaData)}
             </span>
           </div>
@@ -293,6 +293,9 @@ export function ConversationListItem({
                 "truncate text-sm",
                 unread > 0 ? "font-semibold text-text" : "font-medium text-text",
                 c?.is_anonymized && "font-normal italic text-text-muted",
+                // O fundo selecionado (accent-50) é claro também no tema escuro:
+                // ali o texto claro sumia. Ink fixo nos dois temas.
+                isSelected && "text-neutral-800",
               )}
             >
               {displayName}
@@ -312,7 +315,7 @@ export function ConversationListItem({
             )}
           </span>
           <span
-            className="shrink-0 text-[11px] tabular-nums text-text-subtle"
+            className={cn("shrink-0 text-[11px] tabular-nums text-text-subtle", isSelected && "text-neutral-500")}
             // O mesmo lugar da tela mostra duas coisas diferentes conforme a aba:
             // na Fila é "desde quando o cliente ESPERA" (a mensagem mais antiga sem
             // resposta — #990), nas outras é "há quanto tempo a conversa mexeu". O
@@ -328,6 +331,7 @@ export function ConversationListItem({
             className={cn(
               "min-w-0 truncate text-[13px]",
               unread > 0 ? "text-text" : "text-text-muted",
+              isSelected && "text-neutral-600",
             )}
           >
             {isAi && mostrarAutomatico ? (

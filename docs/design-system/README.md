@@ -14,6 +14,7 @@ Este conjunto aplica o Brand System ao CRM, sob a doutrina de `CLAUDE.md`. Specs
 - Sora para títulos, Manrope para leitura e controles, JetBrains Mono para dados técnicos.
 - Estallo Blue para ação, Estallo Green para resultado e Ink para texto e navegação. Temas claro e escuro com contraste verificado.
 - Texto sobre o Estallo Blue (botão primário, chip de ação, item ativo) é **sempre branco**, nos dois temas (`--color-accent-fg: #ffffff` em `app/globals.css`). Decisão do dono em 2026-10-14: texto escuro sobre azul tinha razão de contraste maior, mas leitura pior aos olhos — a escolha é deliberada, não descuido.
+- A regra vale para **qualquer fundo azul**, não só o token (decisão do dono em 2026-10-15): cor de etiqueta, cor de etapa do funil, `hover`/`focus`/selecionado em `bg-accent`/`bg-primary`. Fundo sólido azul sempre leva `text-accent-foreground` (ou `text-white`) junto; cor dinâmica passa por `frenteSobreCor()` em `lib/branding/contraste.ts`, que devolve branco para azul e a régua de contraste para as demais cores. A exceção são os tons **pastel** (accent-50…200, `bg-accent-soft`): neles o texto segue escuro. Não usar `hover:bg-accent` como realce neutro (idioma do shadcn): para realce neutro, `bg-surface-elevated`.
 - Layout claro, hierarquia consistente, respiro e densidade adequada ao atendimento.
 - Gradiente azul → verde e grafismos de marca são permitidos em composição, sem prejudicar leitura ou operação.
 - Componentes compartilhados, tokens semânticos e acessibilidade; nenhuma tela cria uma identidade própria.

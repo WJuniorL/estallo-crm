@@ -63,11 +63,11 @@ export function ConversaNoDossie({
   return (
     <Link
       href={`/app/inbox?id=${conversa.id}`}
-      className="group mt-3 flex items-center gap-2.5 rounded-md border border-border bg-muted/40 px-3 py-2 transition-colors hover:border-primary/40 hover:bg-muted"
+      className="group mt-2 flex w-full items-center gap-2.5 rounded-[10px] border border-border bg-surface px-3 py-2.5 text-left transition-colors hover:border-accent"
     >
       <ChatCircle size={16} weight="regular" className="shrink-0 text-text-muted" aria-hidden />
       <span className="min-w-0 flex-1">
-        <span className="block text-xs font-medium text-text">{t("Abrir conversa no Inbox")}</span>
+        <span className="block text-xs font-semibold text-text">{t("Abrir conversa no Inbox")}</span>
         {preview && (
           // A última mensagem responde "vale a pena entrar agora?" sem entrar —
           // sem ela o botão é uma aposta, e o dossiê já existe para não obrigar

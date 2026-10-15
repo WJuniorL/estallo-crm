@@ -58,7 +58,7 @@
  * lidos como os novos. Como a borda (`lib/schemas/tags.ts`) também normaliza
  * por aqui, quem mandar `#12a594` pela API passa a ter `#00655a` gravado.
  */
-import { escolheAFrente } from "@/lib/branding/contraste";
+import { frenteSobreCor } from "@/lib/branding/contraste";
 import { ehHexValido, normalizarHex } from "@/lib/branding/rampa";
 
 /**
@@ -252,7 +252,8 @@ export function coresDoVocabulario(settings: unknown): CoresPorEtiqueta {
 
 /**
  * O estilo do chip quando a etiqueta tem cor: fundo na cor, texto escolhido por
- * `escolheAFrente` (a régua, com piso de 4,5 — issue #2373) e borda da mesma
+ * `frenteSobreCor` — branco sobre azul (decisão do dono, 2026-10-15), a régua
+ * `escolheAFrente` (piso de 4,5 — issue #2373) nas outras cores — e borda da mesma
  * cor (o chip do design system já tem borda; deixá-la no token padrão criaria
  * um aro claro em torno de um fundo escuro — medido na revisão visual da tela
  * de Tags).
@@ -273,6 +274,6 @@ export function estiloDoChip(cor: string | null | undefined): React.CSSPropertie
   return {
     backgroundColor: normalizada,
     borderColor: normalizada,
-    color: escolheAFrente(normalizada),
+    color: frenteSobreCor(normalizada),
   };
 }

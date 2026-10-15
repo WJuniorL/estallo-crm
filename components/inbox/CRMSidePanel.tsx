@@ -39,6 +39,7 @@ import { toast } from "sonner";
 import type { ConversationWithContact } from "@/hooks/inbox/useConversationsRealtime";
 import { activityLabel, actorLabel, actorShape } from "@/lib/leads/activity-vocabulary";
 import { ContactTagsEditor } from "./ContactTagsEditor";
+import { useTagsDoContato } from "@/hooks/contacts/useTagsDoContato";
 import { useDefaultPipeline } from "@/hooks/pipelines/useDefaultPipeline";
 import { NewLeadDialog } from "@/components/kanban/NewLeadDialog";
 import type { CustomFieldDef } from "@/components/contacts/CustomFieldsEditor";
@@ -610,7 +611,8 @@ export function CRMSidePanel({ conversation }: Props) {
   // esta tela inteira combate.
   const recarregar = useCallback(() => setTentativa((n) => n + 1), []);
 
-  const tags = contact?.tags ?? [];
+  // Otimista: chips e editor leem a MESMA lista, que muda no clique.
+  const { tags, aplicar: aplicarTags } = useTagsDoContato(contactId ?? "", contact?.tags ?? []);
   const displayName = rotuloDoContato(contact, t);
 
   // `erro` PRIMEIRO, e não é detalhe: as três listas voltam a `null` quando a
@@ -669,7 +671,7 @@ export function CRMSidePanel({ conversation }: Props) {
               </Button>
             )}
           </div>
-          {tagEditorOpen && contactId && <ContactTagsEditor contactId={contactId} orgId={conversation.organization_id} tags={tags} />}
+          {tagEditorOpen && contactId && <ContactTagsEditor tags={tags} onChange={aplicarTags} />}
         </div>
       </BlocoRecolhivel>
 

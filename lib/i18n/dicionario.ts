@@ -7223,6 +7223,9 @@ export const DICIONARIO: Traducoes = {
   negócio: { es: "negocio" },
   negócios: { es: "negocios" },
   "Etapa atualizada.": { es: "Etapa actualizada." },
+  "Atual": { es: "Actual" },
+  "Ver etapas anteriores": { es: "Ver etapas anteriores" },
+  "Ver próximas etapas": { es: "Ver próximas etapas" },
   "Só uma etapa pode ser a de fechamento. Marcar esta desmarca": {
     es: "Solo una etapa puede ser la de cierre. Marcar esta desmarca",
   },

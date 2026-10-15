@@ -65,11 +65,11 @@ export function TarefasDoNegocio({ leadId, contactId, podeEditar, aberto }: Prop
 
   return (
     <section
-      className="shrink-0 overflow-hidden rounded-lg border border-border bg-card"
+      className="shrink-0 overflow-hidden rounded-[14px] border border-border bg-card shadow-xs"
       aria-labelledby="dossie-tarefas"
     >
-      <div className="flex items-center justify-between gap-2 border-b border-border bg-muted/40 px-3 py-2">
-        <h3 id="dossie-tarefas" className="text-xs font-semibold text-text">
+      <div className="flex min-h-[34px] items-center justify-between gap-2 border-b border-border bg-muted/40 px-3 py-2">
+        <h3 id="dossie-tarefas" className="font-sans text-xs font-semibold text-text">
           {t("Tarefas")}
           {resumo.abertas > 0 ? (
             <span className="ml-1.5 font-normal text-text-muted">

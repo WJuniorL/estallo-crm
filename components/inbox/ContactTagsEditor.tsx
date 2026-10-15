@@ -1,36 +1,33 @@
 "use client";
 import { useT } from "@/hooks/i18n/useT";
 import { SeletorDeTags } from "@/components/tags/SeletorDeTags";
-import { useUpdateContact } from "@/hooks/contacts/useUpdateContact";
 import { normalizarTag } from "@/lib/contacts/tag-normalizada";
 
 interface Props {
-  contactId: string;
-  /** Mantido por compatibilidade de quem monta; o cadastro vem do provider. */
-  orgId?: string;
   tags: string[];
+  /** Grava a lista nova — otimista, via `useTagsDoContato` de quem monta. */
+  onChange: (proximas: string[]) => void;
 }
 
 /**
  * Edita as tags do CONTATO — aberto pelo botão "Tags do contato" do painel do
  * Inbox. Oferece as etiquetas cadastradas de contato (tela Tags, /app/crm/tags)
- * e permite criar na hora. Grava a cada mudança.
+ * e permite criar na hora. Grava a cada mudança, sem travar o campo: quem monta
+ * (`CRMSidePanel`) aplica na tela antes da resposta e desfaz se der erro.
  *
  * A forma gravada é a normalizada (`normalizarTag`), a mesma do servidor: sem
  * isso "VIP" e "vip" virariam duas etiquetas no mesmo contato.
  */
-export function ContactTagsEditor({ contactId, tags }: Props) {
+export function ContactTagsEditor({ tags, onChange }: Props) {
   const t = useT();
-  const mutation = useUpdateContact(contactId);
 
   return (
     <div className="mt-2 rounded-md border border-border p-2">
       <SeletorDeTags
         entidade="contact"
         valor={tags}
-        onChange={(proximas) => mutation.mutate({ tags: proximas })}
+        onChange={onChange}
         normalizar={normalizarTag}
-        disabled={mutation.isPending}
         rotulo={t("Adicionar tag ao contato")}
       />
       {tags.length === 0 && (

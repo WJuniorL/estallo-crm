@@ -10,6 +10,7 @@ import type { Lead } from "@/lib/types/leads";
 const post = vi.hoisted(() => vi.fn(async (..._args: unknown[]) => ({ data: {} })));
 vi.mock("@/lib/api/client", () => ({ apiClient: { post } }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), warning: vi.fn(), error: vi.fn() } }));
+vi.mock("@/components/feedback/ApiErrorToast", () => ({ showApiError: vi.fn() }));
 
 const etapa = (id: string, extra: Partial<Stage> = {}) =>
   ({ id, name: id, color: "#3b82f6", is_won: false, is_lost: false, is_archived: false, ...extra }) as Stage;
@@ -56,6 +57,43 @@ describe("TrilhoDeEtapas", () => {
     renderTrilho();
     await userEvent.click(screen.getByTestId("trilho-etapa-b"));
     expect(await screen.findByLabelText("CPF")).toBeInTheDocument();
+  });
+
+  it("não trava: o 2º clique durante o move em voo muda a tela na hora e sai depois, com o updated_at novo", async () => {
+    post.mockClear();
+    let soltar: (v: { data: unknown }) => void = () => {};
+    post.mockImplementationOnce(() => new Promise<{ data: {} }>((r) => (soltar = r as (v: { data: unknown }) => void)));
+    const client = new QueryClient();
+    const lead = { id: "l-1", stage_id: "a", stage_changed_at: null, updated_at: "T1", position_in_stage: 1 } as Lead;
+    client.setQueryData(["board", "p-1"], { leads: [lead], stages: [] });
+    render(
+      <QueryClientProvider client={client}>
+        <TrilhoDeEtapas lead={lead} stages={[etapa("a"), etapa("b"), etapa("c")]} pipelineId="p-1" podeMover />
+      </QueryClientProvider>,
+    );
+    await userEvent.click(screen.getByTestId("trilho-etapa-b"));
+    expect(screen.getByTestId("trilho-etapa-b")).toHaveAttribute("aria-current", "step");
+    // O primeiro ainda não voltou: o botão não está desabilitado e o clique vale.
+    expect(screen.getByTestId("trilho-etapa-c")).not.toBeDisabled();
+    await userEvent.click(screen.getByTestId("trilho-etapa-c"));
+    expect(screen.getByTestId("trilho-etapa-c")).toHaveAttribute("aria-current", "step");
+    expect(post).toHaveBeenCalledTimes(1);
+
+    soltar({ data: { ...lead, stage_id: "b", updated_at: "T2" } });
+    await waitFor(() =>
+      expect(post).toHaveBeenLastCalledWith(
+        "/api/v1/leads/l-1/move",
+        expect.objectContaining({ stage_id: "c", expected_updated_at: "T2" }),
+      ),
+    );
+  });
+
+  it("erro devolve a etapa anterior", async () => {
+    const { ApiError } = await import("@/lib/api/types");
+    post.mockRejectedValueOnce(new ApiError(500, "internal_error", undefined, "req-2"));
+    renderTrilho();
+    await userEvent.click(screen.getByTestId("trilho-etapa-b"));
+    await waitFor(() => expect(screen.getByTestId("trilho-etapa-a")).toHaveAttribute("aria-current", "step"));
   });
 
   it("sem permissão, os botões ficam desabilitados", () => {

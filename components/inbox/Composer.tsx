@@ -505,7 +505,7 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
             className={cn(
               "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
               mode === "note"
-                ? "bg-warning text-warning-fg"
+                ? "bg-warning text-white"
                 : "text-muted-foreground hover:bg-muted",
             )}
           >

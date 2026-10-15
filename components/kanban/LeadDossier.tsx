@@ -96,7 +96,7 @@ export function LeadDossier({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="flex w-full flex-col gap-3 overflow-y-auto bg-muted/20 sm:max-w-2xl"
+        className="painel-do-lead flex w-full flex-col gap-3 overflow-y-auto px-4 py-5 sm:max-w-2xl sm:p-6"
         // Observável pelo mesmo motivo do board: "a assinatura morreu" e "nada
         // aconteceu" têm a mesma aparência, que é silêncio.
         data-realtime-status={timeline.realtimeStatus.toLowerCase()}
@@ -105,14 +105,16 @@ export function LeadDossier({
         // negócio sem novidade é um estado normal.
         data-refetch-divergencias={timeline.seguranca.divergencias}
       >
-        <SheetHeader className="pb-3 pr-8">
-          <div className="flex items-start justify-between gap-2">
-            <SheetTitle className="text-base leading-6">{lead.title}</SheetTitle>
+        <SheetHeader className="pr-8">
+          <div className="flex flex-wrap items-start justify-between gap-2 sm:flex-nowrap">
+            <SheetTitle className="min-w-0 basis-full text-base leading-6 font-semibold tracking-[-0.3px] sm:basis-auto">
+              {lead.title}
+            </SheetTitle>
             {podeMover && aberto && (
               <Button
                 size="sm"
                 variant="outline"
-                className="h-7 shrink-0 px-2 text-xs"
+                className="h-7 shrink-0 border-border-strong bg-transparent px-2 text-xs hover:border-accent hover:bg-transparent hover:text-accent"
                 onClick={() => setMoverAberto(true)}
                 data-testid="dossie-mover-de-funil"
               >
@@ -124,7 +126,7 @@ export function LeadDossier({
         </SheetHeader>
 
         {stages && stages.length > 0 && (
-          <div className="pb-3">
+          <div className="my-3">
             <TrilhoDeEtapas
               lead={lead}
               stages={stages}
@@ -135,8 +137,8 @@ export function LeadDossier({
         )}
 
         {/* ① cabeçalho vivo */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-border pb-3 text-xs">
-          <span className="font-medium tabular-nums text-text">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border-strong pb-3 text-xs">
+          <span className="font-semibold tabular-nums text-text">
             {formatValor(lead.value_cents, lead.currency)}
           </span>
           <span className="text-text-muted">{stageName}</span>
@@ -163,7 +165,7 @@ export function LeadDossier({
           <button
             type="button"
             onClick={() => campos.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
-            className="ml-auto text-text-muted underline-offset-2 hover:text-text hover:underline"
+            className="ml-auto text-accent underline-offset-[3px] hover:underline"
           >
             {t("Editar campos")}
           </button>
@@ -174,7 +176,7 @@ export function LeadDossier({
             Sem esta linha, quem visse o número mudando no cabeçalho e nunca na
             timeline concluiria que a timeline está incompleta. */}
         {score?.at && (
-          <p className="pt-2 text-[11px] text-text-muted">
+          <p className="-mt-1 text-[11px] leading-4 text-text-muted">
             {t("Probabilidade recalculada automaticamente")} ·{" "}
             {new Date(score.at).toLocaleString(tagDoIdioma)}
           </p>

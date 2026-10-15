@@ -341,7 +341,7 @@ export function SidebarContent({
                                   collapsed={collapsed}
                                   onNavigate={onNavigate}
                                   numero={collapsed && fixados.length > 1 ? i + 1 : undefined}
-                                  icone={<PushPin size={20} weight="fill" aria-hidden />}
+                                  icone={<PushPin size={16} weight="fill" aria-hidden />}
                                   testId={`funil-fixado-${f.id}`}
                                 />
                               </li>
@@ -354,7 +354,7 @@ export function SidebarContent({
                             ativo={isActive}
                             collapsed={collapsed}
                             onNavigate={onNavigate}
-                            icone={<Icon size={20} weight={isActive ? "fill" : "regular"} aria-hidden />}
+                            icone={<Icon size={16} weight={isActive ? "fill" : "regular"} aria-hidden />}
                           >
                             {item.healthDot && (
                               <ConnectionHealthDot
@@ -376,7 +376,7 @@ export function SidebarContent({
                         ativo={pathname === group.hub.href}
                         collapsed={collapsed}
                         onNavigate={onNavigate}
-                        icone={<ArrowRight size={20} aria-hidden />}
+                        icone={<ArrowRight size={16} aria-hidden />}
                       />
                     </li>
                   )}
@@ -394,7 +394,7 @@ export function SidebarContent({
             ativo={pathname === plano.href}
             collapsed={collapsed}
             onNavigate={onNavigate}
-            icone={<Receipt size={20} aria-hidden />}
+            icone={<Receipt size={16} aria-hidden />}
           />
         )}
         {rodape && (
@@ -404,7 +404,7 @@ export function SidebarContent({
             ativo={pathname.startsWith(rodape.href) && pathname !== plano?.href}
             collapsed={collapsed}
             onNavigate={onNavigate}
-            icone={<Gear size={20} aria-hidden />}
+            icone={<Gear size={16} aria-hidden />}
           />
         )}
         <VersionFooter collapsed={collapsed} onNavigate={onNavigate} />

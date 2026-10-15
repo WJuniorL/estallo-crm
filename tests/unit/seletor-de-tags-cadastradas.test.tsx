@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { ContactTagsEditor } from "@/components/inbox/ContactTagsEditor";
+import { useTagsDoContato } from "@/hooks/contacts/useTagsDoContato";
 
 /**
  * Estallo (0659): atribuir etiqueta oferece as CADASTRADAS daquela entidade
@@ -29,12 +30,18 @@ const CADASTRO = [
   { tag: "Proposta enviada", cor: "#10ba84", entidade: "lead" },
 ];
 
+/** Como o `CRMSidePanel` monta: o editor lê e grava pela lista otimista. */
+function Editor({ tags }: { tags: string[] }) {
+  const { tags: visiveis, aplicar } = useTagsDoContato("c-1", tags);
+  return <ContactTagsEditor tags={visiveis} onChange={aplicar} />;
+}
+
 function montar(tags: string[]) {
   get.mockResolvedValue({ data: CADASTRO });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <ContactTagsEditor contactId="c-1" tags={tags} />
+      <Editor tags={tags} />
     </QueryClientProvider>,
   );
 }
@@ -56,7 +63,7 @@ describe("seletor de tags do contato", () => {
 
     await userEvent.click(retorno);
     // O contato grava a forma normalizada, como o servidor.
-    expect(mutate).toHaveBeenCalledWith({ tags: ["vip", "retorno"] });
+    expect(mutate).toHaveBeenCalledWith({ tags: ["vip", "retorno"] }, expect.anything());
   });
 
   it("cria na hora uma tag que não está no cadastro", async () => {
@@ -64,7 +71,26 @@ describe("seletor de tags do contato", () => {
     const campo = screen.getByLabelText("Adicionar tag ao contato");
     await userEvent.type(campo, "Indicação");
     await userEvent.click(await screen.findByRole("option", { name: /Criar «Indicação»/ }));
-    expect(mutate).toHaveBeenCalledWith({ tags: ["indicação"] });
+    expect(mutate).toHaveBeenCalledWith({ tags: ["indicação"] }, expect.anything());
+  });
+
+  it("a tag aparece NO CLIQUE, sem esperar o servidor, e o campo não trava", async () => {
+    montar([]);
+    const campo = screen.getByLabelText("Adicionar tag ao contato");
+    await userEvent.type(campo, "Quente");
+    await userEvent.click(await screen.findByRole("option", { name: /Criar «Quente»/ }));
+    // `mutate` não resolveu (é um mock): o chip já está na tela e o campo segue livre.
+    expect(screen.getByRole("button", { name: /Remover tag quente/ })).toBeInTheDocument();
+    expect(campo).not.toBeDisabled();
+  });
+
+  it("erro na gravação desfaz a tag na tela", async () => {
+    montar([]);
+    await userEvent.type(screen.getByLabelText("Adicionar tag ao contato"), "Quente");
+    await userEvent.click(await screen.findByRole("option", { name: /Criar «Quente»/ }));
+    const callbacks = mutate.mock.calls[0]![1] as { onError: () => void };
+    act(() => callbacks.onError());
+    expect(screen.queryByRole("button", { name: /Remover tag quente/ })).toBeNull();
   });
 
   it("digitar o nome de uma cadastrada não oferece 'Criar' — usa a do cadastro", async () => {

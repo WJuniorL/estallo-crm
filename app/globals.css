@@ -1555,20 +1555,22 @@ h4 {
 [data-estallo-navigation] :focus-visible {
   outline-color: var(--ring);
 }
-/* Menu lateral "02 · Com presença" (escolha do dono, 2026-10-14): ícone de 20px
-   num suporte de 36px, item ativo em azul com filete claro à esquerda. Prévia:
-   ~/.estallo-crm/previews/sidebar-estallo/previas.html. */
+/* Menu lateral "02 · Com presença" (escolha do dono, 2026-10-14): item ativo em
+   azul com filete claro à esquerda. Prévia:
+   ~/.estallo-crm/previews/sidebar-estallo/previas.html. Em 2026-10-15 o dono
+   reduziu o suporte de 36px para 24px (desenho de 16px) e o rótulo para 13px,
+   na proporção do corpo do produto (14px). */
 .nav-item {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 0.6875rem;
-  min-height: 2.75rem;
-  padding: 0.25rem 0.375rem;
-  border-radius: 0.6875rem;
+  gap: 0.625rem;
+  min-height: 2.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
   border: 1px solid transparent;
   color: #dce4ea;
-  font-size: 0.9rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   transition:
     background-color var(--duration-fast, 150ms),
@@ -1584,9 +1586,9 @@ h4 {
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 0.625rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.375rem;
   border: 1px solid rgb(255 255 255 / 0.04);
   background: #34424e;
   color: #a7daf0;
@@ -1615,20 +1617,20 @@ h4 {
   position: absolute;
   left: -1px;
   width: 3px;
-  height: 1.5rem;
+  height: 1.25rem;
   border-radius: 3px;
   background: #8fd9f5;
 }
 /* O número do funil fixado, no canto do suporte, com o menu recolhido. */
 .nav-item-numero {
   position: absolute;
-  top: -0.3rem;
-  right: -0.3rem;
+  top: -0.375rem;
+  right: -0.375rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 1rem;
-  height: 1rem;
+  min-width: 0.875rem;
+  height: 0.875rem;
   padding: 0 0.2rem;
   border-radius: 999px;
   border: 1px solid #26333d;
@@ -1643,13 +1645,40 @@ h4 {
   width: 100%;
   align-items: center;
   justify-content: space-between;
-  min-height: 2.25rem;
-  padding: 0 0.75rem;
+  min-height: 2rem;
+  padding: 0 0.5rem;
   border-radius: 0.5rem;
   color: #c4cdd4;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 .nav-grupo:hover {
   color: #ffffff;
+}
+
+/* Painel lateral do lead (dossiê) e trilho de etapas — prévia
+   ~/.estallo-crm/previews/etapas-estallo/previas.html (dono, 2026-10-15). O
+   fundo claro #f1f1f1 foi pedido pelo dono; no escuro, o fundo da página. As
+   etapas inativas misturam a cor da etapa com esse fundo; a atual usa a cor
+   cheia, sem contorno. */
+.painel-do-lead {
+  --painel-lead: #f1f1f1;
+  background: var(--painel-lead);
+}
+[data-theme="dark"] .painel-do-lead {
+  --painel-lead: var(--color-bg);
+}
+.trilho-etapa path {
+  fill: color-mix(in srgb, var(--etapa) 14%, var(--painel-lead, var(--color-surface)));
+  stroke: none;
+  transition: fill var(--duration-fast, 150ms);
+}
+[data-theme="dark"] .trilho-etapa path {
+  fill: color-mix(in srgb, var(--etapa) 18%, var(--painel-lead, var(--color-surface)));
+}
+.trilho-etapa:not([data-atual]):not(:disabled):hover path {
+  fill: color-mix(in srgb, var(--etapa) 24%, var(--painel-lead, var(--color-surface)));
+}
+.trilho-etapa[data-atual] path {
+  fill: var(--etapa);
 }

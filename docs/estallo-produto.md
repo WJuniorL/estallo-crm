@@ -46,7 +46,7 @@ Pendências para ativar Stripe:
 
 A implantação atual é um piloto; não constitui dimensionamento de uma plataforma comercial. Escalabilidade, WhatsApps simultâneos, capacidade e disponibilidade precisam de validação antes da abertura a clientes.
 
-GitHub Actions permanece desativado por decisão do proprietário após esgotamento da cota. Esta etapa é validada localmente, sem disparar workflows. O ambiente produtivo não recebe um build pesado na VPS compartilhada como consequência do redesign.
+GitHub Actions permanece desativado por decisão do proprietário após esgotamento da cota. Esta etapa é validada localmente, sem disparar workflows. A VPS de produção não faz build: as imagens são construídas fora dela e transferidas por SSH (ver `docs/estallo-vps.md`).
 
 Aceite desta etapa: marca consistente em acesso, navegação e ícones; operação desktop/mobile e claro/escuro; catálogo de navegação preservando RBAC; planos claramente demonstrativos; documentação coerente; ausência de alterações na licença MIT e no schema.
 

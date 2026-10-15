@@ -6,11 +6,68 @@ O copyright e a licença originais são preservados em `LICENSE`. O histórico u
 
 ## Topologia
 
-Uma stack Swarm `estallo-crm` em `178.156.231.35`, domínio `crm.estallo.com.br`,
-Supabase exclusivo `cbeqboyfmwyjsybszaxy`. Traefik e `NetPratica` já existem.
-A aplicação participa de `NetPratica` e da rede interna da stack; worker,
-scheduler, WAHA, Redis efêmero e seu adaptador HTTP usam apenas a rede interna.
-Sem Caddy, portas públicas adicionais, serviços de voz ou build na VPS.
+VPS dedicada Locaweb em São Paulo, `177.153.68.124` (Ubuntu 24.04, 2 vCPU,
+4 GB de RAM e 4 GB de swap, fuso `America/Sao_Paulo`), acessada por
+`root` com a chave `~/.ssh/estallo-crm`. Domínio `crm.estallo.com.br`, servido
+pelo Cloudflare. Supabase exclusivo `cbeqboyfmwyjsybszaxy`. O firewall (`ufw`)
+libera só 22, 80 e 443.
+
+Docker Swarm de um nó com duas stacks: `traefik` (proxy e certificados, receita
+abaixo) e `estallo-crm`. A aplicação participa da rede overlay `NetPratica` e da
+rede interna da stack; worker, scheduler, WAHA, Redis efêmero e seu adaptador HTTP
+usam apenas a rede interna. Sem Caddy, portas públicas adicionais, serviços de
+voz ou build na VPS. O nome `NetPratica` vem da VPS anterior e foi mantido para
+que `docker-stack.estallo.yml` rode sem alteração.
+
+**Migração em 15/10/2026.** Até essa data, a stack rodava na VPS multitenant
+`178.156.231.35`, que dividia 3,7 GB entre 13 stacks. A migração levou
+`runtime.env`, o clone, as três imagens do commit `63541d702a61f51bc9ec29530c0077d1c011b4ce`
+e os volumes do WAHA. A sessão voltou a `WORKING` sem novo pareamento. Depois
+disso, tudo do CRM foi removido da VPS anterior, inclusive a deploy key no GitHub.
+
+A stack `traefik` fica em `/opt/stacks/traefik/docker-compose.yml`. O Traefik 3.5
+não conversa com o Docker 29 (recusa a API 1.24), por isso a versão é 3.6:
+
+```yaml
+version: "3.8"
+services:
+  traefik:
+    image: traefik:v3.6.25@sha256:31267173a15b4944e797a76ffd9c419707c8d8b32fe5b610f80cd0cfa05f372d
+    command:
+      - --providers.swarm=true
+      - --providers.swarm.exposedbydefault=false
+      - --providers.swarm.network=NetPratica
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entryPoint.to=websecure
+      - --entrypoints.web.http.redirections.entryPoint.scheme=https
+      - --entrypoints.web.http.redirections.entrypoint.permanent=true
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.letsencryptresolver.acme.httpchallenge=true
+      - --certificatesresolvers.letsencryptresolver.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.letsencryptresolver.acme.storage=/etc/traefik/letsencrypt/acme.json
+      - --certificatesresolvers.letsencryptresolver.acme.email=pratica.biomed@gmail.com
+      - --log.level=INFO
+    ports:
+      - { target: 80, published: 80, mode: host }
+      - { target: 443, published: 443, mode: host }
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - certificates:/etc/traefik/letsencrypt
+    networks: [NetPratica]
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+    deploy:
+      placement: { constraints: [node.role == manager] }
+      resources: { limits: { memory: 128M } }
+networks:
+  NetPratica: { external: true }
+volumes:
+  certificates:
+```
+
+Não agendar `docker image prune -a` nesta VPS. As imagens do CRM não existem em
+registro, então a limpeza apagaria a versão anterior e o rollback deixaria de funcionar.
 
 As três imagens próprias têm o mesmo SHA completo. O caminho inicial usou
 imagens publicadas pelo CI; com Actions desativado, é permitido gerar imagens
@@ -34,7 +91,7 @@ python3 scripts/estallo-vps.py deploy --sha 1692ad9eb367b8cb9bfc39b79c0ca84cf9ab
 ## Deploy direto, sem GitHub Actions
 
 Para uma revisão nova, construir as três imagens pelos Dockerfiles do projeto
-em um Docker Linux externo à VPS compartilhada. Usar o SHA completo em
+em um Docker Linux externo à VPS. Usar o SHA completo em
 `APP_VERSION`, na tag e no label OCI `org.opencontainers.image.revision`;
 o label de origem dos Dockerfiles deve ser preservado. Nenhuma credencial
 operacional entra no build. O build local Windows do Next serve como verificação,
@@ -67,28 +124,34 @@ carregá-los com `docker load` e recuperar `local-images.json` antes do deploy.
 
 ## Instalação
 
-**Estado publicado em 14/10/2026:** identidade e navegação Estallo estão em produção
-com imagens Linux/AMD64 do commit `8563e3b720c8c34a07f4360f51f1023897885312`.
-A receita operacional no clone é `3184834d5`; essas alterações posteriores afetam
-somente a operação/QA, sem mudar o código da aplicação ou worker nas imagens.
-Build realizado no Docker local e arquivos transferidos por SSH, sem Actions.
+**Estado publicado em 15/10/2026:** produção na VPS dedicada com imagens Linux/AMD64
+do commit `63541d702a61f51bc9ec29530c0077d1c011b4ce`. A versão em execução não
+envelhece nesta linha: `cat /opt/stacks/estallo-crm/deployment.json` ou
+`curl -s https://crm.estallo.com.br/api/v1/health` (campo `version`).
+A identidade e a navegação Estallo entraram em produção em 14/10/2026, com o
+commit `8563e3b720c8c34a07f4360f51f1023897885312`. As imagens são construídas
+no Docker local e transferidas por SSH, sem Actions.
 Prova de HTTPS, login autenticado, temas, planos e navegação está em
 [`evidence/estallo-deploy-2026-10-14/README.md`](../evidence/estallo-deploy-2026-10-14/README.md).
 
 O primeiro rollout manual recriou o WAHA por normalização da especificação Swarm
 (defaults, ordem dos mounts e metadados de plataforma). O digest e os volumes
-foram preservados, e a sessão voltou a `WORKING` sem novo pareamento. Os containers
-dos demais projetos permaneceram os mesmos; 20 domínios públicos mantiveram as
-respostas HTTP. Preservar digests impede troca da versão, mas não garante que o
+foram preservados, e a sessão voltou a `WORKING` sem novo pareamento. Na VPS
+anterior, que era compartilhada, os containers dos demais projetos permaneceram
+os mesmos. Preservar digests impede troca da versão, mas não garante que o
 Swarm nunca recrie uma dependência ao normalizar sua especificação.
 
-1. Apontar o registro A de `crm.estallo.com.br` para `178.156.231.35`.
-2. Clonar o repositório por deploy key read-only em `/opt/stacks/estallo-crm/repo`.
-3. Guardar as credenciais em `/opt/stacks/estallo-crm/credentials.env`, com modo 600:
+1. Preparar o host: instalar o Docker, rodar `docker swarm init`, criar a rede com
+   `docker network create -d overlay --attachable NetPratica` e subir a stack `traefik`
+   com `docker stack deploy -c /opt/stacks/traefik/docker-compose.yml traefik`.
+2. Apontar o registro A de `crm.estallo.com.br` para o IP da VPS.
+3. Clonar o repositório por deploy key read-only em `/opt/stacks/estallo-crm/repo`.
+   O clone usa `core.sshCommand = ssh -i /root/.ssh/estallo_crm_deploy_key -o IdentitiesOnly=yes`.
+4. Guardar as credenciais em `/opt/stacks/estallo-crm/credentials.env`, com modo 600:
    `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
    `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL`, `OWNER_EMAIL`, `OWNER_PASSWORD`.
    A conexão Postgres deve ser o Session pooler com senha e usuário do projeto.
-4. Na raiz do clone, executar:
+5. Na raiz do clone, executar:
 
 ```bash
 python3 scripts/estallo-vps.py configure --credentials /opt/stacks/estallo-crm/credentials.env
@@ -114,6 +177,11 @@ as três imagens daquele commit estão publicadas. O clique na tela existente
 é lido pelo agente; progresso e resultado voltam a `/api/v1/system/agent`.
 Atualizações aplicam somente migrations novas; edição de migration antiga é recusada.
 
+**Pendência desde a migração de 15/10/2026:** a VPS atual ainda não tem deploy key
+do GitHub. Sem ela, `git fetch` e o comando `agent` falham. O deploy manual com
+`--local-images` não depende dela. Para resolver, gerar `/root/.ssh/estallo_crm_deploy_key`
+na VPS e cadastrar a parte pública como deploy key **read-only** do repositório.
+
 ```bash
 python3 scripts/estallo-vps.py agent
 python3 scripts/estallo-vps.py backup
@@ -138,7 +206,9 @@ Sem destino externo, o script declara a pendência; backup na mesma VPS não é 
 No piloto, o computador do proprietário faz a cópia externa pela tarefa Windows
 `Estallo CRM - Backup externo`, às 03:20 e ao entrar no Windows. Ela executa uma
 cópia protegida de `scripts/estallo-backup-pull.ps1`, em
-`C:\Users\junio\.estallo-crm\pull-backups.ps1`, e guarda os backups em
+`C:\Users\junio\.estallo-crm\pull-backups.ps1` (acessa a VPS com a chave
+`~/.ssh/estallo-crm`; ao alterar o script no repositório, copiar de novo para
+esse caminho), e guarda os backups em
 `C:\Users\junio\OneDrive\Documentos\backup-estallo-crm`. O log fica em
 `C:\Users\junio\.estallo-crm\backup-external.log`; arquivos incompletos são
 tentados novamente, e cada cópia concluída recebe um recibo. A cópia depende

@@ -1,11 +1,11 @@
 "use client";
 import { Draggable } from "@hello-pangea/dnd";
-import type { MouseEvent } from "react";
+import { memo, useMemo, type MouseEvent } from "react";
 import { useT } from "@/hooks/i18n/useT";
 import { cn } from "@/lib/utils";
 import { formatValorDoNegocio, MOEDA_PADRAO } from "@/lib/money";
 import type { Lead } from "@/lib/types/leads";
-import { resolveCardState, stageAgeLabel, type CardInput } from "@/lib/kanban/card-state";
+import { buildCardInput, resolveCardState, stageAgeLabel } from "@/lib/kanban/card-state";
 import { KanbanCardActions } from "./KanbanCardActions";
 import { NextActionSlot } from "./NextActionSlot";
 import { ReactivationSlot } from "./ReactivationSlot";
@@ -19,10 +19,13 @@ import { TarefasNoCard } from "./TarefasNoCard";
 export type GestoDeSelecao = "alterna" | "intervalo";
 
 interface KanbanCardProps {
-  /** O que o card mostra — explicitamente NÃO é a linha do banco. */
-  card: CardInput;
-  /** A linha do lead, só para o menu de ações (que muta o lead). */
+  /** A linha do lead. O que o card MOSTRA sai dela por `buildCardInput`. */
   lead: Lead;
+  stageName: string;
+  ownerNames?: Map<string, string | null>;
+  coolingIds?: Set<string>;
+  reactivations?: Map<string, { proposalId: string; expiresAt: string }>;
+  canonicalTags?: string[];
   index: number;
   pipelineId: string;
   isSelected?: boolean;
@@ -67,9 +70,13 @@ function formatValor(cents: number | null, currency: string | null): string | nu
  *
  * Cor só aparece na borda esquerda, e só quando o estado pede (Lei C).
  */
-export function KanbanCard({
-  card,
+export const KanbanCard = memo(function KanbanCard({
   lead,
+  stageName,
+  ownerNames,
+  coolingIds,
+  reactivations,
+  canonicalTags,
   index,
   pipelineId,
   isSelected,
@@ -79,6 +86,14 @@ export function KanbanCard({
   onOpen,
 }: KanbanCardProps) {
   const t = useT();
+  // MEMO: num funil de mil cards, qualquer estado do quadro (abrir o dossiê,
+  // um pulso, marcar um card) re-renderizava TODOS. O card só refaz quando o
+  // próprio lead (o cache do quadro preserva a referência do que não mudou) ou
+  // o contexto dele muda.
+  const card = useMemo(
+    () => buildCardInput(lead, { stageName, ownerNames, coolingIds, reactivations, canonicalTags }),
+    [lead, stageName, ownerNames, coolingIds, reactivations, canonicalTags],
+  );
   const value = formatValor(card.valueCents, card.currency);
   const state = resolveCardState(card, t);
   const age = stageAgeLabel(card.hoursInStage, t);
@@ -104,11 +119,7 @@ export function KanbanCard({
   // O título é o maior e mais natural alvo do card. Quem lê "Segurando Shift,
   // um clique seleciona tudo entre o card anterior e o que você clicou" e clica
   // no card clica no nome dele — e recebia o dossiê.
-  const decidirClique = (e: {
-    shiftKey: boolean;
-    metaKey: boolean;
-    ctrlKey: boolean;
-  }): void => {
+  const decidirClique = (e: { shiftKey: boolean; metaKey: boolean; ctrlKey: boolean }): void => {
     if (e.shiftKey) {
       onSelect?.(card.id, "intervalo");
       return;
@@ -139,7 +150,7 @@ export function KanbanCard({
           title={card.tags.length > 0 ? `Tags: ${card.tags.join(", ")}` : undefined}
           className={cn(
             "group relative overflow-hidden rounded-md border border-border bg-surface",
-            "py-2.5 pl-3 pr-3 shadow-xs transition-colors",
+            "py-2.5 pr-3 pl-3 shadow-xs transition-colors",
             "hover:border-border-strong",
             snapshot.isDragging && "rotate-1 shadow-md ring-1 ring-accent/40",
             isSelected && "ring-2 ring-accent",
@@ -196,9 +207,7 @@ export function KanbanCard({
                 className={cn(
                   "mt-1 h-4 w-4 shrink-0 cursor-pointer accent-accent transition-opacity",
                   "focus:opacity-100 focus-visible:outline-2 focus-visible:outline-accent",
-                  isSelected || isSelecting
-                    ? "opacity-100"
-                    : "opacity-0 group-hover:opacity-100",
+                  isSelected || isSelecting ? "opacity-100" : "opacity-0 group-hover:opacity-100",
                 )}
               />
               {card.canonicalTag && (
@@ -218,7 +227,7 @@ export function KanbanCard({
                   acessibilidade; deixar só onKeyDown daria uma ação que existe
                   e NÃO É DESCOBERTA por leitor de tela. O título como button
                   atende mouse, teclado e leitor sem desfazer a decisão antiga. */}
-              <h3 className="line-clamp-2 h-10 text-sm font-medium leading-5 text-text">
+              <h3 className="line-clamp-2 h-10 text-sm leading-5 font-medium text-text">
                 <button
                   type="button"
                   onClick={(e) => {
@@ -241,7 +250,7 @@ export function KanbanCard({
           {/* ② valor — altura reservada mesmo sem valor, senão o card encolhe. */}
           <p
             className={cn(
-              "mt-1 h-5 text-xs font-medium leading-5 tabular-nums",
+              "mt-1 h-5 text-xs leading-5 font-medium tabular-nums",
               value ? "text-text" : "text-text-muted",
             )}
           >
@@ -310,7 +319,7 @@ export function KanbanCard({
               />
               <TarefasNoCard tarefas={lead.tarefas} />
             </div>
-            <span className="shrink-0 whitespace-nowrap text-[11px] tabular-nums text-text-muted">
+            <span className="shrink-0 text-[11px] whitespace-nowrap text-text-muted tabular-nums">
               {state.showStageAge && age
                 ? `${age} ${t("em")} ${card.stageName}`
                 : `${t("em")} ${card.stageName}`}
@@ -320,4 +329,4 @@ export function KanbanCard({
       )}
     </Draggable>
   );
-}
+});

@@ -14,7 +14,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useT } from "@/hooks/i18n/useT";
-import { useCatalogoDeProdutos, useProdutosDoNegocio } from "@/hooks/leads/useProdutosDoNegocio";
+import {
+  ehProvisorio,
+  useCatalogoDeProdutos,
+  useProdutosDoNegocio,
+} from "@/hooks/leads/useProdutosDoNegocio";
 import { formatCents, parseReaisToCents } from "@/lib/money";
 import { totalDoItem, type ProdutoDoNegocio } from "@/lib/schemas/produtos-do-negocio";
 import { X } from "@/lib/ui/icons";
@@ -54,7 +58,8 @@ export function ProdutosDoNegocio({
               key={item.id}
               item={item}
               moeda={moeda}
-              podeEditar={podeEditar}
+              // A linha provisória (otimista) só se edita quando o id real chega.
+              podeEditar={podeEditar && !ehProvisorio(item.id)}
               onAlterar={(v) => itens.alterar.mutate({ itemId: item.id, ...v })}
               onRemover={() => itens.remover.mutate(item.id)}
             />
@@ -65,11 +70,13 @@ export function ProdutosDoNegocio({
         <Select
           value=""
           onValueChange={(id) => itens.adicionar.mutate(id)}
-          disabled={itens.adicionar.isPending || ativos.length === 0}
+          disabled={ativos.length === 0}
         >
           <SelectTrigger aria-label={t("Adicionar produto")} data-testid="adicionar-produto">
             <SelectValue
-              placeholder={ativos.length === 0 ? t("Nenhum produto no catálogo") : t("Adicionar produto")}
+              placeholder={
+                ativos.length === 0 ? t("Nenhum produto no catálogo") : t("Adicionar produto")
+              }
             />
           </SelectTrigger>
           <SelectContent>
@@ -100,7 +107,9 @@ function LinhaDoProduto({
 }) {
   const t = useT();
   const [quantidade, setQuantidade] = useState(String(item.quantidade));
-  const [desconto, setDesconto] = useState(item.desconto_cents ? centsParaTexto(item.desconto_cents) : "");
+  const [desconto, setDesconto] = useState(
+    item.desconto_cents ? centsParaTexto(item.desconto_cents) : "",
+  );
 
   function salvarQuantidade() {
     const q = Number.parseInt(quantidade, 10);
@@ -123,7 +132,10 @@ function LinhaDoProduto({
   }
 
   return (
-    <li className="space-y-2 rounded-md border border-border p-3 text-sm" data-produto={item.product_id ?? ""}>
+    <li
+      className="space-y-2 rounded-md border border-border p-3 text-sm"
+      data-produto={item.product_id ?? ""}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="truncate font-medium">{item.nome}</p>
@@ -178,7 +190,7 @@ function LinhaDoProduto({
         </div>
         <div className="space-y-1 text-right">
           <p className="text-xs text-muted-foreground">{t("Total")}</p>
-          <p className="h-8 font-medium leading-8">{formatCents(totalDoItem(item), moeda)}</p>
+          <p className="h-8 leading-8 font-medium">{formatCents(totalDoItem(item), moeda)}</p>
         </div>
       </div>
     </li>

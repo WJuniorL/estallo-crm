@@ -37,7 +37,17 @@ interface Props {
   ownerNames?: Map<string, string | null>;
   /** As etapas do funil — alimentam o trilho do topo. Sem elas, não há trilho. */
   stages?: Stage[];
+  /**
+   * Desenha só o CONTEÚDO, dentro de uma gaveta que quem chama já abriu (o
+   * Inbox abre a gaveta na hora do clique e preenche quando o quadro chega —
+   * trocar de gaveta no meio faria a animação de entrada rodar duas vezes).
+   */
+  embutido?: boolean;
 }
+
+/** A gaveta do dossiê — a mesma medida aberta pelo quadro e pelo Inbox. */
+export const CLASSE_DA_GAVETA_DO_LEAD =
+  "painel-do-lead flex w-full flex-col gap-3 overflow-y-auto px-4 py-5 sm:max-w-2xl sm:p-6";
 
 function formatValor(cents: number | null, currency: string | null): string {
   // Mesma régua e mesmo locale do card e do total da coluna (`formatValorDoNegocio`).
@@ -67,6 +77,7 @@ export function LeadDossier({
   stageName,
   ownerNames,
   stages,
+  embutido = false,
 }: Props) {
   const tagDoIdioma = useTagDeIdioma();
   const t = useT();
@@ -80,7 +91,9 @@ export function LeadDossier({
   const user = useUser();
   const activeOrg = useActiveOrg();
   const podeCriarProposta =
-    user.is_platform_admin || (activeOrg && ROLE_RANK[activeOrg.role] >= ROLE_RANK.manager) || false;
+    user.is_platform_admin ||
+    (activeOrg && ROLE_RANK[activeOrg.role] >= ROLE_RANK.manager) ||
+    false;
   // Tarefas são `agent`+, a mesma régua da tela de Tarefas e da rota — e o
   // suporte temporário só lê, como lá (`requireSupportWrite`).
   const podeEditarTarefas =
@@ -92,162 +105,174 @@ export function LeadDossier({
   const aberto = lead.status === "open";
   const [moverAberto, setMoverAberto] = useState(false);
 
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="painel-do-lead flex w-full flex-col gap-3 overflow-y-auto px-4 py-5 sm:max-w-2xl sm:p-6"
-        // Observável pelo mesmo motivo do board: "a assinatura morreu" e "nada
-        // aconteceu" têm a mesma aparência, que é silêncio.
-        data-realtime-status={timeline.realtimeStatus.toLowerCase()}
-        // Observável como no board: "a entrega morreu" e "nada aconteceu"
-        // têm a mesma aparência, e no dossiê a segunda é ainda mais crível —
-        // negócio sem novidade é um estado normal.
-        data-refetch-divergencias={timeline.seguranca.divergencias}
-      >
-        <SheetHeader className="pr-8">
-          <div className="flex flex-wrap items-start justify-between gap-2 sm:flex-nowrap">
-            <SheetTitle className="min-w-0 basis-full text-base leading-6 font-semibold tracking-[-0.3px] sm:basis-auto">
-              {lead.title}
-            </SheetTitle>
-            {podeMover && aberto && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7 shrink-0 border-border-strong bg-transparent px-2 text-xs hover:border-accent hover:bg-transparent hover:text-accent"
-                onClick={() => setMoverAberto(true)}
-                data-testid="dossie-mover-de-funil"
-              >
-                <Funnel size={12} className="mr-1" aria-hidden />
-                {t("Mover de funil")}
-              </Button>
-            )}
-          </div>
-        </SheetHeader>
+  const observaveis = {
+    // Observável pelo mesmo motivo do board: "a assinatura morreu" e "nada
+    // aconteceu" têm a mesma aparência, que é silêncio.
+    "data-realtime-status": timeline.realtimeStatus.toLowerCase(),
+    // Observável como no board: "a entrega morreu" e "nada aconteceu"
+    // têm a mesma aparência, e no dossiê a segunda é ainda mais crível —
+    // negócio sem novidade é um estado normal.
+    "data-refetch-divergencias": timeline.seguranca.divergencias,
+  };
+  const conteudo = (
+    <>
+      <SheetHeader className="pr-8">
+        <div className="flex flex-wrap items-start justify-between gap-2 sm:flex-nowrap">
+          <SheetTitle className="min-w-0 basis-full text-base leading-6 font-semibold tracking-[-0.3px] sm:basis-auto">
+            {lead.title}
+          </SheetTitle>
+          {podeMover && aberto && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 shrink-0 border-border-strong bg-transparent px-2 text-xs hover:border-accent hover:bg-transparent hover:text-accent"
+              onClick={() => setMoverAberto(true)}
+              data-testid="dossie-mover-de-funil"
+            >
+              <Funnel size={12} className="mr-1" aria-hidden />
+              {t("Mover de funil")}
+            </Button>
+          )}
+        </div>
+      </SheetHeader>
 
-        {stages && stages.length > 0 && (
-          <div className="my-3">
-            <TrilhoDeEtapas
-              lead={lead}
-              stages={stages}
-              pipelineId={pipelineId}
-              podeMover={podeMover && aberto}
-            />
-          </div>
+      {stages && stages.length > 0 && (
+        <div className="my-3">
+          <TrilhoDeEtapas
+            lead={lead}
+            stages={stages}
+            pipelineId={pipelineId}
+            podeMover={podeMover && aberto}
+          />
+        </div>
+      )}
+
+      {/* ① cabeçalho vivo */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border-strong pb-3 text-xs">
+        <span className="font-semibold text-text tabular-nums">
+          {formatValor(lead.value_cents, lead.currency)}
+        </span>
+        <span className="text-text-muted">{stageName}</span>
+        <OwnerBadge
+          ownerKind={owner.kind}
+          ownerName={owner.name}
+          agentVersion={owner.agentVersion}
+        />
+        {score && (
+          // O MESMO componente do card, não uma cópia do medidor.
+          // "Superfície nova herda as decisões da antiga" só vale como
+          // mecanismo: herdar por cópia é como as duas listas do evidence —
+          // funciona hoje e diverge no mês em que alguém mudar um dos dois.
+          // De brinde, o rótulo honesto da âncora ("registro que sustenta",
+          // nunca "momento da conversa") vem junto, sem eu reescrever nada.
+          <ScoreSlot
+            probability={score.probability}
+            band={score.band}
+            reason={score.reason}
+            factors={score.factors.slice(0, 3)}
+          />
         )}
 
-        {/* ① cabeçalho vivo */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border-strong pb-3 text-xs">
-          <span className="font-semibold tabular-nums text-text">
-            {formatValor(lead.value_cents, lead.currency)}
-          </span>
-          <span className="text-text-muted">{stageName}</span>
-          <OwnerBadge
-            ownerKind={owner.kind}
-            ownerName={owner.name}
-            agentVersion={owner.agentVersion}
-          />
-          {score && (
-            // O MESMO componente do card, não uma cópia do medidor.
-            // "Superfície nova herda as decisões da antiga" só vale como
-            // mecanismo: herdar por cópia é como as duas listas do evidence —
-            // funciona hoje e diverge no mês em que alguém mudar um dos dois.
-            // De brinde, o rótulo honesto da âncora ("registro que sustenta",
-            // nunca "momento da conversa") vem junto, sem eu reescrever nada.
-            <ScoreSlot
-              probability={score.probability}
-              band={score.band}
-              reason={score.reason}
-              factors={score.factors.slice(0, 3)}
-            />
-          )}
+        <button
+          type="button"
+          onClick={() => campos.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+          className="ml-auto text-accent underline-offset-[3px] hover:underline"
+        >
+          {t("Editar campos")}
+        </button>
+      </div>
 
-          <button
-            type="button"
-            onClick={() => campos.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
-            className="ml-auto text-accent underline-offset-[3px] hover:underline"
-          >
-            {t("Editar campos")}
-          </button>
-        </div>
-
-        {/* O score NÃO aparece na timeline: recálculo é telemetria e não emite
+      {/* O score NÃO aparece na timeline: recálculo é telemetria e não emite
             atividade (silêncio para telemetria, pulso para mudança de estado).
             Sem esta linha, quem visse o número mudando no cabeçalho e nunca na
             timeline concluiria que a timeline está incompleta. */}
-        {score?.at && (
-          <p className="-mt-1 text-[11px] leading-4 text-text-muted">
-            {t("Probabilidade recalculada automaticamente")} ·{" "}
-            {new Date(score.at).toLocaleString(tagDoIdioma)}
-          </p>
-        )}
+      {score?.at && (
+        <p className="-mt-1 text-[11px] leading-4 text-text-muted">
+          {t("Probabilidade recalculada automaticamente")} ·{" "}
+          {new Date(score.at).toLocaleString(tagDoIdioma)}
+        </p>
+      )}
 
-        <ConversaNoDossie
-          conversa={lead.conversa}
-          contactId={lead.contact_id}
-          phone={lead.contact_phone}
-        />
+      <ConversaNoDossie
+        conversa={lead.conversa}
+        contactId={lead.contact_id}
+        phone={lead.contact_phone}
+      />
 
-        {/* Os dados do CLIENTE: telefone e e-mail numa aba, links (Instagram,
+      {/* Os dados do CLIENTE: telefone e e-mail numa aba, links (Instagram,
             site, Google Meu Negócio…) na outra. Vêm do contato, não do lead. */}
-        <BlocoRecolhivel id="dossie-contato" titulo={t("Contato")} icone={<UserCircle size={14} aria-hidden />}>
-          <ContatoDoNegocio
-            contactId={lead.contact_id}
-            pipelineId={pipelineId}
-            leadId={lead.id}
-            lead={{ pipeline_id: lead.pipeline_id, stage_id: lead.stage_id }}
-          />
-        </BlocoRecolhivel>
+      <BlocoRecolhivel
+        id="dossie-contato"
+        titulo={t("Contato")}
+        icone={<UserCircle size={14} aria-hidden />}
+      >
+        <ContatoDoNegocio
+          contactId={lead.contact_id}
+          pipelineId={pipelineId}
+          leadId={lead.id}
+          lead={{ pipeline_id: lead.pipeline_id, stage_id: lead.stage_id }}
+        />
+      </BlocoRecolhivel>
 
-        {/* As tarefas ANTES da linha do tempo: a timeline conta o que já
+      {/* As tarefas ANTES da linha do tempo: a timeline conta o que já
             aconteceu, a tarefa é o que ainda falta fazer — e quem abre o card
             para agir procura o próximo passo primeiro. */}
-        <TarefasDoNegocio
-          leadId={lead.id}
-          contactId={lead.contact_id}
-          podeEditar={podeEditarTarefas}
-          aberto={open}
-        />
+      <TarefasDoNegocio
+        leadId={lead.id}
+        contactId={lead.contact_id}
+        podeEditar={podeEditarTarefas}
+        aberto={open}
+      />
 
-        {/* ② timeline */}
+      {/* ② timeline */}
+      <BlocoRecolhivel
+        id="dossie-linha-do-tempo"
+        titulo={t("Linha do tempo")}
+        icone={<ClockCounterClockwise size={14} aria-hidden />}
+      >
+        <LeadTimeline
+          itens={timeline.itens}
+          chegouAoVivo={timeline.chegouAoVivo}
+          isLoading={timeline.isLoading}
+          isError={timeline.isError}
+        />
+      </BlocoRecolhivel>
+
+      {/* ③ campos, por último */}
+      <div ref={campos}>
         <BlocoRecolhivel
-          id="dossie-linha-do-tempo"
-          titulo={t("Linha do tempo")}
-          icone={<ClockCounterClockwise size={14} aria-hidden />}
+          id="dossie-dados"
+          titulo={t("Dados do negócio")}
+          icone={<ListChecks size={14} aria-hidden />}
         >
-          <LeadTimeline
-            itens={timeline.itens}
-            chegouAoVivo={timeline.chegouAoVivo}
-            isLoading={timeline.isLoading}
-            isError={timeline.isError}
-          />
+          <LeadFieldsForm lead={lead} pipelineId={pipelineId} fieldDefs={fieldDefs} />
         </BlocoRecolhivel>
+      </div>
 
-        {/* ③ campos, por último */}
-        <div ref={campos}>
-          <BlocoRecolhivel
-            id="dossie-dados"
-            titulo={t("Dados do negócio")}
-            icone={<ListChecks size={14} aria-hidden />}
-          >
-            <LeadFieldsForm lead={lead} pipelineId={pipelineId} fieldDefs={fieldDefs} />
-          </BlocoRecolhivel>
-        </div>
-
-        {/* N1 — seção "Propostas", depois de "Dados do negócio". Some sozinha
+      {/* N1 — seção "Propostas", depois de "Dados do negócio". Some sozinha
             (null) quando a capacidade está desligada — ver PropostasDoNegocio. */}
-        <PropostasDoNegocio
-          leadId={lead.id}
-          pipelineId={pipelineId}
-          podeCriar={podeCriarProposta}
-        />
-        <MoveToOtherPipelineDialog
-          open={moverAberto}
-          onOpenChange={setMoverAberto}
-          leadId={lead.id}
-          pipelineId={pipelineId}
-          expectedUpdatedAt={lead.updated_at}
-        />
+      <PropostasDoNegocio leadId={lead.id} pipelineId={pipelineId} podeCriar={podeCriarProposta} />
+      <MoveToOtherPipelineDialog
+        open={moverAberto}
+        onOpenChange={setMoverAberto}
+        leadId={lead.id}
+        pipelineId={pipelineId}
+        expectedUpdatedAt={lead.updated_at}
+      />
+    </>
+  );
+
+  if (embutido) {
+    return (
+      <div className="contents" {...observaveis}>
+        {conteudo}
+      </div>
+    );
+  }
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className={CLASSE_DA_GAVETA_DO_LEAD} {...observaveis}>
+        {conteudo}
       </SheetContent>
     </Sheet>
   );

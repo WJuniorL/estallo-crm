@@ -99,4 +99,23 @@ describe("seletor de tags do contato", () => {
     await screen.findByRole("option", { name: /Retorno/ }, { timeout: 5000 });
     expect(screen.queryByRole("option", { name: /Criar/ })).toBeNull();
   });
+
+  it("a lista abre POR CIMA da tela, fora do card que corta o que transborda", async () => {
+    // O card recolhível do Inbox tem `overflow-hidden`: dentro dele, a lista
+    // ficava escondida abaixo da borda (print do usuário, 15/10/2026).
+    get.mockResolvedValue({ data: CADASTRO });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <section data-testid="card" className="overflow-hidden">
+          <Editor tags={[]} />
+        </section>
+      </QueryClientProvider>,
+    );
+    await userEvent.click(screen.getByLabelText("Adicionar tag ao contato"));
+    const lista = await screen.findByRole("listbox", {}, { timeout: 5000 });
+    expect(screen.getByTestId("card").contains(lista)).toBe(false);
+    // E o foco fica no campo: quem abriu a lista continua digitando.
+    expect(document.activeElement).toBe(screen.getByLabelText("Adicionar tag ao contato"));
+  });
 });

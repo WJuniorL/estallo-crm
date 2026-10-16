@@ -3,6 +3,10 @@
 import { useActiveOrg, useUser } from "@/hooks/auth/AuthProvider";
 import { useAssignableMembers } from "@/hooks/inbox/useAssignableMembers";
 import { useCatalogoDeProdutos } from "@/hooks/leads/useProdutosDoNegocio";
+import { useQueryClient } from "@tanstack/react-query";
+import { SeletorDeTags } from "@/components/tags/SeletorDeTags";
+import { chaveDoQuadro } from "@/hooks/kanban/useBoard";
+import { totalDoItem } from "@/lib/schemas/produtos-do-negocio";
 import { apiClient } from "@/lib/api/client";
 import { X } from "@/lib/ui/icons";
 import { useT } from "@/hooks/i18n/useT";
@@ -49,7 +53,6 @@ interface FormShape {
   description: string;
   stage_id: string;
   valueReais: string;
-  tagsRaw: string;
   expected_close_date: string;
 }
 
@@ -73,6 +76,12 @@ interface Props {
    * mesmo funil + aberto, e depender de quem chama é como a regra se perde.
    */
   leads?: Lead[];
+}
+
+/** Produto escolhido antes de o negócio existir: gravado depois do INSERT. */
+interface ProdutoEscolhido {
+  product_id: string;
+  desconto_cents: number;
 }
 
 /** O "ninguém" no Select de responsável — o Radix não aceita item de valor vazio. */
@@ -111,7 +120,24 @@ export function NewLeadDialog({
   // deles, pela trigger do banco, igual a adicionar pelo card.
   const { data: catalogoBruto } = useCatalogoDeProdutos(open);
   const catalogo = Array.isArray(catalogoBruto) ? catalogoBruto : undefined;
-  const [produtos, setProdutos] = useState<string[]>([]);
+  const [produtos, setProdutos] = useState<ProdutoEscolhido[]>([]);
+  // Etiquetas de OPORTUNIDADE: o mesmo seletor do dossiê (cadastradas + criar).
+  const [tags, setTags] = useState<string[]>([]);
+  const qc = useQueryClient();
+  // Com produtos, o valor É a soma deles (já com os descontos) — a mesma conta
+  // da trigger, mostrada na hora em que o produto entra.
+  const somaDosProdutos = produtos.reduce((soma, escolhido) => {
+    const p = catalogo?.find((c) => c.id === escolhido.product_id);
+    if (!p) return soma;
+    return (
+      soma +
+      totalDoItem({
+        quantidade: 1,
+        preco_unitario_cents: p.preco_cents,
+        desconto_cents: escolhido.desconto_cents,
+      })
+    );
+  }, 0);
   // ─── O AVISO DE NEGÓCIO ABERTO DUPLICADO (issue #1751) ─────────────────────
   //
   // Guarda TAMBÉM os valores do formulário: quem chega aqui já preencheu tudo,
@@ -143,6 +169,7 @@ export function NewLeadDialog({
       setAviso(null);
       setResponsavel(usuario.id);
       setProdutos([]);
+      setTags([]);
     }
   }
 
@@ -152,7 +179,6 @@ export function NewLeadDialog({
       description: "",
       stage_id: initialStage,
       valueReais: "",
-      tagsRaw: "",
       expected_close_date: "",
     },
   });
@@ -196,14 +222,10 @@ export function NewLeadDialog({
    * duplicidade — é a única forma de não dizer a mesma coisa duas vezes.
    */
   async function gravar(values: FormShape, avisoJaMostrado: boolean) {
-    const tags = values.tagsRaw
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-
     const reais = values.valueReais.trim();
     let valueCents: number | null = null;
-    if (reais.length > 0) {
+    // Com produtos, o valor sai da soma (trigger): o campo nem é enviado.
+    if (reais.length > 0 && produtos.length === 0) {
       valueCents = parseReaisToCents(reais);
       if (valueCents === null) {
         form.setError("valueReais", { message: t("Valor inválido") });
@@ -254,11 +276,13 @@ export function NewLeadDialog({
       if (leadId && produtos.length > 0) {
         const falhas = (
           await Promise.allSettled(
-            produtos.map((product_id) =>
-              apiClient.post(`/api/v1/leads/${leadId}/produtos`, { product_id }),
+            produtos.map(({ product_id, desconto_cents }) =>
+              apiClient.post(`/api/v1/leads/${leadId}/produtos`, { product_id, desconto_cents }),
             ),
           )
         ).filter((r) => r.status === "rejected").length;
+        // O quadro foi relido na criação, ANTES de os produtos mudarem o valor.
+        void qc.invalidateQueries({ queryKey: chaveDoQuadro(pipelineId) });
         if (falhas > 0) {
           toast.warning(t("Lead criado, mas alguns produtos não foram adicionados."));
         }
@@ -286,13 +310,13 @@ export function NewLeadDialog({
         description: "",
         stage_id: initialStage,
         valueReais: "",
-        tagsRaw: "",
         expected_close_date: "",
       });
       setContato(null);
       setAviso(null);
       setResponsavel(usuario.id);
       setProdutos([]);
+      setTags([]);
       onOpenChange(false);
     } catch {
       // toast already shown
@@ -318,9 +342,7 @@ export function NewLeadDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("Novo Lead")}</DialogTitle>
-          <DialogDescription>
-            {t("Crie um lead manualmente neste pipeline.")}
-          </DialogDescription>
+          <DialogDescription>{t("Crie um lead manualmente neste pipeline.")}</DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           {!contactId && (
@@ -355,10 +377,7 @@ export function NewLeadDialog({
 
           <div className="space-y-2">
             <Label>{t("Etapa")}</Label>
-            <Select
-              value={stageId}
-              onValueChange={(v) => form.setValue("stage_id", v)}
-            >
+            <Select value={stageId} onValueChange={(v) => form.setValue("stage_id", v)}>
               <SelectTrigger>
                 <SelectValue placeholder={t("Selecione a etapa")} />
               </SelectTrigger>
@@ -374,22 +393,98 @@ export function NewLeadDialog({
             </Select>
           </div>
 
+          <div className="space-y-2">
+            <Label>{t("Produtos")}</Label>
+            {produtos.length > 0 && (
+              <ul className="space-y-2" data-testid="novo-lead-produtos">
+                {produtos.map((escolhido) => (
+                  <LinhaDoProdutoEscolhido
+                    key={escolhido.product_id}
+                    produto={catalogo?.find((c) => c.id === escolhido.product_id)}
+                    escolhido={escolhido}
+                    moeda={moedaDoValor}
+                    onDesconto={(desconto_cents) =>
+                      setProdutos((atual) =>
+                        atual.map((x) =>
+                          x.product_id === escolhido.product_id ? { ...x, desconto_cents } : x,
+                        ),
+                      )
+                    }
+                    onRemover={() =>
+                      setProdutos((atual) =>
+                        atual.filter((x) => x.product_id !== escolhido.product_id),
+                      )
+                    }
+                  />
+                ))}
+              </ul>
+            )}
+            {/* `value=""` mantém o seletor como AÇÃO ("adicionar"), não como
+                estado: cada escolha entra na lista acima e o gatilho volta vazio. */}
+            <Select
+              value=""
+              onValueChange={(id) =>
+                setProdutos((atual) =>
+                  atual.some((x) => x.product_id === id)
+                    ? atual
+                    : [...atual, { product_id: id, desconto_cents: 0 }],
+                )
+              }
+              disabled={!catalogo || catalogo.length === 0}
+            >
+              <SelectTrigger data-testid="novo-lead-adicionar-produto">
+                <SelectValue
+                  placeholder={
+                    catalogo && catalogo.length === 0
+                      ? t("Nenhum produto no catálogo")
+                      : t("Adicionar produto")
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {(catalogo ?? [])
+                  .filter((c) => c.ativo && !produtos.some((x) => x.product_id === c.id))
+                  .map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nome} · {formatCents(c.preco_cents, moedaDoValor)}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               {/* Negócio novo: o rótulo segue a moeda da organização, que é onde ele
                   vai nascer. `R$` em duro mentia para quem opera em euro. */}
-              <Label htmlFor="valueReais">{t("Valor")} ({simboloDaMoeda(moedaDoValor)})</Label>
-              <Input
-                id="valueReais"
-                inputMode="decimal"
-                placeholder="0,00"
-                {...form.register("valueReais")}
-              />
-              <EcoDoValor control={form.control} moeda={moedaDoValor} />
+              <Label htmlFor="valueReais">
+                {t("Valor")} ({simboloDaMoeda(moedaDoValor)})
+              </Label>
+              {produtos.length > 0 ? (
+                <>
+                  <Input
+                    id="valueReais"
+                    readOnly
+                    value={formatCents(somaDosProdutos, moedaDoValor)}
+                    data-testid="novo-lead-valor-pelos-produtos"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {t("Calculado pelos produtos, já com os descontos.")}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Input
+                    id="valueReais"
+                    inputMode="decimal"
+                    placeholder="0,00"
+                    {...form.register("valueReais")}
+                  />
+                  <EcoDoValor control={form.control} moeda={moedaDoValor} />
+                </>
+              )}
               {form.formState.errors.valueReais && (
-                <p className="text-xs text-error-fg">
-                  {form.formState.errors.valueReais.message}
-                </p>
+                <p className="text-xs text-error-fg">{form.formState.errors.valueReais.message}</p>
               )}
             </div>
             <div className="space-y-2">
@@ -403,11 +498,12 @@ export function NewLeadDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="tagsRaw">{t("Tags (separadas por vírgula)")}</Label>
-            <Input
-              id="tagsRaw"
-              placeholder="vip, recompra"
-              {...form.register("tagsRaw")}
+            <Label>{t("Tags")}</Label>
+            <SeletorDeTags
+              entidade="lead"
+              valor={tags}
+              onChange={setTags}
+              rotulo={t("Tags da oportunidade")}
             />
           </div>
 
@@ -432,67 +528,6 @@ export function NewLeadDialog({
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>{t("Produtos")}</Label>
-            {produtos.length > 0 && (
-              <ul className="space-y-1" data-testid="novo-lead-produtos">
-                {produtos.map((id) => {
-                  const p = catalogo?.find((c) => c.id === id);
-                  return (
-                    <li
-                      key={id}
-                      className="flex items-center justify-between gap-2 rounded-md border px-2.5 py-1.5 text-sm"
-                    >
-                      <span className="truncate">{p?.nome ?? id}</span>
-                      <span className="ml-auto shrink-0 tabular-nums text-muted-foreground">
-                        {p ? formatCents(p.preco_cents, moedaDoValor) : ""}
-                      </span>
-                      <button
-                        type="button"
-                        aria-label={`${t("Remover")} ${p?.nome ?? ""}`}
-                        onClick={() => setProdutos((atual) => atual.filter((x) => x !== id))}
-                        className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-text"
-                      >
-                        <X size={14} aria-hidden />
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-            {/* `value=""` mantém o seletor como AÇÃO ("adicionar"), não como
-                estado: cada escolha entra na lista acima e o gatilho volta vazio. */}
-            <Select
-              value=""
-              onValueChange={(id) => setProdutos((atual) => (atual.includes(id) ? atual : [...atual, id]))}
-              disabled={!catalogo || catalogo.length === 0}
-            >
-              <SelectTrigger data-testid="novo-lead-adicionar-produto">
-                <SelectValue
-                  placeholder={
-                    catalogo && catalogo.length === 0
-                      ? t("Nenhum produto no catálogo")
-                      : t("Adicionar produto")
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {(catalogo ?? [])
-                  .filter((c) => c.ativo && !produtos.includes(c.id))
-                  .map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.nome} · {formatCents(c.preco_cents, moedaDoValor)}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-            {produtos.length > 0 && (
-              <p className="text-xs text-muted-foreground">
-                {t("Com produtos, o valor do lead passa a ser a soma deles.")}
-              </p>
-            )}
           </div>
 
           {/* O AVISO SEM BLOQUEIO (#1751): aparece quando já existe negócio
@@ -546,5 +581,94 @@ export function NewLeadDialog({
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function centsParaTexto(cents: number): string {
+  return cents ? (cents / 100).toFixed(2).replace(".", ",") : "";
+}
+
+/** Uma linha de produto do Novo Lead, com o desconto como no dossiê (`ProdutosDoNegocio`). */
+function LinhaDoProdutoEscolhido({
+  produto,
+  escolhido,
+  moeda,
+  onDesconto,
+  onRemover,
+}: {
+  produto: { nome: string; preco_cents: number } | undefined;
+  escolhido: ProdutoEscolhido;
+  moeda: string;
+  onDesconto: (cents: number) => void;
+  onRemover: () => void;
+}) {
+  const t = useT();
+  const [desconto, setDesconto] = useState(centsParaTexto(escolhido.desconto_cents));
+  const preco = produto?.preco_cents ?? 0;
+
+  function aplicarDesconto() {
+    const texto = desconto.trim();
+    const cents = texto === "" ? 0 : parseReaisToCents(texto);
+    if (cents === null || cents < 0) {
+      toast.error(t("Desconto inválido"));
+      setDesconto(centsParaTexto(escolhido.desconto_cents));
+      return;
+    }
+    if (cents !== escolhido.desconto_cents) onDesconto(cents);
+  }
+
+  return (
+    <li className="space-y-2 rounded-md border border-border p-2.5 text-sm">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate font-medium">{produto?.nome ?? "…"}</p>
+          <p className="text-xs text-muted-foreground">{formatCents(preco, moeda)}</p>
+        </div>
+        <button
+          type="button"
+          aria-label={`${t("Remover")} ${produto?.nome ?? ""}`}
+          onClick={onRemover}
+          className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-text"
+        >
+          <X size={14} aria-hidden />
+        </button>
+      </div>
+      <div className="grid grid-cols-2 items-end gap-2">
+        <div className="space-y-1">
+          <Label htmlFor={`novo-lead-desconto-${escolhido.product_id}`} className="text-xs">
+            {t("Desconto")}
+          </Label>
+          <Input
+            id={`novo-lead-desconto-${escolhido.product_id}`}
+            inputMode="decimal"
+            placeholder="0,00"
+            className="h-8"
+            value={desconto}
+            onChange={(e) => setDesconto(e.target.value)}
+            onBlur={aplicarDesconto}
+            onKeyDown={(e) => {
+              // Enter aplica o desconto, não envia o formulário inteiro.
+              if (e.key === "Enter") {
+                e.preventDefault();
+                aplicarDesconto();
+              }
+            }}
+          />
+        </div>
+        <div className="space-y-1 text-right">
+          <p className="text-xs text-muted-foreground">{t("Total")}</p>
+          <p className="h-8 leading-8 font-medium">
+            {formatCents(
+              totalDoItem({
+                quantidade: 1,
+                preco_unitario_cents: preco,
+                desconto_cents: escolhido.desconto_cents,
+              }),
+              moeda,
+            )}
+          </p>
+        </div>
+      </div>
+    </li>
   );
 }

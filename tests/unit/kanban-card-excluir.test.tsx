@@ -33,8 +33,12 @@ vi.mock("@/hooks/kanban/useUpdateLead", () => ({
   useWinLead: () => ({ mutate: vi.fn(), isPending: false }),
   useEditLead: () => ({ mutate: vi.fn(), isPending: false }),
 }));
-vi.mock("@/hooks/inbox/useAssignableMembers", () => ({ useAssignableMembers: () => ({ data: [] }) }));
-vi.mock("@/hooks/kanban/useAssignableAgents", () => ({ useAssignableAgents: () => ({ data: [] }) }));
+vi.mock("@/hooks/inbox/useAssignableMembers", () => ({
+  useAssignableMembers: () => ({ data: [] }),
+}));
+vi.mock("@/hooks/kanban/useAssignableAgents", () => ({
+  useAssignableAgents: () => ({ data: [] }),
+}));
 vi.mock("@/components/kanban/LoseLeadDialog", () => ({ LoseLeadDialog: () => null }));
 vi.mock("@/components/kanban/MoveToOtherPipelineDialog", () => ({
   MoveToOtherPipelineDialog: () => null,
@@ -181,7 +185,8 @@ describe("menu do card — Excluir", () => {
     abrirDossie.mockReset();
 
     // O overlay: o irmão do conteúdo dentro do portal, o que cobre a tela.
-    const overlay = document.querySelector("[data-slot=alert-dialog-overlay], [role=alertdialog]")!
+    const overlay = document
+      .querySelector("[data-slot=alert-dialog-overlay], [role=alertdialog]")!
       .parentElement!.querySelector("div.fixed.inset-0")!;
     await user.click(overlay as HTMLElement);
 
@@ -223,9 +228,7 @@ describe("menu do card — Excluir", () => {
     renderMenu();
 
     await user.click(screen.getByRole("button", { name: "Ações do lead" }));
-    expect(
-      await screen.findByRole("menuitem", { name: "Mover de funil" }),
-    ).toBeTruthy();
+    expect(await screen.findByRole("menuitem", { name: "Mover de funil" })).toBeTruthy();
   });
 
   it("o botão do menu não depende de hover: no toque ele fica visível", () => {
@@ -239,5 +242,19 @@ describe("menu do card — Excluir", () => {
     // No desktop quem navega por teclado tabula até aqui: sem isto o foco
     // pousa num botão invisível, que só aparece depois que o menu abre.
     expect(botao.className).toContain("focus-visible:opacity-100");
+  });
+
+  it("o menu (e suas consultas) só monta no primeiro clique — e já abre", async () => {
+    // Num funil de mil cards, montar o menu completo em todos travava o quadro.
+    const user = userEvent.setup();
+    renderMenu();
+    expect(permissao).not.toHaveBeenCalled();
+    expect(screen.queryByRole("menu")).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Ações do lead" }));
+
+    expect(await screen.findByRole("menuitem", { name: "Excluir" })).toBeTruthy();
+    expect(permissao).toHaveBeenCalled();
+    expect(abrirDossie).not.toHaveBeenCalled();
   });
 });

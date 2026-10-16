@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { ChipDeEtiqueta } from "@/components/tags/ChipDeEtiqueta";
 import { useEtiquetasDaEntidade } from "@/components/tags/CoresDasEtiquetas";
 import { PontoDaEtiqueta } from "@/components/tags/PontoDaEtiqueta";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { useT } from "@/hooks/i18n/useT";
 import type { EntidadeDaEtiqueta } from "@/lib/tags/cor-da-etiqueta";
 import { Plus, X } from "@/lib/ui/icons";
@@ -42,6 +43,7 @@ export function SeletorDeTags({
   const cadastro = useEtiquetasDaEntidade(entidade);
   const [texto, setTexto] = useState("");
   const [aberto, setAberto] = useState(false);
+  const campo = useRef<HTMLInputElement>(null);
 
   const jaTem = new Set(valor.map((v) => v.trim().toLowerCase()));
   const termo = texto.trim().toLowerCase();
@@ -65,7 +67,12 @@ export function SeletorDeTags({
       {valor.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {valor.map((tag) => (
-            <ChipDeEtiqueta key={tag} tag={tag} entidade={entidade} className="h-5 gap-1 px-1.5 text-[11px]">
+            <ChipDeEtiqueta
+              key={tag}
+              tag={tag}
+              entidade={entidade}
+              className="h-5 gap-1 px-1.5 text-[11px]"
+            >
               <button
                 type="button"
                 onClick={() => onChange(valor.filter((v) => v !== tag))}
@@ -79,35 +86,54 @@ export function SeletorDeTags({
           ))}
         </div>
       )}
-      <div className="relative">
-        <Input
-          value={texto}
-          onChange={(e) => {
-            setTexto(e.target.value);
-            setAberto(true);
+      {/* A lista sai num PORTAL: dentro do card recolhível (`overflow-hidden`),
+          do painel do Inbox ou de um Dialog, um `absolute` era cortado. */}
+      <Popover
+        open={aberto && !disabled && (opcoes.length > 0 || podeCriar)}
+        onOpenChange={setAberto}
+      >
+        <PopoverAnchor asChild>
+          <Input
+            ref={campo}
+            value={texto}
+            onChange={(e) => {
+              setTexto(e.target.value);
+              setAberto(true);
+            }}
+            onFocus={() => setAberto(true)}
+            // O clique numa opção acontece antes do blur fechar a lista.
+            onBlur={() => setTimeout(() => setAberto(false), 120)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                if (opcoes[0] && (!podeCriar || opcoes[0].tag.toLowerCase() === termo))
+                  adicionar(opcoes[0].tag);
+                else if (podeCriar) adicionar(texto);
+              }
+              if (e.key === "Escape") setAberto(false);
+            }}
+            placeholder={cheio ? t("Limite de 20 tags") : t("Buscar ou criar tag…")}
+            disabled={disabled || cheio}
+            maxLength={60}
+            aria-label={rotulo}
+            className="h-8 text-xs"
+          />
+        </PopoverAnchor>
+        <PopoverContent
+          align="start"
+          // O foco fica no campo: quem digita continua digitando.
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => e.preventDefault()}
+          // Clicar no próprio campo não conta como "fora".
+          onInteractOutside={(e) => {
+            if (e.target instanceof Node && campo.current?.contains(e.target)) e.preventDefault();
           }}
-          onFocus={() => setAberto(true)}
-          // O clique numa opção acontece antes do blur fechar a lista.
-          onBlur={() => setTimeout(() => setAberto(false), 120)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              if (opcoes[0] && (!podeCriar || opcoes[0].tag.toLowerCase() === termo)) adicionar(opcoes[0].tag);
-              else if (podeCriar) adicionar(texto);
-            }
-            if (e.key === "Escape") setAberto(false);
-          }}
-          placeholder={cheio ? t("Limite de 20 tags") : t("Buscar ou criar tag…")}
-          disabled={disabled || cheio}
-          maxLength={60}
-          aria-label={rotulo}
-          className="h-8 text-xs"
-        />
-        {aberto && !disabled && (opcoes.length > 0 || podeCriar) && (
+          className="w-(--radix-popper-anchor-width) p-1 text-xs"
+        >
           <ul
             role="listbox"
             aria-label={t("Sugestões de tags")}
-            className="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-md border border-border bg-popover p-1 text-xs shadow-md"
+            className="max-h-56 overflow-y-auto"
           >
             {opcoes.map((e) => (
               <li key={e.tag}>
@@ -143,8 +169,8 @@ export function SeletorDeTags({
               </li>
             )}
           </ul>
-        )}
-      </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }

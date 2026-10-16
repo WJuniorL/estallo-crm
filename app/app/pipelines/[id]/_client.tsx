@@ -67,9 +67,12 @@ export function PipelinePageClient({
   const setFilters = useCallback(
     (next: LeadFilters) => {
       const qs = filtersToParams(next);
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      // History API nativa, e não `router.replace`: esta página é dinâmica, e o
+      // router relia o servidor (sessão, organização, funis) a cada filtro. O
+      // Next sincroniza `useSearchParams` com o `replaceState` sem ida à rede.
+      window.history.replaceState(null, "", qs ? `${pathname}?${qs}` : pathname);
     },
-    [router, pathname],
+    [pathname],
   );
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [newOpen, setNewOpen] = useState(false);
@@ -92,7 +95,10 @@ export function PipelinePageClient({
     const settings = data?.pipeline.settings;
     return (motivo: string) => categoriaDoMotivo(motivo, settings);
   }, [data?.pipeline.settings]);
-  const filteredLeads = data ? applyFilters(data.leads, filters, { categoriaDo }) : [];
+  const filteredLeads = useMemo(
+    () => (data ? applyFilters(data.leads, filters, { categoriaDo }) : []),
+    [data, filters, categoriaDo],
+  );
   // NÃO é a conta do FilterBar: o seletor de filtro lista as três caixas
   // (`marcadoresDoCard`: negócio, contato e conversa), e esta lista, a da tag em
   // lote, só `lead.tags` — é lá que a ação em lote grava (#852). O `useMemo` é o
@@ -171,9 +177,7 @@ export function PipelinePageClient({
         */}
         <h1
           className={
-            podeTrocar
-              ? "sr-only"
-              : "min-w-0 truncate text-2xl font-semibold tracking-tight"
+            podeTrocar ? "sr-only" : "min-w-0 truncate text-2xl font-semibold tracking-tight"
           }
         >
           {nomeAtual}
@@ -188,17 +192,13 @@ export function PipelinePageClient({
             <SelectTrigger
               aria-label={`${t("Trocar de funil")}: ${nomeAtual}`}
               data-testid="trocar-funil"
-              className="h-auto w-auto min-w-0 max-w-full gap-1.5 border-0 bg-transparent p-0 text-2xl font-semibold tracking-tight shadow-none focus:ring-1 focus:ring-ring sm:max-w-[60%] [&>span]:truncate"
+              className="h-auto w-auto max-w-full min-w-0 gap-1.5 border-0 bg-transparent p-0 text-2xl font-semibold tracking-tight shadow-none focus:ring-1 focus:ring-ring sm:max-w-[60%] [&>span]:truncate"
             >
               <SelectValue placeholder={nomeAtual} />
             </SelectTrigger>
             <SelectContent>
               {funis.map((f) => (
-                <SelectItem
-                  key={f.id}
-                  value={f.id}
-                  data-testid={`trocar-funil-opcao-${f.id}`}
-                >
+                <SelectItem key={f.id} value={f.id} data-testid={`trocar-funil-opcao-${f.id}`}>
                   {f.name}
                 </SelectItem>
               ))}

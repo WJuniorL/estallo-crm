@@ -1,11 +1,18 @@
 "use client";
 import { Droppable } from "@hello-pangea/dnd";
-import { useRef, useState, type CSSProperties } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { useT } from "@/hooks/i18n/useT";
 import { cn } from "@/lib/utils";
 import type { Lead } from "@/lib/types/leads";
 import type { Stage } from "@/lib/kanban/types";
-import { buildCardInput } from "@/lib/kanban/card-state";
 import { intervaloDaColuna } from "@/lib/kanban/selecao";
 import { formatSomaPorMoeda, formatValorDoNegocio, MOEDA_PADRAO, somaPorMoeda } from "@/lib/money";
 import { KanbanCard, type GestoDeSelecao } from "./KanbanCard";
@@ -39,7 +46,14 @@ interface StageColumnProps {
   onRenomear?: (nome: string) => void;
 }
 
-export function StageColumn({
+/**
+ * Quantos cards a coluna desenha de cada vez. Os seguintes entram quando o fim
+ * da lista chega perto da tela — um funil de mil negócios desenhava mil cards
+ * de saída, e o scroll do quadro arrastava.
+ */
+const LOTE_DE_CARDS = 30;
+
+export const StageColumn = memo(function StageColumn({
   stage,
   leads,
   pipelineId,
@@ -114,16 +128,45 @@ export function StageColumn({
   // inteira — inclusive o `Droppable` — a cada card marcado.
   const ancora = useRef<string | null>(null);
 
-  const aoSelecionar = (leadId: string, gesto: GestoDeSelecao) => {
+  // ESTÁVEL de propósito: é prop de todo card (memoizado). Lê a lista e a
+  // seleção do render mais recente por ref, em vez de nascer de novo a cada um.
+  const atual = useRef({ idsVisiveis, selectedLeadIds, onSelectMany });
+  useLayoutEffect(() => {
+    atual.current = { idsVisiveis, selectedLeadIds, onSelectMany };
+  });
+  const aoSelecionar = useCallback((leadId: string, gesto: GestoDeSelecao) => {
+    const { idsVisiveis: ids, selectedLeadIds: sel, onSelectMany: marcar } = atual.current;
     if (gesto === "intervalo") {
-      const faixa = intervaloDaColuna(idsVisiveis, ancora.current, leadId);
+      const faixa = intervaloDaColuna(ids, ancora.current, leadId);
       ancora.current = leadId;
-      onSelectMany?.(faixa, true);
+      marcar?.(faixa, true);
       return;
     }
     ancora.current = leadId;
-    onSelectMany?.([leadId], !selectedLeadIds?.has(leadId));
-  };
+    marcar?.([leadId], !sel?.has(leadId));
+  }, []);
+
+  // Os cards entram em lotes (LOTE_DE_CARDS). A lista desenhada é sempre um
+  // PREFIXO da lista da etapa, então o índice do arrasto continua apontando o
+  // mesmo vizinho — e o de baixo vem da etapa inteira (`proximoNaEtapaInteira`).
+  // Total, contagem e "selecionar todos" seguem contando a etapa inteira.
+  const [limite, setLimite] = useState(LOTE_DE_CARDS);
+  const fimDaLista = useRef<HTMLDivElement | null>(null);
+  const temMais = leads.length > limite;
+  useEffect(() => {
+    const alvo = fimDaLista.current;
+    if (!temMais || !alvo || typeof IntersectionObserver === "undefined") return;
+    const observador = new IntersectionObserver(
+      (entradas) => {
+        if (entradas.some((e) => e.isIntersecting)) setLimite((n) => n + LOTE_DE_CARDS);
+      },
+      { rootMargin: "800px 0px" },
+    );
+    observador.observe(alvo);
+    return () => observador.disconnect();
+  }, [temMais, limite]);
+  const visiveis = temMais ? leads.slice(0, limite) : leads;
+  const selecionando = (selectedLeadIds?.size ?? 0) > 0;
 
   const alternarEtapa = () => {
     ancora.current = null;
@@ -243,27 +286,34 @@ export function StageColumn({
               snapshot.isDraggingOver && "bg-accent/5",
             )}
           >
-            {leads.map((lead, idx) => (
+            {visiveis.map((lead, idx) => (
               <KanbanCard
                 key={lead.id}
-                card={buildCardInput(lead, {
-                  stageName: stage.name,
-                  ownerNames,
-                  coolingIds,
-                  reactivations,
-                  canonicalTags,
-                })}
                 lead={lead}
+                stageName={stage.name}
+                ownerNames={ownerNames}
+                coolingIds={coolingIds}
+                reactivations={reactivations}
+                canonicalTags={canonicalTags}
                 index={idx}
                 pipelineId={pipelineId}
-                isSelected={selectedLeadIds?.has(lead.id)}
-                isSelecting={(selectedLeadIds?.size ?? 0) > 0}
+                isSelected={selectedLeadIds?.has(lead.id) ?? false}
+                isSelecting={selecionando}
                 pulseCount={pulses?.get(lead.id) ?? 0}
                 onSelect={aoSelecionar}
                 onOpen={onOpen}
               />
             ))}
             {provided.placeholder}
+            {temMais && (
+              <div
+                ref={fimDaLista}
+                className="flex h-8 items-center justify-center text-[11px] text-text-muted"
+                data-testid="coluna-carrega-mais"
+              >
+                {t("Carregando…")}
+              </div>
+            )}
             {leads.length === 0 && !snapshot.isDraggingOver && (
               <div className="flex h-20 items-center justify-center text-[11px] text-text-muted">
                 {t("vazio")}
@@ -274,7 +324,7 @@ export function StageColumn({
       </Droppable>
     </div>
   );
-}
+});
 
 /**
  * O nome da etapa, editado no lugar — direto no cabeçalho da coluna.

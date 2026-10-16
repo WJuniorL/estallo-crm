@@ -15556,7 +15556,6 @@ export const DICIONARIO: Traducoes = {
   "A conversa encerrada que recebe mensagem nova volta direto para o último atendente.": { es: "La conversación cerrada que recibe un mensaje nuevo vuelve directo al último asesor." },
   "Criar tarefa": { es: "Crear tarea" },
   "Tarefa criada": { es: "Tarea creada" },
-  "Com produtos, o valor do lead passa a ser a soma deles.": { es: "Con productos, el valor del lead pasa a ser la suma de ellos." },
   "Lead criado, mas alguns produtos não foram adicionados.": { es: "Lead creado, pero algunos productos no se agregaron." },
 };
 

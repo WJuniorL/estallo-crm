@@ -6,7 +6,11 @@ import { useT } from "@/hooks/i18n/useT";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { chaveDoQuadro, useBoard } from "@/hooks/kanban/useBoard";
-import { useMoveCard, type RecusaDeCampos, type RetomadaPendente } from "@/hooks/kanban/useMoveCard";
+import {
+  useMoveCard,
+  type RecusaDeCampos,
+  type RetomadaPendente,
+} from "@/hooks/kanban/useMoveCard";
 import { useRenameStage } from "@/hooks/kanban/useRenameStage";
 import { CamposObrigatoriosDialog } from "./CamposObrigatoriosDialog";
 import { useAssignableMembers } from "@/hooks/inbox/useAssignableMembers";
@@ -69,7 +73,7 @@ function BoardSkeleton() {
       {[0, 1, 2].map((c) => (
         <div
           key={c}
-          className="flex w-80 shrink-0 flex-col gap-2 rounded-lg border border-border bg-surface-muted/40 p-3"
+          className="bg-surface-muted/40 flex w-80 shrink-0 flex-col gap-2 rounded-lg border border-border p-3"
         >
           <Skeleton className="h-5 w-32" />
           {[0, 1, 2, 3].map((i) => (
@@ -158,20 +162,24 @@ export function KanbanBoard({
     [selectedIds, internalSelected],
   );
 
-  const data = useExternal
-    ? {
-        pipeline: pipelineProp ?? ({} as Pipeline),
-        stages: stagesProp,
-        leads: leadsProp,
-      }
-    : queryResult.data;
+  // Memoizado: um objeto novo a cada render invalidava o `grouped` abaixo e,
+  // com ele, toda coluna e todo card do quadro.
+  const data = useMemo(
+    () =>
+      useExternal
+        ? {
+            pipeline: pipelineProp ?? ({} as Pipeline),
+            stages: stagesProp,
+            leads: leadsProp,
+          }
+        : queryResult.data,
+    [useExternal, pipelineProp, stagesProp, leadsProp, queryResult.data],
+  );
   const isLoading = useExternal ? false : queryResult.isLoading;
   const isError = useExternal ? false : queryResult.isError;
   const error = useExternal ? null : queryResult.error;
 
-  const leadDoDossie = dossieId
-    ? (data?.leads.find((l) => l.id === dossieId) ?? null)
-    : null;
+  const leadDoDossie = dossieId ? (data?.leads.find((l) => l.id === dossieId) ?? null) : null;
 
   const grouped = useMemo(() => {
     if (!data) return null;
@@ -201,15 +209,25 @@ export function KanbanBoard({
     [onSelectionChange, selectedLeadIds],
   );
 
+  // Um callback por etapa, estável: a coluna é memoizada.
+  const renomear = renameStage.mutate;
+  const renomearPorEtapa = useMemo(
+    () =>
+      new Map(
+        (data?.stages ?? []).map((s) => [
+          s.id,
+          (nome: string) => renomear({ stageId: s.id, name: nome }),
+        ]),
+      ),
+    [data?.stages, renomear],
+  );
+
   const handleDragEnd = useCallback(
     (result: DropResult) => {
       if (!data || !grouped) return;
       const { source, destination, draggableId } = result;
       if (!destination) return;
-      if (
-        source.droppableId === destination.droppableId &&
-        source.index === destination.index
-      ) {
+      if (source.droppableId === destination.droppableId && source.index === destination.index) {
         return;
       }
 
@@ -217,9 +235,7 @@ export function KanbanBoard({
       if (!lead) return;
 
       const destStageId = destination.droppableId;
-      const destList = (grouped.get(destStageId) ?? []).filter(
-        (l) => l.id !== draggableId,
-      );
+      const destList = (grouped.get(destStageId) ?? []).filter((l) => l.id !== draggableId);
 
       const before = destination.index > 0 ? destList[destination.index - 1] : null;
       // `destList` sai do `grouped`, que a página já FILTROU. O de cima fica
@@ -322,7 +338,7 @@ export function KanbanBoard({
             onSelectMany={handleSelectMany}
             onOpen={setDossieId}
             podeRenomear={podeRenomearEtapa}
-            onRenomear={(nome) => renameStage.mutate({ stageId: stage.id, name: nome })}
+            onRenomear={renomearPorEtapa.get(stage.id)}
           />
         ))}
       </div>
@@ -333,9 +349,7 @@ export function KanbanBoard({
           lead={leadDoDossie}
           pipelineId={pipelineId}
           fieldDefs={camposDoFunil(data.pipeline.settings ?? null)}
-          stageName={
-            data.stages.find((s) => s.id === leadDoDossie.stage_id)?.name ?? "—"
-          }
+          stageName={data.stages.find((s) => s.id === leadDoDossie.stage_id)?.name ?? "—"}
           ownerNames={ownerNames}
           stages={data.stages}
         />

@@ -529,7 +529,6 @@
   "Freios de segurança": "安全限制",
   "Ações por atendimento (1 a 25)": "每次接待的操作数（1 到 25）",
   "Volume de texto por atendimento": "每次接待的文本量",
-  "Custo máximo por atendimento (centavos)": "每次接待的最高成本（分）",
   "Mensagens anteriores que ele lê": "它读取的历史消息",
   "Tamanho máximo desse histórico": "该历史记录的最大长度",
   "As instruções dele": "它的指令",
@@ -5593,5 +5592,10 @@
   "A conversa encerrada que recebe mensagem nova volta direto para o último atendente.": "已结束的对话收到新消息后直接回到最后的接待人。",
   "Criar tarefa": "创建任务",
   "Tarefa criada": "任务已创建",
-  "Lead criado, mas alguns produtos não foram adicionados.": "销售线索已创建，但部分产品未能添加。"
+  "Lead criado, mas alguns produtos não foram adicionados.": "销售线索已创建，但部分产品未能添加。",
+  "Sair sem salvar?": "不保存就离开？",
+  "Você alterou este lead e ainda não salvou. Se sair agora, as alterações serão descartadas.": "您修改了此销售线索但尚未保存。如果现在离开，更改将被丢弃。",
+  "Continuar editando": "继续编辑",
+  "Salvar e fechar": "保存并关闭",
+  "Custo máximo por atendimento (US$)": "每次接待的最高费用（US$）"
 }

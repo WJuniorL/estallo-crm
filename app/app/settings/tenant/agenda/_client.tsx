@@ -6,7 +6,7 @@ import { ClientePelaAgenda } from "@/components/agenda/ClientePelaAgenda";
 import { DiasBloqueados } from "@/components/agenda/DiasBloqueados";
 
 import { useT } from "@/hooks/i18n/useT";
-import { parseReaisToCents } from "@/lib/money";
+import { parseReaisToCents, centavosParaCampo } from "@/lib/money";
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
@@ -26,6 +26,7 @@ import {
   type UnidadeDeAntecedencia,
 } from "@/lib/agenda/lembretes";
 import { apiClient } from "@/lib/api/client";
+import { CampoDeDinheiro } from "@/components/ui/campo-de-dinheiro";
 
 export interface TipoRow {
   id: string;
@@ -829,16 +830,11 @@ export function TiposDeAgendamentoClient({
                   </label>
                   <label className="flex flex-col gap-1 text-xs text-text-muted">
                     {t("Preço padrão")}
-                    <input
+                    <CampoDeDinheiro
                       name="default_price_cents"
-                      type="text"
-                      inputMode="decimal"
+                      containerClassName="w-36"
                       placeholder={t("digite na hora")}
-                      defaultValue={
-                        tipo.default_price_cents === null
-                          ? ""
-                          : (tipo.default_price_cents / 100).toFixed(2)
-                      }
+                      defaultValue={centavosParaCampo(tipo.default_price_cents)}
                       data-testid={`editar-preco-${tipo.id}`}
                       className="rounded-md border border-border bg-surface-elevated p-2 text-sm text-text"
                     />

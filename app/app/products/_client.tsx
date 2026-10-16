@@ -14,6 +14,7 @@ import { formatCents } from "@/lib/money";
 import { precoParaCentavos, type Produto } from "@/lib/schemas/produtos";
 
 import { EdicaoDoProduto } from "./_edicao";
+import { CampoDeDinheiro } from "@/components/ui/campo-de-dinheiro";
 
 interface Textos {
   titulo: string;
@@ -447,11 +448,11 @@ export function ProdutosClient({
             </label>
             <label className="text-sm">
               {t("Preço de venda")}
-              <input
+              <CampoDeDinheiro
                 value={rascunho.preco}
                 onChange={(e) => setRascunho({ ...rascunho, preco: e.target.value })}
-                placeholder="5.499,00"
-                className="mt-1 h-9 w-full rounded-md border px-3"
+                containerClassName="mt-1 w-full"
+                className="h-9 w-full rounded-md border px-3"
                 data-testid="produto-preco"
               />
             </label>

@@ -33,6 +33,7 @@ export function BlocoRecolhivel({
   contagem,
   acoes,
   abertoPorPadrao = true,
+  manterMontado = false,
   className,
   children,
   ...resto
@@ -43,6 +44,11 @@ export function BlocoRecolhivel({
   contagem?: number | null;
   acoes?: ReactNode;
   abertoPorPadrao?: boolean;
+  /**
+   * Recolhido continua MONTADO (só escondido). Para conteúdo com estado que
+   * não pode se perder ao recolher — a ficha do lead com alteração não salva.
+   */
+  manterMontado?: boolean;
   className?: string;
   children: ReactNode;
   "data-testid"?: string;
@@ -90,7 +96,11 @@ export function BlocoRecolhivel({
         </button>
         {acoes}
       </div>
-      {aberto && <div className="border-t border-border p-3">{children}</div>}
+      {(aberto || manterMontado) && (
+        <div className="border-t border-border p-3" hidden={!aberto}>
+          {children}
+        </div>
+      )}
     </section>
   );
 }

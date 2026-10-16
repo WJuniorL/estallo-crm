@@ -1262,7 +1262,6 @@
   "Freios de segurança": "Safety limits",
   "Ações por atendimento (1 a 25)": "Actions per conversation (1 to 25)",
   "Volume de texto por atendimento": "Text volume per conversation",
-  "Custo máximo por atendimento (centavos)": "Maximum cost per conversation (cents)",
   "Mensagens anteriores que ele lê": "Previous messages it reads",
   "Esperar antes de responder (segundos)": "Wait before replying (seconds)",
   "Mensagens do mesmo contato dentro desse tempo viram uma resposta só. Vazio usa a janela padrão da instalação (máximo 60 segundos).": "Messages from the same contact within this time become a single reply. Empty uses the installation's default window (maximum 60 seconds).",
@@ -9068,5 +9067,10 @@
   "Tarefa criada": "Task created",
   "Lead criado, mas alguns produtos não foram adicionados.": "Lead created, but some products were not added.",
   "Nenhum produto no catálogo": "No products in the catalog",
-  "Adicionar produto": "Add product"
+  "Adicionar produto": "Add product",
+  "Sair sem salvar?": "Leave without saving?",
+  "Você alterou este lead e ainda não salvou. Se sair agora, as alterações serão descartadas.": "You changed this lead and haven't saved yet. If you leave now, the changes will be discarded.",
+  "Continuar editando": "Keep editing",
+  "Salvar e fechar": "Save and close",
+  "Custo máximo por atendimento (US$)": "Maximum cost per conversation (US$)"
 }

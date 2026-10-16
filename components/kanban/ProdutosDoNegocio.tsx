@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CampoDeDinheiro } from "@/components/ui/campo-de-dinheiro";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -14,64 +15,77 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useT } from "@/hooks/i18n/useT";
-import {
-  ehProvisorio,
-  useCatalogoDeProdutos,
-  useProdutosDoNegocio,
-} from "@/hooks/leads/useProdutosDoNegocio";
-import { formatCents, parseReaisToCents } from "@/lib/money";
-import { totalDoItem, type ProdutoDoNegocio } from "@/lib/schemas/produtos-do-negocio";
+import { useCatalogoDeProdutos } from "@/hooks/leads/useProdutosDoNegocio";
+import { centavosParaCampo, formatCents, parseReaisToCents } from "@/lib/money";
+import type { ItemDoRascunho } from "@/lib/leads/rascunho-de-produtos";
+import { totalDoItem } from "@/lib/schemas/produtos-do-negocio";
 import { X } from "@/lib/ui/icons";
 
 function centsParaTexto(cents: number): string {
-  return (cents / 100).toFixed(2).replace(".", ",");
+  return centavosParaCampo(cents);
 }
 
 /**
  * Os produtos do negócio (0660): escolher do catálogo, quantidade e desconto
  * por item. O valor do negócio é a soma — quem calcula é a trigger do banco, e
  * o `LeadFieldsForm` mostra o total daqui no lugar do campo de valor.
+ *
+ * É um editor de RASCUNHO: cada mudança fica na tela e só vai ao servidor
+ * quando a pessoa clica em "Salvar" na ficha (`LeadFieldsForm`). Antes cada
+ * clique gravava na hora, e o botão Salvar parecia não mandar em nada.
  */
 export function ProdutosDoNegocio({
-  leadId,
-  pipelineId,
+  itens,
+  onChange,
   moeda,
   podeEditar,
 }: {
-  leadId: string;
-  pipelineId: string;
+  itens: ItemDoRascunho[];
+  onChange: (proximos: ItemDoRascunho[]) => void;
   moeda: string;
   podeEditar: boolean;
 }) {
   const t = useT();
-  const itens = useProdutosDoNegocio(leadId, pipelineId);
   const catalogo = useCatalogoDeProdutos(podeEditar);
   const ativos = (catalogo.data ?? []).filter((p) => p.ativo);
+  // Id da linha que ainda não existe no banco — único dentro do rascunho.
+  const proximoId = useRef(0);
+
+  function adicionar(productId: string) {
+    const p = ativos.find((c) => c.id === productId);
+    if (!p) return;
+    onChange([
+      ...itens,
+      {
+        id: `novo-${productId}-${(proximoId.current += 1)}`,
+        product_id: p.id,
+        nome: p.nome,
+        quantidade: 1,
+        preco_unitario_cents: p.preco_cents,
+        desconto_cents: 0,
+      },
+    ]);
+  }
 
   return (
     <div className="space-y-2" data-testid="produtos-do-negocio">
       <Label>{t("Produtos")}</Label>
-      {(itens.data ?? []).length > 0 && (
+      {itens.length > 0 && (
         <ul className="space-y-2">
-          {(itens.data ?? []).map((item) => (
+          {itens.map((item) => (
             <LinhaDoProduto
               key={item.id}
               item={item}
               moeda={moeda}
-              // A linha provisória (otimista) só se edita quando o id real chega.
-              podeEditar={podeEditar && !ehProvisorio(item.id)}
-              onAlterar={(v) => itens.alterar.mutate({ itemId: item.id, ...v })}
-              onRemover={() => itens.remover.mutate(item.id)}
+              podeEditar={podeEditar}
+              onAlterar={(v) => onChange(itens.map((i) => (i.id === item.id ? { ...i, ...v } : i)))}
+              onRemover={() => onChange(itens.filter((i) => i.id !== item.id))}
             />
           ))}
         </ul>
       )}
       {podeEditar && (
-        <Select
-          value=""
-          onValueChange={(id) => itens.adicionar.mutate(id)}
-          disabled={ativos.length === 0}
-        >
+        <Select value="" onValueChange={adicionar} disabled={ativos.length === 0}>
           <SelectTrigger aria-label={t("Adicionar produto")} data-testid="adicionar-produto">
             <SelectValue
               placeholder={
@@ -99,7 +113,7 @@ function LinhaDoProduto({
   onAlterar,
   onRemover,
 }: {
-  item: ProdutoDoNegocio;
+  item: ItemDoRascunho;
   moeda: string;
   podeEditar: boolean;
   onAlterar: (v: { quantidade?: number; desconto_cents?: number }) => void;
@@ -111,7 +125,7 @@ function LinhaDoProduto({
     item.desconto_cents ? centsParaTexto(item.desconto_cents) : "",
   );
 
-  function salvarQuantidade() {
+  function conferirQuantidade() {
     const q = Number.parseInt(quantidade, 10);
     if (!Number.isInteger(q) || q < 1) {
       setQuantidade(String(item.quantidade));
@@ -120,7 +134,7 @@ function LinhaDoProduto({
     if (q !== item.quantidade) onAlterar({ quantidade: q });
   }
 
-  function salvarDesconto() {
+  function conferirDesconto() {
     const texto = desconto.trim();
     const cents = texto === "" ? 0 : parseReaisToCents(texto);
     if (cents === null || cents < 0) {
@@ -169,23 +183,32 @@ function LinhaDoProduto({
             className="h-8"
             value={quantidade}
             disabled={!podeEditar}
-            onChange={(e) => setQuantidade(e.target.value)}
-            onBlur={salvarQuantidade}
+            onChange={(e) => {
+              setQuantidade(e.target.value);
+              const q = Number.parseInt(e.target.value, 10);
+              if (Number.isInteger(q) && q >= 1 && q !== item.quantidade)
+                onAlterar({ quantidade: q });
+            }}
+            onBlur={conferirQuantidade}
           />
         </div>
         <div className="space-y-1">
           <Label htmlFor={`desc-${item.id}`} className="text-xs">
             {t("Desconto")}
           </Label>
-          <Input
+          <CampoDeDinheiro
             id={`desc-${item.id}`}
-            inputMode="decimal"
-            placeholder="0,00"
+            moeda={moeda}
             className="h-8"
             value={desconto}
             disabled={!podeEditar}
-            onChange={(e) => setDesconto(e.target.value)}
-            onBlur={salvarDesconto}
+            onChange={(e) => {
+              setDesconto(e.target.value);
+              const cents = e.target.value.trim() === "" ? 0 : parseReaisToCents(e.target.value);
+              if (cents !== null && cents !== item.desconto_cents)
+                onAlterar({ desconto_cents: cents });
+            }}
+            onBlur={conferirDesconto}
           />
         </div>
         <div className="space-y-1 text-right">

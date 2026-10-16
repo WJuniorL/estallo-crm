@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CampoDeDinheiro } from "@/components/ui/campo-de-dinheiro";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -42,10 +43,15 @@ import {
 } from "@/lib/leads/negocio-aberto-duplicado";
 import type { Lead } from "@/lib/types/leads";
 import { createLeadSchema, type CreateLeadInput } from "@/lib/schemas/leads";
-import { MOEDA_PADRAO, formatCents, parseReaisToCents, simboloDaMoeda } from "@/lib/money";
+import {
+  MOEDA_PADRAO,
+  centavosParaCampo,
+  formatCents,
+  parseReaisToCents,
+  simboloDaMoeda,
+} from "@/lib/money";
 import { rotuloDoContato } from "@/lib/contacts/rotulo-do-contato";
 import type { Contact } from "@/lib/types/contacts";
-import { EcoDoValor } from "./EcoDoValor";
 import { SeletorDeContato } from "./SeletorDeContato";
 
 interface FormShape {
@@ -474,13 +480,12 @@ export function NewLeadDialog({
                 </>
               ) : (
                 <>
-                  <Input
+                  {/* A máscara É o eco: o que aparece no campo é o que será gravado. */}
+                  <CampoDeDinheiro
                     id="valueReais"
-                    inputMode="decimal"
-                    placeholder="0,00"
+                    moeda={moedaDoValor}
                     {...form.register("valueReais")}
                   />
-                  <EcoDoValor control={form.control} moeda={moedaDoValor} />
                 </>
               )}
               {form.formState.errors.valueReais && (
@@ -585,7 +590,7 @@ export function NewLeadDialog({
 }
 
 function centsParaTexto(cents: number): string {
-  return cents ? (cents / 100).toFixed(2).replace(".", ",") : "";
+  return cents ? centavosParaCampo(cents) : "";
 }
 
 /** Uma linha de produto do Novo Lead, com o desconto como no dossiê (`ProdutosDoNegocio`). */
@@ -638,10 +643,9 @@ function LinhaDoProdutoEscolhido({
           <Label htmlFor={`novo-lead-desconto-${escolhido.product_id}`} className="text-xs">
             {t("Desconto")}
           </Label>
-          <Input
+          <CampoDeDinheiro
             id={`novo-lead-desconto-${escolhido.product_id}`}
-            inputMode="decimal"
-            placeholder="0,00"
+            moeda={moeda}
             className="h-8"
             value={desconto}
             onChange={(e) => setDesconto(e.target.value)}

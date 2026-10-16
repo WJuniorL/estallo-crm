@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useT } from "@/hooks/i18n/useT";
 import { camposDoFunil } from "@/lib/leads/campos-do-funil";
 import { CLASSE_DA_GAVETA_DO_LEAD, LeadDossier } from "./LeadDossier";
+import { useSaidaProtegida } from "./SaidaSemSalvar";
 
 /**
  * O MESMO dossiê do quadro, aberto fora dele (ex.: Leads recentes do inbox).
@@ -45,13 +46,17 @@ export function LeadDossierDoFunil({
     [members],
   );
   const lead = data?.leads.find((l) => l.id === leadId);
+  // A gaveta é DESTE componente: é ele quem pergunta antes de fechar com a
+  // ficha alterada e não salva.
+  const saida = useSaidaProtegida(onClose);
 
   return (
-    <Sheet open onOpenChange={(v) => !v && onClose()}>
+    <Sheet open onOpenChange={(v) => !v && saida.pedirFechar()}>
       <SheetContent side="right" className={CLASSE_DA_GAVETA_DO_LEAD}>
         {data && lead ? (
           <LeadDossier
             embutido
+            saida={saida}
             open
             onOpenChange={(v) => !v && onClose()}
             lead={lead}

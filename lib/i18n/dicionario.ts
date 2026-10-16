@@ -1995,7 +1995,6 @@ export const DICIONARIO: Traducoes = {
   "Freios de segurança": { es: "Límites de seguridad" },
   "Ações por atendimento (1 a 25)": { es: "Acciones por atención (1 a 25)" },
   "Volume de texto por atendimento": { es: "Volumen de texto por atención" },
-  "Custo máximo por atendimento (centavos)": { es: "Costo máximo por atención (centavos)" },
   "Mensagens anteriores que ele lê": { es: "Mensajes anteriores que lee" },
   "Esperar antes de responder (segundos)": { es: "Esperar antes de responder (segundos)" },
   "Mensagens do mesmo contato dentro desse tempo viram uma resposta só. Vazio usa a janela padrão da instalação (máximo 60 segundos).": {
@@ -15557,6 +15556,11 @@ export const DICIONARIO: Traducoes = {
   "Criar tarefa": { es: "Crear tarea" },
   "Tarefa criada": { es: "Tarea creada" },
   "Lead criado, mas alguns produtos não foram adicionados.": { es: "Lead creado, pero algunos productos no se agregaron." },
+  "Sair sem salvar?": { es: "¿Salir sin guardar?" },
+  "Você alterou este lead e ainda não salvou. Se sair agora, as alterações serão descartadas.": { es: "Modificaste este lead y aún no lo guardaste. Si sales ahora, los cambios se descartarán." },
+  "Continuar editando": { es: "Seguir editando" },
+  "Salvar e fechar": { es: "Guardar y cerrar" },
+  "Custo máximo por atendimento (US$)": { es: "Costo máximo por atención (US$)" },
 };
 
 /**

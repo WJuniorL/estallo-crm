@@ -124,7 +124,8 @@ describe("Novo Lead — responsável e produtos", () => {
     expect(valor.readOnly).toBe(true);
 
     // Desconto por produto, como no dossiê: a soma acompanha.
-    await user.type(screen.getByLabelText("Desconto"), "20");
+    // Máscara de dinheiro: 2000 → 20,00.
+    await user.type(screen.getByLabelText("Desconto"), "2000");
     await user.tab();
     expect(valor.value).toMatch(/177,00/);
 

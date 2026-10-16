@@ -24,6 +24,7 @@ import { ClockCounterClockwise, Funnel, ListChecks, UserCircle } from "@/lib/ui/
 import { BlocoRecolhivel } from "@/components/ui/bloco-recolhivel";
 import { TrilhoDeEtapas } from "./TrilhoDeEtapas";
 import { MoveToOtherPipelineDialog } from "./MoveToOtherPipelineDialog";
+import { useSaidaProtegida, type SaidaProtegida } from "./SaidaSemSalvar";
 import { formatValorDoNegocio, MOEDA_PADRAO } from "@/lib/money";
 import type { CustomFieldDef } from "@/components/contacts/CustomFieldsEditor";
 
@@ -43,11 +44,17 @@ interface Props {
    * trocar de gaveta no meio faria a animação de entrada rodar duas vezes).
    */
   embutido?: boolean;
+  /**
+   * A guarda de "sair sem salvar" de quem é DONO da gaveta (o Inbox, no modo
+   * embutido). Sem ela, o dossiê usa a própria, ligada ao `onOpenChange`.
+   */
+  saida?: SaidaProtegida;
 }
 
 /** A gaveta do dossiê — a mesma medida aberta pelo quadro e pelo Inbox. */
 export const CLASSE_DA_GAVETA_DO_LEAD =
-  "painel-do-lead flex w-full flex-col gap-3 overflow-y-auto px-4 py-5 sm:max-w-2xl sm:p-6";
+  // Sem padding EMBAIXO: o rodapé fixo do "Salvar" encosta na borda da gaveta.
+  "painel-do-lead flex w-full flex-col gap-3 overflow-y-auto px-4 pt-5 pb-0 sm:max-w-2xl sm:px-6 sm:pt-6 sm:pb-0";
 
 function formatValor(cents: number | null, currency: string | null): string {
   // Mesma régua e mesmo locale do card e do total da coluna (`formatValorDoNegocio`).
@@ -78,7 +85,10 @@ export function LeadDossier({
   ownerNames,
   stages,
   embutido = false,
+  saida: saidaDeFora,
 }: Props) {
+  const saidaPropria = useSaidaProtegida(() => onOpenChange(false));
+  const saida = saidaDeFora ?? saidaPropria;
   const tagDoIdioma = useTagDeIdioma();
   const t = useT();
   const campos = useRef<HTMLDivElement | null>(null);
@@ -244,8 +254,19 @@ export function LeadDossier({
           id="dossie-dados"
           titulo={t("Dados do negócio")}
           icone={<ListChecks size={14} aria-hidden />}
+          // Recolher a ficha não pode jogar fora o que ainda não foi salvo.
+          manterMontado
         >
-          <LeadFieldsForm lead={lead} pipelineId={pipelineId} fieldDefs={fieldDefs} />
+          <LeadFieldsForm
+            lead={lead}
+            pipelineId={pipelineId}
+            fieldDefs={fieldDefs}
+            formId={saida.formId}
+            semBotoes
+            onEstado={saida.aoMudarEstado}
+            onSaved={saida.aoSalvar}
+            onErroAoSalvar={saida.aoFalharAoSalvar}
+          />
         </BlocoRecolhivel>
       </div>
 
@@ -259,6 +280,25 @@ export function LeadDossier({
         pipelineId={pipelineId}
         expectedUpdatedAt={lead.updated_at}
       />
+      {/* O "Salvar" da ficha, FIXO no pé da gaveta: quem edita lá em cima
+          salva sem rolar até o fim. Nada da ficha grava antes deste clique. */}
+      <div
+        className="sticky bottom-0 z-10 -mx-4 mt-auto flex items-center justify-end gap-3 border-t border-border bg-background px-4 py-3 sm:-mx-6 sm:px-6"
+        data-testid="dossie-rodape-salvar"
+      >
+        {saida.estado.pendente && (
+          <span className="mr-auto text-xs text-text-muted">{t("Alterações não salvas")}</span>
+        )}
+        <Button
+          type="submit"
+          form={saida.formId}
+          disabled={!saida.estado.pendente || saida.estado.salvando}
+          data-testid="dossie-salvar"
+        >
+          {saida.estado.salvando ? t("Salvando…") : t("Salvar")}
+        </Button>
+      </div>
+      {saida.dialogo}
     </>
   );
 
@@ -270,7 +310,7 @@ export function LeadDossier({
     );
   }
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={(v) => (v ? onOpenChange(true) : saida.pedirFechar())}>
       <SheetContent side="right" className={CLASSE_DA_GAVETA_DO_LEAD} {...observaveis}>
         {conteudo}
       </SheetContent>

@@ -126,6 +126,12 @@ export const AUDIT_ACTIONS = [
   // auditoria. Desligar uma automação é decisão auditável tanto quanto religá-la.
   "conversation.ai_paused",
   "conversation.tags_changed",
+  // Menu de ações da conversa no Inbox (16/10/2026).
+  "conversation.pinned",
+  "conversation.unpinned",
+  "conversation.marked_unread",
+  "conversation.cleared",
+  "conversation.deleted",
   "contact.tags_changed",
   // Fila de confirmação (spec 17 §4b): a IA PROPÕE, uma pessoa decide. As três
   // entram porque a proposta é intenção auditável mesmo quando nunca vira
@@ -253,6 +259,7 @@ export const AUDIT_ACTIONS = [
   // A auditoria precisa distinguir o que sumiu do que continua no banco.
   "channel.deleted",
   "channel.archived",
+  "channel.history_deleted",
   // Contraparte de `archived`: a linha escondida voltou à vida (reconexão do
   // canal oficial, retomada do pareamento). Sem ela o histórico registra a
   // exclusão e cala sobre o canal ter voltado a receber e enviar. Emitida por

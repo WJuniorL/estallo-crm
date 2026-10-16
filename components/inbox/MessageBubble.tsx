@@ -218,7 +218,7 @@ export function MessageBubble({
     <div
       data-search-match={searchMatch || undefined}
       className={cn(
-        "group flex w-full min-w-0 items-center gap-1 px-4 py-1",
+        "group flex w-full min-w-0 items-center gap-1",
         isOutbound ? "justify-end" : "justify-start",
       )}
     >
@@ -233,16 +233,17 @@ export function MessageBubble({
           isBareSticker
             ? "px-0 py-0"
             : cn(
-                "rounded-2xl px-3 py-2 shadow-sm",
-                temMenu && "pr-8",
-                isOutbound
-                  ? "rounded-br-sm bg-primary dark:bg-accent-700 text-primary-foreground"
-                  : "rounded-bl-sm bg-muted text-foreground",
+                // A bolha do modelo do Inbox (16/10/2026): recebida branca com
+                // borda e "cauda" em cima à esquerda; enviada na cor da marca,
+                // cauda em cima à direita. Régua em `components/inbox/inbox.css`.
+                "ibx-bubble",
+                temMenu && "ibx-com-menu",
+                isOutbound && "ibx-outgoing",
               ),
-          isFailed && "border border-destructive",
+          isFailed && "ibx-falhou border border-destructive",
           // A marca da busca é ANEL, não cor de fundo: o fundo já diz de quem é
           // a mensagem, e trocá-lo apagaria essa leitura justo na bolha achada.
-          searchMatch && "ring-2 ring-foreground ring-offset-2 ring-offset-background",
+          searchMatch && "ibx-achada ring-2 ring-foreground ring-offset-2 ring-offset-background",
           apagada && "opacity-70",
         )}
       >
@@ -310,12 +311,7 @@ export function MessageBubble({
         */}
         {citada && (
           <div
-            className={cn(
-              "mb-1 rounded-md border-l-2 px-2 py-1 text-xs",
-              isOutbound
-                ? "border-primary-foreground/50 bg-primary-foreground/10"
-                : "border-primary bg-background/60",
-            )}
+            className="ibx-quoted-message"
           >
             <div className={cn("font-medium", isOutbound ? "text-primary-foreground" : "opacity-80")}>
               {citada.direction === "outbound" ? t("Você") : t("Cliente")}
@@ -347,7 +343,7 @@ export function MessageBubble({
           </p>
         )}
         {senderLabel && (
-          <div className="mb-0.5 flex items-center gap-1 text-[11px] font-semibold text-primary-foreground">
+          <div className="ibx-bubble-label flex items-center gap-1">
             {senderLabel === "IA" ? (
               <Robot size={10} weight="duotone" aria-hidden />
             ) : null}
@@ -420,10 +416,7 @@ export function MessageBubble({
         )}
 
         <div
-          className={cn(
-            "mt-1 flex items-center justify-end gap-1 text-[10px]",
-            isOutbound ? "text-primary-foreground" : "text-muted-foreground",
-          )}
+          className="ibx-bubble-time"
         >
           {editada && (
             // Ao lado da hora, não no corpo: o texto mostrado JÁ é o novo, e o

@@ -314,7 +314,7 @@ export async function GET(
  * Admin only. organization_id vem da sessão — nunca do path/body.
  */
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
   const supportDenied = await requireSupportWrite();
@@ -345,7 +345,9 @@ export async function DELETE(
   if (!session) return fail("not_found", t("Canal não encontrado."), 404, { requestId });
 
   const impact = await loadDeletionImpact(activeOrg.orgId, id);
-  const arquivar = impact.outcome === "archive";
+  let arquivar = impact.outcome === "archive";
+  // O operador marcou "apagar também o histórico" no diálogo de exclusão.
+  const apagarHistorico = req.nextUrl.searchParams.get("apagar_historico") === "1";
 
   const now = new Date().toISOString();
   const patch: Record<string, unknown> = {
@@ -498,6 +500,43 @@ export async function DELETE(
     patch.webhook_path_token = randomUUID().replace(/-/g, "");
   }
 
+  // ─── APAGAR O HISTÓRICO, SE PEDIDO (16/10/2026) ────────────────────────────
+  //
+  // Só DEPOIS de o número sair do provedor: se a revogação falhasse, apagar
+  // antes deixaria o número conectado e sem histórico. Mensagens primeiro,
+  // conversas depois (o resto das ligações é cascade/set null). Admin client
+  // com o `organization_id` da sessão: `messages_delete` da RLS não é o
+  // problema, mas a contagem tem de enxergar tudo o que a tela contou. Mídia
+  // órfã sai na poda que já existe (0432). Sem histórico, o número pode ser
+  // apagado de vez — a decisão é refeita com o impacto novo.
+  let historicoApagado: { conversations: number; messages: number } | null = null;
+  if (apagarHistorico && impact.history.conversations + impact.history.messages > 0) {
+    const admin = createAdminClient();
+    const { count: msgs, error: msgErr } = await admin
+      .from("messages")
+      .delete({ count: "exact" })
+      .eq("organization_id", activeOrg.orgId)
+      .eq("channel_session_id", id);
+    if (msgErr) return fail("internal_error", msgErr.message, 500, { requestId });
+    const { count: convs, error: convErr } = await admin
+      .from("conversations")
+      .delete({ count: "exact" })
+      .eq("organization_id", activeOrg.orgId)
+      .eq("channel_session_id", id);
+    if (convErr) return fail("internal_error", convErr.message, 500, { requestId });
+    historicoApagado = { conversations: convs ?? 0, messages: msgs ?? 0 };
+    void audit({
+      action: "channel.history_deleted",
+      actorUserId: user.id,
+      organizationId: activeOrg.orgId,
+      resourceType: "channel_session",
+      resourceId: id,
+      requestId,
+      metadata: historicoApagado,
+    });
+    arquivar = (await loadDeletionImpact(activeOrg.orgId, id)).outcome === "archive";
+  }
+
   if (arquivar) {
     const { error: archErr } = await supabase
       .from("channel_sessions")
@@ -573,5 +612,5 @@ export async function DELETE(
     },
   });
 
-  return ok({ id, archived: arquivar, impact }, { requestId });
+  return ok({ id, archived: arquivar, impact, historico_apagado: historicoApagado }, { requestId });
 }

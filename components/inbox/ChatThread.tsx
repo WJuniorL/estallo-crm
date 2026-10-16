@@ -343,7 +343,8 @@ export function ChatThread({
           {t("Resultados nas mensagens carregadas")}: {resultados.size}
         </div>
       )}
-      <div ref={scrollerRef} className="min-w-0 flex-1 overflow-y-auto py-2">
+      <div ref={scrollerRef} className="ibx-thread min-w-0 flex-1 overflow-y-auto">
+        <div className="ibx-thread-content">
         {q.hasNextPage && (
           <div className="flex justify-center py-2">
             <Button
@@ -358,12 +359,9 @@ export function ChatThread({
         )}
 
         {groups.map((g) => (
-          <div key={g.key} className="space-y-1">
-            <div className="sticky top-0 z-10 flex justify-center py-1">
-              <span className="rounded-full bg-background/80 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground backdrop-blur">
-                {dayLabel(g.date, t, localeDaData)}
-              </span>
-            </div>
+          <div key={g.key} className="flex flex-col gap-[13px]">
+            {/* O separador do modelo: o dia entre duas linhas, rolando junto. */}
+            <div className="ibx-day">{dayLabel(g.date, t, localeDaData)}</div>
             {g.items.map((item) =>
               item.kind === "passagem" ? (
                 <PassagemCard
@@ -429,6 +427,7 @@ export function ChatThread({
         ))}
 
         <div ref={bottomRef} />
+        </div>
       </div>
     </div>
   );

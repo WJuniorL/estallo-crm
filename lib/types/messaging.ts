@@ -4,6 +4,8 @@
  */
 
 export interface Conversation {
+  /** Fixada no topo do Inbox por QUEM pediu a lista (0662) — só vem na lista. */
+  fixada?: boolean;
   id: string;
   organization_id: string;
   contact_id: string;

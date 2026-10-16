@@ -9,7 +9,7 @@ import {
   type ClipboardEvent,
   type KeyboardEvent,
 } from "react";
-import { PaperPlaneTilt } from "@/lib/ui/icons";
+import { Note, PaperPlaneTilt } from "@/lib/ui/icons";
 import { Button } from "@/components/ui/button";
 import { AttachMenu } from "@/components/inbox/composer/AttachMenu";
 import { AttachmentPreviewDialog } from "@/components/inbox/composer/AttachmentPreviewDialog";
@@ -443,10 +443,10 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
   return (
     <>
       <div
-        className={cn(
-          "relative border-t border-border bg-background px-3 py-2",
-          mode === "note" && "border-warning/40 bg-warning-bg",
-        )}
+        // O composer do modelo do Inbox (16/10/2026): abas em pílula clara com
+        // a dica do Enter ao lado, e + / emoji / IA / campo / enviar numa caixa
+        // só. Em nota interna a CAIXA fica amarela (régua em inbox.css).
+        className={cn("ibx-composer relative", mode === "note" && "ibx-note-mode")}
       >
         <TemplateMenu
           open={menuOpen}
@@ -486,31 +486,31 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
             </p>
           </div>
         )}
-        <div className="mb-1.5 flex gap-1">
-          <button
-            type="button"
-            onClick={() => setMode("reply")}
-            className={cn(
-              "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
-              mode === "reply"
-                ? "bg-accent dark:bg-accent-700 text-accent-foreground"
-                : "text-muted-foreground hover:bg-muted",
-            )}
-          >
-            {t("Responder")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("note")}
-            className={cn(
-              "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
-              mode === "note"
-                ? "bg-warning text-white"
-                : "text-muted-foreground hover:bg-muted",
-            )}
-          >
-            {t("Nota interna")}
-          </button>
+        <div className="ibx-composer-heading">
+          <div className="ibx-compose-modes">
+            <button
+              type="button"
+              onClick={() => setMode("reply")}
+              aria-pressed={mode === "reply"}
+              data-modo="reply"
+            >
+              {t("Responder")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("note")}
+              aria-pressed={mode === "note"}
+              data-modo="note"
+            >
+              <Note className="ibx-icon" aria-hidden />
+              {t("Nota interna")}
+            </button>
+          </div>
+          <span className="ibx-compose-hint">
+            {mode === "note"
+              ? t("Enter salva a nota · Shift + Enter quebra a linha")
+              : t("Enter envia · Shift + Enter quebra a linha")}
+          </span>
         </div>
         {/*
           A FAIXA DA CITAÇÃO — o que o atendente escolheu responder.
@@ -544,7 +544,7 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
             </button>
           </div>
         )}
-        <div className="flex items-end gap-0.5">
+        <div className="ibx-input-box">
           {/* O "+" existe nos DOIS modos desde a F3 da #1863: em "Nota interna"
               ele abre o mesmo menu, com as DUAS primeiras opções — foto/vídeo e
               documento — porque a nota passou a aceitar anexo. A terceira
@@ -628,10 +628,7 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
                 ? t("Enter salva a nota · Shift+Enter quebra linha")
                 : t("Enter envia · Shift+Enter quebra linha")
             }
-            className={cn(
-              "max-h-40 min-h-9 flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm",
-              "placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-hidden",
-            )}
+            className="max-h-[120px] min-h-6 flex-1 placeholder:text-muted-foreground"
             disabled={mode === "note" ? isDisabled : respostaBarrada}
             aria-label={t("Mensagem")}
           />

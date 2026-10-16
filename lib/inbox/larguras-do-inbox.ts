@@ -35,7 +35,7 @@
  */
 
 /** Faixa de viewport do Tailwind que define o FORMATO da grade. */
-export type FaixaId = "md" | "xl" | "2xl";
+export type FaixaId = "md" | "lg" | "xl" | "2xl";
 
 export interface LargurasDoInbox {
   lista: number;
@@ -61,13 +61,20 @@ export const CONVERSA_MINIMA = 420;
 export const PASSO_TECLADO = 16;
 
 /** Da faixa maior para a menor: `find` devolve a primeira que cabe. */
+//
+// 16/10/2026 — as faixas do MODELO do Inbox do dono (previews/inbox-layout):
+// ≥1600 lista 360 + ficha 320 · 1280–1599 lista 336, ficha 296 quando aberta ·
+// 1101–1279 lista 336, ficha em gaveta · 851–1100 lista 300 · ≤850 uma coluna.
+// `temFicha` diz se a ficha PODE ser coluna nesta faixa; se ela está aberta é
+// escolha de quem usa (o botão da ficha no cabeçalho do chat).
 export const FAIXAS: readonly Faixa[] = [
-  { id: "2xl", min: 1536, lista: 300, ficha: 320, temFicha: true },
-  { id: "xl", min: 1280, lista: 272, ficha: 296, temFicha: true },
-  { id: "md", min: 768, lista: 300, ficha: 300, temFicha: false },
+  { id: "2xl", min: 1600, lista: 360, ficha: 320, temFicha: true },
+  { id: "xl", min: 1280, lista: 336, ficha: 296, temFicha: true },
+  { id: "lg", min: 1101, lista: 336, ficha: 296, temFicha: false },
+  { id: "md", min: 851, lista: 300, ficha: 300, temFicha: false },
 ];
 
-/** Abaixo do `md` o inbox é uma coluna por vez e não tem divisória nenhuma. */
+/** Até 850px o inbox é uma coluna por vez e não tem divisória nenhuma. */
 export function faixaDaLargura(largura: number): Faixa | null {
   if (!Number.isFinite(largura) || largura <= 0) return null;
   return FAIXAS.find((f) => largura >= f.min) ?? null;

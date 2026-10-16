@@ -787,6 +787,9 @@ function ExcluirCanalDialog({
 }) {
   const t = useT();
   const [excluindo, setExcluindo] = useState(false);
+  // "Apagar também o histórico": só aparece quando há conversa ou mensagem do
+  // número — e é a única forma de o histórico sair junto (16/10/2026).
+  const [apagarHistorico, setApagarHistorico] = useState(false);
   const {
     data: impact,
     isPending,
@@ -808,11 +811,18 @@ function ExcluirCanalDialog({
     setExcluindo(true);
     try {
       const res = await apiClient.delete<{
-        data: { id: string; archived: boolean; impact: ChannelDeletionImpact };
-      }>(`/api/v1/channel-sessions/${canal.id}`);
+        data: {
+          id: string;
+          archived: boolean;
+          impact: ChannelDeletionImpact;
+          historico_apagado?: { conversations: number; messages: number } | null;
+        };
+      }>(`/api/v1/channel-sessions/${canal.id}${apagarHistorico ? "?apagar_historico=1" : ""}`);
       const conversas = res.data.impact.history.conversations;
       toast.success(
-        !res.data.archived
+        res.data.historico_apagado
+          ? t("Número excluído e histórico de conversas apagado.")
+          : !res.data.archived
           ? t("Canal excluído.")
           : conversas > 0
             ? `${t("Canal removido.")} ${contar(conversas, "conversa continua", "conversas continuam", t)} ${t("no inbox.")}`
@@ -846,10 +856,35 @@ function ExcluirCanalDialog({
                 </p>
               ) : (
                 <ul className="list-disc space-y-1 pl-5">
-                  {frasesDoImpacto(impact, t).map((frase) => (
-                    <li key={frase}>{frase}</li>
-                  ))}
+                  {frasesDoImpacto(impact, t)
+                    // Marcado para apagar, "continua no inbox" deixa de ser verdade.
+                    .filter((frase) => !(apagarHistorico && frase.startsWith(t("Continua no inbox:"))))
+                    .map((frase) => (
+                      <li key={frase}>{frase}</li>
+                    ))}
                 </ul>
+              )}
+              {impact && impact.history.conversations + impact.history.messages > 0 && (
+                <label className="flex items-start gap-2 rounded-md border border-border p-3 text-text">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--color-error)]"
+                    checked={apagarHistorico}
+                    disabled={excluindo}
+                    onChange={(e) => setApagarHistorico(e.target.checked)}
+                    data-testid="excluir-canal-apagar-historico"
+                  />
+                  <span>
+                    {t("Apagar também todo o histórico de conversas e mensagens deste número")} (
+                    {contar(impact.history.conversations, "conversa", "conversas", t)},{" "}
+                    {contar(impact.history.messages, "mensagem", "mensagens", t)}).
+                    {apagarHistorico && (
+                      <span className="mt-1 block font-medium text-error-fg">
+                        {t("Esta ação não pode ser desfeita. Os contatos continuam cadastrados.")}
+                      </span>
+                    )}
+                  </span>
+                </label>
               )}
               <p>{t("Para usar este número de novo, será preciso conectá-lo outra vez.")}</p>
             </div>

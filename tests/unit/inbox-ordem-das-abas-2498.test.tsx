@@ -65,12 +65,14 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("as seis abas, na ordem pedida pela #2498", () => {
-  it("Automático, Fila, Pendentes, Todas, Fechadas — nessa ordem", () => {
+  // 16/10/2026: a ordem do MODELO do Inbox do dono substitui a da #2498 —
+  // Fila primeiro, Automático depois de Pendentes. Valores e contadores iguais.
+  it("Fila, Pendentes, Automático, Todas, Fechadas — nessa ordem", () => {
     render(<InboxFilters value={VALUE} onChange={() => {}} />);
     expect(abasRenderizadas()).toEqual([
-      "Automático",
       "Fila",
       "Pendentes",
+      "Automático",
       "Todas",
       "Fechadas",
     ]);
@@ -87,9 +89,9 @@ describe("as seis abas, na ordem pedida pela #2498", () => {
       ([, value, label]) => `${value}=${label}`,
     );
     expect(pares).toEqual([
-      "ai=Automático",
       "unassigned=Fila",
       "pending=Pendentes",
+      "ai=Automático",
       "all=Todas",
       "closed=Fechadas",
     ]);
@@ -108,9 +110,9 @@ describe("as seis abas, na ordem pedida pela #2498", () => {
 describe("só a ordem muda — as permissões continuam quem eram", () => {
   it("manager vê as seis, com 'Todas' no meio", () => {
     expect(visibleInboxTabs("manager", "all")).toEqual([
-      "ai",
       "unassigned",
       "pending",
+      "ai",
       "all",
       "closed",
     ]);
@@ -119,9 +121,9 @@ describe("só a ordem muda — as permissões continuam quem eram", () => {
   it("agent em modo own* vê as mesmas abas, na mesma ordem (Minhas virou filtro)", () => {
     // Sem a aba "Minhas", 'Todas' (recortada pela RLS) é a caixa do agent.
     expect(visibleInboxTabs("agent", "own")).toEqual([
-      "ai",
       "unassigned",
       "pending",
+      "ai",
       "all",
       "closed",
     ]);
@@ -129,9 +131,9 @@ describe("só a ordem muda — as permissões continuam quem eram", () => {
 
   it("agent com visibility 'all' tem as seis, 'Todas' na posição dela", () => {
     expect(visibleInboxTabs("agent", "all")).toEqual([
-      "ai",
       "unassigned",
       "pending",
+      "ai",
       "all",
       "closed",
     ]);

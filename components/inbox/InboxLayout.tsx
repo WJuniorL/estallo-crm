@@ -1,4 +1,5 @@
 "use client";
+import "./inbox.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "@/hooks/i18n/useT";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -29,9 +30,9 @@ import { InboxKeyboardShortcuts } from "./InboxKeyboardShortcuts";
 import { ShortcutsHelpDialog } from "./ShortcutsHelpDialog";
 import { OpenConversationProvider } from "@/hooks/notifications/OpenConversationContext";
 // ADR-05: ícone de feature sai do mapa canônico, nunca do pacote direto.
-import { CaretLeft, ChatCircle, IdentificationCard, MagnifyingGlass, X } from "@/lib/ui/icons";
+import { CaretLeft, ChatCircle, MagnifyingGlass, X } from "@/lib/ui/icons";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { comandosDaFila } from "@/lib/inbox/comando-da-conversa";
 import type { AvisoDeRascunho } from "@/lib/inbox/rascunho-sugerido";
@@ -70,9 +71,11 @@ import {
  * `md:flex` em ambas: no desktop as duas colunas convivem e a regra não vale.
  */
 export function colunasDoCelular(temSelecao: boolean): { lista: string; conversa: string } {
+  // 851px, e não o `md` (768): é o corte do modelo do Inbox (16/10/2026) — o
+  // tablet em pé também vê uma coluna por vez, com a seta de voltar no chat.
   return {
-    lista: temSelecao ? "hidden md:flex" : "flex",
-    conversa: temSelecao ? "flex" : "hidden md:flex",
+    lista: temSelecao ? "hidden min-[851px]:flex" : "flex",
+    conversa: temSelecao ? "flex" : "hidden min-[851px]:flex",
   };
 }
 
@@ -207,8 +210,15 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
   const ultimoIdNaUrl = useRef(idNaUrl);
   const [visibleIds, setVisibleIds] = useState<string[]>([]);
   const [helpOpen, setHelpOpen] = useState(false);
-  /** A ficha do contato como painel deslizante — só existe abaixo do `xl`. */
+  /** A ficha do contato como gaveta — quando a faixa não a comporta como coluna. */
   const [fichaAberta, setFichaAberta] = useState(false);
+  /**
+   * A ficha como COLUNA, por escolha de quem usa (o botão da ficha no chat).
+   * `null` = o padrão da faixa: aberta a partir de 1600px, fechada entre 1280 e
+   * 1599 (o modelo do Inbox, 16/10/2026). O CSS pinta o padrão na primeira
+   * pintura; a escolha entra como classe por cima.
+   */
+  const [fichaEscolhida, setFichaEscolhida] = useState<boolean | null>(null);
   /**
    * A busca dentro da conversa (#1793) pertence à CONVERSA em que foi aberta.
    * Guardar o id junto fecha a busca em qualquer troca — clique, atalho j/k,
@@ -471,11 +481,17 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
 
   /** O que vale AGORA na tela: o ajuste salvo, ou o padrão da faixa. */
   const efetivas: LargurasDoInbox | null = larguras ?? (faixa ? largurasPadrao(faixa) : null);
+  /** A ficha está de pé como COLUNA agora (a faixa comporta e quem usa quer). */
+  const fichaNaColuna = Boolean(faixa?.temFicha) && (fichaEscolhida ?? faixa?.id === "2xl");
+  const alternarFicha = useCallback(() => {
+    if (faixa?.temFicha) setFichaEscolhida(!fichaNaColuna);
+    else setFichaAberta((aberta) => !aberta);
+  }, [faixa, fichaNaColuna]);
 
   const estiloDaGrade: CSSProperties | undefined =
     faixa && larguras
       ? {
-          gridTemplateColumns: faixa.temFicha
+          gridTemplateColumns: fichaNaColuna
             ? `${larguras.lista}px minmax(0,1fr) ${larguras.ficha}px`
             : `${larguras.lista}px minmax(0,1fr)`,
         }
@@ -498,7 +514,7 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
     evento.stopPropagation();
     evento.currentTarget.setPointerCapture?.(evento.pointerId);
     const base = largurasRef.current ?? efetivas;
-    const temFicha = faixa.temFicha;
+    const temFicha = fichaNaColuna;
     const faixaAtual = faixa;
 
     const aoMover = (movimento: PointerEvent) => {
@@ -529,7 +545,7 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
     evento.preventDefault();
     const base = { ...(largurasRef.current ?? efetivas), [coluna]: proximo };
     aplicarLarguras(
-      resolverLarguras({ ...base, larguraContainer: larguraDaGrade(), temFicha: faixa.temFicha }),
+      resolverLarguras({ ...base, larguraContainer: larguraDaGrade(), temFicha: fichaNaColuna }),
     );
     gravarLarguras(armazenamentoDoNavegador(), faixa.id, largurasRef.current);
   };
@@ -585,7 +601,11 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
     <OpenConversationProvider conversationId={selectedId}>
     <div
       ref={gradeRef}
-      className="grid relative h-[calc(100dvh-3.5rem-var(--space-6)-max(var(--space-6),var(--rodape-ocupado,0px)))] w-full grid-cols-1 md:grid-cols-[300px_1fr] xl:grid-cols-[272px_1fr_296px] 2xl:grid-cols-[300px_1fr_320px]"
+      className={cn(
+        "ibx ibx-grade relative h-[calc(100dvh-3.5rem-var(--space-6)-max(var(--space-6),var(--rodape-ocupado,0px)))] w-full",
+        fichaEscolhida === true && "ibx-ficha-aberta",
+        fichaEscolhida === false && "ibx-ficha-fechada",
+      )}
       style={estiloDaGrade}
       /*
        * O ESTADO DO TEMPO REAL, LEGÍVEL DE FORA — mesmo par que o dossiê do lead
@@ -623,13 +643,12 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
         classe condicional é resolvida pelo CSS, na primeira pintura, e some no
         `md` — onde as duas colunas cabem juntas e a regra não se aplica.
       */}
-      <div
-        className={cn(
-          "h-full min-h-0 flex-col border-r border-border md:flex",
-          colunas.lista,
-        )}
-      >
-        <InboxFilters value={filterValue} onChange={setFilterValue} />
+      <div className={cn("ibx-list-panel h-full min-h-0 flex-col", colunas.lista)}>
+        <InboxFilters
+          value={filterValue}
+          onChange={setFilterValue}
+          onAbrirAtalhos={() => setHelpOpen(true)}
+        />
         <div className="min-h-0 flex-1 overflow-hidden">
           <ConversationList
             listQuery={listQ}
@@ -638,7 +657,22 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
             onSelect={handleSelect}
             onVisibleChange={handleVisibleChange}
             onLimparFiltros={limparFiltrosAuxiliares}
+            onFecharConversa={() => handleSelect(null)}
           />
+        </div>
+        {/* O rodapé do modelo, dizendo a VERDADE: o ponto acompanha o estado
+            do canal de tempo real (o mesmo `data-realtime-status` da grade). */}
+        <div className="ibx-list-footer">
+          <span
+            className="ibx-live-dot"
+            data-status={listQ.realtimeStatus === "subscribed" ? "on" : "off"}
+            aria-hidden
+          />
+          {listQ.realtimeStatus === "subscribed"
+            ? t("Atualização em tempo real")
+            : listQ.realtimeStatus === "connecting"
+              ? t("Conectando o tempo real…")
+              : t("Reconectando o tempo real…")}
         </div>
       </div>
 
@@ -654,20 +688,18 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
         escondido — deixando o dono numa tela vazia, sem sequer o botão de
         voltar, porque ele morava dentro do ramo da conversa carregada.
       */}
-      <div
-        className={cn(
-          "h-full min-h-0 min-w-0 flex-col md:flex",
-          colunas.conversa,
-        )}
-      >
+      <div className={cn("ibx-chat h-full min-h-0 min-w-0 flex-col", colunas.conversa)}>
         {/*
           A barra do celular vive FORA do ramo da conversa carregada: o caminho
           de volta tem de existir inclusive quando não há o que mostrar — é aí
           que ele é a única saída. A porta da ficha, essa sim, depende da
           conversa, e só aparece quando há uma.
         */}
-        {selectedId && (
-          <div className="flex items-center gap-1 border-b border-border px-1 py-1 md:hidden">
+        {/* Sem a conversa carregada (deep-link respondendo, ou fora do acesso)
+            o cabeçalho do chat não existe — e a seta de voltar mora nele. Esta
+            barra é o caminho de volta nesse intervalo, só onde há uma coluna. */}
+        {selectedId && !selectedConversation && (
+          <div className="flex items-center gap-1 border-b border-border px-1 py-1 min-[851px]:hidden">
             <Button
               variant="ghost"
               size="sm"
@@ -677,22 +709,17 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
               <CaretLeft size={16} />
               {t("Conversas")}
             </Button>
-            <div className="flex-1" />
-            {selectedConversation && (
-              <Sheet open={fichaAberta} onOpenChange={setFichaAberta}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-9 gap-1 px-2 xl:hidden">
-                    <IdentificationCard size={16} />
-                    {t("Ficha")}
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-[min(22rem,90vw)] overflow-y-auto p-0">
-                  <SheetTitle className="sr-only">{t("Ficha do contato")}</SheetTitle>
-                  <CRMSidePanel conversation={selectedConversation} />
-                </SheetContent>
-              </Sheet>
-            )}
           </div>
+        )}
+        {/* A ficha como GAVETA: abaixo de 1280px (onde ela não vira coluna),
+            aberta pelo botão da ficha no cabeçalho do chat. */}
+        {selectedConversation && (
+          <Sheet open={fichaAberta && !fichaNaColuna} onOpenChange={setFichaAberta}>
+            <SheetContent side="right" className="w-[min(22rem,90vw)] overflow-y-auto p-0">
+              <SheetTitle className="sr-only">{t("Ficha do contato")}</SheetTitle>
+              <CRMSidePanel conversation={selectedConversation} />
+            </SheetContent>
+          </Sheet>
         )}
         {selectedConversation ? (
           <>
@@ -709,9 +736,12 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
               }
               buscaAberta={buscaAberta}
               botaoBuscaRef={botaoBuscaRef}
+              fichaVisivel={fichaNaColuna || fichaAberta}
+              onAlternarFicha={alternarFicha}
+              onVoltar={() => handleSelect(null)}
             />
             {buscaAberta && (
-              <div className="flex items-center gap-2 border-b border-border px-4 py-1.5">
+              <div className="ibx-message-search-bar">
                 <MagnifyingGlass size={16} className="shrink-0 text-muted-foreground" aria-hidden />
                 <input
                   type="search"
@@ -807,7 +837,7 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
         )}
       </div>
 
-      <div className="hidden h-full min-h-0 min-w-0 xl:block">
+      <div className="ibx-coluna-ficha h-full min-h-0 min-w-0">
         <CRMSidePanel conversation={selectedConversation} />
       </div>
 
@@ -845,7 +875,7 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
               className="w-px bg-border transition-colors group-hover:bg-primary group-focus-visible:bg-primary"
             />
           </span>
-          {faixa?.temFicha && (
+          {fichaNaColuna && (
             <span
               role="separator"
               aria-orientation="vertical"

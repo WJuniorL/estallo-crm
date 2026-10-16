@@ -33,6 +33,15 @@ interface Props {
   onLimparFiltros?: () => void;
   /** Notifies parent when the visible list changes (used by keyboard nav). */
   onVisibleChange?: (ids: string[]) => void;
+  /** Fecha a conversa aberta (pedido do menu da linha). */
+  onFecharConversa?: () => void;
+}
+
+/** Quantas fixadas há antes da linha `i` — a régua da posição na Fila. */
+function fixadasAntes(items: readonly ConversationWithContact[], i: number): number {
+  let n = 0;
+  for (let k = 0; k < i; k += 1) if (items[k]?.fixada) n += 1;
+  return n;
 }
 
 export function ConversationList({
@@ -42,6 +51,7 @@ export function ConversationList({
   onSelect,
   onVisibleChange,
   onLimparFiltros,
+  onFecharConversa,
 }: Props) {
   const t = useT();
   // Só mostra POR ONDE a conversa entrou quando há mais de um número. Com um
@@ -167,7 +177,7 @@ export function ConversationList({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex-1 overflow-y-auto">
+      <div className="ibx-contact-list">
         {/* Vazio por FILTRO: fica DENTRO do return, nunca como `return` precoce —
             e por isso o bloco do `hasNextPage` abaixo continua sendo alcancado. */}
         {items.length === 0 && filtrosAtivos.length > 0 && (
@@ -191,7 +201,10 @@ export function ConversationList({
             conversation={c}
             isSelected={c.id === selectedId}
             onSelect={onSelect}
-            queuePosition={isQueue ? i + 1 : undefined}
+            onFecharConversa={onFecharConversa}
+            // A posição na Fila é a ORDEM DE CHEGADA: as fixadas (que sobem para
+            // o topo só na tela de quem fixou) não contam nem empurram ninguém.
+            queuePosition={isQueue && !c.fixada ? i + 1 - fixadasAntes(items, i) : undefined}
             mostrarCanal={maisDeUmCanal}
             mostrarAtendente={mostrarAtendente}
             mostrarAutomatico={mostrarAutomatico}

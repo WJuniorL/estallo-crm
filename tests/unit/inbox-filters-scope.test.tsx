@@ -81,6 +81,11 @@ function canal(over: Partial<ChannelSession> = {}): ChannelSession {
 
 const SELETOR = "Filtrar por número de WhatsApp";
 
+/** Desde o redesenho (16/10/2026) número, tags e Minhas moram no popover "Filtrar conversas". */
+function abrirFiltros() {
+  fireEvent.click(screen.getByRole("button", { name: "Filtrar conversas" }));
+}
+
 beforeEach(() => {
   setOrg("agent", "own_and_unassigned");
   canaisRef.current = [];
@@ -176,10 +181,14 @@ describe("InboxFilters render — 3 visões + escopo", () => {
     expect(screen.getByRole("tab", { name: /Fila/ })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Todas/ })).toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: /Minhas/ })).not.toBeInTheDocument();
-    const minhas = screen.getByRole("button", { name: "Minhas" });
-    expect(minhas).toHaveAttribute("aria-pressed", "false");
+    abrirFiltros();
+    const minhas = screen.getByRole("checkbox", { name: "Minhas" });
+    expect(minhas).not.toBeChecked();
     fireEvent.click(minhas);
-    expect(onChange).toHaveBeenCalledWith({ ...VALUE, onlyMine: true });
+    // O popover é um RASCUNHO: nada muda até "Aplicar filtros".
+    expect(onChange).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Aplicar filtros" }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ tab: VALUE.tab, onlyMine: true }));
   });
 
   it("manager: mostra Todas", () => {
@@ -202,6 +211,7 @@ describe("InboxFilters — seletor de número e o filtro órfão", () => {
     setOrg("manager", "all");
     canaisRef.current = [canal()];
     render(<InboxFilters value={VALUE} onChange={() => {}} />);
+    abrirFiltros();
     expect(screen.queryByLabelText(SELETOR)).not.toBeInTheDocument();
   });
 
@@ -209,6 +219,7 @@ describe("InboxFilters — seletor de número e o filtro órfão", () => {
     setOrg("manager", "all");
     canaisRef.current = [canal(), canal({ id: "canal-2", display_name: "Suporte" })];
     render(<InboxFilters value={VALUE} onChange={() => {}} />);
+    abrirFiltros();
     expect(screen.getByLabelText(SELETOR)).toBeInTheDocument();
   });
 
@@ -224,6 +235,7 @@ describe("InboxFilters — seletor de número e o filtro órfão", () => {
     render(
       <InboxFilters value={{ ...VALUE, channel_session_id: "canal-excluido" }} onChange={() => {}} />,
     );
+    abrirFiltros();
     const seletor = screen.getByLabelText(SELETOR);
     expect(seletor).toBeInTheDocument();
     expect(seletor).toHaveTextContent("Número removido");
@@ -243,6 +255,7 @@ describe("InboxFilters — seletor de número e o filtro órfão", () => {
     render(
       <InboxFilters value={{ ...VALUE, tag: "etiqueta-orfa" }} onChange={() => {}} />,
     );
+    abrirFiltros();
     // ⚠️ `getByLabelText` continua valendo (#1274): o seletor deixou de ser um
     // `Select` (que era `role="combobox"`) e virou um botão de menu, mas o RÓTULO
     // ACESSÍVEL é o mesmo — e é por ele que se procura o controle, e por ele que
@@ -262,6 +275,7 @@ describe("InboxFilters — seletor de número e o filtro órfão", () => {
     setOrg("manager", "all");
     tagsDoContatoRef.current = ["vip"];
     render(<InboxFilters value={VALUE} onChange={() => {}} />);
+    abrirFiltros();
     expect(screen.getByLabelText("Filtrar por tag")).toBeInTheDocument();
   });
 
@@ -269,6 +283,7 @@ describe("InboxFilters — seletor de número e o filtro órfão", () => {
     setOrg("manager", "all");
     tagsRef.current = ["reclamacao"];
     render(<InboxFilters value={VALUE} onChange={() => {}} />);
+    abrirFiltros();
     expect(screen.getByLabelText("Filtrar por tag")).toBeInTheDocument();
   });
 
@@ -278,6 +293,7 @@ describe("InboxFilters — seletor de número e o filtro órfão", () => {
     setOrg("manager", "all");
     tagsRef.current = [];
     render(<InboxFilters value={VALUE} onChange={() => {}} />);
+    abrirFiltros();
     expect(screen.queryByLabelText("Filtrar por tag")).not.toBeInTheDocument();
   });
 
@@ -285,6 +301,7 @@ describe("InboxFilters — seletor de número e o filtro órfão", () => {
     setOrg("manager", "all");
     canaisRef.current = [canal(), canal({ id: "canal-2", display_name: "Suporte" })];
     render(<InboxFilters value={{ ...VALUE, channel_session_id: "canal-2" }} onChange={() => {}} />);
+    abrirFiltros();
     const seletor = screen.getByLabelText(SELETOR);
     expect(seletor).toHaveTextContent("Suporte");
     expect(seletor).not.toHaveTextContent("Número removido");
@@ -302,6 +319,7 @@ describe("InboxFilters — seletor de número e o filtro órfão", () => {
     render(
       <InboxFilters value={{ ...VALUE, channel_session_id: "canal-1" }} onChange={() => {}} />,
     );
+    abrirFiltros();
     expect(screen.queryByText("Número removido")).not.toBeInTheDocument();
   });
 });

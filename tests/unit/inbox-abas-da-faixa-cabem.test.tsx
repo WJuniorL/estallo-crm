@@ -75,25 +75,17 @@ function faixa(): HTMLElement {
 }
 
 describe("faixa da Inbox — quebra em vez de esconder aba (#2745)", () => {
-  it("a faixa tem `flex-wrap` — sem ele ela ROLA e a ponta direita fica atrás da seta", () => {
+  // 16/10/2026 — o redesenho do Inbox (modelo do dono) trocou a QUEBRA de
+  // linha por abas que DIVIDEM a largura: cada `.ibx-category` é `flex: 1;
+  // min-width: 0` em 10px (9px até 1100px), com o contador embaixo do rótulo —
+  // as cinco cabem na coluna de 300px. A faixa só rola se uma aba sozinha não
+  // couber (zoom alto). A régua mora em `components/inbox/inbox.css`.
+  it("a faixa é a do modelo — as abas dividem a largura em vez de quebrar linha", () => {
     render(<InboxFilters value={VALUE} onChange={() => {}} />);
-    // A regressão que esta catraca existe para pegar: `flex-wrap` removido
-    // devolve o corte medido — 191px de rolagem na coluna de 272px, com
-    // "Fechadas" cortada e "Arquivadas" escondida.
-    expect(
-      faixa().className.split(/\s+/),
-      "`flex-wrap` sumiu da faixa: as abas voltam a rolar para fora da coluna em 1280px (#2745)",
-    ).toContain("flex-wrap");
-  });
-
-  it("`gap-x-1` acompanha — é o que deixa 272px em 2 linhas em vez de 3", () => {
-    render(<InboxFilters value={VALUE} onChange={() => {}} />);
-    // Sem a folga de 4px, a coluna de 272px (o PADRÃO em 1280) quebra em 3
-    // linhas / 106px; com ela, 2 linhas / 68px. Medido na sonda.
-    expect(
-      faixa().className.split(/\s+/),
-      "`gap-x-1` sumiu: a faixa padrão em 1280px ganha uma terceira linha de abas (#2745)",
-    ).toContain("gap-x-1");
+    expect(faixa().className.split(/\s+/)).toContain("ibx-categories");
+    for (const aba of screen.getAllByRole("tab")) {
+      expect(aba.className.split(/\s+/)).toContain("ibx-category");
+    }
   });
 
   it("as SEIS abas estão na faixa, com os rótulos inteiros", () => {
@@ -103,7 +95,7 @@ describe("faixa da Inbox — quebra em vez de esconder aba (#2745)", () => {
     // catraca de classe continua verde com a tela errada.
     const abas = screen.getAllByRole("tab");
     expect(abas).toHaveLength(5);
-    for (const rotulo of ["Automático", "Fila", "Pendentes", "Todas", "Fechadas"]) {
+    for (const rotulo of ["Fila", "Pendentes", "Automático", "Todas", "Fechadas"]) {
       expect(
         screen.getByRole("tab", { name: new RegExp(rotulo) }),
         `a aba "${rotulo}" não está na faixa`,
@@ -120,21 +112,21 @@ describe("faixa da Inbox — quebra em vez de esconder aba (#2745)", () => {
     expect(onChange).toHaveBeenCalledWith({ ...VALUE, tab: "closed" });
   });
 
-  it("a ordem e os valores das abas não mudaram (#2498)", () => {
+  it("a ordem é a do modelo (16/10/2026) e os valores não mudaram", () => {
     render(<InboxFilters value={VALUE} onChange={() => {}} />);
     // `visibleInboxTabs` é a fonte da ORDEM do trabalho; a largura não se paga
     // reordenando nem renomeando.
     expect(visibleInboxTabs("manager", "all")).toEqual([
-      "ai",
       "unassigned",
       "pending",
+      "ai",
       "all",
       "closed",
     ]);
     expect(screen.getAllByRole("tab").map((a) => a.textContent?.replace(/\s+/g, ""))).toEqual([
-      "Automático12",
       "Fila47",
       "Pendentes8",
+      "Automático12",
       "Todas130",
       "Fechadas25",
     ]);

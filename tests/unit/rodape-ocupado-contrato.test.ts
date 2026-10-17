@@ -51,9 +51,8 @@ const PECAS = [
   // peça mais ALTA do rodapé — sem ela declarada, o fim de toda lista ficava por
   // baixo das abas, que é o mesmo defeito da #1305 numa peça nova.
   "components/shell/BarraInferior.tsx",
-  // O chat suspenso: a bolha minimizada no canto (a janela aberta flutua por
-  // cima do conteúdo e não entra na reserva — ver CHAT_SUSPENSO).
-  "components/chat-suspenso/ChatSuspenso.tsx",
+  // O chat suspenso NÃO está aqui de propósito: ele flutua por cima do
+  // conteúdo, e reservar rodapé para ele deixava uma faixa vazia no funil.
 ] as const;
 
 /** O arquivo sem comentários: o que o código diz, não o que o comentário conta. */

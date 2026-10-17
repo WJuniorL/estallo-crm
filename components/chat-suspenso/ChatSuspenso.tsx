@@ -24,8 +24,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ArrowSquareOut, ChatCircle, Minus, X } from "@/lib/ui/icons";
-import { usePecaDoRodape, type PecaDoRodape } from "@/lib/ui/rodape-ocupado";
+import { ArrowSquareOut, CaretDown, ChatCircle, Check, Minus, X } from "@/lib/ui/icons";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { channelLabel, useChannelSessions } from "@/hooks/channels/useChannelSessions";
+import { useContinuarPorOutroNumero } from "@/hooks/inbox/useContinuarPorOutroNumero";
+import { outrosNumerosDoContato } from "@/lib/inbox/outros-numeros";
 import { rotuloDoContato } from "@/lib/contacts/rotulo-do-contato";
 import { cn } from "@/lib/utils";
 import type { Message } from "@/lib/types/messaging";
@@ -37,17 +46,11 @@ const ChatThread = dynamic(() => import("@/components/inbox/ChatThread").then((m
 const Composer = dynamic(() => import("@/components/inbox/Composer").then((m) => m.Composer));
 
 /**
- * O QUE O CHAT SUSPENSO OCUPA DO RODAPÉ: a bolha minimizada (56px a 16px do
- * fundo). A janela aberta flutua por cima do conteúdo, como um diálogo — se ela
- * entrasse na reserva, abrir um chat encolheria a tela de baixo (o quadro do
- * funil pularia). Só registra enquanto há chat aberto.
+ * O chat suspenso NÃO reserva rodapé: ele flutua por cima do conteúdo, como um
+ * diálogo. A primeira versão registrava a peça no contrato do rodapé, e a
+ * reserva encolhia a tela de baixo — no funil virava uma faixa vazia na frente
+ * dos cards (relatado em 17/10/2026).
  */
-export const CHAT_SUSPENSO: PecaDoRodape = {
-  dono: "components/chat-suspenso/ChatSuspenso.tsx",
-  distancia: 16,
-  altura: 56,
-};
-
 /** Com chamada de voz no ar o canto de baixo é do painel da chamada: o chat sobe. */
 const ACIMA_DA_CHAMADA = 96;
 
@@ -104,7 +107,6 @@ function Doca({ chat }: { chat: ChatSuspensoApi }) {
   const t = useT();
   const orgId = useAuth().activeOrg?.orgId ?? null;
   const qc = useQueryClient();
-  const ancora = usePecaDoRodape(CHAT_SUSPENSO);
   const { call, minha } = useVoiceCall();
   const elevado = Boolean(minha && call && call.status !== "ended");
   const { abertos, ativo, minimizado } = chat;
@@ -153,7 +155,6 @@ function Doca({ chat }: { chat: ChatSuspensoApi }) {
 
   return (
     <aside
-      ref={ancora}
       aria-label={t("Chats suspensos")}
       style={{ bottom: elevado ? ACIMA_DA_CHAMADA : "var(--chat-suspenso-base)" }}
       className="ibx fixed right-2 z-40 flex items-end gap-2 [--chat-suspenso-base:5rem] md:right-4 md:[--chat-suspenso-base:1rem]"
@@ -229,6 +230,7 @@ function Doca({ chat }: { chat: ChatSuspensoApi }) {
             visivel={!minimizado && id === ativo}
             aoMinimizar={chat.minimizar}
             aoFechar={() => chat.fechar(id)}
+            aoTrocarDeConversa={(novo) => chat.substituir(id, novo)}
           />
         ))}
       </section>
@@ -261,11 +263,13 @@ function PainelDaConversa({
   visivel,
   aoMinimizar,
   aoFechar,
+  aoTrocarDeConversa,
 }: {
   conversationId: string;
   visivel: boolean;
   aoMinimizar: () => void;
   aoFechar: () => void;
+  aoTrocarDeConversa: (conversationId: string) => void;
 }) {
   const t = useT();
   const consulta = useConversation(conversationId, true);
@@ -288,21 +292,29 @@ function PainelDaConversa({
     >
       <header className="flex shrink-0 items-center gap-2.5 border-b border-border px-3 py-2.5">
         {conversa?.contact_id ? (
-          <Link
-            href={`/app/contacts/${conversa.contact_id}`}
-            className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg focus-visible:outline-2"
-            title={t("Abrir o cadastro do contato")}
-          >
-            <AvatarDoContato conversa={conversa} nome={nome} className="size-9" />
+          <div className="flex min-w-0 flex-1 items-center gap-2.5">
+            <Link
+              href={`/app/contacts/${conversa.contact_id}`}
+              className="shrink-0 rounded-full focus-visible:outline-2"
+              title={t("Abrir o cadastro do contato")}
+              aria-label={`${t("Abrir o cadastro do contato")}: ${nome}`}
+            >
+              <AvatarDoContato conversa={conversa} nome={nome} className="size-9" />
+            </Link>
             <span className="block min-w-0">
-              {/* `h2`: o título usa a fonte de títulos do sistema (Sora). */}
-              <h2 className="truncate text-sm font-semibold text-foreground">{nome}</h2>
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <ChannelLogo channel={conversa.channel_sessions} size={12} />
-                <span className="truncate">{conversa.channel_sessions?.display_name ?? "WhatsApp"}</span>
-              </span>
+              <Link
+                href={`/app/contacts/${conversa.contact_id}`}
+                className="block rounded focus-visible:outline-2"
+                title={t("Abrir o cadastro do contato")}
+              >
+                {/* `h2`: o título usa a fonte de títulos do sistema (Sora). */}
+                <h2 className="truncate text-sm font-semibold text-foreground hover:underline">
+                  {nome}
+                </h2>
+              </Link>
+              <SeletorDeInstancia conversa={conversa} aoTrocar={aoTrocarDeConversa} />
             </span>
-          </Link>
+          </div>
         ) : (
           <span className="min-w-0 flex-1">
             <Skeleton className="h-4 w-32" />
@@ -378,6 +390,7 @@ function PainelDaConversa({
             <Composer
               conversationId={conversationId}
               active={visivel}
+              compacto
               blockedReason={blockedReason}
               janelaFechada={motivoDaJanela}
               disabled={fechada}
@@ -391,5 +404,83 @@ function PainelDaConversa({
         </OpenConversationProvider>
       )}
     </div>
+  );
+}
+
+/**
+ * A INSTÂNCIA POR ONDE A CONVERSA ANDA — e a troca para outra.
+ *
+ * Abaixo do nome vai o nome da instância conectada (não "WhatsApp"). Trocar é
+ * o mesmo "continuar pelo outro número" do Transferir do Inbox
+ * (`useContinuarPorOutroNumero`): abre — ou reabre — a conversa do contato no
+ * outro número e a assume. A conversa nova entra no lugar da atual no chat.
+ * Instância fora do ar aparece desabilitada, dizendo por quê.
+ */
+function SeletorDeInstancia({
+  conversa,
+  aoTrocar,
+}: {
+  conversa: ConversationWithContact;
+  aoTrocar: (conversationId: string) => void;
+}) {
+  const t = useT();
+  const [aberto, setAberto] = useState(false);
+  const sessoes = useChannelSessions({ enabled: aberto });
+  const continuar = useContinuarPorOutroNumero();
+  const atual = conversa.channel_sessions;
+  const rotulo = atual?.display_name || atual?.phone_number || "WhatsApp";
+  const outras = outrosNumerosDoContato(sessoes.data, conversa.channel_session_id ?? "");
+
+  return (
+    <DropdownMenu open={aberto} onOpenChange={setAberto}>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          disabled={continuar.isPending}
+          className="flex max-w-full items-center gap-1 rounded text-xs text-muted-foreground hover:text-foreground focus-visible:outline-2 disabled:opacity-60"
+          aria-label={`${t("Instância")}: ${rotulo}. ${t("Trocar de instância")}`}
+        >
+          <ChannelLogo channel={atual} size={12} />
+          <span className="truncate">{rotulo}</span>
+          <CaretDown size={11} aria-hidden className="shrink-0" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-64">
+        <DropdownMenuLabel className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          {t("Conversa e envio")}
+        </DropdownMenuLabel>
+        <DropdownMenuItem disabled className="gap-2 opacity-100">
+          <ChannelLogo channel={atual} size={14} />
+          <span className="min-w-0 flex-1 truncate font-medium text-primary">{rotulo}</span>
+          <Check size={14} aria-label={t("Instância atual")} className="text-primary" />
+        </DropdownMenuItem>
+        {outras.map((s) => (
+          <DropdownMenuItem
+            key={s.id}
+            disabled={!s.conectado || !conversa.contact_id}
+            className="gap-2"
+            onSelect={() =>
+              conversa.contact_id &&
+              continuar.mutate(
+                { contact_id: conversa.contact_id, channel_session_id: s.id },
+                { onSuccess: aoTrocar },
+              )
+            }
+          >
+            <ChannelLogo channel={{ ...s, provider: s.provider ?? null }} size={14} />
+            <span className="min-w-0 flex-1 truncate">{channelLabel(s, t)}</span>
+            {!s.conectado && (
+              <span className="shrink-0 text-[11px] text-muted-foreground">{t("fora do ar")}</span>
+            )}
+          </DropdownMenuItem>
+        ))}
+        {sessoes.isLoading && <DropdownMenuItem disabled>{t("Carregando…")}</DropdownMenuItem>}
+        {!sessoes.isLoading && outras.length === 0 && (
+          <DropdownMenuItem disabled className="text-xs">
+            {t("Nenhuma outra instância com número")}
+          </DropdownMenuItem>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

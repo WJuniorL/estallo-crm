@@ -45,6 +45,19 @@ export function abrirChat(e: Estado, id: string): Estado {
   return { abertos, ativo: id, minimizado: false };
 }
 
+/**
+ * Trocar de instância é trocar de CONVERSA (uma por contato e número): a nova
+ * ocupa a posição da antiga e fica à vista. Se a nova já estava aberta, a
+ * antiga só sai — nunca duas entradas para a mesma conversa.
+ */
+export function substituirChat(e: Estado, antigo: string, novo: string): Estado {
+  if (antigo === novo) return { ...e, ativo: novo, minimizado: false };
+  const abertos = e.abertos.includes(novo)
+    ? e.abertos.filter((x) => x !== antigo)
+    : e.abertos.map((x) => (x === antigo ? novo : x));
+  return { abertos, ativo: novo, minimizado: false };
+}
+
 export function fecharChat(e: Estado, id: string): Estado {
   const abertos = e.abertos.filter((x) => x !== id);
   // Objeto NOVO, não `VAZIO`: fechar o último precisa ser gravado (ver o efeito).
@@ -73,6 +86,8 @@ export interface ChatSuspensoApi extends Estado {
   abrir: (conversationId: string) => void;
   fechar: (conversationId: string) => void;
   alternar: (conversationId: string) => void;
+  /** Troca de instância: a conversa do outro número entra no LUGAR da atual. */
+  substituir: (antigo: string, novo: string) => void;
   minimizar: () => void;
   restaurar: () => void;
 }
@@ -107,10 +122,14 @@ export function ProvedorDoChatSuspenso({ children }: { children: ReactNode }) {
   );
   const minimizar = useCallback(() => setEstado((e) => ({ ...e, minimizado: true })), []);
   const restaurar = useCallback(() => setEstado((e) => ({ ...e, minimizado: false })), []);
+  const substituir = useCallback(
+    (antigo: string, novo: string) => setEstado((e) => substituirChat(e, antigo, novo)),
+    [],
+  );
 
   const api = useMemo(
-    () => ({ ...estado, abrir, fechar, alternar, minimizar, restaurar }),
-    [estado, abrir, fechar, alternar, minimizar, restaurar],
+    () => ({ ...estado, abrir, fechar, alternar, minimizar, restaurar, substituir }),
+    [estado, abrir, fechar, alternar, minimizar, restaurar, substituir],
   );
   return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
 }

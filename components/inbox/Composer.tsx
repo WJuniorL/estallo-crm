@@ -119,6 +119,12 @@ interface Props {
    * `draft_id` que o consumo usa depois do clique.
    */
   rascunho?: AvisoDeRascunho | null;
+  /**
+   * A versão estreita do chat suspenso: o texto ocupa a linha de cima, inteira,
+   * e os botões (anexo, emoji, IA, enviar) ficam na de baixo — como os
+   * aplicativos de mensagem num painel pequeno. Sem a dica de atalho.
+   */
+  compacto?: boolean;
 }
 
 export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
@@ -137,6 +143,7 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
     respondendo,
     onCancelarResposta,
     rascunho = null,
+    compacto = false,
   },
   ref,
 ) {
@@ -466,7 +473,11 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
         // O composer do modelo do Inbox (16/10/2026): abas em pílula clara com
         // a dica do Enter ao lado, e + / emoji / IA / campo / enviar numa caixa
         // só. Em nota interna a CAIXA fica amarela (régua em inbox.css).
-        className={cn("ibx-composer relative", mode === "note" && "ibx-note-mode")}
+        className={cn(
+          "ibx-composer relative",
+          mode === "note" && "ibx-note-mode",
+          compacto && "ibx-composer-compacto",
+        )}
       >
         <TemplateMenu
           open={menuOpen}

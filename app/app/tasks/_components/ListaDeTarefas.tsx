@@ -60,11 +60,11 @@ function ConversarDaTarefa({ contactId }: { contactId: string }) {
         type="button"
         onClick={() => void conversar()}
         disabled={buscando || conversaNova.abrindo}
-        className="flex items-center gap-1 rounded-full bg-success-bg px-2 py-0.5 font-medium text-success-fg hover:bg-success-bg/70 disabled:opacity-60"
+        className="inline-flex size-6 items-center justify-center rounded-full bg-success-bg text-success-fg hover:bg-success-bg/70 disabled:opacity-60"
         title={t("Conversar com o contato sem sair das tarefas")}
+        aria-label={t("Conversar com o contato sem sair das tarefas")}
       >
-        <IconeWhatsapp size={12} />
-        {t("Conversar")}
+        <IconeWhatsapp size={14} />
       </button>
       {conversaNova.seletor}
     </>

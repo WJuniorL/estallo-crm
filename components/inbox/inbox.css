@@ -1394,3 +1394,22 @@
     animation: none;
   }
 }
+
+/* Composer do chat suspenso (`compacto`): texto em cima, inteiro; botões
+   embaixo, com o enviar à direita. Sem a dica de atalho. */
+.ibx-composer-compacto .ibx-compose-hint {
+  display: none;
+}
+.ibx-composer-compacto .ibx-input-box {
+  flex-wrap: wrap;
+  align-items: center;
+}
+.ibx-composer-compacto .ibx-input-box textarea {
+  order: -1;
+  flex: 1 0 100%;
+  min-height: 40px;
+  padding: 2px 4px 6px;
+}
+.ibx-composer-compacto .ibx-input-box > :last-child {
+  margin-left: auto;
+}

@@ -15629,12 +15629,16 @@ export const DICIONARIO: Traducoes = {
   "Chats suspensos": { es: "Chats flotantes" },
   "Conversar com o contato sem sair das tarefas": { es: "Conversar con el contacto sin salir de las tareas" },
   "Conversar sem sair do funil": { es: "Conversar sin salir del embudo" },
-  "Conversar": { es: "Conversar" },
   "Conversas abertas": { es: "Conversaciones abiertas" },
   "Fechar chat de": { es: "Cerrar chat de" },
   "Fechar chat": { es: "Cerrar chat" },
   "Minimizar chat": { es: "Minimizar chat" },
   "Nenhuma resposta rápida com esse nome.": { es: "Ninguna respuesta rápida con ese nombre." },
+  "Trocar de instância": { es: "Cambiar de instancia" },
+  "Conversa e envio": { es: "Conversación y envío" },
+  "Instância atual": { es: "Instancia actual" },
+  "fora do ar": { es: "fuera de línea" },
+  "Nenhuma outra instância com número": { es: "Ninguna otra instancia con número" },
 };
 
 /**

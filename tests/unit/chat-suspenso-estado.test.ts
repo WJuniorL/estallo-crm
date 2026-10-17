@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { abrirChat, fecharChat, MAXIMO_DE_CHATS } from "@/components/chat-suspenso/ChatSuspensoContext";
+import {
+  abrirChat,
+  fecharChat,
+  MAXIMO_DE_CHATS,
+  substituirChat,
+} from "@/components/chat-suspenso/ChatSuspensoContext";
 
 const vazio = { abertos: [] as string[], ativo: null as string | null, minimizado: false };
 
@@ -31,5 +36,17 @@ describe("chat suspenso — estado", () => {
     const vazioDeNovo = fecharChat(semB, "a");
     expect(vazioDeNovo.abertos).toEqual([]);
     expect(vazioDeNovo.ativo).toBeNull();
+  });
+});
+
+describe("chat suspenso — troca de instância", () => {
+  it("a conversa do outro número entra no LUGAR da atual e fica à vista", () => {
+    const e = { abertos: ["a", "b", "c"], ativo: "b", minimizado: true };
+    expect(substituirChat(e, "b", "b2")).toEqual({ abertos: ["a", "b2", "c"], ativo: "b2", minimizado: false });
+  });
+
+  it("se a conversa nova já estava aberta, a antiga só sai — sem duplicar", () => {
+    const e = { abertos: ["a", "b", "c"], ativo: "b", minimizado: false };
+    expect(substituirChat(e, "b", "c")).toEqual({ abertos: ["a", "c"], ativo: "c", minimizado: false });
   });
 });

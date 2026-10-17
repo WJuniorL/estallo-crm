@@ -2,7 +2,9 @@
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChipDeEtiqueta } from "@/components/tags/ChipDeEtiqueta";
-import { CalendarBlank, WhatsappLogo } from "@/lib/ui/icons";
+import { CalendarBlank } from "@/lib/ui/icons";
+import { IconeWhatsapp } from "@/components/chat-suspenso/IconeWhatsapp";
+import { useChatSuspenso } from "@/components/chat-suspenso/ChatSuspensoContext";
 import { Draggable } from "@hello-pangea/dnd";
 import { memo, useMemo, type MouseEvent } from "react";
 import { useT } from "@/hooks/i18n/useT";
@@ -80,6 +82,7 @@ export const KanbanCard = memo(function KanbanCard({
   onOpen,
 }: KanbanCardProps) {
   const t = useT();
+  const chatSuspenso = useChatSuspenso();
   // MEMO: num funil de mil cards, qualquer estado do quadro (abrir o dossiê,
   // um pulso, marcar um card) re-renderizava TODOS. O card só refaz quando o
   // próprio lead (o cache do quadro preserva a referência do que não mudou) ou
@@ -326,17 +329,33 @@ export const KanbanCard = memo(function KanbanCard({
                   : `${t("em")} ${card.stageName}`}
               </span>
             </span>
-            {lead.conversa?.channel === "whatsapp" && (
-              <Link
-                href={`/app/inbox?id=${lead.conversa.id}`}
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-success-bg text-success-fg hover:bg-success-bg/70"
-                aria-label={t("Abrir WhatsApp")}
-                title={t("Abrir esta conversa no Inbox")}
-              >
-                <WhatsappLogo size={22} aria-hidden />
-              </Link>
-            )}
+            {lead.conversa?.channel === "whatsapp" &&
+              (chatSuspenso ? (
+                // Abre a conversa no CHAT SUSPENSO, sem sair do funil. Fora da
+                // casca (teste de componente, tela pública) cai no link de antes.
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    chatSuspenso.abrir(lead.conversa!.id);
+                  }}
+                  className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-success-bg text-success-fg hover:bg-success-bg/70"
+                  aria-label={t("Abrir WhatsApp")}
+                  title={t("Conversar sem sair do funil")}
+                >
+                  <IconeWhatsapp size={22} />
+                </button>
+              ) : (
+                <Link
+                  href={`/app/inbox?id=${lead.conversa.id}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-success-bg text-success-fg hover:bg-success-bg/70"
+                  aria-label={t("Abrir WhatsApp")}
+                  title={t("Abrir esta conversa no Inbox")}
+                >
+                  <IconeWhatsapp size={22} />
+                </Link>
+              ))}
           </div>
         </div>
       )}

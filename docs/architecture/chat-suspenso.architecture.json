@@ -2,9 +2,9 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Mensagens rápidas em qualquer tela",
-    "subtitle": "Uma superfície do Inbox existente",
-    "output": "mensagens-rapidas.html",
+    "title": "Chat suspenso",
+    "subtitle": "O Inbox em uma janela compacta, a partir do funil e das tarefas",
+    "output": "chat-suspenso.html",
     "quality_profile": "standard"
   },
   "lanes": [
@@ -18,25 +18,25 @@
     }
   ],
   "mainPath": [
-    "shell",
+    "origem",
     "dock",
     "composer",
     "api"
   ],
   "nodes": [
     {
-      "id": "shell",
+      "id": "origem",
       "lane": "ui",
       "col": 1,
       "type": "frontend",
-      "label": "AppShell"
+      "label": "Card do funil + Tarefas"
     },
     {
       "id": "dock",
       "lane": "ui",
       "col": 2,
       "type": "frontend",
-      "label": "FloatingInbox"
+      "label": "ChatSuspenso (AppShell)"
     },
     {
       "id": "composer",
@@ -57,7 +57,7 @@
       "lane": "data",
       "col": 2,
       "type": "service",
-      "label": "Hooks existentes + realtime"
+      "label": "Realtime de conversas e mensagens"
     },
     {
       "id": "full",
@@ -70,21 +70,21 @@
   "edges": [
     {
       "id": "0",
-      "from": "shell",
+      "from": "origem",
       "to": "dock",
-      "label": "botão global"
+      "label": "abrir(conversa)"
     },
     {
       "id": "1",
       "from": "realtime",
       "to": "dock",
-      "label": "contagem e conversas"
+      "label": "não lidas e status"
     },
     {
       "id": "2",
       "from": "dock",
       "to": "composer",
-      "label": "seleção"
+      "label": "conversa ativa"
     },
     {
       "id": "3",
@@ -102,7 +102,7 @@
       "id": "5",
       "from": "dock",
       "to": "full",
-      "label": "ampliar conversa"
+      "label": "abrir no Inbox"
     }
   ]
 }

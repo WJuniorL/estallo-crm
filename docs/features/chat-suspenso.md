@@ -1,39 +1,52 @@
-# Mensagens rápidas
+# Chat suspenso
 
-O botão **Mensagens** no canto inferior direito acompanha a navegação autenticada.
-Abra a lista, busque um contato e selecione uma conversa para ler e responder sem
-sair da tela. O ícone de ampliar abre a mesma conversa no Inbox completo; o lápis
-leva aos Contatos para iniciar um atendimento pelo fluxo existente.
+Conversar com o contato sem sair da tela atual. O ícone do WhatsApp no card do
+funil e o botão **Conversar** numa tarefa com oportunidade abrem a conversa numa
+janela compacta no canto inferior direito, com o **mesmo** fio e o **mesmo**
+composer do Inbox: texto, áudio, anexos, emoji e respostas rápidas (`/`).
 
-Minimizar mantém a conversa, anexos e texto em edição. Voltar à lista mantém um
-rascunho de texto por conversa durante esta navegação. Recarregar a página ou trocar
-de organização limpa esses rascunhos locais. Não há persistência adicional de
-conteúdo no navegador. O contador mostra conversas não lidas em todo o escopo de
-acesso, inclusive fora da primeira página de resultados.
+- Vários contatos podem ficar abertos (até 6). Só um fica expandido; os outros
+  aparecem como avatares empilhados à esquerda da janela, com o número de não
+  lidas. Clicar num avatar alterna; passar o mouse mostra o nome e o **x** de
+  fechar.
+- **Minimizar** recolhe tudo numa bolha com o total de não lidas das conversas
+  abertas. Clicar na bolha restaura.
+- **Fechar** tira a conversa do canto. Não encerra nem altera o atendimento.
+- O cabeçalho leva ao cadastro do contato (`/app/contacts/[id]`) e ao Inbox
+  completo (`/app/inbox?id=`).
+- Alternar, minimizar e navegar entre módulos preservam o texto não enviado e a
+  posição de leitura: as conversas abertas ficam montadas, só uma visível. A
+  lista de abertas vai para o `sessionStorage` da aba e volta depois de um F5.
+- No próprio Inbox o chat suspenso some (a tela já é o chat) e volta ao sair.
 
 ## Limites e recuperação
 
-- As APIs, RLS, envio, anexos, notas e histórico são os mesmos do Inbox.
-- Suporte somente leitura, contato bloqueado/anonimizado e conversa encerrada
-  continuam impedindo envio. Janela fechada orienta a abrir o Inbox completo.
-- Conversa minimizada não é marcada como lida. As duas conversas visíveis (Inbox
-  e painel) são reconhecidas pelo controle de notificações.
-- Falhas de leitura mostram **Tentar novamente**; falhas de envio usam o tratamento
-  e a restauração de texto do Composer existente.
-- Uma chamada ativa desloca o botão para cima para preservar os controles da chamada.
+- As APIs, a RLS, o envio, os anexos e o histórico são os do Inbox. Não há
+  endpoint novo de mensagens.
+- Suporte somente leitura, contato bloqueado/anonimizado, conversa encerrada e
+  janela de 24h fechada impedem o envio pela mesma regra do Inbox
+  (`hooks/inbox/useEstadoDoEnvio.ts`).
+- Conversa minimizada ou atrás de outra não é marcada como lida. A visível é
+  publicada no `OpenConversationProvider`, então não gera aviso duplicado.
+- Tarefa cujo contato não tem conversa abre o fluxo de conversa nova (com
+  escolha de canal quando há mais de um), e o resultado vai para o chat suspenso.
+- Com chamada de voz ativa, o chat sobe para não cobrir os controles da chamada.
 
 ## Living System Checklist
 
-1. Entrada: `useConversationsRealtime`, `useConversationCounts` e `useConversation`.
-2. Saída: `ChatThread`, `Composer` e link `/app/inbox/[id]`.
-3. Registro: envio/nota passam por `useSendMessage`/`useCreateNote` e APIs existentes.
-4. Visibilidade: histórico compartilhado no painel e no Inbox.
-5. Porta: `AppShell` monta `FloatingInbox` em todas as telas autenticadas.
-6. Anti-morte: contador global, atualização realtime e retry explícito; nenhuma
-   nova campanha ou resposta automática é criada por abrir o painel.
-7. Configuração: permissões e canais existentes; sem nova credencial ou env.
-8. Continuidade: o mesmo atendimento IA/humano e histórico; controles completos de
-   responsabilidade e retorno à IA permanecem disponíveis pelo botão de ampliar.
-9. Retorno: erros de envio chegam ao Composer; operador corrige/reenvia ou amplia
-   para resolver bloqueios. Abrir/minimizar não toma decisões automáticas.
-10. Mapa: `docs/architecture/mensagens-rapidas.architecture.json`.
+1. Entrada: `useChatSuspenso().abrir(id)` — `KanbanCard` e `ListaDeTarefas`.
+2. Saída: `ChatThread` e `Composer` do Inbox; link para o Inbox completo.
+3. Registro: envio passa por `useSendMessage` e pelas APIs existentes (auditoria
+   inclusa).
+4. Visibilidade: o mesmo histórico no chat suspenso e no Inbox (mesmas chaves do
+   react-query: `["messages", id]`, `["conversation", id]`).
+5. Porta: `AppShell` monta `ProvedorDoChatSuspenso` e `ChatSuspenso`.
+6. Anti-morte: canal `conversations` da org enquanto há chat aberto, mais o
+   canal de mensagens de cada fio e `alinharFioComAPrevia` (o fio é relido
+   quando a conversa anuncia mensagem mais nova que a última do fio).
+7. Configuração: nenhuma; permissões e canais existentes.
+8. Continuidade: o mesmo atendimento IA/humano; os controles completos ficam no
+   Inbox, a um clique.
+9. Retorno: erro de envio aparece no Composer; conversa inacessível mostra
+   **Tentar novamente**.
+10. Mapa: `docs/architecture/chat-suspenso.architecture.json`.

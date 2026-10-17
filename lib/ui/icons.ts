@@ -164,4 +164,6 @@ export {
   User,
   TextT,
   FloppyDisk,
+  // Chat suspenso: minimizar a janela
+  Minus,
 } from "@phosphor-icons/react/dist/ssr";

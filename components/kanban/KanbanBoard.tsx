@@ -42,6 +42,7 @@ interface KanbanBoardProps {
    */
   pulses?: Map<string, number>;
   onSelectionChange?: (ids: string[]) => void;
+  onAddLead?: (stageId: string) => void;
   /** Lead a abrir já na montagem (deep link `?lead=` — ver o dossiê abaixo). */
   leadInicial?: string | null;
   /**
@@ -93,6 +94,7 @@ export function KanbanBoard({
   selectedIds,
   pulses: pulsesProp,
   onSelectionChange,
+  onAddLead,
   leadInicial,
   podeRenomearEtapa = false,
 }: KanbanBoardProps) {
@@ -337,6 +339,7 @@ export function KanbanBoard({
             selectedLeadIds={selectedLeadIds}
             onSelectMany={handleSelectMany}
             onOpen={setDossieId}
+            onAddLead={onAddLead}
             podeRenomear={podeRenomearEtapa}
             onRenomear={renomearPorEtapa.get(stage.id)}
           />

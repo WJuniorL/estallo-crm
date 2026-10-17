@@ -173,3 +173,13 @@ describe("Novo Lead — responsável e produtos", () => {
     expect(criarLead.mock.calls[0]?.[0]).not.toHaveProperty("owner_user_id");
   });
 });
+
+it("adicionar pela etapa respeita a etapa pré-selecionada na criação", async () => {
+  const user = userEvent.setup();
+  const etapa = { ...ETAPAS[0]!, id: "11111111-1111-4111-8111-111111111112", name: "Proposta" };
+  render(<NewLeadDialog open onOpenChange={() => {}} pipelineId="33333333-3333-4333-8333-333333333333" stages={[...ETAPAS, etapa]} initialStageId={etapa.id} contactId={CONTATO} />);
+  await user.type(screen.getByLabelText("Título"), "Lead na etapa escolhida");
+  await user.click(screen.getByRole("button", { name: "Criar lead" }));
+  await waitFor(() => expect(criarLead).toHaveBeenCalledTimes(1));
+  expect(criarLead.mock.calls[0]?.[0]).toMatchObject({ stage_id: etapa.id });
+});

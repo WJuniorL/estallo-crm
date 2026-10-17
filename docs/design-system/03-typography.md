@@ -15,3 +15,5 @@ Usar Sora para títulos e Manrope para atendimento; mono onde favorece precisão
 A escala de apresentação do Brand System orienta capas e chamadas. No CRM, ajustar tamanho ao contexto e à largura: listas e configurações não usam automaticamente títulos de marketing. Não reduzir texto de controle para fazer o layout caber.
 
 Pares experimentais de `app/design/lib/fonts.ts` não são alternativas oficiais. O SaaS não oferece seletor de família por empresa.
+
+Escala de operação (16/10/2026): corpo e controles `text-sm` em 15px, informação secundária `text-xs` em 13px, metadados legados com piso de 12px. Não usar texto de 8–11px para navegação ou informação de atendimento. Ícones dos botões compartilhados em 18px. Ajustar quebra e truncamento em vez de comprimir o texto.

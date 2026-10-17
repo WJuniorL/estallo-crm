@@ -35,7 +35,7 @@ const buttonVariants = cva(
     "duration-fast ease-out",
     "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
     "disabled:pointer-events-none disabled:opacity-50",
-    "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+    "[&_svg]:pointer-events-none [&_svg]:size-4.5 [&_svg]:shrink-0",
     "active:translate-y-px",
   ].join(" "),
   {

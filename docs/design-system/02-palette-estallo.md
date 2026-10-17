@@ -29,3 +29,5 @@ Combinar cor com rótulo, ícone ou forma para indicar estados. Verde comunica r
 ## Gradientes e composição
 
 O Brand System permite gradiente Blue → Green a 135°, orbs de luz e grafismos de fluxo em composição de marca. São opcionais para apresentação, acesso e marketing; preservar leitura e foco nas telas operacionais. A antiga proibição absoluta de gradientes não se aplica.
+
+No tema escuro, fundos de ações azuis e balões enviados usam `#085A7F` (`accent-700`), com texto branco. O azul claro `#54BCE8` permanece na rampa para detalhes gráficos, sem servir de fundo para texto branco. Links e ícones azuis sobre superfícies escuras usam `--color-accent-text`, separado do fundo das ações.

@@ -231,17 +231,11 @@ describe("menu do card — Excluir", () => {
     expect(await screen.findByRole("menuitem", { name: "Mover de funil" })).toBeTruthy();
   });
 
-  it("o botão do menu não depende de hover: no toque ele fica visível", () => {
+  it("o botão do menu fica visível em mouse, toque e teclado", () => {
     renderMenu();
     const botao = screen.getByRole("button", { name: "Ações do lead" });
-    // Mesmo padrão de `components/inbox/MessageBubble.tsx`: visível por padrão,
-    // escondido até o hover só onde existe hover.
-    expect(botao.className).toContain("[@media(hover:hover)]:opacity-0");
-    expect(botao.className).toContain("[@media(hover:hover)]:group-hover:opacity-100");
-    expect(botao.className.split(/\s+/)).not.toContain("opacity-0");
-    // No desktop quem navega por teclado tabula até aqui: sem isto o foco
-    // pousa num botão invisível, que só aparece depois que o menu abre.
-    expect(botao.className).toContain("focus-visible:opacity-100");
+    expect(botao.className.split(/\s+/)).toContain("opacity-100");
+    expect(botao.className).not.toMatch(/(?:^|:)opacity-0(?:\s|$)/);
   });
 
   it("o menu (e suas consultas) só monta no primeiro clique — e já abre", async () => {

@@ -27,3 +27,7 @@ Inbox, conversa, composer, card de lead e painel do contato adotam a mesma ident
 ## Validação
 
 Provar teclado, desktop/mobile, claro/escuro, conteúdo longo, estados vazios e falhas. Utilizar tokens semânticos; não copiar `.ds-*` do laboratório sem conferir a implementação real. A revisão interna dos módulos continua progressiva.
+
+O Inbox organiza a lista em **Todas | Sem resposta | Em espera | Em aberto | Fechadas**. Sem resposta preserva a regra de Pendentes (entrada existente e nenhuma saída); Em espera exige uma saída anterior e entrada mais recente; Em aberto tem saída sem entrada posterior. Grupos não recebem categoria de resposta. Fechadas inclui o legado arquivado. Não há categoria nem posição de fila na lista. Os contadores e a listagem consultam o banco antes da paginação; o ciclo de vida e o roteamento continuam separados dessa apresentação.
+
+A lista arrastável tem piso de 380px no desktop; os gatilhos das categorias preservam a largura do rótulo com espaçamento próprio e rolagem quando necessário, inclusive em telas pequenas e zoom alto. O botão de informação junto a Inbox abre a ajuda dos cinco status. Canais usa o nome das instâncias e Ordem altera a data da última mensagem, com desempate por ID e conversas fixadas no topo.

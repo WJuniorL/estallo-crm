@@ -1,4 +1,8 @@
 "use client";
+import Link from "next/link";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ChipDeEtiqueta } from "@/components/tags/ChipDeEtiqueta";
+import { CalendarBlank, WhatsappLogo } from "@/lib/ui/icons";
 import { Draggable } from "@hello-pangea/dnd";
 import { memo, useMemo, type MouseEvent } from "react";
 import { useT } from "@/hooks/i18n/useT";
@@ -59,17 +63,7 @@ function formatValor(cents: number | null, currency: string | null): string | nu
   return formatValorDoNegocio(cents, currency ?? MOEDA_PADRAO, { semCentavos: true });
 }
 
-/**
- * O card do Kanban — orçamento FIXO: 5 elementos, 3 faixas, altura constante.
- *
- * As alturas são reservadas em vez de derivadas do conteúdo: título sempre
- * ocupa 2 linhas, valor sempre ocupa a sua linha (com "—" quando não há valor),
- * e a faixa do agente existe mesmo vazia. É isso que faz o board continuar
- * legível quando score, próxima ação e alerta chegarem — o card não cresce com
- * dados, ele TROCA de estado.
- *
- * Cor só aparece na borda esquerda, e só quando o estado pede (Lei C).
- */
+/** Card do funil: identidade, etiquetas, valor, conversa e responsável sempre à vista. */
 export const KanbanCard = memo(function KanbanCard({
   lead,
   stageName,
@@ -146,11 +140,11 @@ export const KanbanCard = memo(function KanbanCard({
           role="group"
           aria-label={`${t("Lead")}: ${card.title}`}
           onClick={handleClick}
-          // Tags saem do card (Lei A): ficam a um hover, sem ocupar altura.
+          // O título nativo também permite ler etiquetas truncadas.
           title={card.tags.length > 0 ? `Tags: ${card.tags.join(", ")}` : undefined}
           className={cn(
-            "group relative overflow-hidden rounded-md border border-border bg-surface",
-            "py-2.5 pr-3 pl-3 shadow-xs transition-colors",
+            "group relative overflow-hidden rounded-2xl border border-border/70 bg-surface",
+            "p-3.5 shadow-md transition-[border-color,box-shadow]",
             "hover:border-border-strong",
             snapshot.isDragging && "rotate-1 shadow-md ring-1 ring-accent/40",
             isSelected && "ring-2 ring-accent",
@@ -170,7 +164,7 @@ export const KanbanCard = memo(function KanbanCard({
               className="card-pulse pointer-events-none absolute inset-0"
             />
           )}
-          {/* Borda de estado — 2px, a única cor do card. */}
+          {/* A borda sinaliza uma ação pendente, além das etiquetas do lead. */}
           <span
             aria-hidden
             className={cn(
@@ -181,16 +175,20 @@ export const KanbanCard = memo(function KanbanCard({
             )}
           />
 
-          {/* ① identidade — altura FIXA de 2 linhas, com ou sem texto longo. */}
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex min-w-0 flex-1 items-start gap-1.5">
-              {/* A largura é SEMPRE reservada (`h-4 w-4` num wrapper que não
-                  some), só a tinta é condicional: o card tem orçamento fixo de
-                  altura e largura, e uma caixa que aparece no hover EMPURRANDO
-                  o título faria o quadro inteiro tremer com o mouse. Some por
-                  opacidade, nunca por `hidden`. `focus:opacity-100` no próprio
-                  input: uma caixa invisível e tabulável seria armadilha de
-                  teclado. */}
+          <div className="flex items-start gap-3">
+            <div className="relative shrink-0">
+              <Avatar className="size-11">
+                {lead.contact_has_avatar && lead.contact_id && (
+                  <AvatarImage
+                    src={`/api/v1/contacts/${lead.contact_id}/avatar`}
+                    alt=""
+                    className="object-cover"
+                  />
+                )}
+                <AvatarFallback className="bg-accent-soft text-lg font-semibold text-accent">
+                  {(lead.contact_name || card.title).trim().slice(0, 1).toUpperCase() || "?"}
+                </AvatarFallback>
+              </Avatar>
               <input
                 type="checkbox"
                 checked={Boolean(isSelected)}
@@ -205,36 +203,17 @@ export const KanbanCard = memo(function KanbanCard({
                   /* estado vem de `isSelected`; quem decide é o onClick acima */
                 }}
                 className={cn(
-                  "mt-1 h-4 w-4 shrink-0 cursor-pointer accent-accent transition-opacity",
+                  "absolute -top-1 -left-1 z-10 h-4 w-4 shrink-0 cursor-pointer accent-accent transition-opacity",
                   "focus:opacity-100 focus-visible:outline-2 focus-visible:outline-accent",
                   isSelected || isSelecting ? "opacity-100" : "opacity-0 group-hover:opacity-100",
                 )}
               />
-              {card.canonicalTag && (
-                <span
-                  className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
-                  title={card.canonicalTag}
-                  // role="img": um span nu não aceita aria-label (aria-prohibited-attr).
-                  role="img"
-                  aria-label={`${t("Tag")}: ${card.canonicalTag}`}
-                />
-              )}
-              {/* O TÍTULO é o elemento ativável, não o card inteiro.
-                  `role="group"` no card foi decisão da wave 2 (o dnd marca o
-                  handle como button, e com o menu de ações dentro isso vira
-                  nested-interactive no axe). Voltar o card para `button`
-                  reintroduziria aquele defeito com cara de melhoria de
-                  acessibilidade; deixar só onKeyDown daria uma ação que existe
-                  e NÃO É DESCOBERTA por leitor de tela. O título como button
-                  atende mouse, teclado e leitor sem desfazer a decisão antiga. */}
-              <h3 className="line-clamp-2 h-10 text-sm leading-5 font-medium text-text">
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="line-clamp-2 text-sm leading-5 font-bold text-text">
                 <button
                   type="button"
                   onClick={(e) => {
-                    // `stopPropagation` continua: sem ele o handler do card
-                    // rodaria de novo e o gesto seria contado duas vezes (um
-                    // ctrl+clique marcaria e desmarcaria no mesmo instante).
-                    // Por isso a DECISÃO tem de ser tomada aqui também.
                     e.stopPropagation();
                     decidirClique(e);
                   }}
@@ -243,14 +222,26 @@ export const KanbanCard = memo(function KanbanCard({
                   {card.title}
                 </button>
               </h3>
+              {card.tags.length > 0 && (
+                <div className="mt-1.5 flex flex-wrap gap-1.5" aria-label={t("Tags do lead")}>
+                  {card.tags.map((tag) => (
+                    <ChipDeEtiqueta
+                      key={tag}
+                      tag={tag}
+                      entidade="lead"
+                      className="max-w-full truncate rounded-full px-2.5 py-1 text-xs"
+                    />
+                  ))}
+                </div>
+              )}
             </div>
             <KanbanCardActions lead={lead} pipelineId={pipelineId} />
           </div>
 
-          {/* ② valor — altura reservada mesmo sem valor, senão o card encolhe. */}
+          {/* Valor em destaque; ausência de valor continua explícita. */}
           <p
             className={cn(
-              "mt-1 h-5 text-xs leading-5 font-medium tabular-nums",
+              "mt-3 text-base leading-6 font-bold tabular-nums",
               value ? "text-text" : "text-text-muted",
             )}
           >
@@ -258,7 +249,12 @@ export const KanbanCard = memo(function KanbanCard({
           </p>
 
           {/* ③ a linha do agente — um slot, três estados, nunca três blocos. */}
-          <div className="mt-1.5 flex h-6 items-center gap-2 text-xs">
+          <div
+            className={cn(
+              "mt-2 flex min-h-6 items-center gap-2 text-xs",
+              state.slot.type === "idle" && "hidden",
+            )}
+          >
             {state.slot.type === "awaiting" && (
               // A proposta do agente é a ÚNICA linha do card com ação: é o
               // ponto onde a decisão do humano entra. Sem os botões aqui, o
@@ -310,7 +306,7 @@ export const KanbanCard = memo(function KanbanCard({
           <ContatoNoCard lead={lead} />
 
           {/* ④ dono (+ selo de tarefas) · ⑤ tempo no estágio */}
-          <div className="mt-1 flex h-6 items-center justify-between gap-2">
+          <div className="mt-2.5 flex min-h-9 items-center justify-between gap-2 border-t border-border/60 pt-2.5">
             <div className="flex min-w-0 items-center gap-2">
               <OwnerBadge
                 ownerKind={card.owner.kind}
@@ -319,11 +315,28 @@ export const KanbanCard = memo(function KanbanCard({
               />
               <TarefasNoCard tarefas={lead.tarefas} />
             </div>
-            <span className="shrink-0 text-[11px] whitespace-nowrap text-text-muted tabular-nums">
-              {state.showStageAge && age
-                ? `${age} ${t("em")} ${card.stageName}`
-                : `${t("em")} ${card.stageName}`}
+            <span
+              className="ml-auto inline-flex min-w-0 items-center gap-1.5 rounded-full bg-surface-elevated px-2 py-1.5 text-xs text-text-muted"
+              title={`${age ?? ""} ${t("em")} ${card.stageName}`}
+            >
+              <CalendarBlank size={15} className="shrink-0" aria-hidden />
+              <span className="truncate">
+                {state.showStageAge && age
+                  ? `${age} ${t("em")} ${card.stageName}`
+                  : `${t("em")} ${card.stageName}`}
+              </span>
             </span>
+            {lead.conversa?.channel === "whatsapp" && (
+              <Link
+                href={`/app/inbox?id=${lead.conversa.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-success-bg text-success-fg hover:bg-success-bg/70"
+                aria-label={t("Abrir WhatsApp")}
+                title={t("Abrir esta conversa no Inbox")}
+              >
+                <WhatsappLogo size={22} aria-hidden />
+              </Link>
+            )}
           </div>
         </div>
       )}

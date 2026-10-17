@@ -63,7 +63,7 @@ vi.mock("@/hooks/inbox/useConversationCounts", () => ({
   }),
 }));
 
-const VALUE: InboxFiltersValue = { tab: "ai", search: "", onlyUnread: false };
+const VALUE: InboxFiltersValue = { tab: "all", search: "", onlyUnread: false };
 
 /**
  * As larguras da coluna da lista: `LIMITES_LISTA` (240–520) e o padrão da

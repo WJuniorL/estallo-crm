@@ -53,10 +53,10 @@ vi.mock("@/hooks/contacts/useContactTagVocabulary", () => ({
   useContactTagVocabulary: () => ({ data: vocabularioUnico() }),
 }));
 vi.mock("@/hooks/inbox/useConversationCounts", () => ({
-  useConversationCounts: () => ({ data: { unassigned: 3, mine: 2, pendentes: 4, all: 5 } }),
+  useConversationCounts: () => ({ data: { em_espera: 3, mine: 2, pendentes: 4, all: 5 } }),
 }));
 
-const VALUE: InboxFiltersValue = { tab: "unassigned", search: "", onlyUnread: false };
+const VALUE: InboxFiltersValue = { tab: "all", search: "", onlyUnread: false };
 
 function setOrg(role: ActiveOrg["role"], visibility_mode: ActiveOrg["visibility_mode"]) {
   activeOrgRef.current = { orgId: "org-1", name: "Org", role, visibility_mode };
@@ -79,7 +79,7 @@ function canal(over: Partial<ChannelSession> = {}): ChannelSession {
   };
 }
 
-const SELETOR = "Filtrar por número de WhatsApp";
+const SELETOR = "Filtrar por canal";
 
 /** Desde o redesenho (16/10/2026) número, tags e Minhas moram no popover "Filtrar conversas". */
 function abrirFiltros() {
@@ -115,9 +115,9 @@ describe("visibleInboxTabs (lógica pura de visões)", () => {
   it("admin sempre vê 'all'", () => {
     expect(visibleInboxTabs("admin", "own")).toContain("all");
   });
-  it("as visões nomeadas existem (Fila/Pendentes/Todas) e 'mine' não é mais aba", () => {
+  it("as visões nomeadas existem (Fila/Sem resposta/Todas) e 'mine' não é mais aba", () => {
     const tabs = visibleInboxTabs("manager", "own_and_unassigned");
-    expect(tabs).toEqual(expect.arrayContaining(["pending", "unassigned", "all"]));
+    expect(tabs).toEqual(expect.arrayContaining(["all", "pending", "waiting", "open", "closed"]));
     expect(tabs).not.toContain("mine");
   });
 });
@@ -141,12 +141,12 @@ describe("InboxFilters render — 3 visões + escopo", () => {
       Object.defineProperty(list, "clientWidth", { configurable: true, get: () => width });
       Object.defineProperty(list, "scrollWidth", { configurable: true, value: 520 });
       vi.spyOn(list, "getBoundingClientRect").mockReturnValue({ left: 0 } as DOMRect);
-      const all = screen.getByRole("tab", { name: /Todas/ });
+      const all = screen.getByRole("tab", { name: /Em aberto/ });
       Object.defineProperty(all, "offsetWidth", { configurable: true, value: 40 });
       vi.spyOn(all, "getBoundingClientRect").mockImplementation(
         () => ({ left: 210 - list.scrollLeft }) as DOMRect,
       );
-      rerender(<InboxFilters value={{ ...VALUE, tab: "all" }} onChange={onChange} />);
+      rerender(<InboxFilters value={{ ...VALUE, tab: "open" }} onChange={onChange} />);
       expect(list.scrollLeft).toBe(140);
       expect(screen.getByRole("button", { name: "Aba anterior" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Próxima aba" })).toBeInTheDocument();
@@ -177,8 +177,8 @@ describe("InboxFilters render — 3 visões + escopo", () => {
     setOrg("agent", "own_and_unassigned");
     const onChange = vi.fn();
     render(<InboxFilters value={VALUE} onChange={onChange} />);
-    expect(screen.getByRole("tab", { name: /Pendentes/ })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Fila/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Sem resposta/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Em espera/ })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Todas/ })).toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: /Minhas/ })).not.toBeInTheDocument();
     abrirFiltros();
@@ -200,19 +200,19 @@ describe("InboxFilters render — 3 visões + escopo", () => {
   it("contagens por visão são renderizadas (Fila=3, Pendentes=4)", () => {
     setOrg("manager", "all");
     render(<InboxFilters value={VALUE} onChange={() => {}} />);
-    expect(screen.getByRole("tab", { name: /Fila/ })).toHaveTextContent("3");
-    expect(screen.getByRole("tab", { name: /Pendentes/ })).toHaveTextContent("4");
+    expect(screen.getByRole("tab", { name: /Em espera/ })).toHaveTextContent("3");
+    expect(screen.getByRole("tab", { name: /Sem resposta/ })).toHaveTextContent("4");
     expect(screen.getByRole("tab", { name: /Todas/ })).toHaveTextContent("5");
   });
 });
 
 describe("InboxFilters — seletor de número e o filtro órfão", () => {
-  it("um número só: não há o que alternar, o seletor não aparece", () => {
+  it("um canal só: o seletor continua disponível", () => {
     setOrg("manager", "all");
     canaisRef.current = [canal()];
     render(<InboxFilters value={VALUE} onChange={() => {}} />);
     abrirFiltros();
-    expect(screen.queryByLabelText(SELETOR)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(SELETOR)).toBeInTheDocument();
   });
 
   it("dois números: o seletor aparece com os dois", () => {

@@ -13,7 +13,6 @@ import { ChipDeEtiqueta } from "@/components/tags/ChipDeEtiqueta";
 import { AcoesDaConversa } from "@/components/inbox/AcoesDaConversa";
 import {
   comandoDaConversa,
-  esperaDaConversa,
   ROTULO_DO_COMANDO,
   STATUS_ENCERRADOS,
 } from "@/lib/inbox/comando-da-conversa";
@@ -27,8 +26,6 @@ interface Props {
   conversation: ConversationWithContact;
   isSelected: boolean;
   onSelect: (id: string) => void;
-  /** Posição 1-based na fila (G5-03). Presente só na visão Fila. */
-  queuePosition?: number;
   /**
    * Mostrar POR ONDE a conversa entrou.
    *
@@ -90,34 +87,6 @@ function relativeTime(iso: string | null, locale: Locale): string {
 }
 
 /**
- * "Aguardando há 5 min" — desde quando o cliente ESPERA.
- *
- * A régua é `esperaDaConversa`, a mesma `awaiting_since` que ordena a Fila
- * (#990): `last_inbound_at` é a ÚLTIMA mensagem do cliente, então a pílula de
- * quem insistia voltava para "há 1 min" a cada mensagem dele — o tempo na linha
- * contradizia a posição do lado e a ordem da lista. O fallback segue sendo a
- * criação, para a conversa que nunca recebeu mensagem.
- */
-function waitingLabel(
-  conversation: ConversationWithContact,
-  t: (texto: string) => string = (texto) => texto, locale: Locale,
-): string {
-  const since = esperaDaConversa(conversation);
-  if (!since) return t("Aguardando");
-  return `${t("Aguardando")} ${formatDistanceToNowStrict(new Date(since), { addSuffix: true, locale: locale })}`;
-}
-
-/** "21h", "35 min", "3d" — a espera curta do modelo ("Espera de 21h"). */
-function esperaCurta(desde: string | null | undefined): string {
-  if (!desde) return "—";
-  const minutos = Math.max(0, Math.floor((Date.now() - new Date(desde).getTime()) / 60_000));
-  if (minutos < 60) return `${minutos} min`;
-  const horas = Math.floor(minutos / 60);
-  if (horas < 24) return `${horas}h`;
-  return `${Math.floor(horas / 24)}d`;
-}
-
-/**
  * O tom pastel do avatar, fixo por pessoa (o modelo tem seis). A cor é
  * decoração: sai do nome, então a mesma pessoa tem o mesmo tom em toda tela.
  */
@@ -139,7 +108,6 @@ export function ConversationListItem({
   conversation,
   isSelected,
   onSelect,
-  queuePosition,
   mostrarCanal,
   mostrarAutomatico = true,
   automaticoDaOrg,
@@ -154,31 +122,9 @@ export function ConversationListItem({
   const visibleTags = tags.slice(0, 2);
   const overflow = tags.length - visibleTags.length;
   const preview = conversation.last_message_preview?.trim() || t("Sem mensagens");
-  const naFila = queuePosition !== undefined;
-  /**
-   * A HORA DO CANTO RESPONDE À MESMA PERGUNTA QUE ORDENA A LISTA.
-   *
-   * Na Fila a lista sai por TEMPO DE ESPERA (`ORDEM_DA_ESPERA`: `awaiting_since`
-   * crescente — a mensagem mais antiga sem resposta, #990), mas a hora do canto era
-   * sempre a da última mensagem de QUALQUER lado. Bastava o atendente responder para o número daquela linha pular para
-   * agora sem que a linha saísse do lugar: lida de cima para baixo, a coluna de
-   * horas saía fora de ordem (#464 — "a lista parece aleatória") embaixo de uma
-   * lista que estava certa.
-   *
-   * Fora da Fila a ordem é por atividade recente, e aí a última mensagem de
-   * qualquer lado É a resposta certa — a régua do relógio segue a régua da lista.
-   *
-   * A origem é a MESMA da pílula "Aguardando há…" (`waitingLabel`), inclusive no
-   * fallback: duas respostas para o mesmo "desde quando?" na mesma linha, a 40px
-   * de distância, seriam a próxima divergência.
-   */
-  // 16/10/2026: o canto mostra SEMPRE a hora da última mensagem (o modelo do
-  // dono). A espera, na Fila, mora na linha de operação ("Espera de 21h"), com
-  // a mesma origem da ordem da lista — a coluna de horas já não precisa contar
-  // a espera, porque ela está escrita por extenso logo abaixo.
+  // O canto acompanha a última atividade, a mesma data da ordenação da lista.
   const time = relativeTime(conversation.last_message_at, localeDaData);
   const unread = conversation.unread_count_for_assignee ?? 0;
-
 
   /**
    * Quem manda, pela MESMA regra do cabeçalho.
@@ -239,19 +185,7 @@ export function ConversationListItem({
   // prévia no meio e a OPERAÇÃO embaixo ("1º na fila · Espera de 21h"). A
   // espera saiu do canto direito — ali agora mora a hora da última mensagem e
   // a setinha do menu, como no modelo.
-  const operacao = naFila ? (
-    <>
-      <span className="ibx-position">
-        {queuePosition}º {t("na fila")}
-      </span>
-      <span className="ibx-operational-separator" aria-hidden>
-        ·
-      </span>
-      <span title={waitingLabel(conversation, t, localeDaData)}>
-        {t("Espera de")} {esperaCurta(esperaDaConversa(conversation))}
-      </span>
-    </>
-  ) : STATUS_ENCERRADOS.has(conversation.status) ? (
+  const operacao = STATUS_ENCERRADOS.has(conversation.status) ? (
     <span>{t("Conversa fechada")}</span>
   ) : isAi ? (
     <>
@@ -294,13 +228,18 @@ export function ConversationListItem({
                 className="object-cover"
               />
             ) : null}
-            <AvatarFallback className={cn("text-[inherit] font-medium", corDoAvatar(displayName))}>
+            <AvatarFallback className={cn("font-medium text-[inherit]", corDoAvatar(displayName))}>
               {initials(displayName, phoneFallback)}
             </AvatarFallback>
           </Avatar>
           {/* Quem manda, para leitor de tela e no passar do mouse: o desenho do
               modelo não tem a bolinha colorida, mas a informação continua. */}
-          <span className="sr-only" role="img" aria-label={rotuloDoComando} title={rotuloDoComando} />
+          <span
+            className="sr-only"
+            role="img"
+            aria-label={rotuloDoComando}
+            title={rotuloDoComando}
+          />
           <span className="ibx-channel-badge">
             <ChannelLogo channel={canal} size={11} />
           </span>
@@ -311,7 +250,7 @@ export function ConversationListItem({
             <span
               className={cn(
                 "ibx-contact-name",
-                c?.is_anonymized && "font-normal italic text-text-muted",
+                c?.is_anonymized && "font-normal text-text-muted italic",
               )}
             >
               {displayName}
@@ -349,7 +288,12 @@ export function ConversationListItem({
           {temSelos && (
             <span className="ibx-badges">
               {visibleTags.map((t) => (
-                <ChipDeEtiqueta key={t} tag={t} entidade="contact" className="h-4 px-1.5 text-[10px]" />
+                <ChipDeEtiqueta
+                  key={t}
+                  tag={t}
+                  entidade="contact"
+                  className="h-4 px-1.5 text-[10px]"
+                />
               ))}
               {overflow > 0 && <span className="text-[10px] text-text-muted">+{overflow}</span>}
               {/* #2383: `min-w-0` + `max-w` + `truncate` — o mesmo tratamento do
@@ -357,7 +301,7 @@ export function ConversationListItem({
               {mostrarCanal && rotuloCanal && (
                 <Badge
                   variant="outline"
-                  className="h-4 min-w-0 max-w-[9rem] gap-1 truncate px-1.5 text-[10px] font-normal text-text-muted"
+                  className="h-4 max-w-[9rem] min-w-0 gap-1 truncate px-1.5 text-[10px] font-normal text-text-muted"
                   title={`${t("Entrou por")} ${rotuloCanal}`}
                 >
                   <span className="truncate">{rotuloCanal}</span>

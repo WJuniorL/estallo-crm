@@ -75,6 +75,7 @@ export function PipelinePageClient({
     [pathname],
   );
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [newStage, setNewStage] = useState<string | undefined>();
   const [newOpen, setNewOpen] = useState(false);
   /**
    * A visão do funil (#2770). Quadro é o padrão — é o que todo mundo já
@@ -243,13 +244,22 @@ export function PipelinePageClient({
               {t("Calendário")}
             </button>
           </div>
-          <Button onClick={() => setNewOpen(true)} disabled={!data} className="shrink-0">
+          <Button
+            onClick={() => {
+              setNewStage(undefined);
+              setNewOpen(true);
+            }}
+            disabled={!data}
+            className="shrink-0"
+          >
             <Plus size={16} className="mr-2" /> {t("Novo Lead")}
           </Button>
         </div>
       </header>
       {data && (
         <NewLeadDialog
+          key={`${newStage ?? "padrao"}-${newOpen}`}
+          initialStageId={newStage}
           open={newOpen}
           onOpenChange={setNewOpen}
           pipelineId={pipelineId}
@@ -292,6 +302,10 @@ export function PipelinePageClient({
           selectedIds={selectedIds}
           onSelectionChange={setSelectedIds}
           leadInicial={searchParams.get("lead")}
+          onAddLead={(stageId) => {
+            setNewStage(stageId);
+            setNewOpen(true);
+          }}
           podeRenomearEtapa={ROLE_RANK[role] >= ROLE_RANK.manager}
         />
       )}

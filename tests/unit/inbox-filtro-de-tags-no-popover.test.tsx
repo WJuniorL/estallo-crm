@@ -42,7 +42,7 @@ vi.mock("@/hooks/inbox/useConversationCounts", () => ({
   useConversationCounts: () => ({ data: { fila: 3, all: 5 } }),
 }));
 
-const VALUE: InboxFiltersValue = { tab: "unassigned", search: "", onlyUnread: false };
+const VALUE: InboxFiltersValue = { tab: "all", search: "", onlyUnread: false };
 const MUITAS = ["vip", "retorno", "quente", "frio", "lead", "cliente", "parceiro"];
 
 function abrirFiltros() {

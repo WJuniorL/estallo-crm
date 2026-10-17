@@ -62,7 +62,7 @@ describe("TrilhoDeEtapas", () => {
   it("não trava: o 2º clique durante o move em voo muda a tela na hora e sai depois, com o updated_at novo", async () => {
     post.mockClear();
     let soltar: (v: { data: unknown }) => void = () => {};
-    post.mockImplementationOnce(() => new Promise<{ data: {} }>((r) => (soltar = r as (v: { data: unknown }) => void)));
+    post.mockImplementationOnce(() => new Promise<{ data: object }>((r) => (soltar = r as (v: { data: unknown }) => void)));
     const client = new QueryClient();
     const lead = { id: "l-1", stage_id: "a", stage_changed_at: null, updated_at: "T1", position_in_stage: 1 } as Lead;
     client.setQueryData(["board", "p-1"], { leads: [lead], stages: [] });

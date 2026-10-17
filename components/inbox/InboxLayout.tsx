@@ -34,11 +34,13 @@ import { CaretLeft, ChatCircle, MagnifyingGlass, X } from "@/lib/ui/icons";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { comandosDaFila } from "@/lib/inbox/comando-da-conversa";
 import type { AvisoDeRascunho } from "@/lib/inbox/rascunho-sugerido";
 import { buscaValeConsulta } from "@/lib/inbox/termo-de-busca";
-import { useAutomaticoAtivo } from "@/hooks/ai/useAutomaticoAtivo";
-import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from "react";
+import type {
+  CSSProperties,
+  KeyboardEvent as ReactKeyboardEvent,
+  PointerEvent as ReactPointerEvent,
+} from "react";
 import {
   LIMITES_FICHA,
   LIMITES_LISTA,
@@ -86,21 +88,9 @@ export function colunasDoCelular(temSelecao: boolean): { lista: string; conversa
  */
 export function tabToFilter(
   tab: InboxFiltersValue["tab"],
-  automaticoDaOrg?: boolean,
+  _automaticoDaOrg?: boolean,
 ): Partial<ConversationsFilters> {
   switch (tab) {
-    case "unassigned":
-      // A FILA PERGUNTA POR QUEM MANDA, NÃO POR STATUS.
-      //
-      // Antes ela pedia `assigned_to=unassigned` + os dois estados de espera. Só
-      // que "sem dono e aberta" é também a conversa que o robô está atendendo
-      // agora — medido na VPS em 2026-08-30, a aba dizia 83 e 47 daquelas tinham
-      // o automático no comando. O atendente abria a Fila e via como trabalho
-      // dele quase tudo que já estava sendo respondido.
-      //
-      // `comandosDaFila` é quem cruza isso com o fato org-wide: numa instalação
-      // sem nenhum agente no ar, `automatico` também é "esperando gente".
-      return { comando: comandosDaFila(automaticoDaOrg) };
     case "pending":
       // O cliente escreveu e ninguém respondeu ainda — régua em `lib/inbox/pendentes.ts`.
       return { pendentes: true };
@@ -108,26 +98,25 @@ export function tabToFilter(
       // Sem "Arquivar" no Estallo: as arquivadas de antes moram aqui, junto
       // com as fechadas. O badge (`counts`) conta o mesmo par.
       return { status: ["closed", "archived"] };
-    case "ai":
-      // `ai_handling` é escrito por UM caminho só em produção (a volta pelo botão
-      // "Devolver ao automático"), então a aba vivia mostrando 2 enquanto o robô
-      // atendia 47. Agora ela pergunta a régua do MOTOR.
-      return { comando: ["automatico"] };
+    case "waiting":
+      return { status_chat: "em_espera" };
+    case "open":
+      return { status_chat: "em_aberto" };
     case "all":
     default:
       return {};
   }
 }
 
-const FILTER_TABS: InboxTab[] = ["unassigned", "pending", "all", "closed", "ai"];
+const FILTER_TABS: InboxTab[] = ["all", "pending", "waiting", "open", "closed"];
 
 /**
- * Lê ?filter= (G4-02, deep-link); default: fila. `?filter=mine` é link de antes
+ * Lê ?filter= (G4-02, deep-link); default: Todas. `?filter=mine` é link de antes
  * de "Minhas" virar filtro: abre em Todas com o filtro "Minhas" ligado.
  */
 function parseFilterParam(v: string | null): InboxTab {
   if (v === "mine") return "all";
-  return v && FILTER_TABS.includes(v as InboxTab) ? (v as InboxTab) : "unassigned";
+  return v && FILTER_TABS.includes(v as InboxTab) ? (v as InboxTab) : "all";
 }
 
 /**
@@ -256,30 +245,18 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
     setRespondendo(null);
   }, [idNaUrl]);
 
-  /**
-   * A ORG tem automático de pé? Sobe para cá porque agora é a ABA que precisa —
-   * `ConversationList` e `ConversationHeader` continuam lendo o mesmo hook, e o
-   * react-query dedupa: segue sendo uma requisição só.
-   *
-   * `undefined` enquanto carrega, e `comandosDaFila` trata isso como "assume que
-   * há" — a mesma convenção da regra. Numa org SEM automático a Fila nasce menor
-   * e completa quando a resposta chega; a janela é de ~200ms e o rótulo nunca
-   * discorda do filtro, porque os dois usam a mesma convenção.
-   */
-  const { data: automaticoDaOrg } = useAutomaticoAtivo();
   const composerRef = useRef<ComposerHandle | null>(null);
 
   const filters: ConversationsFilters = useMemo(
     () => ({
-      ...tabToFilter(filterValue.tab, automaticoDaOrg),
+      ...tabToFilter(filterValue.tab),
       // A tela NÃO pede o que a rota recusa: o hook trata falha com
       // `showApiError`, então digitar a primeira letra de qualquer busca faria
       // piscar um erro na cara de quem digita. A regra é a MESMA que o schema
       // usa (`lib/inbox/termo-de-busca.ts`) — nunca repetida aqui.
-      search: buscaValeConsulta(filterValue.search)
-        ? filterValue.search
-        : undefined,
+      search: buscaValeConsulta(filterValue.search) ? filterValue.search : undefined,
       channel_session_id: filterValue.channel_session_id,
+      ordem: filterValue.ordem,
       tag: filterValue.tag,
       tagMode: filterValue.tagMode,
       unread: filterValue.onlyUnread || undefined,
@@ -288,9 +265,9 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
     }),
     [
       filterValue.tab,
-      automaticoDaOrg,
       filterValue.search,
       filterValue.channel_session_id,
+      filterValue.ordem,
       filterValue.tag,
       filterValue.tagMode,
       filterValue.onlyUnread,
@@ -298,7 +275,6 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
       filterValue.onlyMine,
     ],
   );
-
 
   // We need the selected conversation object for header / composer / side panel.
   // Source it from the same query the list uses to avoid an extra request.
@@ -361,7 +337,8 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
   // É um SUPERCONJUNTO do `handleSelect` do upstream — o tipo dele não aceita
   // `null`, e sem isso o botão de voltar não teria o que chamar.
   //
-  const handleSelect = useCallback((id: string | null) => {
+  const handleSelect = useCallback(
+    (id: string | null) => {
     if (id === selectedId) return;
     setSelectedId(id);
     // Sem isto, escolher "responder" numa conversa e trocar para outra levaria
@@ -376,7 +353,9 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
     params.delete("rascunho");
     const query = params.toString();
     window.history.pushState(null, "", query ? `${pathname}?${query}` : pathname);
-  }, [selectedId, searchParams, pathname]);
+    },
+    [selectedId, searchParams, pathname],
+  );
   const handleVisibleChange = useCallback((ids: string[]) => setVisibleIds(ids), []);
   const handleFocusReply = useCallback(() => composerRef.current?.focus(), []);
   const handleClaim = useCallback(() => {
@@ -522,9 +501,7 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
         coluna === "lista"
           ? { ...base, lista: movimento.clientX - retangulo.left }
           : { ...base, ficha: retangulo.right - movimento.clientX };
-      aplicarLarguras(
-        resolverLarguras({ ...pedido, larguraContainer: retangulo.width, temFicha }),
-      );
+      aplicarLarguras(resolverLarguras({ ...pedido, larguraContainer: retangulo.width, temFicha }));
     };
     const aoSoltar = () => {
       window.removeEventListener("pointermove", aoMover);
@@ -742,7 +719,11 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
             />
             {buscaAberta && (
               <div className="ibx-message-search-bar">
-                <MagnifyingGlass size={16} className="shrink-0 text-muted-foreground" aria-hidden />
+                  <MagnifyingGlass
+                    size={16}
+                    className="shrink-0 text-muted-foreground"
+                    aria-hidden
+                  />
                 <input
                   type="search"
                   autoFocus
@@ -750,7 +731,9 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
                   aria-label={t("Buscar nas mensagens carregadas")}
                   placeholder={t("Buscar nas mensagens carregadas")}
                   value={busca.termo}
-                  onChange={(e) => setBusca({ conversaId: busca.conversaId, termo: e.target.value })}
+                    onChange={(e) =>
+                      setBusca({ conversaId: busca.conversaId, termo: e.target.value })
+                    }
                   onKeyDown={(e) => {
                     if (e.key === "Escape") fecharBusca();
                   }}
@@ -867,7 +850,7 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
             onPointerDown={(evento) => arrastar("lista", evento)}
             onDoubleClick={restaurarPadrao}
             onKeyDown={(evento) => teclarNaDivisoria("lista", evento)}
-            className="group absolute inset-y-0 z-10 flex w-2 -translate-x-1/2 cursor-col-resize touch-none select-none items-stretch justify-center focus-visible:outline-hidden"
+              className="group absolute inset-y-0 z-10 flex w-2 -translate-x-1/2 cursor-col-resize touch-none items-stretch justify-center select-none focus-visible:outline-hidden"
             style={{ left: `${efetivas.lista}px` }}
           >
             <span
@@ -889,7 +872,7 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
               onPointerDown={(evento) => arrastar("ficha", evento)}
               onDoubleClick={restaurarPadrao}
               onKeyDown={(evento) => teclarNaDivisoria("ficha", evento)}
-              className="group absolute inset-y-0 z-10 flex w-2 translate-x-1/2 cursor-col-resize touch-none select-none items-stretch justify-center focus-visible:outline-hidden"
+                className="group absolute inset-y-0 z-10 flex w-2 translate-x-1/2 cursor-col-resize touch-none items-stretch justify-center select-none focus-visible:outline-hidden"
               style={{ right: `${efetivas.ficha}px` }}
             >
               <span

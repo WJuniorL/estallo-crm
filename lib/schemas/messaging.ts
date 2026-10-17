@@ -340,6 +340,8 @@ export const listConversationsQuerySchema = z.object({
    * Conversa encerrada e grupo ficam fora: grupo não espera resposta da equipe.
    */
   pendentes: z.boolean().optional(),
+  status_chat: z.enum(["em_espera", "em_aberto"]).optional(),
+  ordem: z.enum(["antigo", "recente"]).optional(),
   assigned_to: z.union([z.string().uuid(), z.literal("me"), z.literal("unassigned")]).optional(),
   channel_session_id: z.string().uuid().optional(),
   /**

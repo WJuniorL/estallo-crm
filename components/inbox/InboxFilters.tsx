@@ -14,43 +14,31 @@ import {
 } from "@/lib/ui/icons";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { PontoDaEtiqueta } from "@/components/tags/PontoDaEtiqueta";
 import { channelLabel, useChannelSessions } from "@/hooks/channels/useChannelSessions";
-import {
-  type ModoDeEtiqueta,
-  marcadoresEscolhidos,
-} from "@/lib/inbox/marcador-da-conversa";
+import { type ModoDeEtiqueta, marcadoresEscolhidos } from "@/lib/inbox/marcador-da-conversa";
 import { useAuth } from "@/hooks/auth/AuthProvider";
 import { useContactTagVocabulary } from "@/hooks/contacts/useContactTagVocabulary";
 import { useConversationCounts } from "@/hooks/inbox/useConversationCounts";
 import type { Role, VisibilityMode } from "@/lib/auth/types";
 
-export type InboxTab = "unassigned" | "pending" | "all" | "closed" | "ai";
+export type InboxTab = "all" | "pending" | "waiting" | "open" | "closed";
 
-/**
- * A faixa na ORDEM DO TRABALHO (#2498): primeiro o que o robô conduz, depois o
- * que espera gente, depois o histórico. Antes "Automático" fechava a faixa,
- * depois de dois passados — o valor que o operador mais olha era o último.
- *
- * Só a ordem mudou: mesmos `value`, mesmos rótulos, mesmas permissões
- * (`visibleInboxTabs` filtra sem reordenar) e mesmas contagens (`countFor` lê
- * por chave, e a chave não acompanha a posição). `moveTab` anda pelo MESMO
- * array, então as setas continuam vizinha a vizinha.
- */
+/** Categorias do atendimento, na ordem de leitura da operação. */
 const INBOX_TABS: { value: InboxTab; label: string }[] = [
-  // 16/10/2026: a ordem do MODELO do dono (Fila, Pendentes, Automático, Todas,
-  // Fechadas) — decisão dele ao aprovar o redesenho do Inbox, que substitui a
-  // ordem do #2498 (Automático primeiro).
-  { value: "unassigned", label: "Fila" },
-  // "Minhas" deixou de ser aba: virou filtro e recorta qualquer aba. No lugar
-  // dela, quem escreveu e ninguém respondeu ainda.
-  { value: "pending", label: "Pendentes" },
-  // "Automático", não "IA": a palavra deste ator já é contrato em quatro arquivos
-  // e no dicionário, e `handoff-por-orcamento.test.ts` usa literalmente "Voltar
-  // para a IA" como a sabotagem que deve reprovar.
-  { value: "ai", label: "Automático" },
   { value: "all", label: "Todas" },
+  { value: "pending", label: "Sem resposta" },
+  { value: "waiting", label: "Em espera" },
+  { value: "open", label: "Em aberto" },
   { value: "closed", label: "Fechadas" },
 ];
 
@@ -69,6 +57,7 @@ export interface InboxFiltersValue {
   search: string;
   onlyUnread: boolean;
   channel_session_id?: string;
+  ordem?: "antigo" | "recente";
   /**
    * A etiqueta escolhida, ou VÁRIAS (#1274).
    *
@@ -99,12 +88,14 @@ interface RascunhoDosFiltros {
   onlyUnread: boolean;
   onlyGroups: boolean;
   channel_session_id?: string;
+  ordem?: "antigo" | "recente";
   tags: string[];
   tagMode?: ModoDeEtiqueta;
 }
 
 export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
   const t = useT();
+  const [ajudaAberta, setAjudaAberta] = useState(false);
   const [searchInput, setSearchInput] = useState(value.search);
   const tabsListRef = useRef<HTMLDivElement>(null);
   const [moreTabs, setMoreTabs] = useState({ left: false, right: false });
@@ -126,8 +117,10 @@ export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
       const selected = list.querySelector<HTMLElement>('[role="tab"][data-state="active"]');
       if (selected) {
         const selectedCenter =
-          selected.getBoundingClientRect().left - list.getBoundingClientRect().left +
-          list.scrollLeft + selected.offsetWidth / 2;
+          selected.getBoundingClientRect().left -
+          list.getBoundingClientRect().left +
+          list.scrollLeft +
+          selected.offsetWidth / 2;
         const maxScroll = Math.max(0, list.scrollWidth - list.clientWidth);
         list.scrollLeft = Math.max(0, Math.min(maxScroll, selectedCenter - list.clientWidth / 2));
       }
@@ -181,7 +174,8 @@ export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
   // Estallo (0659): conversa não tem mais etiqueta — o filtro é pela do contato.
   const { data: tagsDeContato } = useContactTagVocabulary(orgId);
   const tagVocabulary = useMemo(
-    () => (tagsDeContato == null ? undefined : [...tagsDeContato].sort((a, b) => a.localeCompare(b))),
+    () =>
+      tagsDeContato == null ? undefined : [...tagsDeContato].sort((a, b) => a.localeCompare(b)),
     [tagsDeContato],
   );
   // A lista de etiquetas escolhida, normalizada pelo MESMO caminho do servidor
@@ -211,15 +205,8 @@ export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
     if (next) onChange({ ...value, tab: next });
   };
   const countFor: Partial<Record<InboxTab, number>> = {
-    // `fila` é o nome novo; `unassigned` é o alias que a rota versionada mantém.
-    // O `??` cobre a janela em que a página ainda lê um cache de react-query
-    // gravado antes do deploy — sem ele o badge sumiria por alguns segundos.
-    unassigned: counts?.fila ?? counts?.unassigned,
-    // A aba do automático ganhou contador junto com o significado: ela deixou de
-    // filtrar `ai_handling` (2 conversas) e passou a mostrar o que o robô conduz
-    // (47, na instalação onde isto foi medido). Um número que existe na API e não
-    // aparece na tela é trabalho feito que ninguém vê.
-    ai: counts?.automatico,
+    waiting: counts?.em_espera,
+    open: counts?.em_aberto,
     pending: counts?.pendentes,
     all: counts?.all,
     closed: counts?.closed,
@@ -232,8 +219,8 @@ export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
     value.channel_session_id != null &&
     channels != null &&
     !channels.some((c) => c.id === value.channel_session_id);
-  // Alternador só aparece com 2+ números — com um só não há o que alternar.
-  const showChannelSwitch = (channels?.length ?? 0) >= 2 || filtroForaDaLista;
+  // O canal fica disponível mesmo com uma única instância.
+  const showChannelSwitch = true;
   /**
    * O SELETOR NÃO PODE SUMIR DEBAIXO DO MENU ABERTO.
    *
@@ -293,10 +280,7 @@ export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
   // reabrir o menu entre a primeira e a segunda, e o `DropdownMenuCheckboxItem`
   // é o item que NÃO fecha (o `Select` de hoje fecha). A regra é do componente,
   // e por isso o gatilho é um botão com `aria-expanded` em vez de um `Select`.
-  const opcoesDoSeletor = [
-    ...vocabularioDoSeletor,
-    ...etiquetasForaDoVocabulario,
-  ];
+  const opcoesDoSeletor = [...vocabularioDoSeletor, ...etiquetasForaDoVocabulario];
   /**
    * A BUSCA DENTRO DO SELETOR (#2498) — e ela é de propósito SEM consulta.
    *
@@ -377,6 +361,7 @@ export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
     onlyUnread: value.onlyUnread,
     onlyGroups: value.onlyGroups ?? false,
     channel_session_id: value.channel_session_id,
+    ordem: value.ordem,
     tags: etiquetas,
     tagMode: value.tagMode,
   });
@@ -393,6 +378,7 @@ export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
       onlyUnread: rascunho.onlyUnread,
       onlyGroups: rascunho.onlyGroups,
       channel_session_id: rascunho.channel_session_id,
+      ordem: rascunho.ordem,
       tag: rascunho.tags.length === 0 ? undefined : rascunho.tags,
       tagMode: rascunho.tags.length > 1 ? rascunho.tagMode : undefined,
     });
@@ -408,6 +394,7 @@ export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
     (value.onlyUnread ? 1 : 0) +
     (value.onlyGroups ? 1 : 0) +
     (value.channel_session_id ? 1 : 0) +
+    (value.ordem === "antigo" ? 1 : 0) +
     etiquetas.length;
   const canalEscolhido = channels?.find((c) => c.id === value.channel_session_id);
   // Mantida para o seletor de tag continuar montado enquanto o vocabulário
@@ -420,7 +407,8 @@ export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
     const aoTeclar = (e: KeyboardEvent) => {
       if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
       const alvo = e.target as HTMLElement | null;
-      if (alvo && (alvo.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(alvo.tagName))) return;
+      if (alvo && (alvo.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(alvo.tagName)))
+        return;
       e.preventDefault();
       buscaRef.current?.focus();
     };
@@ -429,7 +417,6 @@ export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
   }, []);
 
   const totalDaAba = countFor[value.tab];
-  const ehFila = value.tab === "unassigned";
 
   return (
     <>
@@ -440,6 +427,21 @@ export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
               <Inbox size={17} aria-hidden />
             </span>
             <h1>{t("Inbox")}</h1>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="ibx-icon-button"
+                    onClick={() => setAjudaAberta(true)}
+                    aria-label={t("O que significa cada status do chat?")}
+                  >
+                    <Info className="ibx-icon" aria-hidden />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>{t("O que significa cada status do chat?")}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           {onAbrirAtalhos && (
             <button
@@ -476,7 +478,9 @@ export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
               return (
                 <TabsTrigger key={tab} value={tab} className="ibx-category">
                   <span>{t(meta.label)}</span>
-                  <span className="ibx-category-count">{typeof count === "number" ? count : "–"}</span>
+                  <span className="ibx-category-count">
+                    {typeof count === "number" ? count : "–"}
+                  </span>
                 </TabsTrigger>
               );
             })}
@@ -530,7 +534,11 @@ export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
                 {filtrosAtivos > 0 && <span className="ibx-filter-count">{filtrosAtivos}</span>}
               </button>
             </PopoverTrigger>
-            <PopoverContent align="end" sideOffset={7} className="ibx ibx-floating ibx-filter-popover">
+            <PopoverContent
+              align="end"
+              sideOffset={7}
+              className="ibx ibx-floating ibx-filter-popover"
+            >
               <div className="ibx-popover-heading">
                 <strong>{t("Filtrar conversas")}</strong>
                 <button
@@ -580,10 +588,10 @@ export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
               </div>
               {showChannelSwitch && (
                 <div className="ibx-filter-field">
-                  <label htmlFor="ibx-filtro-numero">{t("Número do WhatsApp")}</label>
+                  <label htmlFor="ibx-filtro-numero">{t("Canais")}</label>
                   <select
                     id="ibx-filtro-numero"
-                    aria-label={t("Filtrar por número de WhatsApp")}
+                    aria-label={t("Filtrar por canal")}
                     value={rascunho.channel_session_id ?? "all"}
                     onChange={(e) =>
                       setRascunho((r) => ({
@@ -592,18 +600,34 @@ export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
                       }))
                     }
                   >
-                    <option value="all">{t("Todos os números")}</option>
+                    <option value="all">{t("Todos os canais")}</option>
                     {filtroForaDaLista && value.channel_session_id != null && (
                       <option value={value.channel_session_id}>{t("Número removido")}</option>
                     )}
                     {channels?.map((c) => (
                       <option key={c.id} value={c.id}>
-                        {channelLabel(c)}
+                        {c.display_name || channelLabel(c)}
                       </option>
                     ))}
                   </select>
                 </div>
               )}
+              <div className="ibx-filter-field">
+                <label htmlFor="ibx-filtro-ordem">{t("Ordem")}</label>
+                <select
+                  id="ibx-filtro-ordem"
+                  value={rascunho.ordem ?? "recente"}
+                  onChange={(e) =>
+                    setRascunho((r) => ({
+                      ...r,
+                      ordem: e.target.value === "antigo" ? "antigo" : "recente",
+                    }))
+                  }
+                >
+                  <option value="antigo">{t("Antigo > recente")}</option>
+                  <option value="recente">{t("Recente > antigo")}</option>
+                </select>
+              </div>
               {opcoesDoSeletor.length > 0 && (
                 <fieldset className="ibx-tag-filters" aria-label={t("Filtrar por tag")}>
                   <legend>{t("Tags do contato")}</legend>
@@ -643,7 +667,10 @@ export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
                     id="ibx-filtro-modo"
                     value={rascunho.tagMode === "ou" ? "ou" : "e"}
                     onChange={(e) =>
-                      setRascunho((r) => ({ ...r, tagMode: e.target.value === "ou" ? "ou" : undefined }))
+                      setRascunho((r) => ({
+                        ...r,
+                        tagMode: e.target.value === "ou" ? "ou" : undefined,
+                      }))
                     }
                   >
                     <option value="e">{t("Todas as selecionadas (E)")}</option>
@@ -665,8 +692,17 @@ export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
 
         {filtrosAtivos > 0 && (
           <div className="ibx-active-filters" aria-label={t("Filtros ativos")}>
+            {value.ordem === "antigo" && (
+              <ChipDoFiltro
+                rotulo={t("Antigo > recente")}
+                onRemover={() => onChange({ ...value, ordem: undefined })}
+              />
+            )}
             {value.onlyMine && (
-              <ChipDoFiltro rotulo={t("Minhas")} onRemover={() => onChange({ ...value, onlyMine: false })} />
+              <ChipDoFiltro
+                rotulo={t("Minhas")}
+                onRemover={() => onChange({ ...value, onlyMine: false })}
+              />
             )}
             {value.onlyUnread && (
               <ChipDoFiltro
@@ -675,7 +711,10 @@ export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
               />
             )}
             {value.onlyGroups && (
-              <ChipDoFiltro rotulo={t("Grupos")} onRemover={() => onChange({ ...value, onlyGroups: false })} />
+              <ChipDoFiltro
+                rotulo={t("Grupos")}
+                onRemover={() => onChange({ ...value, onlyGroups: false })}
+              />
             )}
             {value.channel_session_id && (
               <ChipDoFiltro
@@ -702,19 +741,30 @@ export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
               ? `${totalDaAba} ${totalDaAba === 1 ? t("conversa") : t("conversas")}`
               : ""}
           </span>
-          {ehFila && (
-            <span
-              className="ibx-queue-help"
-              title={t(
-                "A posição indica a ordem de chegada à fila de atendimento. Fixar muda apenas a ordem de exibição.",
-              )}
-            >
-              <span>{t("Ordem de chegada")}</span>
-              <Info className="ibx-icon" aria-hidden />
-            </span>
-          )}
         </div>
       </div>
+      <Dialog open={ajudaAberta} onOpenChange={setAjudaAberta}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("O que significa cada status do chat?")}</DialogTitle>
+            <DialogDescription>{t("Veja quem está aguardando uma resposta.")}</DialogDescription>
+          </DialogHeader>
+          <dl className="space-y-4 text-sm">
+            {[
+              ["Todas", "Todas as conversas, inclusive as fechadas."],
+              ["Sem resposta", "Primeiro contato: ainda não recebeu nenhuma resposta."],
+              ["Em espera", "Já foi respondido e escreveu novamente. Aguarda sua resposta."],
+              ["Em aberto", "Você enviou uma mensagem e aguarda o contato responder."],
+              ["Fechadas", "Conversas com atendimento encerrado."],
+            ].map(([titulo, descricao]) => (
+              <div key={titulo}>
+                <dt className="font-semibold">{t(titulo!)}</dt>
+                <dd className="mt-1 text-text-muted">{t(descricao!)}</dd>
+              </div>
+            ))}
+          </dl>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

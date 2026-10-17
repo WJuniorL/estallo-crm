@@ -81,6 +81,7 @@ export interface Lead {
     preview: string | null;
     last_message_at: string | null;
     unread: number;
+    channel?: string;
   } | null;
   score?: {
     probability: number;
@@ -127,6 +128,8 @@ export interface Lead {
    * já validados — só http/https.
    */
   contact_phone?: string;
+  contact_name?: string;
+  contact_has_avatar?: boolean;
   contact_email?: string;
   contact_links?: Array<{ tipo: string; href: string }>;
   /**

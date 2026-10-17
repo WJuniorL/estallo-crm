@@ -20,6 +20,7 @@ import type { Conversation } from "@/lib/types/messaging";
 import { normalizarTermoDeBusca } from "@/lib/inbox/termo-de-busca";
 import { ORDEM_DA_ESPERA, ehAFila } from "@/lib/inbox/comando-da-conversa";
 import { aplicarMarcadores } from "@/lib/inbox/marcador-da-conversa";
+import { aplicarStatusDoChat } from "@/lib/inbox/status-do-chat";
 import { aplicarPendentes } from "@/lib/inbox/pendentes";
 
 /**
@@ -197,8 +198,8 @@ export async function listConversationsHandler(
   // pergunta e a posição responder outra — sem sintoma nenhum, porque as duas
   // telas continuam populadas e plausíveis.
   const sortCol = isQueue ? ORDEM_DA_ESPERA.coluna : "last_message_at";
-  const ordem = isQueue ? ORDEM_DA_ESPERA.opcoes : ({ ascending: false, nullsFirst: false } as const);
-  const asc = isQueue;
+  const asc = q.ordem ? q.ordem === "antigo" : isQueue;
+  const ordem = { ascending: asc, nullsFirst: false };
 
   // A consulta com TODOS os filtros da visão, montada por uma função: ela roda
   // duas vezes quando quem pede tem conversas fixadas — uma para as fixadas
@@ -238,6 +239,7 @@ export async function listConversationsHandler(
       query = query.not("status", "in", `(${CONVERSATION_TERMINAL_STATUSES.join(",")})`);
     }
     if (q.pendentes) query = aplicarPendentes(query);
+    if (q.status_chat) query = aplicarStatusDoChat(query, q.status_chat);
     if (q.channel_session_id) query = query.eq("channel_session_id", q.channel_session_id);
     // Canal desativado nunca entra na inbox (quarentena): exclui as conversas
     // dele aqui e nos badges, mantendo o acesso direto por id para auditoria e
@@ -485,7 +487,7 @@ export async function listConversationsHandler(
     const op = asc ? "gt" : "lt";
     if (c.sort) {
       query = query.or(
-        `${sortCol}.${op}.${c.sort},and(${sortCol}.eq.${c.sort},id.${op}.${c.id})`,
+        `${sortCol}.${op}.${c.sort},and(${sortCol}.eq.${c.sort},id.${op}.${c.id}),${sortCol}.is.null`,
       );
     } else {
       // Página já na região de sort NULL (nulls last): pagina só por id.

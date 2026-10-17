@@ -67,6 +67,7 @@ interface Props {
   onOpenChange: (v: boolean) => void;
   pipelineId: string;
   stages: Stage[];
+  initialStageId?: string;
   /** Vincula o lead criado a este contato de origem (ex.: painel do Inbox). */
   contactId?: string | null;
   /** Depois do INSERT — o inbox relê o resumo para o lead novo aparecer no formulário. */
@@ -103,6 +104,7 @@ export function NewLeadDialog({
   onOpenChange,
   pipelineId,
   stages,
+  initialStageId,
   contactId,
   leads,
   onCreated,
@@ -112,7 +114,10 @@ export function NewLeadDialog({
   // Negócio NOVO nasce na moeda da organização (createLeadHandler).
   const moedaDoValor = org?.currency ?? MOEDA_PADRAO;
   const create = useCreateLead(pipelineId);
-  const initialStage = useMemo(() => defaultStageId(stages), [stages]);
+  const initialStage = useMemo(
+    () => (stages.some((s) => s.id === initialStageId) ? initialStageId! : defaultStageId(stages)),
+    [stages, initialStageId],
+  );
   // Quem abre o diálogo já sabendo o contato (Inbox) não escolhe de novo.
   const [contato, setContato] = useState<Contact | null>(null);
   // O RESPONSÁVEL nasce como quem está criando, e pode ser trocado (ou tirado).

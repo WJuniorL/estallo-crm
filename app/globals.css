@@ -60,6 +60,7 @@
   --color-accent-950: #051e2b;
   --color-accent: var(--color-accent-600);
   --color-accent-fg: #ffffff;
+  --color-accent-text: var(--color-accent);
   --color-accent-soft: var(--color-accent-100);
   --color-accent-hover: var(--color-accent-700);
 
@@ -274,6 +275,7 @@
   --color-border-strong: #c4cdd4;
   --color-accent: var(--color-accent-600);
   --color-accent-fg: #ffffff;
+  --color-accent-text: var(--color-accent);
   --color-accent-soft: var(--color-accent-100);
   --color-accent-hover: var(--color-accent-700);
   --color-neutral-50: #f8fafb;
@@ -348,8 +350,8 @@
 
   /* Text (dark) */
   --color-text: #f8fafb;
-  --color-text-muted: #92a0ab;
-  --color-text-subtle: #647480;
+  --color-text-muted: #c4cdd4;
+  --color-text-subtle: #aebdc8;
 
   /* Borders (dark) */
   --color-border: #3e4e5a;
@@ -363,15 +365,16 @@
   --color-accent-400: #54bce8;
   --color-accent-500: #1099d3;
   --color-accent-600: #0b6e9a;
-  --color-accent-700: #095a7f;
+  --color-accent-700: #085a7f;
   --color-accent-800: #084866;
   --color-accent-900: #07384f;
   --color-accent-950: #051e2b;
-  --color-accent: var(--color-accent-400);
+  --color-accent: var(--color-accent-700);
+  --color-accent-text: #8fd9f5;
   /* Estallo: texto BRANCO sobre o azul em qualquer tema (decisão do dono, 2026-10-14 — legibilidade percebida acima da razão de contraste). */
   --color-accent-fg: #ffffff;
   --color-accent-soft: rgba(84, 188, 232, 0.16);
-  --color-accent-hover: var(--color-accent-300);
+  --color-accent-hover: var(--color-accent-800);
 
   /* Neutrals — Estallo Ink (11 stops, dark) */
   --color-neutral-50: #f8fafb;
@@ -467,6 +470,10 @@
    embrulhar o `:root` num `@layer`, o teste reprova e a explicação está aqui.
    ───────────────────────────────────────────────────────────────────────── */
 @theme inline {
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.5;
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.5;
   /* Foundation */
   --color-bg: var(--color-bg);
   --color-surface: var(--color-surface);
@@ -1571,7 +1578,7 @@ h4 {
   border-radius: 0.5rem;
   border: 1px solid transparent;
   color: #dce4ea;
-  font-size: 0.8125rem;
+  font-size: 0.9375rem;
   font-weight: 500;
   transition:
     background-color var(--duration-fast, 150ms),
@@ -1696,4 +1703,21 @@ h4 {
 html body[data-scroll-locked] {
   overflow: clip !important;
   margin-right: 0 !important;
+}
+
+/* Legibilidade transversal: metadados com piso de 12px, sem ampliar a grade.
+   Classes legadas menores deixam de reduzir a leitura abaixo deste piso. */
+:is([class~="text-[8px]"], [class~="text-[9px]"], [class~="text-[10px]"], [class~="text-[11px]"]) {
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+:is(button, a, label)
+  > svg:is([width="10"], [width="11"], [width="12"], [width="13"], [width="14"]) {
+  min-width: 16px;
+  min-height: 16px;
+}
+@layer utilities {
+  .text-accent {
+    color: var(--color-accent-text, var(--color-accent));
+  }
 }

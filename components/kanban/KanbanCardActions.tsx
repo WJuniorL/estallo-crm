@@ -39,11 +39,8 @@ interface KanbanCardActionsProps {
   pipelineId: string;
 }
 
-// Visível por padrão e escondido até o hover SÓ onde existe hover: no toque
-// não há hover, e `opacity-0` deixava o menu inalcançável. Mesmo padrão de
-// `components/inbox/MessageBubble.tsx`.
-const CLASSE_DO_GATILHO =
-  "h-7 w-7 shrink-0 opacity-100 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100";
+// O menu permanece visível em mouse, toque e teclado.
+const CLASSE_DO_GATILHO = "h-8 w-8 shrink-0 opacity-100";
 
 /**
  * O "⋯" do card. Até o primeiro uso é SÓ o botão: o menu completo traz 4
@@ -77,7 +74,7 @@ export function KanbanCardActions(props: KanbanCardActionsProps) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <DotsThree size={16} weight="bold" />
+        <DotsThree size={16} weight="bold" className="rotate-90" />
       </Button>
     </span>
   );
@@ -150,7 +147,7 @@ function AcoesDoCard({ lead, pipelineId }: KanbanCardActionsProps) {
             onClick={(e) => e.stopPropagation()}
             aria-label={t("Ações do lead")}
           >
-            <DotsThree size={16} weight="bold" />
+            <DotsThree size={16} weight="bold" className="rotate-90" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>

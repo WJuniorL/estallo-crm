@@ -1,5 +1,4 @@
 "use client";
-import { ehAFila } from "@/lib/inbox/comando-da-conversa";
 import { useEffect, useMemo } from "react";
 import { useT } from "@/hooks/i18n/useT";
 import type { InfiniteData, UseInfiniteQueryResult } from "@tanstack/react-query";
@@ -37,13 +36,6 @@ interface Props {
   onFecharConversa?: () => void;
 }
 
-/** Quantas fixadas há antes da linha `i` — a régua da posição na Fila. */
-function fixadasAntes(items: readonly ConversationWithContact[], i: number): number {
-  let n = 0;
-  for (let k = 0; k < i; k += 1) if (items[k]?.fixada) n += 1;
-  return n;
-}
-
 export function ConversationList({
   listQuery: q,
   filters,
@@ -63,12 +55,6 @@ export function ConversationList({
   const canais = useChannelSessions().data ?? [];
   const maisDeUmCanal = canais.length > 1;
 
-  // Fila (G5-03): a lista já vem ordenada por tempo de espera (server), então a
-  // posição é o índice na lista visível. Só mostramos posição/espera nessa visão.
-  // A Fila deixou de mandar `assigned_to=unassigned` (agora pede `comando`), e
-  // sem esta linha a numeração "1º, 2º…" e o tempo de espera sumiriam da única
-  // visão em que servem para alguma coisa — sem erro nenhum, só sumiriam.
-  const isQueue = ehAFila(filters);
   // Uma leitura por lista, compartilhada por todas as linhas (react-query dedupa
   // com o cabeçalho, que faz a mesma pergunta).
   const automaticoDaOrg = useAutomaticoAtivo();
@@ -115,8 +101,7 @@ export function ConversationList({
    * já é robô, e repetir o ícone em cada uma vira ruído. Nas outras abas a
    * lista é mista (ou pode ser), então o ícone segue dizendo algo.
    */
-  const mostrarAutomatico =
-    !(filters.comando?.length === 1 && filters.comando[0] === "automatico");
+  const mostrarAutomatico = !(filters.comando?.length === 1 && filters.comando[0] === "automatico");
 
   useEffect(() => {
     if (onVisibleChange) onVisibleChange(items.map((i) => i.id));
@@ -151,12 +136,7 @@ export function ConversationList({
     return (
       <div className="p-4 text-center text-sm text-muted-foreground">
         <p>{t("Erro ao carregar conversas.")}</p>
-        <Button
-          size="sm"
-          variant="outline"
-          className="mt-2"
-          onClick={() => q.refetch()}
-        >
+        <Button size="sm" variant="outline" className="mt-2" onClick={() => q.refetch()}>
           Tentar novamente
         </Button>
       </div>
@@ -192,19 +172,18 @@ export function ConversationList({
             filtros" e acha o botão quebrado (issue #2103). */}
         {items.length === 0 && filters.is_group && (
           <p className="px-6 pb-6 text-center text-xs text-text-subtle">
-            {t("Só entram na inbox os grupos ligados em Conexões › Grupos, e cada um aparece aqui a partir da primeira mensagem recebida depois de ligar (o histórico anterior não entra).")}
+            {t(
+              "Só entram na inbox os grupos ligados em Conexões › Grupos, e cada um aparece aqui a partir da primeira mensagem recebida depois de ligar (o histórico anterior não entra).",
+            )}
           </p>
         )}
-        {items.map((c, i) => (
+        {items.map((c) => (
           <ConversationListItem
             key={c.id}
             conversation={c}
             isSelected={c.id === selectedId}
             onSelect={onSelect}
             onFecharConversa={onFecharConversa}
-            // A posição na Fila é a ORDEM DE CHEGADA: as fixadas (que sobem para
-            // o topo só na tela de quem fixou) não contam nem empurram ninguém.
-            queuePosition={isQueue && !c.fixada ? i + 1 - fixadasAntes(items, i) : undefined}
             mostrarCanal={maisDeUmCanal}
             mostrarAtendente={mostrarAtendente}
             mostrarAutomatico={mostrarAutomatico}

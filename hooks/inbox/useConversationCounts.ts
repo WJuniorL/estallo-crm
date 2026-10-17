@@ -25,6 +25,8 @@ export interface ConversationCounts {
   archived?: number;
   /** A aba "Pendentes". Opcional pelo mesmo motivo dos de cima. */
   pendentes?: number;
+  em_espera?: number;
+  em_aberto?: number;
 }
 
 /** Os filtros auxiliares ligados na barra, que a contagem tem de aplicar junto. */

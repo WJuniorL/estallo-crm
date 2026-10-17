@@ -15605,6 +15605,21 @@ export const DICIONARIO: Traducoes = {
   "Atualização em tempo real": { es: "Actualización en tiempo real" },
   "Conectando o tempo real…": { es: "Conectando el tiempo real…" },
   "Reconectando o tempo real…": { es: "Reconectando el tiempo real…" },
+  "Em espera": { es: "En espera" },
+  "O que significa cada status do chat?": { es: "¿Qué significa cada estado del chat?" },
+  "Veja quem está aguardando uma resposta.": { es: "Consulta quién está esperando una respuesta." },
+  "Todas as conversas, inclusive as fechadas.": { es: "Todas las conversaciones, incluidas las cerradas." },
+  "Primeiro contato: ainda não recebeu nenhuma resposta.": { es: "Primer contacto: todavía no ha recibido ninguna respuesta." },
+  "Já foi respondido e escreveu novamente. Aguarda sua resposta.": { es: "Ya recibió una respuesta y volvió a escribir. Espera tu respuesta." },
+  "Você enviou uma mensagem e aguarda o contato responder.": { es: "Enviaste un mensaje y esperas que el contacto responda." },
+  "Conversas com atendimento encerrado.": { es: "Conversaciones con la atención finalizada." },
+  "Filtrar por canal": { es: "Filtrar por canal" },
+  "Antigo > recente": { es: "Antiguo > reciente" },
+  "Recente > antigo": { es: "Reciente > antiguo" },
+  "Nenhum lead nesta etapa": { es: "Ningún lead en esta etapa" },
+  "Quando um lead avançar para esta etapa, ele aparecerá aqui.": { es: "Cuando un lead avance a esta etapa, aparecerá aquí." },
+  "Adicionar lead": { es: "Añadir lead" },
+  "Abrir WhatsApp": { es: "Abrir WhatsApp" },
 };
 
 /**

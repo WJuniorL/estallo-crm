@@ -1,4 +1,6 @@
 "use client";
+import { Button } from "@/components/ui/button";
+import { ListChecks, Plus } from "@/lib/ui/icons";
 import { Droppable } from "@hello-pangea/dnd";
 import {
   memo,
@@ -41,6 +43,7 @@ interface StageColumnProps {
   onSelectMany?: (leadIds: string[], marcar: boolean) => void;
   /** Abrir o dossiê — atravessa o board até o card, como `pulses`. */
   onOpen?: (leadId: string) => void;
+  onAddLead?: (stageId: string) => void;
   /** `manager`+ — mesmo corte de papel da rota que renomeia a etapa. */
   podeRenomear?: boolean;
   onRenomear?: (nome: string) => void;
@@ -65,6 +68,7 @@ export const StageColumn = memo(function StageColumn({
   pulses,
   onSelectMany,
   onOpen,
+  onAddLead,
   podeRenomear = false,
   onRenomear,
 }: StageColumnProps) {
@@ -179,7 +183,7 @@ export const StageColumn = memo(function StageColumn({
   return (
     <div
       /*
-        `w-[85vw] max-w-80 snap-center md:w-80` — a coluna cabe na tela do
+        `w-[85vw] max-w-80 snap-center md:w-[360px]` — a coluna cabe na tela do
         celular, e uma por vez.
 
         Com `w-80` fixo (320px) numa tela de 360px a coluna ocupava 89% da
@@ -193,7 +197,7 @@ export const StageColumn = memo(function StageColumn({
         coluna de etapa não vira painel. De `md` para cima volta o `w-80` de
         sempre, onde a graça é justamente ver várias etapas ao mesmo tempo.
       */
-      className="bg-surface-muted/40 flex min-h-full w-[85vw] max-w-80 shrink-0 snap-center flex-col rounded-lg border border-t-4 border-border md:w-80"
+      className="flex min-h-full w-[85vw] max-w-[360px] shrink-0 snap-center flex-col rounded-2xl border border-t-4 border-border bg-background md:w-[360px]"
       // A cor da etapa (Configurações › Funis) vira a borda da coluna; o topo
       // grosso é o que dá para ler de longe. Sem cor, fica a borda neutra.
       style={stage.color ? { borderColor: stage.color } : undefined}
@@ -203,8 +207,8 @@ export const StageColumn = memo(function StageColumn({
           uma etapa comprida, é o que diz em que etapa se está olhando. O fundo
           opaco (`bg-background`) é o que impede os cards de aparecerem por baixo;
           por dentro, a mesma camada translúcida da coluna, para o tom não mudar. */}
-      <div className="sticky top-0 z-10 rounded-t-lg bg-background" data-cabecalho-da-etapa>
-        <div className="bg-surface-muted/40 rounded-t-lg">
+      <div className="sticky top-0 z-10 rounded-t-2xl bg-background" data-cabecalho-da-etapa>
+        <div className="rounded-t-2xl">
           <div className="group/etapa flex items-center gap-2 border-b border-border px-3 py-2.5">
             {/* "Selecionar a etapa inteira" é o gesto que faz a ação em lote valer a
             pena: sem ele, mover trinta cards deixa de ser trinta arrastes e vira
@@ -257,13 +261,13 @@ export const StageColumn = memo(function StageColumn({
             ) : (
               <h2 className="flex-1 truncate text-sm font-semibold text-text">{stage.name}</h2>
             )}
-            <span className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-medium text-text-muted tabular-nums">
+            <span className="rounded-full bg-surface px-2 py-0.5 text-xs font-medium text-text-muted tabular-nums">
               {selecionadosAqui > 0 ? `${selecionadosAqui}/${leads.length}` : leads.length}
             </span>
           </div>
 
           {temTotal && (
-            <div className="border-b border-border px-3 py-1.5 text-[11px] text-text-muted tabular-nums">
+            <div className="border-b border-border px-3 py-1.5 text-xs text-text-muted tabular-nums">
               {formatSomaPorMoeda(totais, formatValorDoNegocio, { primeira })}
               {ponderados !== null && (
                 <span className="ml-2">
@@ -282,7 +286,7 @@ export const StageColumn = memo(function StageColumn({
             ref={provided.innerRef}
             {...provided.droppableProps}
             className={cn(
-              "flex flex-1 flex-col gap-2 p-2 transition-colors",
+              "flex flex-1 flex-col gap-3 p-2.5 transition-colors",
               snapshot.isDraggingOver && "bg-accent/5",
             )}
           >
@@ -308,15 +312,30 @@ export const StageColumn = memo(function StageColumn({
             {temMais && (
               <div
                 ref={fimDaLista}
-                className="flex h-8 items-center justify-center text-[11px] text-text-muted"
+                className="flex h-8 items-center justify-center text-xs text-text-muted"
                 data-testid="coluna-carrega-mais"
               >
                 {t("Carregando…")}
               </div>
             )}
             {leads.length === 0 && !snapshot.isDraggingOver && (
-              <div className="flex h-20 items-center justify-center text-[11px] text-text-muted">
-                {t("vazio")}
+              <div className="flex min-h-80 flex-1 flex-col items-center justify-center px-5 py-12 text-center">
+                <span className="mb-6 flex size-20 items-center justify-center rounded-3xl bg-accent-soft text-accent">
+                  <ListChecks size={40} aria-hidden />
+                </span>
+                <p className="text-base font-bold text-text">{t("Nenhum lead nesta etapa")}</p>
+                <p className="mt-2 max-w-60 text-sm leading-relaxed text-text-muted">
+                  {t("Quando um lead avançar para esta etapa, ele aparecerá aqui.")}
+                </p>
+                {onAddLead && (
+                  <Button
+                    className="mt-7 rounded-lg px-5 shadow-md"
+                    onClick={() => onAddLead(stage.id)}
+                  >
+                    <Plus size={18} aria-hidden />
+                    {t("Adicionar lead")}
+                  </Button>
+                )}
               </div>
             )}
           </div>

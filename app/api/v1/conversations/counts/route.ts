@@ -19,6 +19,7 @@ import { CONVERSATION_TERMINAL_STATUSES } from "@/lib/schemas";
 import { orgTemAutomatico } from "@/lib/ai/agents/org-tem-automatico";
 import { comandosDaFila } from "@/lib/inbox/comando-da-conversa";
 import { aplicarMarcadores, modoDeEtiqueta } from "@/lib/inbox/marcador-da-conversa";
+import { aplicarStatusDoChat } from "@/lib/inbox/status-do-chat";
 import { aplicarPendentes } from "@/lib/inbox/pendentes";
 import { createClient } from "@/lib/supabase/server";
 import { idsDeContatosPessoais } from "../_handler";
@@ -148,7 +149,7 @@ export async function GET(req: NextRequest): Promise<Response> {
   // convenção da regra: assume que há automático.
   const automaticoDaOrg = await orgTemAutomatico(supabase, org);
 
-  const [fila, automatico, mine, all, closed, archived, pendentes] = await Promise.all([
+  const [fila, automatico, mine, all, closed, archived, pendentes, emEspera, emAberto] = await Promise.all([
     // A FILA DEIXOU DE SER "sem dono + status de espera".
     //
     // Aquele par contava como trabalho humano pendente tudo que o robô estava
@@ -179,6 +180,8 @@ export async function GET(req: NextRequest): Promise<Response> {
     countExact().eq("status", "archived"),
     // A aba "Pendentes": a mesma régua da lista (`aplicarPendentes`).
     aplicarPendentes(countExact()),
+    aplicarStatusDoChat(countExact(), "em_espera"),
+    aplicarStatusDoChat(countExact(), "em_aberto"),
   ]);
 
   const firstErr =
@@ -188,7 +191,7 @@ export async function GET(req: NextRequest): Promise<Response> {
     all.error ??
     closed.error ??
     archived.error ??
-    pendentes.error;
+    pendentes.error ?? emEspera.error ?? emAberto.error;
   if (firstErr) {
     return fail("internal_error", firstErr.message, 500, { requestId });
   }
@@ -207,6 +210,8 @@ export async function GET(req: NextRequest): Promise<Response> {
       closed: closed.count ?? 0,
       archived: archived.count ?? 0,
       pendentes: pendentes.count ?? 0,
+      em_espera: emEspera.count ?? 0,
+      em_aberto: emAberto.count ?? 0,
     },
     { requestId },
   );

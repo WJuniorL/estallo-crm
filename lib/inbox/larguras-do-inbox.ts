@@ -10,7 +10,7 @@
  *
  * Três decisões, cada uma por um motivo medido:
  *
- *   1. LIMITE PRÓPRIO + PISO DA CONVERSA. Lista 240–520, ficha 260–560 (os
+ *   1. LIMITE PRÓPRIO + PISO DA CONVERSA. Lista 420–520, ficha 260–560 (os
  *      valores que a issue propôs) e conversa com no mínimo ~420px. O piso da
  *      conversa não é uma quarta coluna: ele aperta o TETO das colunas laterais
  *      e nunca empurra nenhuma abaixo do próprio mínimo — quando a janela é
@@ -54,7 +54,7 @@ export interface Faixa {
   temFicha: boolean;
 }
 
-export const LIMITES_LISTA = { min: 240, max: 520 } as const;
+export const LIMITES_LISTA = { min: 420, max: 520 } as const;
 export const LIMITES_FICHA = { min: 260, max: 560 } as const;
 export const CONVERSA_MINIMA = 420;
 /** Passo da seta do teclado, igual ao do explorador de dados. */
@@ -68,10 +68,10 @@ export const PASSO_TECLADO = 16;
 // `temFicha` diz se a ficha PODE ser coluna nesta faixa; se ela está aberta é
 // escolha de quem usa (o botão da ficha no cabeçalho do chat).
 export const FAIXAS: readonly Faixa[] = [
-  { id: "2xl", min: 1600, lista: 360, ficha: 320, temFicha: true },
-  { id: "xl", min: 1280, lista: 336, ficha: 296, temFicha: true },
-  { id: "lg", min: 1101, lista: 336, ficha: 296, temFicha: false },
-  { id: "md", min: 851, lista: 300, ficha: 300, temFicha: false },
+  { id: "2xl", min: 1600, lista: 420, ficha: 320, temFicha: true },
+  { id: "xl", min: 1280, lista: 420, ficha: 296, temFicha: true },
+  { id: "lg", min: 1101, lista: 420, ficha: 296, temFicha: false },
+  { id: "md", min: 851, lista: 420, ficha: 300, temFicha: false },
 ];
 
 /** Até 850px o inbox é uma coluna por vez e não tem divisória nenhuma. */
@@ -88,7 +88,7 @@ function limitar(valor: number, minimo: number, maximo: number): number {
   return Math.min(maximo, Math.max(minimo, valor));
 }
 
-/** Arredonda e prende a lista nos seus próprios limites (240–520). */
+/** Arredonda e prende a lista nos seus próprios limites (420–520). */
 export function limitarLista(valor: number): number {
   if (!Number.isFinite(valor)) return LIMITES_LISTA.min;
   return limitar(Math.round(valor), LIMITES_LISTA.min, LIMITES_LISTA.max);
@@ -105,7 +105,7 @@ export function limitarFicha(valor: number): number {
  *
  * A ordem importa. Prender cada coluna no seu próprio intervalo é
  * determinístico; o piso de 420px é quem desempata quando as três não cabem —
- * e ele só pode apertar o teto, nunca o piso (a lista não cai de 240 nem a
+ * e ele só pode apertar o teto, nunca o piso (a lista não cai de 420 nem a
  * ficha de 260, mesmo custando conversa). Com a janela estreita demais até
  * para os três mínimos (`larguraContainer` menor que a soma deles), o piso é
  * desligado: aí vale não estourar o layout, e o `minmax(0,1fr)` da conversa
@@ -156,9 +156,7 @@ export function moverPorSeta(
 ): number | null {
   const passo = tecla === "ArrowLeft" ? -PASSO_TECLADO : tecla === "ArrowRight" ? PASSO_TECLADO : 0;
   if (passo === 0) return null;
-  return coluna === "lista"
-    ? limitarLista(atual + passo)
-    : limitarFicha(atual - passo);
+  return coluna === "lista" ? limitarLista(atual + passo) : limitarFicha(atual - passo);
 }
 
 /** Recorte mínimo do `Storage` — o teste passa um objeto falso e segue o resto. */

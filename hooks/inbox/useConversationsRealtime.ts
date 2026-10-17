@@ -88,6 +88,8 @@ export interface ConversationsFilters {
   exclude_finished?: boolean;
   /** A aba "Pendentes" — ver `pendentes` no schema da rota. */
   pendentes?: boolean;
+  status_chat?: "em_espera" | "em_aberto";
+  ordem?: "antigo" | "recente";
   assigned_to?: "me" | "unassigned" | string;
   /**
    * QUEM MANDA na conversa — o filtro que as abas Fila e Automático passaram a
@@ -163,6 +165,8 @@ export function useConversationsRealtime(
         qs.set("comando", filters.comando.join(","));
       }
       if (filters.exclude_finished) qs.set("exclude_finished", "true");
+      if (filters.status_chat) qs.set("status_chat", filters.status_chat);
+      if (filters.ordem) qs.set("ordem", filters.ordem);
       if (filters.pendentes) qs.set("pendentes", "true");
       if (filters.assigned_to) qs.set("assigned_to", filters.assigned_to);
       if (filters.search) qs.set("search", filters.search);

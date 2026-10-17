@@ -42,48 +42,21 @@ const base = {
   contacts: { id: "ct1", display_name: "Cliente", name: null, phone_number: "+595999", tags: [], is_blocked: false, is_anonymized: false },
 } as unknown as ConversationWithContact;
 
-const pintar = (conv: ConversationWithContact, queuePosition?: number) =>
+const pintar = (conv: ConversationWithContact) =>
   render(
     <ConversationListItem
       conversation={conv}
       isSelected={false}
       onSelect={() => {}}
-      queuePosition={queuePosition}
       mostrarCanal={false}
     />,
   );
 
-describe("na Fila, a espera é a da ordem", () => {
-  it("⭐ a linha diz a posição e a ESPERA — a mensagem mais antiga sem resposta (9 dias)", () => {
-    pintar(base, 3);
-    expect(screen.getByText(/3º na fila/)).toBeInTheDocument();
-    expect(screen.getByText(/Espera de 9d/)).toBeInTheDocument();
-  });
-
-  it("⭐ não é a ÚLTIMA mensagem do cliente (1 dia), nem a criação (300 dias)", () => {
-    pintar(base, 3);
-    expect(screen.queryByText(/Espera de 1d/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Espera de 300d/)).not.toBeInTheDocument();
-  });
-
-  it("⭐ sem mensagem do cliente, cai no MESMO fallback da régua (a criação)", () => {
-    pintar(
-      { ...base, awaiting_since: null, last_inbound_at: null } as unknown as ConversationWithContact,
-      1,
-    );
-    expect(screen.getByText(/Espera de 300d/)).toBeInTheDocument();
-  });
-
-  it("o canto mostra a hora da última mensagem, como no modelo", () => {
-    pintar(base, 3);
-    expect(screen.getByText(horaDaAtividade)).toBeInTheDocument();
-  });
-});
-
-describe("fora da Fila", () => {
-  it("CONTROLE: sem posição na fila, não há linha de espera", () => {
+describe("Inbox sem posição na fila", () => {
+  it("mostra a última atividade sem posição nem linha de espera", () => {
     pintar(base);
     expect(screen.getByText(horaDaAtividade)).toBeInTheDocument();
+    expect(screen.queryByText(/na fila/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Espera de/)).not.toBeInTheDocument();
   });
 });

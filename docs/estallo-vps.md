@@ -90,6 +90,28 @@ do CRM. O firewall libera só `docker_gwbridge → 172.18.0.1:53` (UDP e TCP). P
 conferir: `docker exec <container do app> getent hosts cbeqboyfmwyjsybszaxy.supabase.co`
 e `resolvectl statistics` (acertos de cache).
 
+### Relógio
+
+A rede também bloqueia NTP (UDP/123) para qualquer servidor: o
+`systemd-timesyncd` ficava ativo com zero pacotes e o relógio derivava. Isso
+importa porque as mensagens enviadas pelo CRM usam o relógio da VPS, e as
+recebidas usam o do WhatsApp; com deriva, uma resposta pode cair acima da
+mensagem que ela responde. Medido em 17/10/2026: desvio de 1,1 s. NTS não
+resolve, porque o pacote de hora dele também vai por UDP/123. A receita
+aplicada no host acerta o relógio pelo cabeçalho `Date` de servidores HTTPS,
+com certificado verificado e ajuste suave:
+
+```bash
+apt-get install -y htpdate
+# /etc/default/htpdate
+HTP_SERVERS="https://www.apple.com https://www.google.com https://www.microsoft.com"
+HTP_OPTIONS="-D -a -c -l"
+systemctl disable --now systemd-timesyncd && systemctl enable --now htpdate
+```
+
+Para conferir: `htpdate -q https://www.google.com` (desvio atual) e
+`journalctl -u htpdate` (ajustes feitos).
+
 Não agendar `docker image prune -a` nesta VPS. As imagens do CRM não existem em
 registro, então a limpeza apagaria a versão anterior e o rollback deixaria de funcionar.
 

@@ -2,6 +2,7 @@
 import { useMutation, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api/client";
 import { randomId } from "@/lib/random-id";
+import { instanteOtimista } from "@/lib/inbox/ordem-do-fio";
 import { showApiError } from "@/components/feedback/ApiErrorToast";
 import type { Message } from "@/lib/types/messaging";
 
@@ -31,10 +32,15 @@ interface MessagesPage {
   meta?: { cursor?: string | null; has_more?: boolean };
 }
 
+export const CHAVE_DO_ENVIO = ["send-message"] as const;
+
 export function useSendMessage() {
   const qc = useQueryClient();
 
   return useMutation({
+    // A chave deixa a lista do Inbox saber em que conversa o PRÓPRIO usuário
+    // acabou de agir (`useMutationState`), sem passar callback pelo composer.
+    mutationKey: CHAVE_DO_ENVIO,
     mutationFn: async (input: SendArgs) =>
       apiClient.post<{ data: Message }>("/api/v1/messages", input),
     onMutate: async (args) => {
@@ -44,6 +50,9 @@ export function useSendMessage() {
       await qc.cancelQueries({ queryKey });
 
       const tempId = `temp-${randomId()}`;
+      const instante = instanteOtimista(
+        qc.getQueryData<InfiniteData<MessagesPage>>(queryKey)?.pages[0]?.data ?? [],
+      );
       const tempMsg: Message = {
         id: tempId,
         organization_id: "",
@@ -65,7 +74,7 @@ export function useSendMessage() {
         reply_to_message_id: args.reply_to_message_id ?? null,
         sent_via: "user",
         sent_by_user_id: null,
-        sent_at: new Date().toISOString(),
+        sent_at: instante,
         delivered_at: null,
         read_at: null,
         metadata: { _optimistic: true },
@@ -74,7 +83,7 @@ export function useSendMessage() {
         // que volta do servidor, e a bolha passaria a renderizar dois formatos.
         edited_at: null,
         revoked_at: null,
-        created_at: new Date().toISOString(),
+        created_at: instante,
       };
 
       qc.setQueryData<InfiniteData<MessagesPage>>(queryKey, (old) => {
@@ -128,6 +137,9 @@ export function useSendMessage() {
     onSettled: (_data, _err, args) => {
       qc.invalidateQueries({ queryKey: ["messages", args.conversation_id] });
       qc.invalidateQueries({ queryKey: ["conversations"] });
+      // Responder muda o status do chat (Em espera → Em aberto): o contador das
+      // abas precisa cair na hora, não no próximo polling de 30 s.
+      qc.invalidateQueries({ queryKey: ["conversation-counts"] });
     },
   });
 }

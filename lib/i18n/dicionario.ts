@@ -15620,6 +15620,21 @@ export const DICIONARIO: Traducoes = {
   "Quando um lead avançar para esta etapa, ele aparecerá aqui.": { es: "Cuando un lead avance a esta etapa, aparecerá aquí." },
   "Adicionar lead": { es: "Añadir lead" },
   "Abrir WhatsApp": { es: "Abrir WhatsApp" },
+  // Chat suspenso, respostas rápidas e tarefas (17/10/2026)
+  "Abrir chats": { es: "Abrir chats" },
+  "Abrir o cadastro do contato": { es: "Abrir la ficha del contacto" },
+  "Buscar pelo nome": { es: "Buscar por nombre" },
+  "Buscar respostas rápidas pelo nome": { es: "Buscar respuestas rápidas por nombre" },
+  "Chat com": { es: "Chat con" },
+  "Chats suspensos": { es: "Chats flotantes" },
+  "Conversar com o contato sem sair das tarefas": { es: "Conversar con el contacto sin salir de las tareas" },
+  "Conversar sem sair do funil": { es: "Conversar sin salir del embudo" },
+  "Conversar": { es: "Conversar" },
+  "Conversas abertas": { es: "Conversaciones abiertas" },
+  "Fechar chat de": { es: "Cerrar chat de" },
+  "Fechar chat": { es: "Cerrar chat" },
+  "Minimizar chat": { es: "Minimizar chat" },
+  "Nenhuma resposta rápida com esse nome.": { es: "Ninguna respuesta rápida con ese nombre." },
 };
 
 /**

@@ -1,5 +1,6 @@
 "use client";
 
+import { FormatacaoWhatsApp } from "@/lib/mensagens/formatacao-whatsapp";
 import { useLocaleDeData } from "@/hooks/i18n/useLocaleDeData";
 import { format } from "date-fns";
 import { useT } from "@/hooks/i18n/useT";
@@ -333,7 +334,9 @@ export function MessageBubble({
                 ? t("Mensagem ocultada no CRM")
                 : citada.type === "contact"
                 ? resolveSharedContact(citada)?.name || t("Contato")
-                : citada.body?.trim() || t("(sem texto)")}
+                : citada.body?.trim()
+                ? <FormatacaoWhatsApp texto={citada.body.trim()} modo="linha" />
+                : t("(sem texto)")}
             </div>
           </div>
         )}
@@ -410,7 +413,11 @@ export function MessageBubble({
             {localizacao && <LocationCard localizacao={localizacao} />}
 
             {message.body && !isContact && !localizacao && (
-              <p className="whitespace-pre-wrap wrap-anywhere leading-snug">{message.body}</p>
+              // `div`, não `p`: a formatação do WhatsApp pode trazer lista e
+              // citação, que são blocos e não cabem num parágrafo.
+              <div className="whitespace-pre-wrap wrap-anywhere leading-snug">
+                <FormatacaoWhatsApp texto={message.body} />
+              </div>
             )}
           </>
         )}

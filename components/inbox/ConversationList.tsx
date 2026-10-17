@@ -1,4 +1,5 @@
 "use client";
+import { listaComRetidas, type Retida } from "@/lib/inbox/lista-com-retidas";
 import { useEffect, useMemo } from "react";
 import { useT } from "@/hooks/i18n/useT";
 import type { InfiniteData, UseInfiniteQueryResult } from "@tanstack/react-query";
@@ -17,6 +18,8 @@ import type {
   ConversationWithContact,
 } from "@/hooks/inbox/useConversationsRealtime";
 
+const SEM_RETIDAS: Retida<ConversationWithContact>[] = [];
+
 interface ListResponse {
   data: ConversationWithContact[];
   meta?: { cursor?: string | null; has_more?: boolean };
@@ -34,6 +37,8 @@ interface Props {
   onVisibleChange?: (ids: string[]) => void;
   /** Fecha a conversa aberta (pedido do menu da linha). */
   onFecharConversa?: () => void;
+  /** Conversas em que o usuário agiu e que a lista segura no lugar (`lista-com-retidas.ts`). */
+  retidas?: Retida<ConversationWithContact>[];
 }
 
 export function ConversationList({
@@ -44,6 +49,7 @@ export function ConversationList({
   onVisibleChange,
   onLimparFiltros,
   onFecharConversa,
+  retidas = SEM_RETIDAS,
 }: Props) {
   const t = useT();
   // Só mostra POR ONDE a conversa entrou quando há mais de um número. Com um
@@ -63,8 +69,12 @@ export function ConversationList({
   // `clientFilter` era o mecanismo que permitia um filtro existir fora do contrato
   // — e foi por ele que "Não lidos" virou ilha, fora da cerca que vigia os demais.
   const items = useMemo(
-    () => (q.data?.pages.flatMap((p) => p.data) ?? []) as ConversationWithContact[],
-    [q.data],
+    () =>
+      listaComRetidas(
+        (q.data?.pages.flatMap((p) => p.data) ?? []) as ConversationWithContact[],
+        retidas,
+      ),
+    [q.data, retidas],
   );
 
   // Notify parent of currently-visible IDs (for j/k nav). Must use effect

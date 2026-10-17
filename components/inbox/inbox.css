@@ -588,6 +588,13 @@
   color: var(--color-text-muted);
 }
 
+/* O avatar de quem atende, na linha dos selos (17/10/2026). */
+.ibx-attendant {
+  display: inline-flex;
+  flex: none;
+  border-radius: 9999px;
+}
+
 /* O menu da linha e o popover de filtros: o mesmo cartão flutuante do modelo. */
 .ibx-floating {
   border: 1px solid var(--ibx-line);
@@ -1318,6 +1325,10 @@
   line-height: 1.5;
   height: auto;
   min-height: 21px;
+  /* A prévia se confundia com a linha de quem atende (17/10/2026): um peso a
+     mais e o tom de texto secundário — não o apagado — a destacam nos dois temas. */
+  font-weight: 500;
+  color: var(--color-text-muted);
 }
 .ibx-bubble {
   font-size: 15px;
@@ -1334,4 +1345,24 @@
 .ibx-search input,
 .ibx-filter-popover {
   font-size: 14px;
+}
+
+/* Chat suspenso: a janela, o trilho e a bolha entram com um deslize curto. */
+@keyframes chat-suspenso-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.chat-suspenso-entrada {
+  animation: chat-suspenso-entrada 180ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .chat-suspenso-entrada {
+    animation: none;
+  }
 }

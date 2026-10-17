@@ -3,7 +3,7 @@
 import { useLocaleDeData } from "@/hooks/i18n/useLocaleDeData";
 
 import type { Locale } from "date-fns";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useT } from "@/hooks/i18n/useT";
 import { format, isToday, isYesterday } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import { ROLE_RANK } from "@/lib/auth/types";
 import { capabilitiesOf, transportaMensagem, type ChannelProvider } from "@/lib/channels/capabilities";
 import { montarCartoesDaPassagem, type CartaoDaPassagem } from "@/lib/escalacao/cartao-da-passagem";
 import type { Message, Note } from "@/lib/types/messaging";
+import { compararMensagens } from "@/lib/inbox/ordem-do-fio";
 
 interface Props {
   conversationId: string | null;
@@ -68,10 +69,17 @@ export function mergeThreadItems(
     ...notes.map((data): ThreadItem => ({ kind: "note", ts: data.created_at, data })),
     ...passagens.map((data): ThreadItem => ({ kind: "passagem", ts: data.criadoEm, data })),
   ];
-  // Sort estável (Array#sort é estável no V8/Node): empate mantém a ordem de
-  // inserção acima — mensagens antes de notas no mesmo instante, e a passagem
-  // DEPOIS das duas, que é o que aconteceu: ela é consequência da última fala.
-  items.sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime());
+  // Empate de instante: mensagens antes de notas, e a passagem DEPOIS das duas,
+  // que é o que aconteceu — ela é consequência da última fala. Entre mensagens,
+  // a régua do servidor (`compararMensagens`), para o desempate não depender da
+  // ordem em que as páginas chegaram.
+  const tipo = { message: 0, note: 1, passagem: 2 } as const;
+  items.sort(
+    (a, b) =>
+      new Date(a.ts).getTime() - new Date(b.ts).getTime() ||
+      tipo[a.kind] - tipo[b.kind] ||
+      (a.kind === "message" && b.kind === "message" ? compararMensagens(a.data, b.data) : 0),
+  );
   return items;
 }
 
@@ -106,6 +114,15 @@ export function ChatThread({
    * pode valer, porque ninguém rolou nada ainda. Ver o efeito abaixo.
    */
   const jaAncorou = useRef(false);
+  /** O usuário estava no fim ANTES da última mudança de conteúdo (ver o efeito de rolagem). */
+  const pertoDoFim = useRef(true);
+  const ultimaChaveVista = useRef<string | null>(null);
+  const paginasNoLayout = useRef(0);
+  const crescimentoDoHistorico = useRef(false);
+  // Os elementos em estado (não só em ref): os observadores precisam ser
+  // religados quando o fio sai do esqueleto e o scroller passa a existir.
+  const [scroller, setScroller] = useState<HTMLDivElement | null>(null);
+  const [conteudo, setConteudo] = useState<HTMLDivElement | null>(null);
   const activeOrg = useActiveOrg();
   const currentUser = useUser();
   const deleteNote = useDeleteNote(conversationId ?? "");
@@ -182,6 +199,9 @@ export function ChatThread({
   useEffect(() => {
     paginasVistas.current = 0;
     jaAncorou.current = false;
+    pertoDoFim.current = true;
+    ultimaChaveVista.current = null;
+    paginasNoLayout.current = 0;
   }, [conversationId]);
 
   // Rola ao fim na primeira carga e quando chega mensagem/nota nova — mas NÃO
@@ -227,10 +247,29 @@ export function ChatThread({
      * inferir isso da paginação de UMA das três fontes do fio.
      */
     const primeiraAncoragem = !jaAncorou.current;
-    if (jaAncorou.current) {
-      const sc = scrollerRef.current;
-      if (sc && sc.scrollHeight - sc.scrollTop - sc.clientHeight > 120) return;
-    }
+    /**
+     * "ESTAVA PERTO DO FIM" É PERGUNTA SOBRE O ANTES, NÃO SOBRE O DEPOIS.
+     *
+     * A versão anterior media a distância AQUI, com a mensagem nova já
+     * desenhada: uma bolha com mais de 120px (texto longo, imagem, áudio) punha
+     * o próprio fim a mais de 120px e a guarda concluía "o usuário está lendo o
+     * histórico" de quem estava parado no rodapé — a mensagem recém-enviada
+     * ficava abaixo da dobra. `pertoDoFim` é atualizado pelo listener de
+     * rolagem, antes de o conteúdo novo existir.
+     *
+     * E a mensagem que EU acabei de mandar vai sempre ao fim: quem envia quer
+     * ver o que enviou, mesmo que estivesse lendo o histórico.
+     */
+    const ultimo = items[items.length - 1];
+    const ultimaChave = ultimo ? `${ultimo.kind}:${ultimo.data.id}` : null;
+    const chegouUltimaNova = ultimaChave !== ultimaChaveVista.current;
+    ultimaChaveVista.current = ultimaChave;
+    const minhaNova =
+      chegouUltimaNova &&
+      ultimo?.kind === "message" &&
+      ultimo.data.direction === "outbound" &&
+      (ultimo.data.metadata?._optimistic === true || ultimo.data.sent_by_user_id === currentUser.id);
+    if (jaAncorou.current && !pertoDoFim.current && !minhaNova) return;
     /**
      * O CARTÃO PODE CHEGAR COM O ESQUELETO AINDA NA TELA (#2515).
      *
@@ -248,11 +287,61 @@ export function ChatThread({
      */
     if (items.length > 0 && bottomRef.current) jaAncorou.current = true;
 
+    pertoDoFim.current = true;
     bottomRef.current?.scrollIntoView({
       behavior: primeiraAncoragem ? "auto" : "smooth",
       block: "end",
     });
-  }, [items.length, conversationId, paginas]);
+    // `items` entra pela chave do último item: a troca da otimista pela real
+    // (mesma contagem) não pode passar despercebida.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items.length, conversationId, paginas, items[items.length - 1]?.data.id]);
+
+  /**
+   * QUEM ESTÁ NO FIM CONTINUA NO FIM.
+   *
+   * O listener registra onde o usuário está ANTES de o conteúdo mudar (ver o
+   * efeito acima). Rolar para BAIXO nunca tira ninguém do fim — só o gesto de
+   * subir decide "estou lendo o histórico"; assim a própria animação suave
+   * (que passa por posições intermediárias) não engana a guarda.
+   *
+   * O `ResizeObserver` cobre o crescimento que não é item novo: imagem, vídeo
+   * ou áudio que termina de carregar depois da ancoragem e empurra o fim para
+   * baixo da dobra. Crescimento vindo do "Carregar mais antigas" é ignorado —
+   * ele entra ACIMA e quem pediu está no topo.
+   */
+  useEffect(() => {
+    if (!scroller) return;
+    let anterior = scroller.scrollTop;
+    const aoRolar = () => {
+      const distancia = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
+      const subiu = scroller.scrollTop < anterior - 1;
+      anterior = scroller.scrollTop;
+      pertoDoFim.current = distancia <= 120 || (!subiu && pertoDoFim.current);
+    };
+    scroller.addEventListener("scroll", aoRolar, { passive: true });
+    return () => scroller.removeEventListener("scroll", aoRolar);
+  }, [scroller]);
+
+  useLayoutEffect(() => {
+    if (paginas > paginasNoLayout.current && paginasNoLayout.current !== 0) {
+      crescimentoDoHistorico.current = true;
+    }
+    paginasNoLayout.current = paginas;
+  }, [paginas]);
+
+  useEffect(() => {
+    if (!scroller || !conteudo || typeof ResizeObserver === "undefined") return;
+    const observador = new ResizeObserver(() => {
+      if (crescimentoDoHistorico.current) {
+        crescimentoDoHistorico.current = false;
+        return;
+      }
+      if (jaAncorou.current && pertoDoFim.current) scroller.scrollTop = scroller.scrollHeight;
+    });
+    observador.observe(conteudo);
+    return () => observador.disconnect();
+  }, [scroller, conteudo]);
 
   /**
    * O ESTADO DO CANAL DESTE THREAD, PUBLICADO SEMPRE — inclusive quando não há
@@ -343,8 +432,14 @@ export function ChatThread({
           {t("Resultados nas mensagens carregadas")}: {resultados.size}
         </div>
       )}
-      <div ref={scrollerRef} className="ibx-thread min-w-0 flex-1 overflow-y-auto">
-        <div className="ibx-thread-content">
+      <div
+        ref={(el) => {
+          scrollerRef.current = el;
+          setScroller(el);
+        }}
+        className="ibx-thread min-w-0 flex-1 overflow-y-auto"
+      >
+        <div ref={setConteudo} className="ibx-thread-content">
         {q.hasNextPage && (
           <div className="flex justify-center py-2">
             <Button

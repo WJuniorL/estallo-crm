@@ -4,8 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "@/hooks/i18n/useT";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/auth/AuthProvider";
-import { estadoDaJanela } from "@/lib/channels/janela";
-import { motivoDaJanelaFechada, motivoDoContato } from "@/lib/inbox/motivo-do-envio-bloqueado";
+import { useEstadoDoEnvio } from "@/hooks/inbox/useEstadoDoEnvio";
 import { JanelaFechadaAviso } from "@/components/inbox/JanelaFechadaAviso";
 import { NumeroForaDoAr } from "@/components/inbox/NumeroForaDoAr";
 import { useClaimConversation } from "@/hooks/inbox/useClaimConversation";
@@ -16,7 +15,10 @@ import {
   type ConversationsFilters,
   type ConversationWithContact,
 } from "@/hooks/inbox/useConversationsRealtime";
-import { useConversation, isNotFound } from "@/hooks/inbox/useConversation";
+import { useConversation, isNotFound, buscarConversa } from "@/hooks/inbox/useConversation";
+import { useMutationState, useQueries } from "@tanstack/react-query";
+import { CHAVE_DO_ENVIO } from "@/hooks/inbox/useSendMessage";
+import type { Retida } from "@/lib/inbox/lista-com-retidas";
 import { ConversationList } from "./ConversationList";
 import { InboxFilters, type InboxFiltersValue, type InboxTab } from "./InboxFilters";
 import { ChatThread } from "./ChatThread";
@@ -317,7 +319,74 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
   // aí `inList` já a tem no primeiro render.
   const needsFetch = !!selectedId && !inList;
   const single = useConversation(selectedId, needsFetch);
-  const selectedConversation: ConversationWithContact | null = inList ?? single.data ?? null;
+  /**
+   * O PAINEL NÃO DESMONTA QUANDO A CONVERSA SAI DA LISTA.
+   *
+   * Responder em "Em espera" (ou receber em "Em aberto") muda o status do chat,
+   * e a lista relida deixa de trazê-la. Entre esse instante e a busca única
+   * responder, `inList` e `single.data` eram os dois nulos: o painel virava
+   * "Selecione uma conversa" e desmontava cabeçalho, fio e composer — piscava,
+   * o rascunho digitado se perdia e o canal de mensagens era recriado, perdendo
+   * o que chegasse no intervalo (a prévia da lista mostrava a mensagem nova e o
+   * fio não). O último objeto conhecido da MESMA conversa segura o painel até a
+   * fonte nova responder.
+   */
+  const vivo = inList ?? single.data ?? null;
+  const [ultimaConhecida, setUltimaConhecida] = useState<ConversationWithContact | null>(null);
+  if (vivo && vivo !== ultimaConhecida) setUltimaConhecida(vivo);
+  const selectedConversation: ConversationWithContact | null =
+    vivo ?? (ultimaConhecida?.id === selectedId ? ultimaConhecida : null);
+
+  /**
+   * AS CONVERSAS EM QUE O USUÁRIO RESPONDEU FICAM NA LISTA (ver
+   * `lib/inbox/lista-com-retidas.ts`). A retenção pertence aos filtros em que
+   * nasceu: trocar de aba ou de filtro (ou recarregar) devolve a lista do
+   * servidor. O dado da retida vem fresco de `["conversation", id]`.
+   */
+  const chaveDosFiltros = JSON.stringify(filters);
+  const [retencao, setRetencao] = useState<{ chave: string; itens: Retida<ConversationWithContact>[] }>(
+    { chave: chaveDosFiltros, itens: [] },
+  );
+  if (retencao.chave !== chaveDosFiltros) setRetencao({ chave: chaveDosFiltros, itens: [] });
+  const envios = useMutationState({
+    filters: { mutationKey: CHAVE_DO_ENVIO },
+    select: (m) => `${(m.state.variables as { conversation_id?: string } | undefined)?.conversation_id ?? ""}|${m.state.submittedAt}`,
+  });
+  const ultimoEnvio = envios.at(-1) ?? null;
+  const [envioVisto, setEnvioVisto] = useState(ultimoEnvio);
+  if (ultimoEnvio !== envioVisto) {
+    setEnvioVisto(ultimoEnvio);
+    const id = ultimoEnvio?.split("|")[0];
+    const lista = listQ.data?.pages.flatMap((p) => p.data) ?? [];
+    const indice = lista.findIndex((c) => c.id === id);
+    if (id && indice >= 0 && !retencao.itens.some((r) => r.conversa.id === id)) {
+      setRetencao({
+        chave: chaveDosFiltros,
+        itens: [...retencao.itens, { conversa: lista[indice]!, indice }],
+      });
+    }
+  }
+  const frescas = useQueries({
+    queries: retencao.itens.map((r) => ({
+      queryKey: ["conversation", r.conversa.id],
+      queryFn: () => buscarConversa(r.conversa.id),
+      retry: false,
+      enabled: !(listQ.data?.pages.some((p) => p.data.some((c) => c.id === r.conversa.id)) ?? false),
+    })),
+    // `combine` é memoizado pelo react-query: o array só muda quando um dado muda
+    // (sem isso `retidas` nasceria nova a cada render e a lista, que avisa o pai
+    // das linhas visíveis por efeito, entraria em laço).
+    combine: (resultados) => resultados.map((r) => r.data),
+  });
+  const retidas = useMemo<Retida<ConversationWithContact>[]>(
+    () =>
+      retencao.itens.map((r, i) => ({
+        indice: r.indice,
+        conversa:
+          (r.conversa.id === selectedId ? selectedConversation : null) ?? frescas[i] ?? r.conversa,
+      })),
+    [retencao.itens, selectedId, selectedConversation, frescas],
+  );
   const selectionNotFound =
     needsFetch && !single.isPending && !single.data && isNotFound(single.error);
 
@@ -370,38 +439,9 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
     close.mutate({ conversation_id: selectedConversation.id });
   }, [close, selectedConversation]);
 
-  // A janela vence SOZINHA com a aba aberta. Sem este relógio, quem deixa o
-  // inbox aberto a tarde inteira seguiria com o composer liberado numa conversa
-  // que já venceu — e o bloqueio só apareceria no próximo recarregamento.
-  const [agoraJanela, setAgoraJanela] = useState(() => new Date());
-  useEffect(() => {
-    const t = setInterval(() => setAgoraJanela(new Date()), 30_000);
-    return () => clearInterval(t);
-  }, []);
-
-  // A janela de 24h fecha o composer, e o motivo DIZ há quanto tempo fechou.
-  //
-  // Antes disto o texto livre saía, o CRM marcava `failed` e o operador via um
-  // `131047` — descobrindo a regra pelo erro, uma mensagem por vez. Barrar aqui
-  // é o pedido explícito do dono: se não dá para enviar, que não deixe tentar.
-  //
-  // Reusa o `blockedReason` que já existe (contato bloqueado/anonimizado) em vez
-  // de um segundo mecanismo de bloqueio: dois caminhos para desabilitar o mesmo
-  // composer divergem, e o segundo esquece de cobrir o áudio ou o anexo.
-  const janela = estadoDaJanela(
-    selectedConversation?.channel_sessions?.provider ?? null,
-    selectedConversation?.last_inbound_at ?? null,
-    agoraJanela,
-  );
-  // Os textos moram em lib/inbox/motivo-do-envio-bloqueado.ts: o "Enviar link"
-  // da videochamada desabilita na mesma conversa e mostra o MESMO motivo.
-  const motivoDaJanela = motivoDaJanelaFechada(
-    janela,
-    selectedConversation?.channel_sessions?.provider,
-    t,
-  );
-
-  const blockedReason = motivoDoContato(selectedConversation?.contacts, t);
+  // Janela de 24h, contato bloqueado e suporte só-leitura: a MESMA regra do
+  // chat suspenso (`hooks/inbox/useEstadoDoEnvio.ts`).
+  const { motivoDaJanela, blockedReason } = useEstadoDoEnvio(selectedConversation);
 
   /* ─── DIVISÓRIAS ARRASTÁVEIS (#2579) ────────────────────────────────────
    *
@@ -629,6 +669,7 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
         <div className="min-h-0 flex-1 overflow-hidden">
           <ConversationList
             listQuery={listQ}
+            retidas={retidas}
             filters={filters}
             selectedId={selectedId}
             onSelect={handleSelect}
@@ -791,7 +832,7 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
               key={rascunhoVivo ? `rascunho:${rascunhoVivo.conversationId}` : "composer"}
               ref={composerRef}
               conversationId={selectedConversation.id}
-              blockedReason={supportReadonly ? "Acompanhamento somente leitura" : blockedReason}
+              blockedReason={blockedReason}
               janelaFechada={motivoDaJanela}
               disabled={selectedConversation.status === "closed"}
               contactName={selectedConversation.contacts?.name ?? null}

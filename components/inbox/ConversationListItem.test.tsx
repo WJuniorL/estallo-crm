@@ -15,6 +15,8 @@ import { conversaDeExemplo } from "./__fixtures__/conversa";
 
 // O menu da linha tem teste próprio (menu-da-conversa-no-inbox).
 vi.mock("@/components/inbox/AcoesDaConversa", () => ({ AcoesDaConversa: () => null }));
+// O avatar de quem atende lê a lista de membros (react-query).
+vi.mock("@/hooks/inbox/useAssignableMembers", () => ({ useAssignableMembers: () => ({ data: [] }) }));
 
 describe("ConversationListItem — etiqueta de grupo", () => {
   it("conversa de grupo tem a etiqueta Grupo", () => {

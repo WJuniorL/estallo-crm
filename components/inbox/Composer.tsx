@@ -23,7 +23,7 @@ import {
   resolverMencao,
   type OpcaoDeMencao,
 } from "@/components/inbox/composer/MentionMenu";
-import { resolveSlash, TemplateMenu } from "@/components/inbox/composer/TemplateMenu";
+import { filtrarTemplates, resolveSlash, TemplateMenu } from "@/components/inbox/composer/TemplateMenu";
 import { useAssignableMembers } from "@/hooks/inbox/useAssignableMembers";
 import { useCreateNote } from "@/hooks/inbox/useCreateNote";
 import { useMessageTemplates, type MessageTemplate } from "@/hooks/inbox/useMessageTemplates";
@@ -186,7 +186,14 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
   const createNote = useCreateNote();
   const templates = useMessageTemplates();
   const slash = resolveSlash(text);
-  const menuOpen = mode === "reply" && slash.open && !menuDismissed;
+  // Com espaços permitidos no termo, uma mensagem que começa com "/" manteria
+  // o menu aberto — e o Enter, reservado ao menu, nunca enviaria. O menu só
+  // conta como aberto enquanto há resposta rápida que case com o termo.
+  const menuOpen =
+    mode === "reply" &&
+    slash.open &&
+    !menuDismissed &&
+    (slash.query.trim() === "" || filtrarTemplates(templates.data ?? [], slash.query).length > 0);
 
   // SÓ em nota: a menção é assunto interno, e uma menção no campo de resposta
   // sairia para o cliente como texto solto. A query roda enquanto a lista está

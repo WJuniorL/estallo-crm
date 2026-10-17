@@ -21,6 +21,9 @@ import type { ConversationWithContact } from "@/hooks/inbox/useConversationsReal
 import { rotuloDoContato } from "@/lib/contacts/rotulo-do-contato";
 import { phoneForDisplay } from "@/lib/channels/phone-variants";
 import { rotuloDoCanalDaConversa } from "@/lib/channels/estado";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useAssignableMembers } from "@/hooks/inbox/useAssignableMembers";
+import { FormatacaoWhatsApp } from "@/lib/mensagens/formatacao-whatsapp";
 
 interface Props {
   conversation: ConversationWithContact;
@@ -98,10 +101,41 @@ const TONS_DO_AVATAR = [
   "ibx-tom-ceu",
   "ibx-tom-neutro",
 ];
-function corDoAvatar(nome: string): string {
+export function corDoAvatar(nome: string): string {
   let h = 0;
   for (let i = 0; i < nome.length; i += 1) h = (h * 31 + nome.charCodeAt(i)) >>> 0;
   return TONS_DO_AVATAR[h % TONS_DO_AVATAR.length]!;
+}
+
+/**
+ * QUEM ATENDE, EM 20px — no lugar do texto "Com <nome>" (pedido de 17/10/2026).
+ *
+ * O texto disputava a atenção com a prévia da mensagem logo acima, nos dois
+ * temas. O avatar diz a mesma coisa sem competir: a foto do perfil do
+ * atendente, ou as iniciais, e o nome no passar do mouse (e para leitor de
+ * tela). A foto vem da lista de membros, que o cabeçalho já carrega — uma
+ * leitura por tela, não por linha.
+ */
+function AvatarDoAtendente({ userId, nome }: { userId: string | null; nome: string }) {
+  const membros = useAssignableMembers(true);
+  const foto = membros.data?.find((m) => m.user_id === userId)?.avatar_url ?? null;
+  return (
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="ibx-attendant" role="img" aria-label={nome}>
+            <Avatar className="size-5">
+              {foto ? <AvatarImage src={foto} alt="" className="object-cover" /> : null}
+              <AvatarFallback className={cn("text-[9px] font-semibold", corDoAvatar(nome))}>
+                {initials(nome, "?")}
+              </AvatarFallback>
+            </Avatar>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="top">{nome}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
 }
 
 export function ConversationListItem({
@@ -175,7 +209,14 @@ export function ConversationListItem({
   const canal = conversation.channel_sessions ?? null;
   const rotuloCanal = rotuloDoCanalDaConversa(canal, t);
 
+  // Conversa com atendente (e aberta): o avatar entra na linha dos selos.
+  const atendente =
+    comando.quem === "humano" && !STATUS_ENCERRADOS.has(conversation.status)
+      ? (comando.nome ?? t("Atendente"))
+      : null;
+
   const temSelos =
+    atendente != null ||
     visibleTags.length > 0 ||
     (mostrarCanal && rotuloCanal != null) ||
     Boolean(c?.is_blocked) ||
@@ -192,11 +233,7 @@ export function ConversationListItem({
       <Robot size={11} weight="duotone" className="ibx-icon" aria-hidden />
       <span>{t("Atendimento automático")}</span>
     </>
-  ) : comando.quem === "humano" ? (
-    <span className="truncate">
-      {t("Com")} {comando.nome ?? t("Atendente")}
-    </span>
-  ) : (
+  ) : comando.quem === "humano" ? null : (
     <span>{rotuloDoComando}</span>
   );
 
@@ -281,12 +318,15 @@ export function ConversationListItem({
             {isAi && mostrarAutomatico ? (
               <Robot size={12} weight="duotone" className="mr-1 inline align-[-2px]" aria-hidden />
             ) : null}
-            {preview}
+            <FormatacaoWhatsApp texto={preview} modo="linha" />
           </span>
-          <span className="ibx-operational">{operacao}</span>
+          {operacao && <span className="ibx-operational">{operacao}</span>}
 
           {temSelos && (
             <span className="ibx-badges">
+              {atendente && (
+                <AvatarDoAtendente userId={conversation.assigned_to_user_id ?? null} nome={atendente} />
+              )}
               {visibleTags.map((t) => (
                 <ChipDeEtiqueta
                   key={t}

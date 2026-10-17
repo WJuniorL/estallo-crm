@@ -86,6 +86,8 @@ export interface ChatSuspensoApi extends Estado {
   abrir: (conversationId: string) => void;
   fechar: (conversationId: string) => void;
   alternar: (conversationId: string) => void;
+  /** Fecha TODOS os chats abertos (o X do cabeçalho); cada avatar tem o seu X individual. */
+  fecharTodos: () => void;
   /** Troca de instância: a conversa do outro número entra no LUGAR da atual. */
   substituir: (antigo: string, novo: string) => void;
   minimizar: () => void;
@@ -122,14 +124,16 @@ export function ProvedorDoChatSuspenso({ children }: { children: ReactNode }) {
   );
   const minimizar = useCallback(() => setEstado((e) => ({ ...e, minimizado: true })), []);
   const restaurar = useCallback(() => setEstado((e) => ({ ...e, minimizado: false })), []);
+  // Objeto novo (não o `VAZIO` da hidratação): fechar tudo precisa ser gravado.
+  const fecharTodos = useCallback(() => setEstado({ ...VAZIO }), []);
   const substituir = useCallback(
     (antigo: string, novo: string) => setEstado((e) => substituirChat(e, antigo, novo)),
     [],
   );
 
   const api = useMemo(
-    () => ({ ...estado, abrir, fechar, alternar, minimizar, restaurar, substituir }),
-    [estado, abrir, fechar, alternar, minimizar, restaurar, substituir],
+    () => ({ ...estado, abrir, fechar, fecharTodos, alternar, minimizar, restaurar, substituir }),
+    [estado, abrir, fechar, fecharTodos, alternar, minimizar, restaurar, substituir],
   );
   return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
 }

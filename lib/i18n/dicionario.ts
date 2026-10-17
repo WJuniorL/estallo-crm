@@ -15631,7 +15631,7 @@ export const DICIONARIO: Traducoes = {
   "Conversar sem sair do funil": { es: "Conversar sin salir del embudo" },
   "Conversas abertas": { es: "Conversaciones abiertas" },
   "Fechar chat de": { es: "Cerrar chat de" },
-  "Fechar chat": { es: "Cerrar chat" },
+  "Fechar todos os chats": { es: "Cerrar todos los chats" },
   "Minimizar chat": { es: "Minimizar chat" },
   "Nenhuma resposta rápida com esse nome.": { es: "Ninguna respuesta rápida con ese nombre." },
   "Trocar de instância": { es: "Cambiar de instancia" },

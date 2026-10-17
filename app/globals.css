@@ -965,6 +965,31 @@
   }
 }
 
+/* A TELA DO FUNIL NUMA ESCALA MENOR (17/10/2026): em tela pequena, letras e
+   botões no tamanho do resto do produto deixavam ver pouco mais de uma etapa.
+   Só a página do quadro leva `.funil-compacto`; os utilitários de texto dentro
+   dela descem um degrau. Regra fora de `@layer` de propósito: vence o
+   utilitário (que mora em `@layer utilities`) sem `!important`. Diálogos e
+   menus abertos a partir do quadro vão para um portal e ficam no tamanho
+   normal. */
+.funil-compacto .text-xs {
+  font-size: 0.71875rem;
+}
+.funil-compacto .text-sm {
+  font-size: 0.8125rem;
+}
+.funil-compacto .text-base {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+.funil-compacto .text-lg {
+  font-size: 0.9375rem;
+}
+.funil-compacto .text-2xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
 /* Overlay próprio, e não uma classe no card: o elemento é REMONTADO a cada
    evento (key = contador de pulsos), e é a remontagem que faz a animação
    recomeçar. Alternar classe no mesmo nó não reinicia animação em CSS. */

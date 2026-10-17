@@ -147,7 +147,7 @@ export const KanbanCard = memo(function KanbanCard({
           title={card.tags.length > 0 ? `Tags: ${card.tags.join(", ")}` : undefined}
           className={cn(
             "group relative overflow-hidden rounded-2xl border border-border/70 bg-surface",
-            "p-3.5 shadow-md transition-[border-color,box-shadow]",
+            "p-3 shadow-md transition-[border-color,box-shadow]",
             "hover:border-border-strong",
             snapshot.isDragging && "rotate-1 shadow-md ring-1 ring-accent/40",
             isSelected && "ring-2 ring-accent",
@@ -178,9 +178,9 @@ export const KanbanCard = memo(function KanbanCard({
             )}
           />
 
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-2.5">
             <div className="relative shrink-0">
-              <Avatar className="size-11">
+              <Avatar className="size-9">
                 {lead.contact_has_avatar && lead.contact_id && (
                   <AvatarImage
                     src={`/api/v1/contacts/${lead.contact_id}/avatar`}
@@ -188,7 +188,7 @@ export const KanbanCard = memo(function KanbanCard({
                     className="object-cover"
                   />
                 )}
-                <AvatarFallback className="bg-accent-soft text-lg font-semibold text-accent">
+                <AvatarFallback className="bg-accent-soft text-sm font-semibold text-accent">
                   {(lead.contact_name || card.title).trim().slice(0, 1).toUpperCase() || "?"}
                 </AvatarFallback>
               </Avatar>
@@ -232,7 +232,7 @@ export const KanbanCard = memo(function KanbanCard({
                       key={tag}
                       tag={tag}
                       entidade="lead"
-                      className="max-w-full truncate rounded-full px-2.5 py-1 text-xs"
+                      className="max-w-full truncate rounded-full px-2 py-0.5 text-xs"
                     />
                   ))}
                 </div>
@@ -244,7 +244,7 @@ export const KanbanCard = memo(function KanbanCard({
           {/* Valor em destaque; ausência de valor continua explícita. */}
           <p
             className={cn(
-              "mt-3 text-base leading-6 font-bold tabular-nums",
+              "mt-2 text-base font-bold tabular-nums",
               value ? "text-text" : "text-text-muted",
             )}
           >
@@ -309,7 +309,7 @@ export const KanbanCard = memo(function KanbanCard({
           <ContatoNoCard lead={lead} />
 
           {/* ④ dono (+ selo de tarefas) · ⑤ tempo no estágio */}
-          <div className="mt-2.5 flex min-h-9 items-center justify-between gap-2 border-t border-border/60 pt-2.5">
+          <div className="mt-2 flex min-h-8 items-center justify-between gap-2 border-t border-border/60 pt-2">
             <div className="flex min-w-0 items-center gap-2">
               <OwnerBadge
                 ownerKind={card.owner.kind}
@@ -319,10 +319,10 @@ export const KanbanCard = memo(function KanbanCard({
               <TarefasNoCard tarefas={lead.tarefas} />
             </div>
             <span
-              className="ml-auto inline-flex min-w-0 items-center gap-1.5 rounded-full bg-surface-elevated px-2 py-1.5 text-xs text-text-muted"
+              className="ml-auto inline-flex min-w-0 items-center gap-1 rounded-full bg-surface-elevated px-2 py-1 text-xs text-text-muted"
               title={`${age ?? ""} ${t("em")} ${card.stageName}`}
             >
-              <CalendarBlank size={15} className="shrink-0" aria-hidden />
+              <CalendarBlank size={13} className="shrink-0" aria-hidden />
               <span className="truncate">
                 {state.showStageAge && age
                   ? `${age} ${t("em")} ${card.stageName}`
@@ -339,21 +339,21 @@ export const KanbanCard = memo(function KanbanCard({
                     e.stopPropagation();
                     chatSuspenso.abrir(lead.conversa!.id);
                   }}
-                  className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-success-bg text-success-fg hover:bg-success-bg/70"
+                  className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-success-bg text-success-fg hover:bg-success-bg/70"
                   aria-label={t("Abrir WhatsApp")}
                   title={t("Conversar sem sair do funil")}
                 >
-                  <IconeWhatsapp size={22} />
+                  <IconeWhatsapp size={18} />
                 </button>
               ) : (
                 <Link
                   href={`/app/inbox?id=${lead.conversa.id}`}
                   onClick={(e) => e.stopPropagation()}
-                  className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-success-bg text-success-fg hover:bg-success-bg/70"
+                  className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-success-bg text-success-fg hover:bg-success-bg/70"
                   aria-label={t("Abrir WhatsApp")}
                   title={t("Abrir esta conversa no Inbox")}
                 >
-                  <IconeWhatsapp size={22} />
+                  <IconeWhatsapp size={18} />
                 </Link>
               ))}
           </div>

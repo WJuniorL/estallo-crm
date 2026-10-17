@@ -149,7 +149,7 @@ function renderInline(nos: NoInline[], chave: string): ReactNode[] {
         return <s key={k}>{renderInline(no.filhos, k)}</s>;
       case "codigo":
         return (
-          <code key={k} className="rounded bg-current/10 px-1 font-mono text-[0.92em]">
+          <code key={k} className="rounded-sm bg-current/10 px-1 font-mono text-[0.92em]">
             {no.texto}
           </code>
         );

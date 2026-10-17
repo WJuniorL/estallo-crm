@@ -170,7 +170,10 @@ function Doca({ chat }: { chat: ChatSuspensoApi }) {
         <TooltipProvider delayDuration={200}>
           <nav
             aria-label={t("Conversas abertas")}
-            className="chat-suspenso-entrada flex max-h-[min(560px,calc(100dvh-9rem))] flex-col gap-2 overflow-y-auto rounded-full border border-border bg-background/90 p-1.5 shadow-lg backdrop-blur-sm"
+            // `p-2` e canto `rounded-3xl` (não `rounded-full`): o X de fechar de
+            // cada avatar sobra para fora do avatar, e com o canto em meia-lua
+            // e pouco respiro a rolagem do trilho o cortava.
+            className="chat-suspenso-entrada flex max-h-[min(558px,calc(100dvh-7rem))] flex-col gap-2.5 overflow-y-auto rounded-3xl border border-border bg-background/90 p-2 shadow-lg backdrop-blur-sm"
           >
             {abertos.map((id) => (
               <Tooltip key={id}>
@@ -197,7 +200,7 @@ function Doca({ chat }: { chat: ChatSuspensoApi }) {
                       type="button"
                       onClick={() => chat.fechar(id)}
                       aria-label={`${t("Fechar chat de")} ${nomeDe(id)}`}
-                      className="absolute -left-1 -top-1 hidden size-4 items-center justify-center rounded-full bg-foreground text-background group-focus-within:flex group-hover:flex"
+                      className="absolute -left-1 -top-1 z-10 hidden size-4 items-center justify-center rounded-full bg-foreground text-background shadow-sm ring-2 ring-background group-focus-within:flex group-hover:flex"
                     >
                       <X size={10} weight="bold" aria-hidden />
                     </button>
@@ -217,7 +220,7 @@ function Doca({ chat }: { chat: ChatSuspensoApi }) {
         aria-label={ativo ? `${t("Chat com")} ${nomeDe(ativo)}` : undefined}
         aria-hidden={minimizado}
         className={cn(
-          "relative flex h-[min(560px,calc(100dvh-7rem))] w-[min(380px,calc(100vw-5.5rem))] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl",
+          "relative flex h-[min(558px,calc(100dvh-7rem))] w-[min(380px,calc(100vw-5.5rem))] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl",
           minimizado ? "pointer-events-none invisible absolute right-0" : "chat-suspenso-entrada",
         )}
       >
@@ -229,7 +232,7 @@ function Doca({ chat }: { chat: ChatSuspensoApi }) {
             conversationId={id}
             visivel={!minimizado && id === ativo}
             aoMinimizar={chat.minimizar}
-            aoFechar={() => chat.fechar(id)}
+            aoFecharTodos={chat.fecharTodos}
             aoTrocarDeConversa={(novo) => chat.substituir(id, novo)}
           />
         ))}
@@ -262,13 +265,13 @@ function PainelDaConversa({
   conversationId,
   visivel,
   aoMinimizar,
-  aoFechar,
+  aoFecharTodos,
   aoTrocarDeConversa,
 }: {
   conversationId: string;
   visivel: boolean;
   aoMinimizar: () => void;
-  aoFechar: () => void;
+  aoFecharTodos: () => void;
   aoTrocarDeConversa: (conversationId: string) => void;
 }) {
   const t = useT();
@@ -304,7 +307,7 @@ function PainelDaConversa({
             <span className="block min-w-0">
               <Link
                 href={`/app/contacts/${conversa.contact_id}`}
-                className="block rounded focus-visible:outline-2"
+                className="block rounded-sm focus-visible:outline-2"
                 title={t("Abrir o cadastro do contato")}
               >
                 {/* `h2`: o título usa a fonte de títulos do sistema (Sora). */}
@@ -343,9 +346,10 @@ function PainelDaConversa({
           size="icon"
           variant="ghost"
           className="size-8"
-          aria-label={t("Fechar chat")}
-          title={t("Fechar chat")}
-          onClick={aoFechar}
+          // Fecha TODOS: cada conversa já tem o seu X no avatar do trilho.
+          aria-label={t("Fechar todos os chats")}
+          title={t("Fechar todos os chats")}
+          onClick={aoFecharTodos}
         >
           <X size={18} aria-hidden />
         </Button>
@@ -437,7 +441,7 @@ function SeletorDeInstancia({
         <button
           type="button"
           disabled={continuar.isPending}
-          className="flex max-w-full items-center gap-1 rounded text-xs text-muted-foreground hover:text-foreground focus-visible:outline-2 disabled:opacity-60"
+          className="flex max-w-full items-center gap-1 rounded-sm text-xs text-muted-foreground hover:text-foreground focus-visible:outline-2 disabled:opacity-60"
           aria-label={`${t("Instância")}: ${rotulo}. ${t("Trocar de instância")}`}
         >
           <ChannelLogo channel={atual} size={12} />

@@ -641,9 +641,37 @@
 }
 
 .ibx-filter-popover {
-  width: 304px;
+  width: min(304px, calc(100vw - 16px));
   padding: 17px;
   font-size: 12px;
+  /* O teto é o espaço livre que o Radix mede (já descontado o
+     `collisionPadding`): o menu nunca passa da janela, em zoom ou tela baixa.
+     Cabeçalho e "Aplicar filtros" ficam fixos; só o miolo rola. */
+  display: flex;
+  flex-direction: column;
+  max-height: var(--radix-popover-content-available-height, calc(100dvh - 16px));
+}
+.ibx-filter-popover > .ibx-popover-heading,
+.ibx-filter-popover > .ibx-filter-apply {
+  flex: none;
+}
+.ibx-filter-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Espaço para a barra de rolagem não colar nos checkboxes. */
+  margin-right: -8px;
+  padding-right: 8px;
+}
+.ibx-filter-apply {
+  margin-top: 12px;
+}
+/* Dentro do miolo rolável a lista de tags não tem rolagem própria: rolagem
+   dentro de rolagem esconde opções justamente em tela pequena. */
+.ibx-filter-scroll .ibx-tag-list {
+  max-height: none;
+  overflow-y: visible;
 }
 .ibx-popover-heading {
   display: flex;

@@ -24,6 +24,7 @@ import {
   type OpcaoDeMencao,
 } from "@/components/inbox/composer/MentionMenu";
 import { filtrarTemplates, resolveSlash, TemplateMenu } from "@/components/inbox/composer/TemplateMenu";
+import { focarCampoDeMensagem } from "@/lib/inbox/foco-do-campo";
 import { useAssignableMembers } from "@/hooks/inbox/useAssignableMembers";
 import { useCreateNote } from "@/hooks/inbox/useCreateNote";
 import { useMessageTemplates, type MessageTemplate } from "@/hooks/inbox/useMessageTemplates";
@@ -207,6 +208,18 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
   useImperativeHandle(ref, () => ({
     focus: () => taRef.current?.focus(),
   }));
+
+  // Abrir (ou trocar de) conversa já deixa o campo pronto para escrever — no
+  // Inbox e no chat suspenso (que só foca a conversa à vista: `active`).
+  useEffect(() => {
+    if (active) focarCampoDeMensagem(taRef.current, { mesmoNoCelular: false });
+  }, [conversationId, active]);
+
+  // "Responder a esta mensagem": o próximo gesto é escrever a resposta.
+  const respondendoId = respondendo?.id ?? null;
+  useEffect(() => {
+    if (active && respondendoId) focarCampoDeMensagem(taRef.current, { mesmoNoCelular: true });
+  }, [respondendoId, active]);
 
   // send/createNote fora do disable: o texto some na hora do envio; travar o campo
   // até a API voltar impedia digitar a próxima mensagem com o campo ainda cheio.

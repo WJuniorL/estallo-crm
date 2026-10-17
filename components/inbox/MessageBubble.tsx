@@ -86,6 +86,13 @@ export function MessageBubble({
   const salvandoEdicao = useRef(false);
   const editorRef = useRef<HTMLDivElement | null>(null);
   const abrindoEdicao = useRef(false);
+  /**
+   * "Responder" só vale depois que o menu FECHA. Ao fechar, o Radix devolve o
+   * foco à setinha — e isso tirava o cursor do campo de mensagem que o
+   * composer acabava de focar. Escolhida a resposta, o menu fecha sem devolver
+   * o foco e só então a citação sobe; o composer foca o campo na sequência.
+   */
+  const respondendoAoFechar = useRef(false);
   const [agora, setAgora] = useState(() => Date.now());
   useEffect(() => {
     const timer = setInterval(() => setAgora(Date.now()), 60_000);
@@ -262,6 +269,12 @@ export function MessageBubble({
             </DropdownMenuTrigger>
             <DropdownMenuContent align={isOutbound ? "end" : "start"} sideOffset={4}
               onCloseAutoFocus={(event) => {
+                if (respondendoAoFechar.current) {
+                  respondendoAoFechar.current = false;
+                  event.preventDefault();
+                  onResponder?.(message);
+                  return;
+                }
                 if (!abrindoEdicao.current) return;
                 // O Radix devolve o foco à setinha ao fechar o menu. Isso rola o
                 // fio de volta e esconde o Salvar logo depois de abrir o editor.
@@ -271,7 +284,7 @@ export function MessageBubble({
                 editorRef.current?.scrollIntoView?.({ behavior: "smooth", block: "nearest", inline: "nearest" });
               }}>
               {onResponder && (
-                <DropdownMenuItem onSelect={() => onResponder(message)}>
+                <DropdownMenuItem onSelect={() => { respondendoAoFechar.current = true; }}>
                   <ArrowBendUpLeft size={16} aria-hidden />{t("Responder a esta mensagem")}
                 </DropdownMenuItem>
               )}

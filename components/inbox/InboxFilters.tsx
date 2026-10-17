@@ -537,6 +537,10 @@ export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
             <PopoverContent
               align="end"
               sideOffset={7}
+              // O Radix reposiciona e mede o espaço livre (`--radix-popover-
+              // content-available-height`), que o CSS usa como teto: o menu
+              // nunca passa da janela, em qualquer zoom ou resolução.
+              collisionPadding={8}
               className="ibx ibx-floating ibx-filter-popover"
             >
               <div className="ibx-popover-heading">
@@ -551,6 +555,9 @@ export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
                   {t("Limpar")}
                 </button>
               </div>
+              {/* Só o miolo rola: o cabeçalho e o "Aplicar filtros" ficam sempre
+                  à vista — antes, em tela baixa, o botão saía da janela. */}
+              <div className="ibx-filter-scroll">
               <div className="ibx-filter-options">
                 <label>
                   <input
@@ -678,9 +685,10 @@ export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
                   </select>
                 </div>
               )}
+              </div>
               <button
                 type="button"
-                className="ibx-button ibx-primary w-full"
+                className="ibx-button ibx-primary ibx-filter-apply w-full"
                 onClick={aplicarRascunho}
                 data-testid="aplicar-filtros"
               >

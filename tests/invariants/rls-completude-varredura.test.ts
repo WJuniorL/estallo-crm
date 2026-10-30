@@ -75,6 +75,10 @@ interface Excecao {
  * linhas da OUTRA organização, não uma leitura como superusuário.
  */
 const PROVA_PROPRIA: readonly Excecao[] = [
+  { tabela: "followup_execution_steps", razao: "tests/invariants/automacoes-execucoes-inspecionaveis.test.ts — dois managers por JWT, leitura positiva própria e zero do vizinho nos dois sentidos; member vê resumo e a sessão não escreve." },
+  { tabela: "followup_execution_attempts", razao: "tests/invariants/automacoes-execucoes-inspecionaveis.test.ts — dois managers por JWT com tentativas reais A/B, controle positivo e zero cross-org nos dois sentidos; viewer não lê e authenticated não escreve." },
+  { tabela: "followup_execution_attempt_jobs", razao: "tests/invariants/automacoes-execucoes-inspecionaveis.test.ts — dois managers por JWT com vínculos reais A/B, controle positivo e zero cross-org nos dois sentidos; viewer e agent não leem; a sessão não insere nem apaga; a FK recusa job ou tentativa de outra organização até com service role." },
+  { tabela: "followup_execution_effects", razao: "tests/invariants/automacoes-execucoes-inspecionaveis.test.ts — dois managers por JWT com recibos reais A/B, controle positivo e zero cross-org nos dois sentidos; viewer não lê e authenticated não escreve." },
   { tabela: "crm_lead_products", razao: "tests/invariants/produtos-no-negocio.test.ts — dois tenants por JWT (agent): leitura local e ZERO do vizinho, insert em negócio de outra org recusado (nas duas formas de organization_id), anon sem grant; e a trigger do valor do negócio." },
   { tabela: "jev_router_decisions", razao: "tests/invariants/jev-roteador-decisoes.test.ts — dois tenants por JWT: leitura local, zero do vizinho; anon sem leitura, authenticated sem escrita; poda com piso no banco." },
   { tabela: "golden_candidates", razao: "tests/invariants/golden-candidates.test.ts — dois tenants reais por JWT (agent): leitura positiva local e ZERO do vizinho nos dois sentidos, a tabela inteira sem filtro igual à própria, anon recusado, e insert/update/delete de authenticated sem efeito (só o servidor grava)." },

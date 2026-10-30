@@ -501,7 +501,7 @@ export function FlowCanvas(props: Props) {
   return (
     <ReactFlowProvider>
       <EtapasDoFluxoProvider>
-        <SaidaDeErroProvider habilitada={props.initialData.draft_graph?.execution_contract === 1}>
+        <SaidaDeErroProvider habilitada={(props.initialData.surface ?? "followup") !== "atendimento"}>
           <FlowCanvasInner {...props} />
         </SaidaDeErroProvider>
       </EtapasDoFluxoProvider>

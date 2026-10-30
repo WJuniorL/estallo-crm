@@ -171,7 +171,6 @@ describe("o turno de fluxo diante da inscrição que não está mais viva", () =
   it.each([
     [0, 1, "execution_contract_mismatch"],
     [1, 0, "execution_contract_mismatch"],
-    [1, 1, "execution_contract_unavailable"],
   ])("contratos %s/%s não tocam o envio (%s)", async (executionContract, graphContract, reason) => {
     const { d, send, completeFollowupTurn } = deps();
     await expect(

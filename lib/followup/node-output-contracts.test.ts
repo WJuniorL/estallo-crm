@@ -8,8 +8,8 @@ const ID = "a0000000-0000-4000-8000-000000000001";
 const NOW = "2026-10-18T18:00:00.000Z";
 
 describe("saídas declaradas dos nós — contrato 1", () => {
-  it("não habilita o executor e não inventa outputs de atendimento", () => {
-    expect(EXECUTION_CONTRACT_AVAILABLE).toBe(false);
+  it("executor habilitado, sem inventar outputs de atendimento", () => {
+    expect(EXECUTION_CONTRACT_AVAILABLE).toBe(true);
     expect(declaredNodeOutputSchema("collect")).toBeNull();
     expect(NODE_CATALOG.skill.output_contract_version).toBeNull();
     expect(NODE_CATALOG.internal_task.output_schema).toBe(NODE_OUTPUT_CONTRACTS.internal_task);

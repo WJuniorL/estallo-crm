@@ -110,7 +110,6 @@ describe("envio inline verifica contrato antes do efeito", () => {
   it.each([
     [0, 1, "execution_contract_mismatch"],
     [1, undefined, "execution_contract_mismatch"],
-    [1, 1, "execution_contract_unavailable"],
   ] as const)("contratos %s/%s não enviam (%s)", async (contract, graph, reason) => {
     const f = fixture(contract, graph);
     expect(await enviarTextoFixoPendente(f.admin)).toBe(0);

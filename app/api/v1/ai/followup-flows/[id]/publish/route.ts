@@ -27,7 +27,7 @@ import {
   validateFlowForPublish,
   type RoteiroDoPublish,
 } from "@/lib/followup/validate-publish";
-import { publishFollowupFlowVersion } from "@/lib/followup/publish";
+import { comContratoDeExecucao, publishFollowupFlowVersion } from "@/lib/followup/publish";
 import type { FlowGraph } from "@/lib/followup/graph-schema";
 import { traduzir } from "@/lib/i18n/dicionario";
 
@@ -179,7 +179,7 @@ export async function POST(_req: NextRequest, ctx: RouteCtx): Promise<Response> 
     });
   }
 
-  const graph = pointer.draft_graph as unknown as FlowGraph;
+  const graph = comContratoDeExecucao(pointer.draft_graph as unknown as FlowGraph, surface);
   // A regra de etapa guarda o `stage_id`, e só o banco diz se a etapa existe e
   // está ativa — sem esta leitura, uma regra que nunca decide publicaria calada.
   const citadas = await carregaEtapasCitadas(admin, activeOrg.orgId, graph.nodes);

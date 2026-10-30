@@ -138,6 +138,9 @@ async function fixture(
     ],
     edges: [{ id: "next", source: "task", target: "end", condition: { type: "always" } }],
   };
+  // Inscrição legada (contrato 0) só existe sobre versão sem a chave: a 0710 faz toda inscrição herdar o
+  // contrato da versão, então um grafo de contrato 1 nunca abriga inscrição de contrato 0.
+  if (options.contract === 0) delete (graph as { execution_contract?: number }).execution_contract;
   if (options.decision) {
     const variant = {
       ...graph,
@@ -613,11 +616,8 @@ describe("diário transacional do motor existente — Postgres real", () => {
 
   it.each([
     { target: "lost" as const, code: "lost_reason_required" },
-    {
-      closed: "lost" as const,
-      settings: { reabertura: "novo_negocio" },
-      code: "reabertura_cria_novo",
-    },
+    // `reabertura_cria_novo` saiu desta lista em 30/10/2026: o funil não recusa
+    // mais a saída de ganho/perdido (`modoDeReabertura`, lib/leads/reabertura.ts).
     { withoutLead: true, code: "execution_lead_required" },
     { targetStageId: GOV_STAGE, code: "pipeline_immutable_use_clone" },
   ])("movimentação recusa regra comercial sem efeito: $code", async ({ code, ...options }) => {

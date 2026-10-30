@@ -46,12 +46,11 @@ describe("compatibilidade de contrato do grafo", () => {
     });
   });
 
-  it("recusa versões futuras e não publica um executor ainda indisponível", () => {
+  it("recusa versões futuras; o contrato 1 não é mais barrado por indisponibilidade", () => {
     expect(flowGraphSchema.safeParse({ ...legacy, execution_contract: 2 }).success).toBe(false);
     const result = validateFlowForPublish({ ...legacy, execution_contract: 1 });
-    expect(result.ok).toBe(false);
     if (!result.ok)
-      expect(result.errors.map((error) => error.code)).toContain("execution_contract_unavailable");
+      expect(result.errors.map((error) => error.code)).not.toContain("execution_contract_unavailable");
   });
 
   describe("nós que o diário ainda não integra não entram no contrato 1", () => {

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { executionContractProblem } from "@/lib/automation/execution-capability";
 import { avancarEnrollmentAtivo, type AdminClient } from "./engine";
 import { flowGraphSchema } from "./graph-schema";
 import type { EnrollmentRow } from "./node-handlers";
@@ -75,11 +76,19 @@ function fixture(graphContract?: 1, enrollmentContract?: 0 | 1) {
   return { db, enqueueJob, run, complete };
 }
 
+describe("contrato 1 habilitado (EXECUTION_CONTRACT_AVAILABLE)", () => {
+  it("grafo 1 + inscrição 1 é aceito; versão desconhecida continua indisponível", () => {
+    expect(executionContractProblem({ execution_contract: 1 }, { execution_contract: 1 })).toBeNull();
+    expect(executionContractProblem({ execution_contract: 2 }, { execution_contract: 2 })).toBe(
+      "execution_contract_unavailable",
+    );
+  });
+});
+
 describe("o motor não executa contrato novo por fallback legado", () => {
   it.each([
     [1, undefined, "execution_contract_mismatch"],
     [undefined, 1, "execution_contract_mismatch"],
-    [1, 1, "execution_contract_unavailable"],
   ] as const)(
     "grafo %s / inscrição %s interrompe com motivo %s",
     async (graph, enrollment, reason) => {
@@ -102,7 +111,6 @@ describe("o motor não executa contrato novo por fallback legado", () => {
   it.each([
     [1, undefined, "execution_contract_mismatch"],
     [undefined, 1, "execution_contract_mismatch"],
-    [1, 1, "execution_contract_unavailable"],
   ] as const)(
     "callback recusa grafo %s / inscrição %s (%s) antes de gravar",
     async (graph, enrollment, reason) => {

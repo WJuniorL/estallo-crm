@@ -1,5 +1,5 @@
 /** Compartilhada com o worker: nenhuma porta envia usando um contrato indisponível. */
-export const EXECUTION_CONTRACT_AVAILABLE = false;
+export const EXECUTION_CONTRACT_AVAILABLE = true;
 
 /**
  * Tipos de nó que o diário do contrato 1 já conclui de ponta a ponta (resultado persistido e

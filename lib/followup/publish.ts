@@ -7,6 +7,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { FlowGraph } from "./graph-schema";
 
+/**
+ * Motor único: todo fluxo do relógio (follow-up e automação do CRM) é publicado no contrato de
+ * execução 1. O roteiro de atendimento não: ele roda no turno, não pelo diário. A chave entra aqui,
+ * antes da validação, para o publicador validar o que de fato vai valer (blocos não integrados e a
+ * saída "Fallback erro" são conferidos como contrato 1).
+ */
+export function comContratoDeExecucao(graph: FlowGraph, surface: string): FlowGraph {
+  return surface === "atendimento" ? graph : { ...graph, execution_contract: 1 };
+}
+
 export interface PublishFlowOk {
   ok: true;
   version_id: string;

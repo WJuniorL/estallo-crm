@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 
 import type { FlowGraph } from "./graph-schema";
-import { publishFollowupFlowVersion } from "./publish";
+import { comContratoDeExecucao, publishFollowupFlowVersion } from "./publish";
 
 const graph = { nodes: [], edges: [] } as unknown as FlowGraph;
 const params = { orgId: "org", pointerId: "ptr", graph, createdBy: "user" };
@@ -45,5 +45,16 @@ describe("publishFollowupFlowVersion: tradução das recusas do banco", () => {
       ok: false,
       code: "internal_error",
     });
+  });
+});
+
+describe("comContratoDeExecucao (motor único)", () => {
+  it.each(["followup", "crm_automation"])("fluxo do relógio (%s) é publicado no contrato 1", (surface) => {
+    expect(comContratoDeExecucao(graph, surface).execution_contract).toBe(1);
+  });
+
+  it("roteiro de atendimento não ganha a chave e o grafo original não é alterado", () => {
+    expect(comContratoDeExecucao(graph, "atendimento")).toBe(graph);
+    expect(graph.execution_contract).toBeUndefined();
   });
 });

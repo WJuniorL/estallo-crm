@@ -2902,6 +2902,7 @@ export const DICIONARIO: Traducoes = {
   "Nenhuma delas": { es: "Ninguna de ellas" },
   "Outros casos": { es: "Otros casos" },
   "Sem resposta": { es: "Sin respuesta" },
+  "Fallback erro": { es: "Respaldo por error" },
   // Rótulos das saídas do nó de repetição: chegaram por outra branch e nunca
   // entraram aqui, então o card do repeat aparecia meio em português no espanhol.
   "Próxima volta": { es: "Siguiente vuelta" },
@@ -6043,14 +6044,20 @@ export const DICIONARIO: Traducoes = {
   "Mover lead no funil": { es: "Mover lead en el embudo" },
   "Mover card de etapa": { es: "Mover tarjeta de etapa" },
   "Editar tag do lead": { es: "Editar etiqueta del lead" },
+  "Adicionar tags ao lead": { es: "Añadir etiquetas al lead" },
+  "O contrato de execução deste fluxo ainda não está disponível nesta instalação.": { es: "El contrato de ejecución de este flujo todavía no está disponible en esta instalación." },
   "Gravar tag no lead": { es: "Grabar etiqueta en el lead" },
   "move o card para outra etapa do funil": { es: "mueve la tarjeta a otra etapa del embudo" },
   "sem etapa de destino": { es: "sin etapa de destino" },
   "sem tag escolhida": { es: "sin etiqueta elegida" },
-  "Tags para gravar no lead": { es: "Etiquetas para grabar en el lead" },
+  "Tags para gravar": { es: "Etiquetas para grabar" },
+  "Onde gravar": { es: "Dónde grabar" },
+  "No negócio": { es: "En el negocio" },
+  "No contato": { es: "En el contacto" },
+  "no contato": { es: "en el contacto" },
   "ex.: vip, orcamento-aberto": { es: "ej.: vip, presupuesto-abierto" },
-  "Separe por vírgula. Tags que o lead já tem são mantidas e nada é apagado.": {
-    es: "Separa por comas. Las etiquetas que el lead ya tiene se conservan y no se borra nada.",
+  "Separe por vírgula. Tags que já existem são mantidas e nada é apagado.": {
+    es: "Separa por comas. Las etiquetas que ya existen se conservan y no se borra nada.",
   },
   "O card vai para esta etapa do mesmo funil — trocar de funil é recusado, como no quadro.": {
     es: "La tarjeta va a esta etapa del mismo embudo: cambiar de embudo se rechaza, igual que en el tablero.",
@@ -15639,6 +15646,20 @@ export const DICIONARIO: Traducoes = {
   "Instância atual": { es: "Instancia actual" },
   "fora do ar": { es: "fuera de línea" },
   "Nenhuma outra instância com número": { es: "Ninguna otra instancia con número" },
+  // Retenção do histórico de automações.
+  "Retenção do histórico": { es: "Retención del historial" },
+  "Defina por quanto tempo sua empresa mantém os dados das automações após cada execução terminar.": { es: "Define cuánto tiempo conserva tu empresa los datos de las automatizaciones después de finalizar cada ejecución." },
+  "Dados das etapas (dias)": { es: "Datos de los pasos (días)" },
+  "Histórico de execuções (dias)": { es: "Historial de ejecuciones (días)" },
+  "Inclui entradas e saídas das etapas. Após esse prazo, os dados deixam de estar disponíveis para consulta e recuperação.": { es: "Incluye entradas y salidas de los pasos. Después de este plazo, los datos dejan de estar disponibles para consulta y recuperación." },
+  "Execuções em andamento e dados necessários para continuá-las são preservados.": { es: "Se conservan las ejecuciones en curso y los datos necesarios para continuarlas." },
+  "Se reduzir o prazo, dados antigos poderão ser apagados na próxima limpeza.": { es: "Si reduces el plazo, los datos antiguos podrán eliminarse en la próxima limpieza." },
+  "A configuração salva é inválida. Os prazos padrão estão em uso; salve para corrigir.": { es: "La configuración guardada no es válida. Se usan los plazos predeterminados; guarda para corregirla." },
+  "O histórico deve ser mantido por pelo menos o prazo dos dados detalhados.": { es: "El historial debe conservarse al menos durante el plazo de los datos detallados." },
+  "Não foi possível carregar a retenção do histórico.": { es: "No se pudo cargar la retención del historial." },
+  "Não foi possível salvar a retenção do histórico.": { es: "No se pudo guardar la retención del historial." },
+  "Confira os prazos de retenção.": { es: "Revisa los plazos de retención." },
+  "Os prazos valem para execuções com histórico detalhado. Fluxos antigos mantêm o histórico existente.": { es: "Los plazos se aplican a ejecuciones con historial detallado. Los flujos antiguos conservan su historial existente." },
 };
 
 /**

@@ -4,6 +4,7 @@ import { Bell, Play, Clock, GitBranch, Brain, ChatCircle, ArrowsClockwise, Paper
 import type { FlowNode, NodeType } from "@/lib/followup/graph-schema";
 import { RESULTADOS_DO_FIM } from "@/lib/followup/vocabulario";
 import { NOS_DA_SUPERFICIE } from "@/lib/followup/validate-publish";
+import { NODE_CATALOG } from "@/lib/followup/node-catalog";
 
 /**
  * Visual identity per node type — shared by the palette (Task 6.2 increment 2)
@@ -59,7 +60,7 @@ export function configPadraoDaAcao(triggerKind?: string): FlowNode["config"] {
 export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
   trigger: {
     type: "trigger",
-    paletteLabel: "Gatilho",
+    paletteLabel: NODE_CATALOG.trigger.label,
     icon: Play,
     chipClassName: "bg-accent-soft text-accent",
     borderClassName: "border-l-accent-500",
@@ -68,7 +69,7 @@ export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
   },
   wait: {
     type: "wait",
-    paletteLabel: "Aguardar",
+    paletteLabel: NODE_CATALOG.wait.label,
     icon: Clock,
     chipClassName: "bg-info-bg text-info-fg",
     borderClassName: "border-l-info",
@@ -77,7 +78,7 @@ export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
   },
   condition: {
     type: "condition",
-    paletteLabel: "Condição",
+    paletteLabel: NODE_CATALOG.condition.label,
     icon: GitBranch,
     chipClassName: "bg-warning-bg text-warning-fg",
     borderClassName: "border-l-warning",
@@ -86,7 +87,7 @@ export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
   },
   ai_classify: {
     type: "ai_classify",
-    paletteLabel: "Classificar (IA)",
+    paletteLabel: NODE_CATALOG.ai_classify.label,
     icon: Brain,
     chipClassName: "bg-accent text-accent-foreground dark:bg-accent-700",
     borderClassName: "border-l-accent-700",
@@ -105,7 +106,7 @@ export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
   },
   match_reply: {
     type: "match_reply",
-    paletteLabel: "Resposta (texto)",
+    paletteLabel: NODE_CATALOG.match_reply.label,
     icon: ChatCircle,
     chipClassName: "bg-info-bg text-info-fg",
     borderClassName: "border-l-info",
@@ -117,7 +118,7 @@ export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
   },
   repeat: {
     type: "repeat",
-    paletteLabel: "Repetir",
+    paletteLabel: NODE_CATALOG.repeat.label,
     icon: ArrowsClockwise,
     chipClassName: "bg-warning-bg text-warning-fg",
     borderClassName: "border-l-warning",
@@ -126,7 +127,7 @@ export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
   },
   collect: {
     type: "collect",
-    paletteLabel: "Pergunta",
+    paletteLabel: NODE_CATALOG.collect.label,
     icon: Question,
     chipClassName: "bg-info-bg text-info-fg",
     borderClassName: "border-l-info",
@@ -135,7 +136,7 @@ export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
   },
   skill: {
     type: "skill",
-    paletteLabel: "Skill",
+    paletteLabel: NODE_CATALOG.skill.label,
     icon: PuzzlePiece,
     chipClassName: "bg-accent-soft text-accent",
     borderClassName: "border-l-accent-500",
@@ -144,7 +145,7 @@ export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
   },
   action: {
     type: "action",
-    paletteLabel: "Ação",
+    paletteLabel: NODE_CATALOG.action.label,
     icon: PaperPlaneTilt,
     chipClassName: "bg-success-bg text-success-fg",
     borderClassName: "border-l-success",
@@ -153,7 +154,7 @@ export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
   },
   internal_task: {
     type: "internal_task",
-    paletteLabel: "Lembrete interno",
+    paletteLabel: NODE_CATALOG.internal_task.label,
     icon: Bell,
     chipClassName: "bg-warning-bg text-warning-fg",
     borderClassName: "border-l-warning",
@@ -171,7 +172,7 @@ export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
   // a escolha (`etapa_destino_ausente`, `tag_ausente`).
   move_lead: {
     type: "move_lead",
-    paletteLabel: "Mover lead no funil",
+    paletteLabel: NODE_CATALOG.move_lead.label,
     icon: Funnel,
     chipClassName: "bg-info-bg text-info-fg",
     borderClassName: "border-l-info",
@@ -180,7 +181,7 @@ export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
   },
   edit_lead_tag: {
     type: "edit_lead_tag",
-    paletteLabel: "Editar tag do lead",
+    paletteLabel: NODE_CATALOG.edit_lead_tag.label,
     icon: Tag,
     chipClassName: "bg-accent-soft text-accent",
     borderClassName: "border-l-accent-500",
@@ -189,7 +190,7 @@ export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
   },
   end: {
     type: "end",
-    paletteLabel: "Fim",
+    paletteLabel: NODE_CATALOG.end.label,
     icon: Flag,
     chipClassName: "bg-error-bg text-error-fg",
     borderClassName: "border-l-error",
@@ -291,7 +292,8 @@ export function describeNodeConfig(
     }
     case "edit_lead_tag": {
       const c = config as ConfigOf<"edit_lead_tag">;
-      return c.tags.length ? c.tags.join(", ") : t("sem tag escolhida");
+      if (!c.tags.length) return t("sem tag escolhida");
+      return c.destino === "contato" ? `${c.tags.join(", ")} (${t("no contato")})` : c.tags.join(", ");
     }
     case "end": {
       const c = config as ConfigOf<"end">;

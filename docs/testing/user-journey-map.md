@@ -3503,3 +3503,11 @@ do commit (resposta perdida, processo reiniciado) e retomada pela segunda tentat
 partir da lápide, com o 500 que não diz "nada foi apagado": medida por unidade em
 `lib/tenants/exclusao.test.ts` e `…/delete/route.test.ts`, e o inventário da lápide em
 `tests/invariants/gestao-de-tenants.test.ts`.
+
+## Automações — retenção do histórico [P0]
+
+Spec: `tests/e2e/automacoes-retencao.spec.ts`. Estado: **aprovada em 18/10/2026**, dois testes no Chromium contra build de produção local e Supabase isolado com baseline aplicado. Não homologa o executor inspecionável, ainda desabilitado.
+
+- Manager abre a configuração na lista de fluxos, salva prazos, recarrega a página e encontra os valores persistidos. A jornada registra screenshots em desktop/mobile e claro/escuro e restaura os prazos anteriores pela interface. Quatro capturas revisadas e preservadas em `evidence/automacoes-fundacao/2026-10-18/`.
+- Viewer não encontra o controle; a API recusa tanto a leitura quanto a escrita da política.
+- Os testes de componente cobrem erro de escrita sem perda da edição, prazo inválido, configuração corrompida, espanhol e troca de organização. Esses testes não representam prova visual no aplicativo real.

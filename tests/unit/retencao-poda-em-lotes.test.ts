@@ -284,6 +284,23 @@ describe("podarHistorico — o laço de lotes", () => {
     expect(r.fila_tem_resto).toBe(true);
   });
 
+  it("drena automações no relógio existente e informa os prazos padrão", async () => {
+    const { db, chamadas } = bancoQueDevolve({ fila: [0], auditoria: [0] });
+    const result = await podarHistorico(db, {});
+    expect(chamadas).toContainEqual({ nome: "fn_expurgar_payloads_de_automacao", dias: 30, limite: TAMANHO_DO_LOTE });
+    expect(chamadas).toContainEqual({ nome: "fn_expurgar_execucoes_de_automacao", dias: 180, limite: TAMANHO_DO_LOTE });
+    expect(result.execucoes_com_payload_expurgado).toBe(0);
+    expect(result.payloads_automacao_tem_resto).toBe(false);
+  });
+
+  it("nomeia a falha na limpeza de payload sem impedir metadados e outras podas", async () => {
+    const { db, chamadas } = bancoQueDevolve({ fila: [1], auditoria: [0], erroEm: ["fn_expurgar_payloads_de_automacao"] });
+    const result = await podarHistorico(db, {});
+    expect(result.jobs_apagados).toBe(1);
+    expect(result.falhas).toContainEqual(expect.stringContaining("fn_expurgar_payloads_de_automacao"));
+    expect(chamadas.some((call) => call.nome === "fn_expurgar_execucoes_de_automacao")).toBe(true);
+  });
+
   it("pede ao banco os dias do padrão quando o .env está intocado", async () => {
     const { db, chamadas } = bancoQueDevolve({ fila: [0], auditoria: [0] });
     const r = await podarHistorico(db, {});
@@ -361,7 +378,7 @@ describe("podarHistorico — o laço de lotes", () => {
     expect(chamadas.some((c) => c.nome === "fn_expurgar_espelho_da_agenda")).toBe(true);
   });
 
-  it("erro em TODOS os drenos: as 14 do rpc + mídia + rascunhos entram nomeadas, sem lançar", async () => {
+  it("erro em TODOS os drenos: RPCs, mídia e rascunhos entram nomeados, sem lançar", async () => {
     const db: PodaDb = {
       async rpc(nome) {
         return { data: null, error: { message: `permission denied for function ${nome}` } };
@@ -375,8 +392,10 @@ describe("podarHistorico — o laço de lotes", () => {
     };
     const r = await podarHistorico(db, {});
 
-    // 16 drenos: 14 pelo rpc + a mídia + a décima poda (o DELETE do admin).
-    expect(r.falhas).toHaveLength(16);
+    // Inclui as duas podas de automação, além das anteriores, mídia e rascunhos.
+    expect(r.falhas).toHaveLength(18);
+    expect(r.falhas.some((f) => f.includes("fn_expurgar_payloads_de_automacao"))).toBe(true);
+    expect(r.falhas.some((f) => f.includes("fn_expurgar_execucoes_de_automacao"))).toBe(true);
     expect(r.falhas.some((f) => f.includes("conversation_drafts"))).toBe(true);
     expect(r.falhas.some((f) => f.includes("fn_enfileirar_midia_vencida"))).toBe(true);
     expect(r.jobs_apagados).toBe(0);
@@ -430,8 +449,8 @@ describe("podarHistorico — o laço de lotes", () => {
     };
     const r = await podarHistorico(db, {});
 
-    // Só os 14 drenos do rpc falham nesta rodada (mídia e rascunhos vão bem).
-    expect(r.falhas).toHaveLength(14);
+    // Só os drenos do rpc falham nesta rodada (mídia e rascunhos vão bem).
+    expect(r.falhas).toHaveLength(16);
     for (const f of r.falhas) expect(f.length).toBeLessThanOrEqual(300);
   });
 });
@@ -625,6 +644,11 @@ describe("houveEfeito — as duas direções", () => {
 
   it("rodada que não apagou nada NÃO ocupa linha de auditoria", () => {
     expect(houveEfeito(base)).toBe(false);
+  });
+
+  it("uma rodada que só removeu payload ou metadados de automação é auditada", () => {
+    expect(houveEfeito({ ...base, execucoes_com_payload_expurgado: 1 })).toBe(true);
+    expect(houveEfeito({ ...base, execucoes_de_automacao_apagadas: 1 })).toBe(true);
   });
 
   it("apagou nonce → audita, pela mesma razão das outras três", () => {

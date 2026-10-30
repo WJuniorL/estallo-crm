@@ -138,6 +138,19 @@ const ESCRITORES: Record<string, { agenda: "agora" | "futuro" | "nenhum"; nota: 
     agenda: "nenhum",
     nota: "traduz o campo para a timeline do dossiê; não escreve.",
   },
+  "execution-contract.ts": {
+    agenda: "nenhum",
+    nota: "só declara o campo no schema Zod do contrato de execução; não agenda nada.",
+  },
+  "execution-journal-pg.ts": {
+    agenda: "agora",
+    nota:
+      "O diário do contrato 1. Todo 'avance agora' (conclusão de tarefa, tags, movimentação, " +
+      "envio e decisão) lê o instante do BANCO (`dbNow` → `now()` do banco, o mesmo valor de `fn_agora()`, 0147) dentro da própria " +
+      "transação, nunca `new Date()`. O que ele agenda para o FUTURO (espera `wait` e o backoff de " +
+      "retry) usa o relógio do processo, onde 30 ms não mudam nada. Vigiado por " +
+      'o bloco "relógio do banco" de `tests/invariants/automacoes-attachjob-contraprova.test.ts`.',
+  },
 };
 
 function modulosQueMencionam(): string[] {

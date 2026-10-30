@@ -107,8 +107,13 @@ export function graphsEqual(a: FlowGraph, b: FlowGraph): boolean {
   return stableStringify(a) === stableStringify(b);
 }
 
-export function fromReactFlow(nodes: RFNode[], edges: RFEdge[]): FlowGraph {
+export function fromReactFlow(
+  nodes: RFNode[],
+  edges: RFEdge[],
+  metadata: Omit<FlowGraph, "nodes" | "edges"> = {},
+): FlowGraph {
   return {
+    ...metadata,
     nodes: nodes.map(toFlowNode),
     edges: edges.map((e) => ({
       id: e.id,

@@ -1142,6 +1142,7 @@ export const AUDIT_ACTIONS = [
   "lead_product.added",
   "lead_product.updated",
   "lead_product.removed",
+  "followup.retention_updated",
 ] as const;
 
 /** Um código de auditoria. Derivado de `AUDIT_ACTIONS` — não redigite a lista. */

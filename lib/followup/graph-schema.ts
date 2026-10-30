@@ -63,6 +63,11 @@ export const CONDITION_FALSE_BRANCH_ID = 'false';
 export const REPEAT_BODY_BRANCH_ID = 'body';
 /** Saída do `repeat` quando o contador chegou a zero. */
 export const REPEAT_DONE_BRANCH_ID = 'done';
+/**
+ * "Fallback erro": por onde o fluxo CONTINUA quando o bloco falha de vez (sem nova tentativa
+ * possível) no motor novo. Opcional — sem ela, a falha para a inscrição e abre aviso na Central.
+ */
+export const ON_ERROR_BRANCH_ID = 'on_error';
 
 /** Branch ids the contract owns — a user-declared branch may not claim one. */
 export const RESERVED_BRANCH_IDS = [
@@ -72,6 +77,7 @@ export const RESERVED_BRANCH_IDS = [
   CONDITION_FALSE_BRANCH_ID,
   REPEAT_BODY_BRANCH_ID,
   REPEAT_DONE_BRANCH_ID,
+  ON_ERROR_BRANCH_ID,
 ] as const;
 
 /** Id of a branch the user declared (a check, an AI class) — opaque, stable across renames. */
@@ -184,6 +190,13 @@ export const ifExistsSchema = z.enum(["skip", "overwrite", "confirm"]);
 export type IfExists = z.infer<typeof ifExistsSchema>;
 
 /**
+ * Teto da carência (365 dias) cobrado só na PUBLICAÇÃO: acima disso `Date`/`interval` estouram e
+ * nenhum fluxo real espera tanto. Fica fora do parse de propósito — grafo já salvo com valor maior
+ * continua legível (o parse estrito derrubaria todo gatilho e inscrição desse fluxo).
+ */
+export const GRACE_TIMEOUT_MAX_MS = 365 * 24 * 3600_000;
+
+/**
  * Text-match node: parks in `waiting_reply` like `ai_classify`, then routes on
  * the last inbound body without calling a model. v2 `branches` only.
  */
@@ -227,7 +240,7 @@ export const aiClassifyConfigSchema = z
       .min(1)
       .max(8),
     branches: z.array(aiClassBranchSchema).min(1).max(8).optional(),
-    grace_timeout_ms: z.number().int().min(900_000), // 15 min minimum
+    grace_timeout_ms: z.number().int().min(900_000), // 15 min .. 365 dias
     target: z.enum(['last_reply', 'summary']).default('last_reply'),
     hint: z.string().max(500).optional(),
   })
@@ -310,6 +323,7 @@ export const internalTaskConfigSchema = z.strictObject({
 export const moveLeadConfigSchema = z.strictObject({
   stage_id: z.string().max(64),
   lost_reason: z.string().max(500).optional(),
+  won_reason: z.string().max(500).optional(),
 });
 
 /**
@@ -326,6 +340,11 @@ export const editLeadTagConfigSchema = z.strictObject({
   tags: z
     .array(z.string().max(60, "Tag muito longa: máximo de 60 caracteres."))
     .max(10, "No máximo 10 tags por caixa."),
+  /**
+   * Onde gravar. Sem a chave (ou `card`) é o negócio da inscrição. `contato` grava no contato — para
+   * fluxo que etiqueta quem ainda não tem negócio; é o mesmo `destino` da ação `add_tag`.
+   */
+  destino: z.enum(["card", "contato"]).optional(),
 });
 
 /**
@@ -705,6 +724,8 @@ export const flowGraphSchema = z
     nodes: z.array(flowNodeSchema).min(2).max(60),
     edges: z.array(flowEdgeSchema).max(120),
     settings: flowSettingsSchema.optional(),
+    /** Ausência preserva integralmente o contrato de execuções legadas. */
+    execution_contract: z.literal(1).optional(),
   })
   .superRefine((grafo, ctx) => {
     const idsDeNo = new Set<string>();
@@ -782,8 +803,11 @@ export type BranchableNode = {
   [K in NodeType]: Pick<Extract<FlowNode, { type: K }>, 'type' | 'config'>;
 }[NodeType];
 
-/** `fallback` is the mandatory catch-all: exactly one per node, never deletable in the builder. */
-export type FlowBranchKind = 'match' | 'fallback';
+/**
+ * `fallback` is the mandatory catch-all: exactly one per node, never deletable in the builder.
+ * `error` is the OPTIONAL failure exit ("Fallback erro"): it needs no edge to publish.
+ */
+export type FlowBranchKind = 'match' | 'fallback' | 'error';
 
 export type FlowBranch = {
   /** Stable within the node. Reserved ids are contract-owned; the rest come from the user's config. */
@@ -817,6 +841,27 @@ const FALLBACK_OTHERS_LABEL = 'Outros casos';
 /** O mesmo escape num nó cujas saídas são REGRAS: "o resto", dito com a palavra das regras. */
 const FALLBACK_NONE_LABEL = 'Nenhuma delas';
 const NO_REPLY_LABEL = 'Sem resposta';
+const ON_ERROR_LABEL = 'Fallback erro';
+
+/** Blocos que podem falhar de vez no motor novo, e por isso oferecem a saída de erro. */
+export const NODES_WITH_ERROR_BRANCH: ReadonlySet<NodeType> = new Set<NodeType>([
+  'action',
+  'internal_task',
+  'move_lead',
+  'edit_lead_tag',
+  'ai_classify',
+  'match_reply',
+]);
+
+function errorBranch(): FlowBranch {
+  return {
+    id: ON_ERROR_BRANCH_ID,
+    label: ON_ERROR_LABEL,
+    check: null,
+    kind: 'error',
+    condition: { type: 'branch', branch_id: ON_ERROR_BRANCH_ID },
+  };
+}
 
 function fallbackBranch(label: string): FlowBranch {
   return {
@@ -900,6 +945,7 @@ export function nodeBranches(node: BranchableNode): FlowBranch[] {
             ? { type: 'branch', branch_id: NO_REPLY_BRANCH_ID }
             : { type: 'class_match', value: NO_REPLY_BRANCH_ID },
         },
+        errorBranch(),
         fallbackBranch(FALLBACK_OTHERS_LABEL),
       ];
     }
@@ -921,6 +967,7 @@ export function nodeBranches(node: BranchableNode): FlowBranch[] {
           kind: 'match',
           condition: { type: 'branch', branch_id: NO_REPLY_BRANCH_ID },
         },
+        errorBranch(),
         fallbackBranch(FALLBACK_OTHERS_LABEL),
       ];
     }
@@ -945,8 +992,20 @@ export function nodeBranches(node: BranchableNode): FlowBranch[] {
       ];
 
     default:
-      return [fallbackBranch(FALLBACK_ALWAYS_LABEL)];
+      return NODES_WITH_ERROR_BRANCH.has(node.type)
+        ? [errorBranch(), fallbackBranch(FALLBACK_ALWAYS_LABEL)]
+        : [fallbackBranch(FALLBACK_ALWAYS_LABEL)];
   }
+}
+
+/**
+ * As saídas que dão FORMA ao cartão do nó (altura, corredor lateral, frase da aresta). Num nó de
+ * saída única, "Fallback erro" é só uma bolinha a mais ao lado — o cartão continua um nó simples e
+ * o fio normal continua saindo pelo rodapé. Nos nós que já têm linhas de saída ele é mais uma linha.
+ */
+export function branchesForShape(node: BranchableNode): FlowBranch[] {
+  const all = nodeBranches(node);
+  return all.length === 2 && all[0]?.kind === 'error' ? all.slice(1) : all;
 }
 
 /**

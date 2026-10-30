@@ -48,6 +48,7 @@ import { Plus, X } from "@/lib/ui/icons";
 import { NodeConfigPanel } from "./NodeConfigPanel";
 import { EdgeConfigPanel } from "./EdgeConfigPanel";
 import { EtapasDoFluxoProvider, useEtapasDoFluxo } from "./EtapasDoFluxo";
+import { SaidaDeErroProvider } from "./SaidaDeErro";
 import { NodePalette } from "./NodePalette";
 import { PublishBar } from "./PublishBar";
 import { NODE_VISUALS, configPadraoDaAcao } from "./nodes/nodeVisuals";
@@ -115,7 +116,10 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
   // As configurações do GRAFO (palavras-gatilho, teto de tentativas, prazo do
   // roteiro) não vivem em nó nenhum: sem este estado, salvar o rascunho as
   // apagava — `fromReactFlow` só conhece nós e arestas.
-  const [settings, setSettings] = useState<FlowGraph["settings"]>(initialData.draft_graph?.settings);
+  const [settings, setSettings] = useState<FlowGraph["settings"]>(
+    initialData.draft_graph?.settings,
+  );
+  const [executionContract] = useState(initialData.draft_graph?.execution_contract);
   const surface = initialData.surface ?? "followup";
   // Continue after the largest persisted suffix. Starting again at 1 makes a
   // newly-created node/edge reuse an existing React Flow key and visually
@@ -128,19 +132,25 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
   const [paletteOpen, setPaletteOpen] = useState(false);
 
   const liveGraph = useMemo(() => {
-    const base = fromReactFlow(nodes, edges);
+    const base = fromReactFlow(nodes, edges, {
+      ...(executionContract !== undefined ? { execution_contract: executionContract } : {}),
+    });
     return settings ? { ...base, settings } : base;
-  }, [nodes, edges, settings]);
+  }, [nodes, edges, settings, executionContract]);
   const dirty = useMemo(() => !graphsEqual(liveGraph, savedGraph), [liveGraph, savedGraph]);
 
   const markNodeErrors = useCallback(
     (errorsByNode: Record<string, string[]>) => {
-      setNodes((nds) => nds.map((n) => ({ ...n, data: { ...n.data, errors: errorsByNode[n.id] } })));
+      setNodes((nds) =>
+        nds.map((n) => ({ ...n, data: { ...n.data, errors: errorsByNode[n.id] } })),
+      );
     },
     [setNodes],
   );
   const clearNodeErrors = useCallback(() => {
-    setNodes((nds) => nds.map((n) => (n.data.errors ? { ...n, data: { ...n.data, errors: undefined } } : n)));
+    setNodes((nds) =>
+      nds.map((n) => (n.data.errors ? { ...n, data: { ...n.data, errors: undefined } } : n)),
+    );
   }, [setNodes]);
 
   // Node and edge selection are mutually exclusive — opening one panel closes the other's.
@@ -159,14 +169,18 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
 
   const updateNodeData = useCallback(
     (id: string, patch: Partial<RFNodeData>) => {
-      setNodes((nds) => nds.map((n) => (n.id === id ? { ...n, data: { ...n.data, ...patch } } : n)));
+      setNodes((nds) =>
+        nds.map((n) => (n.id === id ? { ...n, data: { ...n.data, ...patch } } : n)),
+      );
     },
     [setNodes],
   );
   const updateEdgeCondition = useCallback(
     (id: string, condition: FlowEdge["condition"]) => {
       setEdges((eds) =>
-        eds.map((e) => (e.id === id ? { ...e, data: { priority: e.data?.priority ?? 0, condition } } : e)),
+        eds.map((e) =>
+          e.id === id ? { ...e, data: { priority: e.data?.priority ?? 0, condition } } : e,
+        ),
       );
     },
     [setEdges],
@@ -174,8 +188,12 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) ?? null;
   const selectedEdge = edges.find((e) => e.id === selectedEdgeId) ?? null;
-  const selectedEdgeSource = selectedEdge ? (nodes.find((n) => n.id === selectedEdge.source) ?? null) : null;
-  const selectedEdgeTarget = selectedEdge ? (nodes.find((n) => n.id === selectedEdge.target) ?? null) : null;
+  const selectedEdgeSource = selectedEdge
+    ? (nodes.find((n) => n.id === selectedEdge.source) ?? null)
+    : null;
+  const selectedEdgeTarget = selectedEdge
+    ? (nodes.find((n) => n.id === selectedEdge.target) ?? null)
+    : null;
 
   // Wire label: derived at render time from `data.condition`, never persisted on the edge
   // itself — `condition` alone stays the source of truth the mapper round-trips.
@@ -309,7 +327,7 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
     window.setTimeout(() => {
       void fitView({ padding: 0.2, duration: 200 });
     }, 0);
-  }, [nodes, liveGraph, setNodes, fitView]);
+  }, [nodes, liveGraph, setNodes, fitView, nomes]);
 
   const onDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -362,7 +380,12 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
           </SheetContent>
         </Sheet>
 
-        <div className="relative h-full flex-1" data-testid="flow-canvas" onDragOver={onDragOver} onDrop={onDrop}>
+        <div
+          className="relative h-full flex-1"
+          data-testid="flow-canvas"
+          onDragOver={onDragOver}
+          onDrop={onDrop}
+        >
           <ReactFlow
             nodes={nodes}
             edges={edgesForRender}
@@ -408,7 +431,7 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
         */}
         {selectedNode && (
           <aside
-            className="fixed inset-x-0 bottom-0 z-40 flex max-h-[75vh] flex-col overflow-hidden rounded-t-lg border-t border-border bg-surface shadow-lg lg:static lg:z-auto lg:h-full lg:w-96 lg:max-h-none lg:shrink-0 lg:rounded-none lg:border-l lg:border-t-0 lg:shadow-none"
+            className="fixed inset-x-0 bottom-0 z-40 flex max-h-[75vh] flex-col overflow-hidden rounded-t-lg border-t border-border bg-surface shadow-lg lg:static lg:z-auto lg:h-full lg:max-h-none lg:w-96 lg:shrink-0 lg:rounded-none lg:border-t-0 lg:border-l lg:shadow-none"
             data-testid="node-config-sheet"
           >
             {/* Barra própria pro X, não sobreposta ao conteúdo — um botão
@@ -443,7 +466,7 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
 
         {selectedEdge && (
           <aside
-            className="fixed inset-x-0 bottom-0 z-40 flex max-h-[75vh] flex-col overflow-hidden rounded-t-lg border-t border-border bg-surface shadow-lg lg:static lg:z-auto lg:h-full lg:w-96 lg:max-h-none lg:shrink-0 lg:rounded-none lg:border-l lg:border-t-0 lg:shadow-none"
+            className="fixed inset-x-0 bottom-0 z-40 flex max-h-[75vh] flex-col overflow-hidden rounded-t-lg border-t border-border bg-surface shadow-lg lg:static lg:z-auto lg:h-full lg:max-h-none lg:w-96 lg:shrink-0 lg:rounded-none lg:border-t-0 lg:border-l lg:shadow-none"
             data-testid="edge-config-sheet"
           >
             <div className="flex shrink-0 justify-end p-2 lg:hidden">
@@ -478,7 +501,9 @@ export function FlowCanvas(props: Props) {
   return (
     <ReactFlowProvider>
       <EtapasDoFluxoProvider>
-        <FlowCanvasInner {...props} />
+        <SaidaDeErroProvider habilitada={props.initialData.draft_graph?.execution_contract === 1}>
+          <FlowCanvasInner {...props} />
+        </SaidaDeErroProvider>
       </EtapasDoFluxoProvider>
     </ReactFlowProvider>
   );

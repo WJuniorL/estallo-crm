@@ -43,15 +43,20 @@ export const dynamic = "force-dynamic";
 
 /** Insere o job followup_turn na fila existente (migration 0050) — consumido
  *  pelo handler já pronto em lib/agent-engine/agent/followup-turn.ts. */
-async function enqueueJob(job: FollowupJobRequest): Promise<void> {
+async function enqueueJob(job: FollowupJobRequest): Promise<{ job_id: string }> {
   const admin = createAdminClient();
-  const { error } = await admin.from("job_queue").insert({
-    organization_id: job.organization_id,
-    contact_id: job.contact_id,
-    kind: "followup_turn",
-    payload: job.payload,
-  });
+  const { data, error } = await admin
+    .from("job_queue")
+    .insert({
+      organization_id: job.organization_id,
+      contact_id: job.contact_id,
+      kind: "followup_turn",
+      payload: job.payload,
+    })
+    .select("id")
+    .single();
   if (error) throw new Error(error.message);
+  return { job_id: data.id };
 }
 
 async function handle(req: NextRequest): Promise<Response> {

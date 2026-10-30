@@ -30,6 +30,8 @@ de menor precedência e registre. Para identidade visual, consultar sempre o [De
 
 ## 1. Comece por aqui
 
+Plano de evolução em discussão: [Automações do CRM — implementação por fases e homologação local](superpowers/plans/2026-10-18-automacoes-crm.md). O documento descreve trabalho futuro; não representa funcionalidades já entregues.
+
 | Doc                                                               | Para quê                                                                                                                                                                                                                             |
 | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | [`README.md`](../README.md)                                       | O que é, quickstart de 5 min, stack, roadmap. Também em [EN](../README.en.md) / [ES](../README.es.md)                                                                                                                                |

@@ -38,6 +38,7 @@ import { definicaoNaConexao } from '@/lib/channels/linha-do-espelho';
 import { estadoDaJanela } from '@/lib/channels/janela';
 import { renderTemplateBody } from '@/lib/channels/meta/render-template';
 import { contextoDoContato, renderizarTextoDeFollowup } from '@/lib/automation/texto-do-followup';
+import { executionContractProblem } from '@/lib/automation/execution-capability';
 import { isStatusSendable } from '@/lib/channels/meta/template-binding';
 import { deriveTemplateContract } from '@/lib/channels/meta/template-contract';
 import { camadaLigada, lerCamadasDaOrg } from '../guardrails/camadas-da-org';
@@ -437,11 +438,21 @@ export function createFollowupTurnHandler(deps: FollowupTurnDeps) {
           return;
         }
       }
-      const { rows: inscricaoRows } = await pool.query<{ current_node_id: string; status: string }>(
-        `select current_node_id, status from followup_enrollments where organization_id = $1 and id = $2 limit 1`,
+      const { rows: inscricaoRows } = await pool.query<{
+        current_node_id: string; status: string; execution_contract: number;
+        graph_execution_contract: number | null;
+      }>(
+        `select e.current_node_id, e.status, e.execution_contract, v.graph->'execution_contract' as graph_execution_contract
+         from followup_enrollments e
+         join followup_flow_versions v on v.organization_id=e.organization_id and v.id=e.version_id
+         where e.organization_id = $1 and e.id = $2 limit 1`,
         [tenantId, payload.followup_enrollment_id],
       );
       const inscricao = inscricaoRows[0];
+      if (inscricao) {
+        const contractProblem = executionContractProblem(inscricao, { execution_contract: inscricao.graph_execution_contract });
+        if (contractProblem) throw new Error(contractProblem);
+      }
       const viva =
         inscricao !== undefined &&
         inscricao.current_node_id === payload.node_id &&

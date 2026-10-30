@@ -93,6 +93,7 @@ import {
   type ResultadoDaVarredura,
 } from "@/lib/lgpd/cascata";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { EXECUTION_RETENTION_DEFAULTS } from "@/lib/followup/execution-retention";
 
 export const dynamic = "force-dynamic";
 
@@ -112,6 +113,13 @@ export const TAMANHO_DO_LOTE = 1000;
 export const MAX_LOTES = 20;
 
 export interface ResultadoDaRetencao {
+  /** Contam execuções, não linhas de snapshots. O prazo é da organização. */
+  execucoes_com_payload_expurgado?: number;
+  execucoes_de_automacao_apagadas?: number;
+  lotes_payloads_automacao?: number;
+  payloads_automacao_tem_resto?: boolean;
+  lotes_execucoes_automacao?: number;
+  execucoes_automacao_tem_resto?: boolean;
   jobs_apagados: number;
   auditoria_apagada: number;
   lotes_fila: number;
@@ -234,7 +242,9 @@ export interface PodaDb {
       | "fn_expurgar_telemetria_de_ia_vencida"
       | "fn_expurgar_ritmo_de_envio_vencido"
       | "fn_expurgar_copias_enviadas_vencidas"
-      | "fn_expurgar_checkpoints_superados",
+      | "fn_expurgar_checkpoints_superados"
+      | "fn_expurgar_payloads_de_automacao"
+      | "fn_expurgar_execucoes_de_automacao",
     args: { p_retencao_dias: number; p_limite: number },
   ): Promise<{ data: number | null; error: { message: string } | null }>;
   /**
@@ -301,7 +311,9 @@ async function drenar(
     | "fn_expurgar_telemetria_de_ia_vencida"
     | "fn_expurgar_ritmo_de_envio_vencido"
     | "fn_expurgar_copias_enviadas_vencidas"
-    | "fn_expurgar_checkpoints_superados",
+    | "fn_expurgar_checkpoints_superados"
+    | "fn_expurgar_payloads_de_automacao"
+    | "fn_expurgar_execucoes_de_automacao",
   dias: number,
 ): Promise<{ apagadas: number; lotes: number; temResto: boolean }> {
   let apagadas = 0;
@@ -632,8 +644,18 @@ export async function podarHistorico(
   const ritmoDrenado = await executarDreno(falhas, "fn_expurgar_ritmo_de_envio_vencido", () => drenar(db, "fn_expurgar_ritmo_de_envio_vencido", ritmoDeEnvio.dias), zerado);
   const copiasDrenadas = await executarDreno(falhas, "fn_expurgar_copias_enviadas_vencidas", () => drenar(db, "fn_expurgar_copias_enviadas_vencidas", copiasEnviadas.dias), zerado);
   const checkpointsDrenados = await executarDreno(falhas, "fn_expurgar_checkpoints_superados", () => drenar(db, "fn_expurgar_checkpoints_superados", checkpoints.dias), zerado);
+  // O banco resolve a política por organização e protege execuções vivas e
+  // checkpoints herdados. Falha em uma poda não impede a outra nem a LGPD.
+  const payloadsDeAutomacao = await executarDreno(falhas, "fn_expurgar_payloads_de_automacao", () => drenar(db, "fn_expurgar_payloads_de_automacao", EXECUTION_RETENTION_DEFAULTS.payload_days), zerado);
+  const execucoesDeAutomacao = await executarDreno(falhas, "fn_expurgar_execucoes_de_automacao", () => drenar(db, "fn_expurgar_execucoes_de_automacao", EXECUTION_RETENTION_DEFAULTS.metadata_days), zerado);
 
   return {
+    execucoes_com_payload_expurgado: payloadsDeAutomacao.apagadas,
+    execucoes_de_automacao_apagadas: execucoesDeAutomacao.apagadas,
+    lotes_payloads_automacao: payloadsDeAutomacao.lotes,
+    payloads_automacao_tem_resto: payloadsDeAutomacao.temResto,
+    lotes_execucoes_automacao: execucoesDeAutomacao.lotes,
+    execucoes_automacao_tem_resto: execucoesDeAutomacao.temResto,
     jobs_apagados: jobs.apagadas,
     auditoria_apagada: linhas.apagadas,
     espelho_apagado: eventos.apagadas,
@@ -723,6 +745,8 @@ export async function podarHistorico(
  */
 export function houveEfeito(resultado: ResultadoDaRetencao): boolean {
   return (
+    (resultado.execucoes_com_payload_expurgado ?? 0) > 0 ||
+    (resultado.execucoes_de_automacao_apagadas ?? 0) > 0 ||
     resultado.jobs_apagados > 0 ||
     resultado.auditoria_apagada > 0 ||
     // A terceira conta: sem ela, uma rodada que só podou o espelho apagaria
@@ -789,9 +813,8 @@ async function handle(req: NextRequest): Promise<Response> {
   let resultado: ResultadoDaRetencao;
   try {
     admin = createAdminClient();
-    // As duas funções são novas e não estão em `lib/database.types.ts` (gerado a
-    // partir de um projeto Supabase vivo) — mesmo tratamento que
-    // `recover-stuck-messages` dá a `emit_event`.
+    // O dreno recebe somente contagens numéricas; o adaptador limita o retorno
+    // das RPCs ao contrato PodaDb sem expor a superfície inteira do client.
     const db: PodaDb = {
       async rpc(nome, args) {
         const { data, error } = await admin.rpc(nome as never, args as never);

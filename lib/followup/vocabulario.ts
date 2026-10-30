@@ -49,6 +49,7 @@ import {
   NO_REPLY_BRANCH_ID,
   REPEAT_BODY_BRANCH_ID,
   REPEAT_DONE_BRANCH_ID,
+  ON_ERROR_BRANCH_ID,
   type RESERVED_BRANCH_IDS,
   type actionConfigSchema,
   type aiClassifyConfigSchema,
@@ -390,6 +391,7 @@ export const RAMOS_RESERVADOS_EM_FRASE: Record<RamoReservado, string> = {
   [CONDITION_FALSE_BRANCH_ID]: "quando a condição é falsa",
   [REPEAT_BODY_BRANCH_ID]: "quando ainda falta uma volta",
   [REPEAT_DONE_BRANCH_ID]: "quando as voltas acabaram",
+  [ON_ERROR_BRANCH_ID]: "quando o bloco falha",
 };
 
 /**
@@ -448,6 +450,7 @@ export const RAMOS_RESERVADOS: Record<RamoReservado, string> = {
   [CONDITION_FALSE_BRANCH_ID]: conditionLabel({ type: "cond_result", value: false }),
   [REPEAT_BODY_BRANCH_ID]: "Próxima volta",
   [REPEAT_DONE_BRANCH_ID]: "Acabou",
+  [ON_ERROR_BRANCH_ID]: "Fallback erro",
 };
 
 // ─── classificação pela IA ───────────────────────────────────────────────
@@ -523,6 +526,14 @@ export const PRIORIDADES_DA_TAREFA: Record<PrioridadeDaTarefa, string> = {
   medium: "Média",
   high: "Alta",
   urgent: "Urgente",
+};
+
+// ─── destino da tag (nó edit_lead_tag) ───────────────────────────────────
+
+/** Onde o bloco de tag grava — rótulos do formulário. */
+export const DESTINOS_DA_TAG: Record<"card" | "contato", string> = {
+  card: "No negócio",
+  contato: "No contato",
 };
 
 // ─── pergunta do fluxo de atendimento (nó collect) ───────────────────────

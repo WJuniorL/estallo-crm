@@ -16,6 +16,7 @@ import type { EnrollmentRow } from "@/lib/followup/node-handlers";
 import { completeTurnForEnrollment, type TurnBridgeAdminClient } from "@/lib/followup/turn-bridge";
 import { logger } from "@/lib/logger";
 import { OrgNaoOperanteError } from "@/lib/organizacao/operante";
+import { executionContractProblem } from "@/lib/automation/execution-capability";
 
 function ponteSupabase(admin: SupabaseClient): TurnBridgeAdminClient {
   const base = createSupabaseAdminClient(admin);
@@ -106,16 +107,21 @@ export async function enviarTextoFixoPendente(
     const jobClaim={worker_id:claimed.locked_by as string,acquired_at:claimed.locked_at as string};
 
     try {
-      const { data: enr } = await admin
+      const { data: enr, error: enrollmentError } = await admin
         .from("followup_enrollments")
-        .select("current_node_id,status,revision")
+        .select("current_node_id,status,revision,version_id,execution_contract")
         .eq("id", enrollmentId)
         .eq("organization_id", job.organization_id as string)
         .maybeSingle();
+      if (enrollmentError) throw new Error(enrollmentError.message);
       if (!enr || enr.current_node_id !== nodeId || !["active","waiting_reply"].includes(enr.status)) {
         await settle(job.organization_id,job.id,jobClaim.acquired_at,true);
         continue;
       }
+      const graph = await ponte.loadFlowGraph(job.organization_id, enr.version_id);
+      if (!graph) throw new Error("flow_version_not_found");
+      const contractProblem = executionContractProblem(enr, graph);
+      if (contractProblem) throw new Error(contractProblem);
       const boundary = parseServiceBoundary((job.payload as Record<string, unknown>).service_boundary);
       await assertServiceBoundarySupabase(admin, boundary);
       const conversationId = boundary!.conversation_id;

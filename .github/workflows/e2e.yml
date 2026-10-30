@@ -1148,6 +1148,7 @@ jobs:
         followup-builder.spec.ts
         followup-journey.spec.ts
         followup-dossie.spec.ts
+        automacoes-retencao.spec.ts
         followup-queue.spec.ts
         fluxo-de-atendimento.spec.ts
         qa-l12-funil.spec.ts

@@ -1,11 +1,20 @@
 import type { FlowGraph, FlowEdge, FlowNode, NodeType } from './graph-schema';
 import type { FollowupFlowSurface } from './api-schemas';
-import { branchIdForCondition, nodeBranches } from './graph-schema';
+import {
+  branchIdForCondition,
+  nodeBranches,
+  GRACE_TIMEOUT_MAX_MS,
+  NODES_WITH_ERROR_BRANCH,
+  ON_ERROR_BRANCH_ID,
+} from './graph-schema';
 import { rotuloDoRamo } from './rotulo-do-ramo';
 import type { NomesDeValor } from './vocabulario';
 import type { EtapaCitada } from './etapas-citadas';
 import { recusaDeMotivoForaDoVocabulario } from '../leads/motivo-da-perda';
 import { capabilitiesOf, transportaMensagem, type ChannelProvider } from '../channels/capabilities';
+import { nodeTypesForSurface } from './node-catalog';
+import { EXECUTION_CONTRACT_AVAILABLE } from './execution-contract';
+import { NODES_INTEGRATED_IN_EXECUTION_CONTRACT } from '@/lib/automation/execution-capability';
 
 /**
  * Structural publish validator for follow-up flow graphs.
@@ -15,6 +24,11 @@ import { capabilitiesOf, transportaMensagem, type ChannelProvider } from '../cha
  */
 
 export const PUBLISH_ERROR_CODES = [
+  'execution_contract_unavailable',
+  'execution_node_not_integrated',
+  'error_edge_requires_new_engine',
+  'error_edge_not_supported',
+  'multiple_error_edges',
   'no_trigger',
   'multiple_triggers',
   'unreachable_node',
@@ -28,6 +42,7 @@ export const PUBLISH_ERROR_CODES = [
   'check_stage_not_found',
   'check_stage_archived',
   'grace_too_short',
+  'grace_too_long',
   'long_wait_needs_template',
   'immune_wait_too_short',
   'cycle_without_wait',
@@ -155,9 +170,9 @@ function cicloDoEncadeamento(
  * recusava em silêncio; a recusa aqui é o erro que a pessoa lê no editor.
  */
 export const NOS_DA_SUPERFICIE: Record<FollowupFlowSurface, readonly NodeType[]> = {
-  followup: ['trigger', 'wait', 'condition', 'ai_classify', 'match_reply', 'repeat', 'action', 'internal_task', 'move_lead', 'edit_lead_tag', 'end'],
-  crm_automation: ['trigger', 'wait', 'condition', 'ai_classify', 'match_reply', 'repeat', 'action', 'internal_task', 'move_lead', 'edit_lead_tag', 'end'],
-  atendimento: ['trigger', 'collect', 'skill', 'end'],
+  followup: nodeTypesForSurface('followup'),
+  crm_automation: nodeTypesForSurface('crm_automation'),
+  atendimento: nodeTypesForSurface('atendimento'),
 };
 
 /**
@@ -478,6 +493,8 @@ function cobrirRamos(
 ): void {
   for (const branch of nodeBranches(node)) {
     if (outgoing.some((e) => branchIdForCondition(node, e.condition) === branch.id)) continue;
+    // "Fallback erro" é opcional: sem aresta, a falha para a inscrição e avisa a Central.
+    if (branch.kind === 'error') continue;
     if (branch.kind === 'fallback') {
       errors.push({
         node_id: node.id,
@@ -649,6 +666,49 @@ function conferirRegras(
   });
 }
 
+/**
+ * "Fallback erro" (aresta `branch: on_error`). Só existe onde há o que falhar de vez e só vale no
+ * motor novo: no antigo a falha é registrada em log e o fluxo segue pela saída normal, então uma
+ * aresta de erro ali prometeria um desvio que nunca acontece.
+ */
+function conferirSaidaDeErro(graph: FlowGraph, errors: PublishValidationError[]): void {
+  const porOrigem = new Map<string, number>();
+  const tipoDe = new Map(graph.nodes.map((n) => [n.id, n.type]));
+  for (const edge of graph.edges) {
+    if (edge.condition.type !== 'branch' || edge.condition.branch_id !== ON_ERROR_BRANCH_ID) continue;
+    const tipo = tipoDe.get(edge.source);
+    if (tipo === undefined) continue;
+    if (!NODES_WITH_ERROR_BRANCH.has(tipo)) {
+      errors.push({
+        node_id: edge.source,
+        code: 'error_edge_not_supported',
+        branch_id: ON_ERROR_BRANCH_ID,
+        message: `Nó "${edge.source}": este tipo de bloco não tem a saída "Fallback erro".`,
+      });
+      continue;
+    }
+    if (graph.execution_contract !== 1) {
+      errors.push({
+        node_id: edge.source,
+        code: 'error_edge_requires_new_engine',
+        branch_id: ON_ERROR_BRANCH_ID,
+        message: `Nó "${edge.source}": a saída "Fallback erro" só funciona no motor novo de execução.`,
+      });
+      continue;
+    }
+    porOrigem.set(edge.source, (porOrigem.get(edge.source) ?? 0) + 1);
+  }
+  for (const [origem, quantas] of porOrigem) {
+    if (quantas > 1)
+      errors.push({
+        node_id: origem,
+        code: 'multiple_error_edges',
+        branch_id: ON_ERROR_BRANCH_ID,
+        message: `Nó "${origem}": só pode haver uma saída "Fallback erro".`,
+      });
+  }
+}
+
 const UUID_RX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function validateFlowForPublish(
@@ -658,6 +718,25 @@ export function validateFlowForPublish(
   const { nodes, edges } = graph;
   const errors: PublishValidationError[] = [];
   const surface = contexto.surface ?? 'followup';
+  if (graph.execution_contract !== undefined && !EXECUTION_CONTRACT_AVAILABLE) {
+    errors.push({
+      node_id: null,
+      code: 'execution_contract_unavailable',
+      message: 'O contrato de execução deste fluxo ainda não está disponível nesta instalação.',
+    });
+  }
+  if (graph.execution_contract !== undefined) {
+    for (const node of nodes) {
+      if (!NODES_INTEGRATED_IN_EXECUTION_CONTRACT.has(node.type)) {
+        errors.push({
+          node_id: node.id,
+          code: 'execution_node_not_integrated',
+          message: 'Este tipo de bloco ainda não é registrado pelo novo contrato de execução.',
+        });
+      }
+    }
+  }
+  conferirSaidaDeErro(graph, errors);
   validarSuperficie(graph, surface, errors, contexto.roteiro);
   validarSomenteInterno(graph, surface, errors);
   const etapas = contexto.etapas;
@@ -786,6 +865,13 @@ export function validateFlowForPublish(
           message: `Nó "${node.id}" tem grace_timeout_ms abaixo do mínimo de 15min.`,
         });
       }
+      if (node.config.grace_timeout_ms > GRACE_TIMEOUT_MAX_MS) {
+        errors.push({
+          node_id: node.id,
+          code: 'grace_too_long',
+          message: `Nó "${node.id}" tem grace_timeout_ms acima do máximo de 365 dias.`,
+        });
+      }
       continue;
     }
 
@@ -827,6 +913,13 @@ export function validateFlowForPublish(
         node_id: node.id,
         code: 'grace_too_short',
         message: `Nó "${node.id}" tem grace_timeout_ms abaixo do mínimo de 15min.`,
+      });
+    }
+    if (node.config.grace_timeout_ms > GRACE_TIMEOUT_MAX_MS) {
+      errors.push({
+        node_id: node.id,
+        code: 'grace_too_long',
+        message: `Nó "${node.id}" tem grace_timeout_ms acima do máximo de 365 dias.`,
       });
     }
   }

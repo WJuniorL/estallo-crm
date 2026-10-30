@@ -17,6 +17,7 @@ import { FlowStatusBadge } from "./FlowStatusBadge";
 import { ModelosDialog } from "./ModelosDialog";
 import { NewFlowDialog } from "./NewFlowDialog";
 import { RenameFollowupFlowButton } from "./RenameFollowupFlowButton";
+import { ExecutionRetentionButton } from "./ExecutionRetentionButton";
 
 interface Props {
   initialData: FollowupFlowPointerRow[];
@@ -102,6 +103,7 @@ export function FlowsList({ initialData, canWrite, surface }: Props) {
             <div className="mt-1 flex flex-col items-center gap-2 sm:flex-row">
               {!deAtendimento && modelosButton}
               {newFlowButton}
+              {!deAtendimento && <ExecutionRetentionButton />}
             </div>
           )}
         </Card>
@@ -116,6 +118,7 @@ export function FlowsList({ initialData, canWrite, surface }: Props) {
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
           {!deAtendimento && modelosButton}
           {newFlowButton}
+          {!deAtendimento && <ExecutionRetentionButton />}
         </div>
       )}
 

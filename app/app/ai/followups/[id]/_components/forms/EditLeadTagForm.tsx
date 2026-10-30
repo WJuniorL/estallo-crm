@@ -4,6 +4,13 @@ import { useState } from "react";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useT } from "@/hooks/i18n/useT";
 import { editLeadTagConfigSchema } from "@/lib/followup/graph-schema";
 
@@ -35,7 +42,10 @@ export function EditLeadTagForm({
       .split(",")
       .map((s) => s.trim())
       .filter((s) => s.length > 0);
-    const parsed = editLeadTagConfigSchema.safeParse({ tags });
+    const parsed = editLeadTagConfigSchema.safeParse({
+      tags,
+      ...(config.destino ? { destino: config.destino } : {}),
+    });
     if (!parsed.success) {
       setErro(parsed.error.issues[0]?.message ?? t("Configuração inválida."));
       return;
@@ -46,7 +56,23 @@ export function EditLeadTagForm({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="edit-lead-tag">{t("Tags para gravar no lead")}</Label>
+      <Label htmlFor="edit-lead-tag-destino">{t("Onde gravar")}</Label>
+      <Select
+        value={config.destino ?? "card"}
+        onValueChange={(v) => {
+          const destino = v === "contato" ? "contato" : "card";
+          onChange({ ...config, destino: destino === "contato" ? "contato" : undefined });
+        }}
+      >
+        <SelectTrigger id="edit-lead-tag-destino">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="card">{t("No negócio")}</SelectItem>
+          <SelectItem value="contato">{t("No contato")}</SelectItem>
+        </SelectContent>
+      </Select>
+      <Label htmlFor="edit-lead-tag">{t("Tags para gravar")}</Label>
       <Input
         id="edit-lead-tag"
         value={texto}
@@ -56,7 +82,7 @@ export function EditLeadTagForm({
       />
       {erro && <p className="text-xs text-error-fg">{erro}</p>}
       <p className="text-xs text-text-muted">
-        {t("Separe por vírgula. Tags que o lead já tem são mantidas e nada é apagado.")}
+        {t("Separe por vírgula. Tags que já existem são mantidas e nada é apagado.")}
       </p>
     </div>
   );

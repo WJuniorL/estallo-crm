@@ -22,7 +22,11 @@ vi.mock("@/lib/ai/elegibilidade/consulta-supabase", () => ({
 vi.mock("@/lib/followup/turn-bridge", () => ({
   completeTurnForEnrollment: (...a: unknown[]) => completeTurnForEnrollment(...a),
 }));
-vi.mock("@/lib/followup/engine", () => ({ createSupabaseAdminClient: () => ({}) }));
+// O atalho carrega o grafo pinado para conferir o contrato de execução; aqui, um grafo legado
+// (sem marcador), que deve seguir o caminho de sempre.
+vi.mock("@/lib/followup/engine", () => ({
+  createSupabaseAdminClient: () => ({ loadFlowGraph: async () => ({ nodes: [], edges: [] }) }),
+}));
 vi.mock("@/lib/logger", () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
 
 import { enviarTextoFixoPendente } from "./enviar-texto-fixo";

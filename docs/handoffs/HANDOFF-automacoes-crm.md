@@ -812,3 +812,12 @@ Teto de 50 jobs ligados: o subselect na lista de colunas não trava `followup_ex
 - **Provas:** `automacoes-tag-e-tarefa-antigo-x-novo.test.ts` 14/14 contra o Supabase local (destino contato sem negócio e com negócio: antigo e novo iguais; o padrão sem negócio continua divergindo e fica documentado). Suíte `automacoes-*` do banco: 26 arquivos, 303 passed | 1 expected fail | 25 skipped (REST). Unit `lib/followup` + `app/app/ai/followups` + `lib/i18n`: verdes após cobrir o enum em `vocabulario.ts`. Typecheck exit 0, ESLint limpo.
 - **NÃO MEDIDO:** a opção pela tela (só tipos/markup); replay do recibo no destino contato (herda o mesmo `confirmedEffect`, sem teste próprio); contraprova por sabotagem desta opção.
 - Pendência 1 do plano de aposentadoria do motor antigo: **resolvida**.
+
+### 2026-10-30 — o atendimento (`collect`/`skill`) NÃO depende do motor antigo (leitura de código)
+
+- **Roteiro de atendimento nunca entra no relógio de follow-up.** Três travas independentes: (1) o banco recusa a inscrição (`trg_enrollment_superficie_coerente`, `fn_enrollment_superficie_coerente` no baseline); (2) `enrollFollowupFlow` devolve 422 `flow_not_enrollable` para `surface='atendimento'`; (3) todos os gatilhos (`gatilho-etapa/caso/lead/retorno`, `silence-sweep`) pulam `surface==='atendimento'`.
+- **O atendimento não importa o motor.** `lib/followup/atendimento.ts` e `lib/agent-engine/agent/roteiro-no-turno.ts` só usam `captura-do-fluxo`, `flow-validate`, tipos de `graph-schema` e `lib/atendimento/*`; nenhum import de `engine.ts`, `node-handlers.ts` ou `turn-bridge.ts`. `lib/atendimento/` não importa `lib/followup/` em nenhum arquivo.
+- **`collect`/`skill` no relógio são só passagem** (`node-handlers.ts`) e a publicação os recusa fora da superfície de atendimento (`NOS_DA_SUPERFICIE`, `no_fora_da_superficie`); no contrato 1 já são recusados (`execution_node_not_integrated`).
+- **Atenção ao escopo da "aposentadoria":** `engine.ts` é um arquivo só com os dois caminhos de efeito (legado em `applyResult` + diário). Aposentar o antigo = remover o ramo legado de efeito, não o arquivo: `reactivity`, `aplicar-inbound`, `turn-bridge`, `relogio/executar` e vários testes importam tipos e funções dele.
+- **NÃO MEDIDO:** execução (é leitura de código); fluxos de atendimento em produção (não há).
+- Pendência 2 do plano: **resolvida**. Restam: ligar a chave (migration), prova com WhatsApp real e prova pela tela.

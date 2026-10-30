@@ -53406,6 +53406,131 @@ begin
 end;
 $$;
 
+-- ---- Publish accepts execution contract 1 (migration 0709) ----
+-- manifest: A publicacao de fluxo passa a aceitar o contrato de execucao 1 (motor novo); qualquer outro valor de execution_contract continua recusado
+-- Troca a guarda da 0707, que recusava a chave inteira enquanto o contrato estava desligado. O interruptor do
+-- codigo (EXECUTION_CONTRACT_AVAILABLE) e o do banco andam juntos: esta migration e a que liga o banco.
+-- Continua recusando valor desconhecido (so o 1 existe) para um chamador com service role nao gravar um contrato inventado.
+create or replace function fn_publish_followup_flow_version(
+  p_org uuid,
+  p_pointer uuid,
+  p_graph jsonb,
+  p_created_by uuid
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_pointer record;
+  v_version_id uuid;
+begin
+  if p_graph ? 'execution_contract' and p_graph -> 'execution_contract' is distinct from '1'::jsonb then
+    raise exception 'execution_contract_invalid' using errcode = 'P0001';
+  end if;
+
+  select p.id, p.organization_id
+    into v_pointer
+  from followup_flow_pointers p
+  where p.id = p_pointer
+  for update;
+
+  if not found or v_pointer.organization_id <> p_org then
+    raise exception 'pointer_not_found' using errcode = 'P0001';
+  end if;
+
+  insert into followup_flow_versions (organization_id, pointer_id, graph, created_by)
+  values (p_org, p_pointer, p_graph, p_created_by)
+  returning id into v_version_id;
+
+  update followup_flow_pointers
+     set active_version_id = v_version_id,
+         status = 'active',
+         updated_at = now()
+   where id = p_pointer;
+
+  return v_version_id;
+end;
+$$;
+revoke all on function fn_publish_followup_flow_version(uuid, uuid, jsonb, uuid) from public, anon, authenticated;
+grant execute on function fn_publish_followup_flow_version(uuid, uuid, jsonb, uuid) to service_role;
+
+-- ---- Enrollment inherits the version execution contract (migration 0710) ----
+-- manifest: A inscricao nasce no contrato de execucao da versao fixada (motor novo) e com o lead explicito congelado na criacao
+-- Todo ponto de criacao de inscricao (manual, varredura de silencio e os gatilhos) grava version_id; este gatilho
+-- copia execution_contract do grafo dessa versao e fixa lead_id no negocio mais recente do contato, a mesma escolha
+-- que o motor antigo refazia a cada passo. So age em inscricao nascida no contrato 0 sobre versao de contrato 1:
+-- linha que ja traz contrato 1 (ou lead explicito) fica como veio. Sem HTTP: apenas leitura de duas tabelas.
+create or replace function public.fn_enrollment_herda_contrato_da_versao()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+declare
+  v_contract int;
+begin
+  if new.execution_contract <> 0 then
+    return new;
+  end if;
+
+  select (v.graph ->> 'execution_contract')::int
+    into v_contract
+  from followup_flow_versions v
+  where v.organization_id = new.organization_id
+    and v.id = new.version_id;
+
+  if v_contract is distinct from 1 then
+    return new;
+  end if;
+
+  new.execution_contract := 1;
+  if new.lead_id is null then
+    select l.id
+      into new.lead_id
+    from crm_leads l
+    where l.organization_id = new.organization_id
+      and l.contact_id = new.contact_id
+    order by l.updated_at desc, l.id
+    limit 1;
+  end if;
+  return new;
+end;
+$$;
+revoke all on function public.fn_enrollment_herda_contrato_da_versao() from public, anon, authenticated;
+
+drop trigger if exists trg_enrollment_herda_contrato_da_versao on public.followup_enrollments;
+create trigger trg_enrollment_herda_contrato_da_versao
+  before insert on public.followup_enrollments
+  for each row execute function public.fn_enrollment_herda_contrato_da_versao();
+
+-- ---- campo computado ultimo_status_de_saida (migration 0711) ----
+-- Antes da VARREDURA anon por ser função; as policies da 0711 ficam no fim,
+-- depois dos conjuntos fn_orgs_veem_* da 0661, que elas usam.
+-- Status da última mensagem de SAÍDA da conversa, para o tique da prévia na
+-- lista da inbox (único/duplo/azul, como no WhatsApp). Campo computado do
+-- PostgREST em vez de coluna: nada a sincronizar (DIRC: Calcular). SECURITY
+-- INVOKER de propósito — a policy de `messages` decide o que o leitor vê.
+-- Servido por `idx_messages_conversation_sent (conversation_id, sent_at desc)`.
+create or replace function public.ultimo_status_de_saida(public.conversations)
+returns text
+language sql
+stable
+security invoker
+set search_path = public
+as $$
+  select m.status
+  from public.messages m
+  where m.conversation_id = $1.id
+    and m.direction = 'outbound'
+  order by m.sent_at desc
+  limit 1;
+$$;
+
+revoke execute on function public.ultimo_status_de_saida(public.conversations) from public, anon;
+grant execute on function public.ultimo_status_de_saida(public.conversations) to authenticated, service_role;
+
+
 -- ---- VARREDURA anon: função nova nasce exposta em quem ATUALIZA (migration 0116) ----
 --
 -- ⚠️ DE PROPÓSITO, NENHUMA FUNÇÃO É CRIADA DEPOIS DESTE BLOCO. Apêndice que cria

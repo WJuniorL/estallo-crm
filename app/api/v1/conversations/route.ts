@@ -7,6 +7,7 @@ import { type NextRequest } from "next/server";
 import { ApiError } from "@/lib/api/types";
 import { fail, ok } from "@/lib/api/wrappers";
 import { loadAuthUser } from "@/lib/auth/server";
+import { logger } from "@/lib/logger";
 import { orgAtivaDaApi } from "@/lib/auth/require-role";
 import { traduzir } from "@/lib/i18n/dicionario";
 import { listConversationsQuerySchema } from "@/lib/schemas";
@@ -111,6 +112,10 @@ export async function GET(req: NextRequest): Promise<Response> {
     });
   } catch (err) {
     if (err instanceof ApiError) {
+      // 500 com o `requestId` no log: é o "ID: …" que o toast mostra.
+      if (err.status >= 500) {
+        logger.error("conversations.list falhou", { requestId, organization_id: activeOrg.orgId, detail: err.message, details: err.details });
+      }
       return fail(err.code, err.message, err.status, { requestId });
     }
     throw err;

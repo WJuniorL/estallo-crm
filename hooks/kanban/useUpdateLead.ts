@@ -126,6 +126,12 @@ interface EditArgs {
   patch: UpdateLeadInput;
 }
 
+/**
+ * OTIMISTA (30/10/2026): o dossiê grava cada campo na hora, e a tela muda antes
+ * do servidor responder — o patch entra no lead do quadro no `onMutate`; erro
+ * devolve o quadro de antes e mostra o motivo. Campos personalizados chegam como
+ * DIFF (issue #2132) e por isso se FUNDEM aos existentes, nunca os substituem.
+ */
 export function useEditLead(pipelineId: string) {
   const qc = useQueryClient();
   const queryKey = ["board", pipelineId] as const;
@@ -135,10 +141,35 @@ export function useEditLead(pipelineId: string) {
       marcarEcoLocal(leadId);
       return apiClient.patch<{ data: Lead }>(`/api/v1/leads/${leadId}`, patch);
     },
+    onMutate: async ({ leadId, patch }) => {
+      await qc.cancelQueries({ queryKey });
+      const snapshot = qc.getQueryData<BoardData>(queryKey);
+      if (snapshot) {
+        const { custom_fields: campos, ...resto } = patch as UpdateLeadInput & {
+          custom_fields?: Record<string, unknown>;
+        };
+        qc.setQueryData<BoardData>(queryKey, {
+          ...snapshot,
+          leads: snapshot.leads.map((l) =>
+            l.id === leadId
+              ? {
+                  ...l,
+                  ...resto,
+                  ...(campos ? { custom_fields: { ...(l.custom_fields ?? {}), ...campos } } : {}),
+                }
+              : l,
+          ),
+        } as BoardData);
+      }
+      return { snapshot };
+    },
     onSuccess: (res, { leadId }) => {
       gravaLeadNoQuadro(qc, queryKey, leadId, res?.data);
     },
-    onError: showApiError,
+    onError: (err, _args, ctx) => {
+      if (ctx?.snapshot) qc.setQueryData(queryKey, ctx.snapshot);
+      showApiError(err);
+    },
     onSettled: (_data, _err, { leadId }) => {
       liberarEcoLocal(leadId);
       qc.invalidateQueries({ queryKey });

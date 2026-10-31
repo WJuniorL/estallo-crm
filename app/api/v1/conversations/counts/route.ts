@@ -13,6 +13,7 @@ import type { NextRequest } from "next/server";
 import { fail, ok } from "@/lib/api/wrappers";
 import { idsDosCanaisDesativados } from "@/lib/channels/desativado";
 import { loadAuthUser } from "@/lib/auth/server";
+import { logger } from "@/lib/logger";
 import { orgAtivaDaApi } from "@/lib/auth/require-role";
 import { traduzir } from "@/lib/i18n/dicionario";
 import { CONVERSATION_TERMINAL_STATUSES } from "@/lib/schemas";
@@ -193,6 +194,10 @@ export async function GET(req: NextRequest): Promise<Response> {
     archived.error ??
     pendentes.error ?? emEspera.error ?? emAberto.error;
   if (firstErr) {
+    // O "ID: …" do toast é este `requestId`: sem a linha no log, ele não leva a
+    // lugar nenhum (30/10/2026 — milhares de 500 por statement timeout, nenhum
+    // rastreável pelo ID que o atendente via).
+    logger.error("conversations.counts falhou", { requestId, organization_id: org, detail: firstErr.message, code: firstErr.code });
     return fail("internal_error", firstErr.message, 500, { requestId });
   }
 

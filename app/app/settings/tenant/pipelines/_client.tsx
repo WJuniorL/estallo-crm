@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/select";
 import { updatePipelineConfig } from "@/app/actions/settings/updatePipelineConfig";
 import type { PipelineConfigPatch } from "@/lib/schemas/settings";
-import { modoDeReabertura } from "@/lib/leads/reabertura";
 import { CATEGORIAS_DE_PERDA } from "@/lib/schemas/leads";
 import { customFieldSchema, type CustomFieldDef } from "@/lib/schemas/settings";
 import { AgentMappingSection, ancoraDoMapeamento } from "./_mapping";
@@ -245,9 +244,6 @@ function PipelineEditor({
   const [comandaNoGanho, setComandaNoGanho] = useState(
     (pipeline.settings as { comanda_no_ganho?: unknown } | null)?.comanda_no_ganho === true,
   );
-  const [retomaComoNovo, setRetomaComoNovo] = useState(
-    modoDeReabertura(pipeline.settings) === "novo_negocio",
-  );
   const [isPending, startTransition] = useTransition();
 
   function handleSave() {
@@ -274,7 +270,6 @@ function PipelineEditor({
       won_reasons: wonReasons,
       won_reason_required: wonRequired,
       comanda_no_ganho: comandaNoGanho,
-      reabertura: retomaComoNovo ? "novo_negocio" : "mesmo_registro",
     };
     startTransition(async () => {
       const r = await updatePipelineConfig(pipeline.id, patch);
@@ -376,22 +371,6 @@ function PipelineEditor({
           />
           {t("Exigir motivo de ganho ao fechar como ganho")}
         </label>
-      </div>
-
-      <div className="space-y-1">
-        <label className="flex items-center gap-2 text-xs">
-          <input
-            type="checkbox"
-            checked={retomaComoNovo}
-            onChange={(e) => setRetomaComoNovo(e.target.checked)}
-          />
-          {t("Negócio encerrado que volta abre um negócio novo")}
-        </label>
-        <p className="text-xs text-muted-foreground">
-          {t(
-            "Desligado, arrastar um negócio perdido ou ganho para uma etapa aberta reabre o mesmo negócio. Ligado, o encerrado fica como está e o quadro oferece criar uma nova tentativa com o mesmo contato.",
-          )}
-        </p>
       </div>
 
       {/* ─── A COMANDA DO GANHO (#1477) ───────────────────────────────

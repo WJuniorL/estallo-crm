@@ -56328,3 +56328,57 @@ begin
 end;
 $$;
 
+
+-- ---- RLS de conversa sem fn_can_view_conversation por linha (migration 0711) ----
+--
+-- Medido em produção (Estallo, 30/10/2026): ~5.000 respostas 500 do PostgREST em
+-- /rest/v1/conversations em 8 horas, todas "canceling statement due to statement
+-- timeout". As contagens das abas da inbox (HEAD count) tinham média de 3,6 a
+-- 4,6 s sobre uma tabela de 173 conversas. A policy `conversations_select` chamava
+-- `fn_can_view_conversation` POR LINHA — SECURITY DEFINER, não inline-ável — e ela
+-- chamava `fn_user_role_in_org` duas vezes, cada uma rodando `fn_support_context()`
+-- (join com auth.sessions e auth.mfa_factors). `messages_select` faz EXISTS em
+-- `conversations` por mensagem e herdava o custo. Era o toast "ID: …" que os
+-- atendentes viam a cada mensagem recebida (o realtime refaz lista e contagens).
+--
+-- O QUE NÃO MUDA: quem vê qual conversa. `fn_can_view_conversation` tem a MESMA
+-- regra de `fn_can_view_lead` (admin de plataforma; sem papel não vê; viewer,
+-- manager e admin veem; responsável vê; senão a `visibility_mode` da organização),
+-- então reusa os conjuntos da 0661, que entram como `in (select ...)` e são
+-- avaliados uma vez por consulta. `fn_can_view_conversation` continua existindo
+-- para quem a chama fora de policy.
+
+drop policy if exists "conversations_select" on public.conversations;
+create policy "conversations_select" on public.conversations
+  for select using (
+    (select public.fn_is_platform_admin())
+    or organization_id in (select public.fn_orgs_veem_todos_os_negocios())
+    or (
+      assigned_to_user_id = (select auth.uid())
+      and organization_id in (select public.fn_user_org_ids())
+    )
+    or (
+      assigned_to_user_id is null
+      and organization_id in (select public.fn_orgs_veem_negocios_sem_dono())
+    )
+  );
+
+drop policy if exists "messages_select" on public.messages;
+create policy "messages_select" on public.messages
+  for select using (
+    (select public.fn_is_platform_admin())
+    or exists (
+      select 1 from public.conversations c
+      where c.id = messages.conversation_id
+    )
+  );
+
+drop policy if exists "message_templates_select" on public.message_templates;
+create policy "message_templates_select" on public.message_templates
+  for select using (
+    (
+      organization_id in (select public.fn_user_org_ids())
+      and (owner_user_id is null or owner_user_id = (select auth.uid()))
+    )
+    or (select public.fn_is_platform_admin())
+  );

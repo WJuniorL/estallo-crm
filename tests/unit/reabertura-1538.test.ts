@@ -35,6 +35,7 @@ import {
   RECUSA_REABERTURA_CRIA_NOVO,
   camposCopiadosNaRetomada,
   modoDeReabertura,
+  pedeEscolhaDeReabertura,
   recusaReabertura,
 } from "@/lib/leads/reabertura";
 
@@ -56,9 +57,20 @@ describe("modoDeReabertura — o padrão é o comportamento de antes da issue", 
     expect(MODO_REABERTURA_PADRAO).toBe("mesmo_registro");
   });
 
-  it("só a string declarada liga a regra nova", () => {
-    expect(modoDeReabertura({ reabertura: "novo_negocio" })).toBe("novo_negocio");
-    expect(modoDeReabertura({ reabertura: "NOVO_NEGOCIO" })).toBe("mesmo_registro");
+  it("desde 30/10/2026 o funil não decide: o valor antigo `novo_negocio` fica inerte", () => {
+    // A escolha passou para quem move (diálogo "Criar novo lead × Mover lead
+    // existente"); o funil não trava mais a saída de ganho/perdido.
+    expect(modoDeReabertura({ reabertura: "novo_negocio" })).toBe("mesmo_registro");
+  });
+});
+
+describe("pedeEscolhaDeReabertura — quando a tela pergunta antes de mover", () => {
+  it("só encerrado (ganho/perdido) indo para etapa ABERTA", () => {
+    expect(pedeEscolhaDeReabertura("won", ABERTA)).toBe(true);
+    expect(pedeEscolhaDeReabertura("lost", ABERTA)).toBe(true);
+    expect(pedeEscolhaDeReabertura("open", ABERTA)).toBe(false);
+    expect(pedeEscolhaDeReabertura("lost", DE_GANHO)).toBe(false);
+    expect(pedeEscolhaDeReabertura("won", undefined)).toBe(false);
   });
 });
 

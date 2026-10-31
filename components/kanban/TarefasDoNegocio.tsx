@@ -110,7 +110,9 @@ export function TarefasDoNegocio({ leadId, contactId, podeEditar, aberto }: Prop
           {t("Nenhuma tarefa neste negócio. Anote o próximo passo combinado, com prazo e responsável.")}
         </p>
       ) : (
-        <div className="-mx-3">
+        // Sem `-mx-3`: ele anulava o `p-3` do card e encostava a caixa de cada
+        // faixa (borda + canto próprios) na borda do card — tarefa sem respiro.
+        <div>
           <ListaDeTarefas
             tarefas={tarefas}
             podeEditar={podeEditar}

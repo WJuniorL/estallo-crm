@@ -15660,6 +15660,16 @@ export const DICIONARIO: Traducoes = {
   "Não foi possível salvar a retenção do histórico.": { es: "No se pudo guardar la retención del historial." },
   "Confira os prazos de retenção.": { es: "Revisa los plazos de retención." },
   "Os prazos valem para execuções com histórico detalhado. Fluxos antigos mantêm o histórico existente.": { es: "Los plazos se aplican a ejecuciones con historial detallado. Los flujos antiguos conservan su historial existente." },
+  "Ver anúncio": { es: "Ver anuncio" },
+  "Contato salvo.": { es: "Contacto guardado." },
+  "Salvar contato": { es: "Guardar contacto" },
+  "O título precisa de pelo menos 2 caracteres.": { es: "El título necesita al menos 2 caracteres." },
+  "Este lead já foi encerrado": { es: "Este lead ya fue cerrado" },
+  "Criar um novo lead mantém este como está (ganho ou perdido) e abre um novo lead com o mesmo contato, copiando campos e tags. Mover o lead existente o reabre na etapa escolhida.": {
+    es: "Crear un nuevo lead mantiene este como está (ganado o perdido) y abre un nuevo lead con el mismo contacto, copiando campos y etiquetas. Mover el lead existente lo reabre en la etapa elegida.",
+  },
+  "Mover lead existente": { es: "Mover lead existente" },
+  "Criar novo lead": { es: "Crear nuevo lead" },
 };
 
 /**

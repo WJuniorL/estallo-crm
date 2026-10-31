@@ -73,3 +73,28 @@ export function alinharFioComAPrevia(qc: QueryClient, payload: unknown): void {
     void qc.invalidateQueries({ queryKey: chave });
   }
 }
+
+/**
+ * A PRÉVIA NA HORA (30/10/2026): grava campos de UMA conversa em toda lista em
+ * cache, sem esperar a recarga. A recarga (que reordena e traz os campos
+ * calculados) continua vindo atrás; isto só tira a defasagem de quem olha.
+ *
+ * Usado pelo Realtime (o `new` do UPDATE — colunas, nunca os joins nem os campos
+ * calculados, que ficam como estavam) e pelo envio otimista (`useSendMessage`).
+ */
+export function gravarNaConversaDaLista(
+  qc: QueryClient,
+  conversationId: string,
+  campos: Record<string, unknown>,
+): void {
+  qc.setQueriesData<InfiniteData<{ data: Array<{ id: string }> }>>({ queryKey: ["conversations"] }, (old) => {
+    if (!old?.pages) return old;
+    let mudou = false;
+    const pages = old.pages.map((page) => {
+      if (!page.data.some((c) => c.id === conversationId)) return page;
+      mudou = true;
+      return { ...page, data: page.data.map((c) => (c.id === conversationId ? { ...c, ...campos } : c)) };
+    });
+    return mudou ? { ...old, pages } : old;
+  });
+}

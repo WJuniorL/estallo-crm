@@ -6,6 +6,7 @@ import type { Locale } from "date-fns";
 import { format, formatDistanceToNowStrict } from "date-fns";
 import { useT } from "@/hooks/i18n/useT";
 import { PushPin, Robot } from "@/lib/ui/icons";
+import { AckIndicator } from "@/components/inbox/AckIndicator";
 import { ChannelLogo } from "@/components/inbox/ChannelLogo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -156,6 +157,11 @@ export function ConversationListItem({
   const visibleTags = tags.slice(0, 2);
   const overflow = tags.length - visibleTags.length;
   const preview = conversation.last_message_preview?.trim() || t("Sem mensagens");
+  // A última mensagem é NOSSA quando a saída é a mais recente — a mesma régua do
+  // `status_do_chat`. É o que põe o tique antes da prévia, como no WhatsApp.
+  const ultimaFoiDeSaida =
+    !!conversation.last_outbound_at &&
+    (!conversation.last_inbound_at || conversation.last_outbound_at >= conversation.last_inbound_at);
   // O canto acompanha a última atividade, a mesma data da ordenação da lista.
   const time = relativeTime(conversation.last_message_at, localeDaData);
   const unread = conversation.unread_count_for_assignee ?? 0;
@@ -317,6 +323,12 @@ export function ConversationListItem({
           <span className="ibx-message-preview">
             {isAi && mostrarAutomatico ? (
               <Robot size={12} weight="duotone" className="mr-1 inline align-[-2px]" aria-hidden />
+            ) : null}
+            {ultimaFoiDeSaida ? (
+              <span className="mr-1 inline-flex align-[-2px]">
+                {/* Sem status conhecido (resposta antiga ou envio em curso), o ✓ simples. */}
+                <AckIndicator status={conversation.ultimo_status_de_saida ?? "sent"} t={t} />
+              </span>
             ) : null}
             <FormatacaoWhatsApp texto={preview} modo="linha" />
           </span>

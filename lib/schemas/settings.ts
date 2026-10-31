@@ -257,10 +257,10 @@ export const pipelineConfigPatchSchema = z.object({
    */
   comanda_no_ganho: z.boolean().optional(),
   /**
-   * O que acontece quando um negócio ENCERRADO volta (issue #1538). Ausente é
-   * `mesmo_registro`, o comportamento de antes: reabre o mesmo negócio. Com
-   * `novo_negocio`, mover o encerrado para etapa aberta é recusado e a saída é
-   * a retomada (`lib/leads/reabertura.ts`).
+   * DESCONTINUADA (30/10/2026): o funil não decide mais o que acontece quando
+   * um negócio encerrado volta — quem move escolhe no diálogo (ver
+   * `modoDeReabertura` em `lib/leads/reabertura.ts`). Segue aceita, e ignorada,
+   * para um cliente antigo não levar 422 ao salvar o funil.
    */
   reabertura: z.enum(["mesmo_registro", "novo_negocio"]).optional(),
   /** O que a retomada copia da origem; ausente é o piso (`custom_fields` e tags). */

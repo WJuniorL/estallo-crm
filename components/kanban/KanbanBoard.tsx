@@ -17,6 +17,7 @@ import { useAssignableMembers } from "@/hooks/inbox/useAssignableMembers";
 import { useAtRiskLeads } from "@/hooks/leads/useAtRiskLeads";
 import { useReactivations } from "@/hooks/leads/useReactivations";
 import { midpoint } from "@/lib/kanban/fractional-indexing";
+import { pedeEscolhaDeReabertura } from "@/lib/leads/reabertura";
 import { proximoNaEtapaInteira } from "@/lib/kanban/vizinho-na-etapa";
 import type { Lead } from "@/lib/types/leads";
 import type { BoardData, Pipeline, Stage } from "@/lib/kanban/types";
@@ -114,7 +115,6 @@ export function KanbanBoard({
   const [retomada, setRetomada] = useState<RetomadaPendente | null>(null);
   const moveCard = useMoveCard(pipelineId, {
     onCamposFaltando: setRecusaDeCampos,
-    onRetomada: setRetomada,
   });
   const { data: members } = useAssignableMembers(true);
   const ownerNames = useMemo(
@@ -270,12 +270,19 @@ export function KanbanBoard({
         return;
       }
 
-      moveCard.mutate({
+      const args = {
         leadId: lead.id,
         stageId: destStageId,
         positionInStage: newPosition,
         expectedUpdatedAt: lead.updated_at,
-      });
+      };
+      // Ganho/perdido solto numa etapa aberta: o card não sai do lugar até a
+      // escolha "Criar novo lead × Mover lead existente" (30/10/2026).
+      if (pedeEscolhaDeReabertura(lead.status, data.stages.find((s) => s.id === destStageId))) {
+        setRetomada({ leadId: lead.id, stageId: destStageId, args });
+        return;
+      }
+      moveCard.mutate(args);
     },
     [data, grouped, moveCard, qc, pipelineId],
   );
@@ -383,6 +390,10 @@ export function KanbanBoard({
           leadId={retomada.leadId}
           stageId={retomada.stageId}
           pipelineId={pipelineId}
+          onMoverEste={() => {
+            moveCard.mutate(retomada.args);
+            setRetomada(null);
+          }}
         />
       )}
     </DragDropContext>

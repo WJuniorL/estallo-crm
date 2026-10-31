@@ -278,7 +278,7 @@ function PainelDaConversa({
   const consulta = useConversation(conversationId, true);
   const conversa = consulta.data ?? null;
   const [respondendo, setRespondendo] = useState<Message | null>(null);
-  const { motivoDaJanela, blockedReason, fechada } = useEstadoDoEnvio(conversa);
+  const { motivoDaJanela, blockedReason } = useEstadoDoEnvio(conversa);
   // Minimizada ou atrás de outra, a conversa NÃO é lida: só a que está à vista.
   useMarkAsRead(visivel && conversa ? conversationId : null, conversa?.unread_count_for_assignee ?? 0);
   const nome = rotuloDoContato(conversa?.contacts ?? null, t);
@@ -382,7 +382,10 @@ function PainelDaConversa({
               contatoId={conversa.contacts?.id ?? null}
             />
           </div>
-          <div className="max-h-[50%] shrink-0 overflow-y-auto">
+          {/* Só os avisos rolam. O Composer fica FORA do `overflow-y-auto`: o menu
+              de respostas rápidas ("/") e o de menções são `absolute` acima dele,
+              e dentro de um contêiner com rolagem eram cortados (30/10/2026). */}
+          <div className="max-h-[35%] shrink-0 overflow-y-auto">
             <RetentionNotice conversationId={conversationId} />
             {motivoDaJanela && (
               <JanelaFechadaAviso
@@ -391,13 +394,14 @@ function PainelDaConversa({
                 motivo={motivoDaJanela}
               />
             )}
+          </div>
+          <div className="shrink-0">
             <Composer
               conversationId={conversationId}
               active={visivel}
               compacto
               blockedReason={blockedReason}
               janelaFechada={motivoDaJanela}
-              disabled={fechada}
               contactName={conversa.contacts?.name ?? null}
               contactDisplayName={conversa.contacts?.display_name}
               respondendo={respondendo}

@@ -93,7 +93,7 @@ const SELECT_COLS = `
   unread_count_for_assignee, is_group, group_chat_id, metadata,
   snooze_until, created_at, updated_at,
   bot_silenced_until, last_handoff_at, last_handoff_reason,
-  comando_da_conversa,
+  comando_da_conversa, ultimo_status_de_saida,
   contacts:contact_id (id, display_name, name, phone_number, is_anonymized, tags, is_blocked, is_personal, avatar_storage_path, force_human),
   channel_sessions:channel_session_id (phone_number, display_name, provider, social_platform:metadata->>social_platform)
 `;

@@ -4,6 +4,8 @@ import { apiClient } from "@/lib/api/client";
 import { randomId } from "@/lib/random-id";
 import { instanteOtimista } from "@/lib/inbox/ordem-do-fio";
 import { showApiError } from "@/components/feedback/ApiErrorToast";
+import { gravarNaConversaDaLista } from "@/hooks/inbox/recargaDasConversas";
+import { previaDaMensagem } from "@/lib/messaging/previa-da-mensagem";
 import type { Message } from "@/lib/types/messaging";
 
 interface SendArgs {
@@ -44,6 +46,17 @@ export function useSendMessage() {
     mutationFn: async (input: SendArgs) =>
       apiClient.post<{ data: Message }>("/api/v1/messages", input),
     onMutate: async (args) => {
+      // A prévia da lista acompanha o envio na hora, antes do servidor responder
+      // (a mesma régua de prévia que o banco grava). O tique sai como "na fila":
+      // o AckIndicator não desenha nada até o status real chegar pelo Realtime.
+      const agora = new Date().toISOString();
+      gravarNaConversaDaLista(qc, args.conversation_id, {
+        last_message_preview: previaDaMensagem(args.body, args.type ?? (args.media_url || args.media_storage_path ? "document" : "text")),
+        last_message_at: agora,
+        last_outbound_at: agora,
+        ultimo_status_de_saida: "queued",
+      });
+
       if (args.media_storage_path || args.media_url || args.type === "contact") return {};
 
       const queryKey = ["messages", args.conversation_id];

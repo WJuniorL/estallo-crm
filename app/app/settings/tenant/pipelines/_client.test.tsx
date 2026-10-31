@@ -99,27 +99,17 @@ describe("retomada de negócio encerrado (#1538)", () => {
   const salvar = () =>
     fireEvent.click(screen.getByRole("button", { name: "Salvar vocabulário e campos" }));
 
-  it("nasce desligada e ligar grava `reabertura: novo_negocio` na porta única de escrita", () => {
-    render(<PipelinesClient pipelines={[FUNIL]} etapas={{}} podeEditarConfig />);
-    const caixa = screen.getByLabelText("Negócio encerrado que volta abre um negócio novo");
-    expect(caixa).not.toBeChecked();
-
-    fireEvent.click(caixa);
-    salvar();
-
-    expect(vi.mocked(updatePipelineConfig).mock.calls.at(-1)![1].reabertura).toBe("novo_negocio");
-  });
-
-  it("funil já ligado abre marcado, e desligar volta a `mesmo_registro`", () => {
+  // 30/10/2026: a escolha saiu do funil — quem move um encerrado escolhe no
+  // diálogo "Criar novo negócio × Mover este". A opção some da tela e salvar não
+  // a grava mais (um valor antigo fica inerte: `modoDeReabertura`).
+  it("a opção de reabertura não existe mais no funil e salvar não a grava", () => {
     const ligado: PipelineRow = { ...FUNIL, settings: { ...FUNIL.settings, reabertura: "novo_negocio" } };
     render(<PipelinesClient pipelines={[ligado]} etapas={{}} podeEditarConfig />);
-    const caixa = screen.getByLabelText("Negócio encerrado que volta abre um negócio novo");
-    expect(caixa).toBeChecked();
+    expect(screen.queryByLabelText("Negócio encerrado que volta abre um negócio novo")).toBeNull();
 
-    fireEvent.click(caixa);
     salvar();
 
-    expect(vi.mocked(updatePipelineConfig).mock.calls.at(-1)![1].reabertura).toBe("mesmo_registro");
+    expect(vi.mocked(updatePipelineConfig).mock.calls.at(-1)![1]).not.toHaveProperty("reabertura");
   });
 });
 

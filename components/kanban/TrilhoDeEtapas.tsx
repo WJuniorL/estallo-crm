@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { chaveDoQuadro } from "@/hooks/kanban/useBoard";
 import { useMoveCard, type RecusaDeCampos, type RetomadaPendente } from "@/hooks/kanban/useMoveCard";
 import { midpoint } from "@/lib/kanban/fractional-indexing";
+import { pedeEscolhaDeReabertura } from "@/lib/leads/reabertura";
 import { frenteSobreCor } from "@/lib/branding/contraste";
 import type { BoardData, Stage } from "@/lib/kanban/types";
 import { CamposObrigatoriosDialog } from "./CamposObrigatoriosDialog";
@@ -56,7 +57,7 @@ export function TrilhoDeEtapas({
   const qc = useQueryClient();
   const [recusa, setRecusa] = useState<RecusaDeCampos | null>(null);
   const [retomada, setRetomada] = useState<RetomadaPendente | null>(null);
-  const mover = useMoveCard(pipelineId, { onCamposFaltando: setRecusa, onRetomada: setRetomada });
+  const mover = useMoveCard(pipelineId, { onCamposFaltando: setRecusa });
   /** A etapa que a pessoa escolheu e a tela já mostra, até a fila esvaziar. */
   const [alvo, setAlvo] = useState<string | null>(null);
   const emVoo = useRef(false);
@@ -143,6 +144,17 @@ export function TrilhoDeEtapas({
 
   function escolher(stageId: string) {
     if (!podeMover || stageId === atualId) return;
+    // Ganho/perdido levado a uma etapa aberta: primeiro a pergunta "Criar novo
+    // lead × Mover lead existente" — a etapa só muda na tela se a escolha for mover.
+    const atual = leadNaCache() ?? lead;
+    if (pedeEscolhaDeReabertura(atual.status, stages.find((s) => s.id === stageId))) {
+      setRetomada({
+        leadId: lead.id,
+        stageId,
+        args: { leadId: lead.id, stageId, positionInStage: 0, expectedUpdatedAt: atual.updated_at },
+      });
+      return;
+    }
     setAlvo(stageId);
     if (emVoo.current) {
       proxima.current = stageId;
@@ -224,8 +236,13 @@ export function TrilhoDeEtapas({
       </ol>
       {rola.transborda && (
         <div className="flex items-center justify-between gap-2 pt-1.5 text-[11px] text-text-muted">
+          {/* Negócio ganho/perdido não está em etapa aberta: sem "Etapa 0/N". */}
           <span>
-            {t("Etapa")} <b className="text-text">{indiceAtual + 1}</b>/{abertas.length}
+            {indiceAtual >= 0 ? (
+              <>
+                {t("Etapa")} <b className="text-text">{indiceAtual + 1}</b>/{abertas.length}
+              </>
+            ) : null}
           </span>
           <div className="flex gap-1.5">
             <button
@@ -278,6 +295,12 @@ export function TrilhoDeEtapas({
           leadId={retomada.leadId}
           stageId={retomada.stageId}
           pipelineId={pipelineId}
+          onMoverEste={() => {
+            const stageId = retomada.stageId;
+            setRetomada(null);
+            setAlvo(stageId);
+            enviar(stageId);
+          }}
         />
       )}
     </section>

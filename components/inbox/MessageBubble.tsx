@@ -4,7 +4,9 @@ import { FormatacaoWhatsApp } from "@/lib/mensagens/formatacao-whatsapp";
 import { useLocaleDeData } from "@/hooks/i18n/useLocaleDeData";
 import { format } from "date-fns";
 import { useT } from "@/hooks/i18n/useT";
-import { ArrowBendUpLeft, CaretDown, Check, Checks, PencilSimple, Robot, Trash, WarningOctagon } from "@/lib/ui/icons";
+import { ArrowBendUpLeft, CaretDown, PencilSimple, Robot, Trash, WarningOctagon } from "@/lib/ui/icons";
+import { AckIndicator } from "@/components/inbox/AckIndicator";
+import { CartaoDeAnuncio, anuncioDaMensagem } from "@/components/inbox/media/CartaoDeAnuncio";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -51,19 +53,6 @@ interface Props {
   onApagar?: () => Promise<void>;
   onOcultar?: () => Promise<void>;
   onRestaurar?: () => Promise<void>;
-}
-
-function AckIndicator({ status, t }: { status: string; t: (texto: string) => string }) {
-  if (status === "read") {
-    return <Checks size={12} weight="bold" className="text-blue-400" aria-label={t("Lida")} />;
-  }
-  if (status === "delivered") {
-    return <Checks size={12} weight="bold" className="text-current/70" aria-label={t("Entregue")} />;
-  }
-  if (status === "sent") {
-    return <Check size={12} weight="bold" className="text-current/70" aria-label={t("Enviada")} />;
-  }
-  return null;
 }
 
 export function MessageBubble({
@@ -130,6 +119,7 @@ export function MessageBubble({
   const isContact = message.type === "contact";
   // Pino com coordenadas: o cartão substitui o corpo, que é só o mesmo link em texto.
   const localizacao = localizacaoDaMensagem(message);
+  const anuncio = anuncioDaMensagem(message.metadata);
   // Figurinha sem caption: sem moldura de bolha (padrão WhatsApp).
   const isBareSticker = hasMedia && message.type === "sticker" && !message.body;
   // Apagada pelo autor ("apagar para todos"). A linha continua no histórico —
@@ -405,6 +395,8 @@ export function MessageBubble({
           </p>
         ) : (
           <>
+            {anuncio && <CartaoDeAnuncio anuncio={anuncio} />}
+
             {hasMedia && (
               <div className={cn(message.body && "mb-1")}>
                 <MediaRenderer message={message} agora={agora} />

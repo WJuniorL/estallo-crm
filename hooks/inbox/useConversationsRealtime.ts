@@ -3,7 +3,11 @@ import { hashKey, useInfiniteQuery, useQueryClient } from "@tanstack/react-query
 import { useCallback, useMemo } from "react";
 import { useRealtimeChannel } from "@/hooks/realtime/useRealtimeChannel";
 import { useRefetchDeSeguranca } from "@/hooks/realtime/useRefetchDeSeguranca";
-import { agendarRecargaDasConversas, alinharFioComAPrevia } from "@/hooks/inbox/recargaDasConversas";
+import {
+  agendarRecargaDasConversas,
+  alinharFioComAPrevia,
+  gravarNaConversaDaLista,
+} from "@/hooks/inbox/recargaDasConversas";
 import { apiClient } from "@/lib/api/client";
 import { showApiError } from "@/components/feedback/ApiErrorToast";
 import {
@@ -220,6 +224,11 @@ export function useConversationsRealtime(
   const onChange = useCallback(
     (payload: unknown) => {
       alinharFioComAPrevia(qc, payload);
+      // Prévia, horários e não-lidas na hora; a recarga agrupada reordena depois.
+      const nova = (payload as { eventType?: string; new?: Record<string, unknown> } | null) ?? null;
+      if (nova?.eventType === "UPDATE" && typeof nova.new?.id === "string") {
+        gravarNaConversaDaLista(qc, nova.new.id, nova.new);
+      }
       agendarRecargaDasConversas(qc);
     },
     [qc],

@@ -1413,3 +1413,13 @@
 .ibx-composer-compacto .ibx-input-box > :last-child {
   margin-left: auto;
 }
+
+/* Tique de "lida" (30/10/2026). Na lista, o azul de texto do tema; sobre a bolha
+   de SAÍDA — que já é azul (`--ibx-blue`) — um azul-claro, senão o "lida" some
+   no fundo e não se distingue do "entregue" (branco). */
+.ibx-ack-read {
+  color: var(--ibx-blue-text);
+}
+.ibx-outgoing .ibx-ack-read {
+  color: #8fe3ff;
+}

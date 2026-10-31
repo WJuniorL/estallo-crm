@@ -17,7 +17,7 @@ import {
 import { useT } from "@/hooks/i18n/useT";
 import { useCatalogoDeProdutos } from "@/hooks/leads/useProdutosDoNegocio";
 import { centavosParaCampo, formatCents, parseReaisToCents } from "@/lib/money";
-import type { ItemDoRascunho } from "@/lib/leads/rascunho-de-produtos";
+import { ehNovoNoRascunho, type ItemDoRascunho } from "@/lib/leads/rascunho-de-produtos";
 import { totalDoItem } from "@/lib/schemas/produtos-do-negocio";
 import { X } from "@/lib/ui/icons";
 
@@ -30,41 +30,42 @@ function centsParaTexto(cents: number): string {
  * por item. O valor do negócio é a soma — quem calcula é a trigger do banco, e
  * o `LeadFieldsForm` mostra o total daqui no lugar do campo de valor.
  *
- * É um editor de RASCUNHO: cada mudança fica na tela e só vai ao servidor
- * quando a pessoa clica em "Salvar" na ficha (`LeadFieldsForm`). Antes cada
- * clique gravava na hora, e o botão Salvar parecia não mandar em nada.
+ * Cada ação grava NA HORA (30/10/2026), de forma otimista: adicionar e remover
+ * no clique; quantidade e desconto ao sair do campo (um PATCH por edição, não
+ * por tecla). Quem grava é `useProdutosDoNegocio`, que desfaz e avisa no erro.
  */
 export function ProdutosDoNegocio({
   itens,
-  onChange,
   moeda,
   podeEditar,
+  onAdicionar,
+  onRemover,
+  onAlterar,
 }: {
   itens: ItemDoRascunho[];
-  onChange: (proximos: ItemDoRascunho[]) => void;
   moeda: string;
   podeEditar: boolean;
+  onAdicionar: (item: ItemDoRascunho) => void;
+  onRemover: (itemId: string) => void;
+  onAlterar: (itemId: string, campos: { quantidade?: number; desconto_cents?: number }) => void;
 }) {
   const t = useT();
   const catalogo = useCatalogoDeProdutos(podeEditar);
   const ativos = (catalogo.data ?? []).filter((p) => p.ativo);
-  // Id da linha que ainda não existe no banco — único dentro do rascunho.
+  // Id da linha enquanto o POST está em voo — único dentro da lista.
   const proximoId = useRef(0);
 
   function adicionar(productId: string) {
     const p = ativos.find((c) => c.id === productId);
     if (!p) return;
-    onChange([
-      ...itens,
-      {
-        id: `novo-${productId}-${(proximoId.current += 1)}`,
-        product_id: p.id,
-        nome: p.nome,
-        quantidade: 1,
-        preco_unitario_cents: p.preco_cents,
-        desconto_cents: 0,
-      },
-    ]);
+    onAdicionar({
+      id: `novo-${productId}-${(proximoId.current += 1)}`,
+      product_id: p.id,
+      nome: p.nome,
+      quantidade: 1,
+      preco_unitario_cents: p.preco_cents,
+      desconto_cents: 0,
+    });
   }
 
   return (
@@ -78,8 +79,8 @@ export function ProdutosDoNegocio({
               item={item}
               moeda={moeda}
               podeEditar={podeEditar}
-              onAlterar={(v) => onChange(itens.map((i) => (i.id === item.id ? { ...i, ...v } : i)))}
-              onRemover={() => onChange(itens.filter((i) => i.id !== item.id))}
+              onAlterar={(v) => onAlterar(item.id, v)}
+              onRemover={() => onRemover(item.id)}
             />
           ))}
         </ul>
@@ -124,6 +125,24 @@ function LinhaDoProduto({
   const [desconto, setDesconto] = useState(
     item.desconto_cents ? centsParaTexto(item.desconto_cents) : "",
   );
+  // O valor gravado mudou (servidor, ou o desfazer de um erro): o campo acompanha.
+  const [gravado, setGravado] = useState({ q: item.quantidade, d: item.desconto_cents });
+  if (gravado.q !== item.quantidade || gravado.d !== item.desconto_cents) {
+    setGravado({ q: item.quantidade, d: item.desconto_cents });
+    setQuantidade(String(item.quantidade));
+    setDesconto(item.desconto_cents ? centsParaTexto(item.desconto_cents) : "");
+  }
+  // A linha recém-adicionada ainda não tem id do banco: editar ou remover agora
+  // mandaria o id provisório ao servidor. Fica travada pelo instante do POST.
+  const editavel = podeEditar && !ehNovoNoRascunho(item.id);
+
+  const qDigitada = Number.parseInt(quantidade, 10);
+  const dDigitado = desconto.trim() === "" ? 0 : parseReaisToCents(desconto);
+  const total = totalDoItem({
+    ...item,
+    quantidade: Number.isInteger(qDigitada) && qDigitada >= 1 ? qDigitada : item.quantidade,
+    desconto_cents: dDigitado !== null && dDigitado >= 0 ? dDigitado : item.desconto_cents,
+  });
 
   function conferirQuantidade() {
     const q = Number.parseInt(quantidade, 10);
@@ -164,6 +183,7 @@ function LinhaDoProduto({
             variant="ghost"
             className="h-7 w-7 shrink-0"
             aria-label={`${t("Remover produto")}: ${item.nome}`}
+            disabled={!editavel}
             onClick={onRemover}
           >
             <X size={14} aria-hidden />
@@ -182,14 +202,10 @@ function LinhaDoProduto({
             inputMode="numeric"
             className="h-8"
             value={quantidade}
-            disabled={!podeEditar}
-            onChange={(e) => {
-              setQuantidade(e.target.value);
-              const q = Number.parseInt(e.target.value, 10);
-              if (Number.isInteger(q) && q >= 1 && q !== item.quantidade)
-                onAlterar({ quantidade: q });
-            }}
+            disabled={!editavel}
+            onChange={(e) => setQuantidade(e.target.value)}
             onBlur={conferirQuantidade}
+            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), e.currentTarget.blur())}
           />
         </div>
         <div className="space-y-1">
@@ -201,19 +217,15 @@ function LinhaDoProduto({
             moeda={moeda}
             className="h-8"
             value={desconto}
-            disabled={!podeEditar}
-            onChange={(e) => {
-              setDesconto(e.target.value);
-              const cents = e.target.value.trim() === "" ? 0 : parseReaisToCents(e.target.value);
-              if (cents !== null && cents !== item.desconto_cents)
-                onAlterar({ desconto_cents: cents });
-            }}
+            disabled={!editavel}
+            onChange={(e) => setDesconto(e.target.value)}
             onBlur={conferirDesconto}
+            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), e.currentTarget.blur())}
           />
         </div>
         <div className="space-y-1 text-right">
           <p className="text-xs text-muted-foreground">{t("Total")}</p>
-          <p className="h-8 leading-8 font-medium">{formatCents(totalDoItem(item), moeda)}</p>
+          <p className="h-8 leading-8 font-medium">{formatCents(total, moeda)}</p>
         </div>
       </div>
     </li>

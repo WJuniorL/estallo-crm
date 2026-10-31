@@ -25,6 +25,7 @@ import {
 } from "@/lib/messaging/ritmo-do-envio-por-token";
 import { sendMessageSchema, validateRequest, type SendMessageInput } from "@/lib/schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/logger";
 import type { Message } from "@/lib/types/messaging";
 
 import { sendMessageHandler } from "./_handler";
@@ -227,6 +228,21 @@ export async function POST(req: NextRequest): Promise<Response> {
         })
       : null;
 
+    // Observe ANTES do envio: um fechamento ocorrido enquanto o canal responde
+    // deve prevalecer. A revisão é conferida pela RPC canônica de atendimento.
+    let revisaoFechada: number | null = null;
+    if (authz.via === "session" && actor.type === "user") {
+      const { data: conversa, error } = await supabase
+        .from("conversations")
+        .select("service_revision")
+        .eq("organization_id", organizationId)
+        .eq("id", input.conversation_id)
+        .eq("status", "closed")
+        .maybeSingle();
+      if (error) throw new ApiError(500, "internal_error", undefined, requestId);
+      revisaoFechada = conversa?.service_revision ?? null;
+    }
+
     const message = await sendMessageHandler(
       supabase,
       {
@@ -240,6 +256,34 @@ export async function POST(req: NextRequest): Promise<Response> {
       },
       input as SendMessageInput,
     );
+    if (revisaoFechada !== null && message.status !== "failed") {
+      try {
+        const { error } = await createAdminClient().rpc("fn_service_status", {
+          p_org: organizationId,
+          p_conversation: input.conversation_id,
+          p_status: "open",
+          p_expected: revisaoFechada,
+        });
+        if (error) throw error;
+        void audit({
+          action: "conversation.released",
+          actorUserId: actor.type === "user" ? actor.id : null,
+          organizationId,
+          resourceType: "conversation",
+          resourceId: input.conversation_id,
+          requestId,
+          metadata: { status: "open", reason: "human_reply", message_id: message.id },
+        });
+      } catch (error) {
+        // A mensagem já foi aceita: não induzir reenvio e duplicação se a
+        // revisão mudou ou se a reabertura falhou depois da entrega.
+        logger.warn("messages.send.reopen_failed", {
+          organization_id: organizationId,
+          conversation_id: input.conversation_id,
+          code: (error as { code?: string })?.code,
+        });
+      }
+    }
     // A primeira resposta humana pelo inbox numa conversa SEM responsável passa
     // a conversa para quem respondeu — sempre (decisão do dono do produto,
     // 2026-10-15; antes dependia de "a conversa fica com quem atendeu", que

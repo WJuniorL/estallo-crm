@@ -16,10 +16,13 @@ vi.mock("@/lib/messaging/ritmo-do-envio-por-token", () => ({
   registrarEnvioPorToken: vi.fn(async () => {}),
 }));
 vi.mock("./_handler", () => ({ sendMessageHandler: vi.fn() }));
+vi.mock("@/lib/audit", () => ({ audit: vi.fn() }));
+vi.mock("@/lib/inbox/atividade-de-comando", () => ({ registrarTrocaDeComando: vi.fn() }));
 
 import { checkRateLimit } from "@/lib/ai/dispatcher/rate-limit";
 import { resolveAuthDual } from "@/lib/api/auth-dual";
 import { ApiError } from "@/lib/api/types";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { registrarEnvioPorToken, segurarEnvioPorToken } from "@/lib/messaging/ritmo-do-envio-por-token";
 
 import { sendMessageHandler } from "./_handler";
@@ -55,12 +58,14 @@ function bancoFalso() {
     idempotency_keys: Linha[];
     user_organizations: Linha[];
     api_tokens: Linha[];
+    conversations: Linha[];
   } = {
     idempotency_keys: [],
     user_organizations: [
       { user_id: PESSOA, organization_id: ORG_ID, role: "agent", revoked_at: null },
     ],
     api_tokens: [{ id: "tok-1", organization_id: ORG_ID, name: "ERP Externo" }],
+    conversations: [],
   };
 
   const from = (nome: string) => {
@@ -113,6 +118,7 @@ function bancoFalso() {
     tabelas,
     supabase: {
       from,
+      rpc: vi.fn(async () => ({ data: [], error: null })),
       auth: {
         admin: {
           getUserById: async () => ({
@@ -168,6 +174,65 @@ beforeEach(() => {
   mockedTeto.mockResolvedValue({ allowed: true } as never);
   mockedSegurar.mockResolvedValue(null);
   mockedSend.mockResolvedValue({ id: "m1", status: "sent" } as never);
+});
+
+describe("resposta humana em conversa fechada", () => {
+  function conversaFechada() {
+    autenticado("session");
+    banco.tabelas.conversations.push({
+      id: CONVERSATION_ID, organization_id: ORG_ID, status: "closed", service_revision: 7,
+      assigned_to_user_id: PESSOA,
+    });
+    const rpc = vi.fn(async () => ({ data: {}, error: null }));
+    vi.mocked(createAdminClient).mockReturnValue({ rpc } as never);
+    return rpc;
+  }
+
+  it("envio aceito reabre pela fronteira canônica mesmo quando já há responsável", async () => {
+    const rpc = conversaFechada();
+    const resposta = await POST(pedido());
+    expect(resposta.status).toBe(201);
+    expect(rpc).toHaveBeenCalledWith("fn_service_status", {
+      p_org: ORG_ID, p_conversation: CONVERSATION_ID, p_status: "open", p_expected: 7,
+    });
+    expect(mockedSend.mock.invocationCallOrder[0]).toBeLessThan(rpc.mock.invocationCallOrder[0]!);
+  });
+
+  it("envio que falhou não reabre", async () => {
+    const rpc = conversaFechada();
+    mockedSend.mockResolvedValue({ id: "m1", status: "failed" } as never);
+    await POST(pedido());
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("recusa do envio não reabre", async () => {
+    const rpc = conversaFechada();
+    mockedSend.mockRejectedValue(new ApiError(403, "forbidden", undefined, "test-request"));
+    expect((await POST(pedido())).status).toBe(403);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("fechamento concorrente não transforma entrega em erro que induza reenvio", async () => {
+    const rpc = conversaFechada();
+    rpc.mockResolvedValue({ data: {}, error: { code: "PT409" } } as never);
+    expect((await POST(pedido())).status).toBe(201);
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(mockedSend).toHaveBeenCalledTimes(1);
+  });
+
+  it("outra organização não é reaberta", async () => {
+    const rpc = conversaFechada();
+    banco.tabelas.conversations[0]!.organization_id = SESSION_ID;
+    await POST(pedido());
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("conversa aberta não muda de atendimento", async () => {
+    const rpc = conversaFechada();
+    banco.tabelas.conversations[0]!.status = "open";
+    await POST(pedido());
+    expect(rpc).not.toHaveBeenCalled();
+  });
 });
 
 describe("POST /api/v1/messages — idempotência (#1613, item A)", () => {

@@ -834,7 +834,6 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
               conversationId={selectedConversation.id}
               blockedReason={blockedReason}
               janelaFechada={motivoDaJanela}
-              disabled={selectedConversation.status === "closed"}
               contactName={selectedConversation.contacts?.name ?? null}
               contactDisplayName={selectedConversation.contacts?.display_name}
               respondendo={respondendo}

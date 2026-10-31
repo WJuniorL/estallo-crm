@@ -276,6 +276,31 @@ test("fechar canal preserva demanda, desfecho explícito e nova entrada volta à
             ?.status,
       )
       .toBe("closed");
+    // Responder no atendimento fechado não exige clicar em Reabrir. Este já
+    // tem dono: o claim condicional sozinho não mudaria seu estado.
+    const campo = page.getByRole("textbox", { name: "Mensagem", exact: true });
+    await expect(campo).toBeEnabled();
+    await campo.fill("Retomando o atendimento por mensagem.");
+    const envio = page.waitForResponse((resposta) =>
+      resposta.url().endsWith("/api/v1/messages") && resposta.request().method() === "POST",
+    );
+    await page.getByRole("button", { name: "Enviar", exact: true }).click();
+    expect((await envio).status()).toBe(201);
+    await expect.poll(async () => {
+      const { data } = await db.from("conversations")
+        .select("status,assigned_to_user_id").eq("organization_id", org).eq("id", conversation).single();
+      return data;
+    }).toEqual({ status: "open", assigned_to_user_id: user });
+    await expect(page.getByText("Retomando o atendimento por mensagem.", { exact: true }).first()).toBeVisible();
+    await page.screenshot({ path: `${evidence}/conversa-fechada-reaberta-ao-enviar.png`, fullPage: true });
+    await page.reload();
+    await expect(campo).toBeEnabled();
+    await expect(page.getByRole("button", { name: "Fechar", exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Fechar", exact: true }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Fechar", exact: true }).click();
+    await expect.poll(async () =>
+      (await db.from("conversations").select("status").eq("organization_id", org).eq("id", conversation).single()).data?.status,
+    ).toBe("closed");
     await insert("agent_cases", { organization_id: org, conversation_id: conversation,
       title: "Caso de atendimento anterior", summary: "Resposta pendente anterior", blocker: "Decisão humana",
       context_snapshot: { service_boundary: originalBoundary.data } });
@@ -285,7 +310,7 @@ test("fechar canal preserva demanda, desfecho explícito e nova entrada volta à
     await page.getByPlaceholder("Escreva sua resposta para a IA...").fill("Resposta registrada após mudança do atendimento");
     await page.getByRole("button", { name: "Enviar", exact: true }).click();
     await expect(page.getByText("Resposta registrada; não repassada porque o atendimento mudou. Revise a conversa.", { exact: true })).toBeVisible();
-    expect(hits.filter((url) => url.includes("sendText"))).toHaveLength(1);
+    expect(hits.filter((url) => url.includes("sendText"))).toHaveLength(2);
     await page.goto("/app/ai/inbox");
     await expect(page.getByRole("heading", { name: "Central de avisos" })).toBeVisible();
     await expect(page.getByTestId("inbox-item")).toContainText("Resposta registrada; atendimento mudou");

@@ -116,8 +116,8 @@ Não agendar `docker image prune -a` nesta VPS. As imagens do CRM não existem e
 registro, então a limpeza apagaria a versão anterior e o rollback deixaria de funcionar.
 
 As três imagens próprias têm o mesmo SHA completo. O caminho inicial usou
-imagens publicadas pelo CI, que voltou a ser o caminho normal em 31/10/2026; em
-emergência, é permitido gerar imagens Linux/AMD64 no computador da Estallo e
+imagens publicadas pelo CI; enquanto o Actions não roda (cobrança do GitHub),
+é permitido gerar imagens Linux/AMD64 no computador da Estallo e
 transferi-las por SSH.
 O deploy verifica que todas existem antes de trocar qualquer serviço.
 Nenhuma tag móvel é usada na instalação.
@@ -135,9 +135,10 @@ e acompanha os backups. Ele também é usado ao retornar a uma versão anterior.
 python3 scripts/estallo-vps.py deploy --sha 1692ad9eb367b8cb9bfc39b79c0ca84cf9abc87a --image-tag 1692ad9eb367b8cb9bfc39b79c0ca84cf9abc87a-amd64
 ```
 
-## Deploy pelo GitHub Actions (caminho normal desde 31/10/2026)
+## Deploy pelo GitHub Actions (quando a cobrança do GitHub for regularizada)
 
-Os workflows foram reativados pelo proprietário em 31/10/2026. Merge na `main`
+Os workflows foram reativados em 31/10/2026, mas o GitHub ainda recusa iniciar
+os jobs por pendência de cobrança. Quando voltarem a rodar: merge na `main`
 dispara `publish-image.yml`, que publica as três imagens no GHCR com o SHA
 completo. Na VPS, aplicar as migrations novas e implantar pelo registro:
 
@@ -149,9 +150,9 @@ python3 scripts/estallo-vps.py verify
 `deploy` não aplica migrations (só o fluxo `agent` aplica). A VPS precisa de
 acesso de leitura ao GHCR quando o pacote é privado (`docker login ghcr.io`).
 
-## Deploy direto, sem GitHub Actions (emergência)
+## Deploy direto, sem GitHub Actions (caminho em uso)
 
-Usado de 13/10 a 31/10/2026, enquanto o Actions esteve sem cota. Para uma revisão nova, construir as três imagens pelos Dockerfiles do projeto
+Em uso desde 13/10/2026, enquanto o Actions não roda. Para uma revisão nova, construir as três imagens pelos Dockerfiles do projeto
 em um Docker Linux externo à VPS. Usar o SHA completo em
 `APP_VERSION`, na tag e no label OCI `org.opencontainers.image.revision`;
 o label de origem dos Dockerfiles deve ser preservado. Nenhuma credencial

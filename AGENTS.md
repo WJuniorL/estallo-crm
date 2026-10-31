@@ -12,7 +12,7 @@ Estallo CRM é o SaaS comercial da Estallo para atendimento e vendas por WhatsAp
 
 Direção atual: [`VISION.md`](VISION.md) e [`docs/estallo-produto.md`](docs/estallo-produto.md). Planos exibidos são demonstrativos; integração Stripe, credenciais e preços finais estão pendentes. Nutrigg é a referência comercial, não o módulo de cobrança herdado do upstream.
 
-GitHub Actions voltou a funcionar: os workflows deste fork foram reativados pelo proprietário em 31/10/2026 (confira com `gh workflow list --all`). O caminho normal de entrega é PR → merge na `main` → CI publica as imagens no GHCR → VPS; o deploy com imagens locais de `docs/estallo-vps.md` é emergência. A VPS é operada pela Estallo e o usuário do SaaS não instala o produto.
+Os workflows deste fork foram reativados pelo proprietário em 31/10/2026, mas o GitHub ainda recusa iniciar os jobs por pendência de cobrança e a VPS não tem acesso aos pacotes privados do GHCR. Até isso ser resolvido, o deploy usa as imagens locais de `docs/estallo-vps.md`; confira o estado com `gh workflow list --all` e as anotações do último job. A VPS é operada pela Estallo e o usuário do SaaS não instala o produto.
 
 Stack canônica (major; a versão exata é o `package.json`):
 
@@ -153,7 +153,7 @@ Se a mudança toca schema/RLS/tabela tenant-aware, rode `pnpm test:db`. Se toca 
 usuário, rode `pnpm test:e2e` com evidência visual. Se toca `Dockerfile*`, `docker-compose*` ou
 `hostgator-setup-kit/`, rode `pnpm test:shell` — é o único gate que exercita o kit.
 
-**Referência de CI.** Os workflows estão ativos neste fork desde 31/10/2026. A branch protection descrita abaixo é a do upstream (`melgarafael/DeskcommCRM`); neste fork, confira a configuração na fonte antes de tratar um check como obrigatório.
+**Referência de CI.** Os workflows estão ligados neste fork desde 31/10/2026, mas os jobs não iniciam enquanto a cobrança do GitHub estiver pendente; validar localmente e registrar as limitações. A branch protection descrita abaixo é a do upstream (`melgarafael/DeskcommCRM`).
 
 `.github/workflows/ci.yml`: `verify` = os passos do job, na ordem —
 typecheck, lint, `lint:channels`, `test:unit` e `test:shell` hoje, e `pnpm lint` sozinho **não**

@@ -28,7 +28,7 @@ pnpm test:unit
 pnpm build
 ```
 
-Os gates complementares de banco, shell e E2E estão descritos em [AGENTS.md](AGENTS.md). Não execute E2E destrutivo contra produção. GitHub Actions está desativado por decisão do proprietário; não reativar ou disparar workflows sem uma nova decisão.
+Os gates complementares de banco, shell e E2E estão descritos em [AGENTS.md](AGENTS.md). Não execute E2E destrutivo contra produção. GitHub Actions está ativo neste fork desde 31/10/2026; o deploy normal sai da publicação das imagens pelo CI (ver [docs/estallo-vps.md](docs/estallo-vps.md)).
 
 ## Operação atual
 

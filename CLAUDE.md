@@ -16,7 +16,7 @@
 
 Estallo CRM é o SaaS comercial da Estallo para atendimento e vendas por WhatsApp, com organizações isoladas por RLS, identidade fixa e planos por assinatura. A Estallo hospeda e administra a plataforma. A cobrança futura usa Stripe, com Nutrigg como referência; o módulo comercial herdado do upstream não é a base desta oferta. Os preços exibidos nesta etapa são demonstrativos, sem cobrança ou limites aplicados. Decisões atuais: `VISION.md` e `docs/estallo-produto.md`. A licença e o histórico MIT do DeskcommCRM permanecem preservados.
 
-**Operação deste fork:** GitHub Actions está desativado por decisão do proprietário. Não iniciar workflows nem exigir sua execução para esta etapa. Os trechos abaixo sobre checks obrigatórios, publicação pelo CI e contribuições descrevem a governança herdada do upstream; não autorizam Actions neste fork. Validar localmente e registrar o que foi e o que não foi medido. A Estallo opera a VPS; o cliente do SaaS não instala o aplicativo.
+**Operação deste fork:** GitHub Actions voltou a funcionar e os workflows de `estallosolucoes/estallo-crm` foram reativados pelo proprietário em 31/10/2026 (ficaram desligados de 13/10 a 31/10 por falta de cota, período em que o deploy era feito com imagens construídas localmente). O caminho normal de entrega é o descrito em "Deploy em produção": PR → merge na `main` → o CI publica no GHCR → a VPS puxa. O deploy direto com imagens locais (`docs/estallo-vps.md`) fica como caminho de emergência. Para saber o estado dos workflows sem confiar nesta linha: `gh workflow list --all`. Os trechos sobre a branch protection do upstream (`melgarafael/DeskcommCRM`) descrevem o upstream, não este fork. A Estallo opera a VPS; o cliente do SaaS não instala o aplicativo.
 
 ---
 

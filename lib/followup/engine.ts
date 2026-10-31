@@ -161,6 +161,8 @@ export interface AdminClient {
   ): Promise<{
     lead_stage: string | null;
     tags: string[];
+    /** Nomes dos produtos do negócio (condição `product`). */
+    products?: string[];
     contact_name?: string | null;
     custom_fields?: Record<string, unknown>;
     contact_custom_fields?: Record<string, unknown>;
@@ -1050,6 +1052,7 @@ async function processEnrollment(
     // Preenchido LOGO ABAIXO, depois que os eventos forem lidos: o desfecho do
     // passo anterior é dado que mora nos eventos, não na linha do lead.
     last_outcome: null,
+    ...(leadRow.products !== undefined ? { products: leadRow.products } : {}),
     contact_name: leadRow.contact_name ?? null,
     ...(leadRow.custom_fields !== undefined ? { custom_fields: leadRow.custom_fields } : {}),
     ...(leadRow.contact_custom_fields !== undefined
@@ -1524,10 +1527,11 @@ export function createSupabaseAdminClient(admin: SupabaseClient): AdminClient {
     async loadLeadFacts(orgId, contactId, target) {
       const [lead, { data: contact, error: contactErr }] = await Promise.all([
         loadLeadForExecution<{
+          id: string;
           stage_id: string | null;
           tags: string[] | null;
           custom_fields: unknown;
-        }>(admin, orgId, contactId, "stage_id, tags, custom_fields", target),
+        }>(admin, orgId, contactId, "id, stage_id, tags, custom_fields", target),
         admin
           .from("contacts")
           .select("name, custom_fields")
@@ -1536,6 +1540,16 @@ export function createSupabaseAdminClient(admin: SupabaseClient): AdminClient {
           .maybeSingle(),
       ]);
       if (contactErr) throw new Error(contactErr.message);
+      let products: string[] = [];
+      if (lead?.id) {
+        const { data: itens, error: itensErr } = await admin
+          .from("crm_lead_products")
+          .select("nome")
+          .eq("organization_id", orgId)
+          .eq("lead_id", lead.id);
+        if (itensErr) throw new Error(itensErr.message);
+        products = (itens ?? []).map((i: { nome: string }) => i.nome);
+      }
       const custom =
         lead?.custom_fields &&
         typeof lead.custom_fields === "object" &&
@@ -1545,6 +1559,7 @@ export function createSupabaseAdminClient(admin: SupabaseClient): AdminClient {
       return {
         lead_stage: lead?.stage_id ?? null,
         tags: lead?.tags ?? [],
+        products,
         contact_name: contact?.name ?? null,
         custom_fields: custom,
         contact_custom_fields:

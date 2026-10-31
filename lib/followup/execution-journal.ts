@@ -20,6 +20,7 @@ export const executionDecisionInputSchema = z.object({
     tags: z.array(z.string()),
     steps_taken: z.number().int().nonnegative(),
     last_outcome: z.string().nullable(),
+    products: z.array(z.string()).optional(),
     contact_name: z.string().nullable().optional(),
     custom_fields: z.record(z.string(), z.json()).optional(),
     contact_custom_fields: z.record(z.string(), z.json()).optional(),

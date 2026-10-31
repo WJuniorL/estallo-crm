@@ -101,6 +101,7 @@ export const CAMPOS_DA_CONDICAO: Record<CampoDaCondicao, CampoDeCondicao> = {
   tag: { rotulo: "Etiqueta do contato", tipoDeValor: "etiqueta" },
   steps_taken: { rotulo: "Passos já dados no fluxo", tipoDeValor: "numero" },
   last_outcome: { rotulo: "Desfecho do passo anterior", tipoDeValor: "texto" },
+  product: { rotulo: "Produto do negócio", tipoDeValor: "texto" },
 };
 
 // ─── condição: o par (campo, operador) ───────────────────────────────────
@@ -278,6 +279,37 @@ const COMPARADORES: Record<CampoDaCondicao, Record<OperadorDaCondicao, Comparado
     lte: {
       rotulo: "é no máximo",
       frase: (v) => `O desfecho do passo anterior é no máximo ${aspas(v)}`,
+      oferecido: false,
+      aviso: AVISO_SO_NUMERO,
+    },
+  },
+  product: {
+    // No motor, `product` é lista de nomes (como `tag`), comparada sem diferença de caixa.
+    // `contains` é o uso comum ("Coleta na Prática" acha `Coleta na Prática SSA` e `... VCA`).
+    contains: {
+      rotulo: "tem um produto com o nome contendo",
+      frase: (v) => `O negócio tem um produto com o nome contendo ${aspas(v)}`,
+      oferecido: true,
+    },
+    eq: {
+      rotulo: "tem o produto",
+      frase: (v) => `O negócio tem o produto ${aspas(v)}`,
+      oferecido: true,
+    },
+    neq: {
+      rotulo: "não tem o produto",
+      frase: (v) => `O negócio não tem o produto ${aspas(v)}`,
+      oferecido: true,
+    },
+    gte: {
+      rotulo: "é pelo menos",
+      frase: (v) => `Os produtos do negócio são pelo menos ${aspas(v)}`,
+      oferecido: false,
+      aviso: AVISO_SO_NUMERO,
+    },
+    lte: {
+      rotulo: "é no máximo",
+      frase: (v) => `Os produtos do negócio são no máximo ${aspas(v)}`,
       oferecido: false,
       aviso: AVISO_SO_NUMERO,
     },

@@ -361,6 +361,8 @@ export const conditionCheckSchema = z.strictObject({
     'tag',
     'steps_taken',
     'last_outcome',
+    // Nomes dos produtos do negócio (crm_lead_products); lista, como `tag`.
+    'product',
   ]),
   op: z.enum(['eq', 'neq', 'gte', 'lte', 'contains']),
   value: z.union([z.string(), z.number()]),

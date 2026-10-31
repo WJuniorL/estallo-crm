@@ -531,9 +531,16 @@ export function createPgAdminClient(pool: pg.Pool): TurnBridgeAdminClient {
         `select name from contacts where organization_id = $1 and id = $2`,
         [orgId, contactId],
       );
+      const { rows: itens } = lead?.id
+        ? await pool.query<{ nome: string }>(
+            `select nome from crm_lead_products where organization_id = $1 and lead_id = $2`,
+            [orgId, lead.id],
+          )
+        : { rows: [] as { nome: string }[] };
       return {
         lead_stage: (lead?.stage_id as string | null | undefined) ?? null,
         tags: (lead?.tags as string[] | undefined) ?? [],
+        products: itens.map((i) => i.nome),
         contact_name: contacts[0]?.name ?? null,
         custom_fields: (lead?.custom_fields as Record<string, unknown> | null | undefined) ?? {},
       };

@@ -101,6 +101,8 @@ export interface LeadFacts {
    * ainda não classificou nada; e `null` NÃO satisfaz `neq` (ver `evaluateCheck`).
    */
   last_outcome: string | null;
+  /** Nomes dos produtos do negócio (`crm_lead_products.nome`). Ausente = não carregado. */
+  products?: string[];
   contact_name?: string | null;
   custom_fields?: Record<string, unknown>;
   /** `contacts.custom_fields` — destino `contact_custom` do `save_to`. */
@@ -562,12 +564,23 @@ export function ultimoDesfechoDe(events: EnrollmentEventRef[]): string | null {
 
 function evaluateCheck(
   check: {
-    field: "lead_stage" | "tag" | "steps_taken" | "last_outcome";
+    field: "lead_stage" | "tag" | "steps_taken" | "last_outcome" | "product";
     op: "eq" | "neq" | "gte" | "lte" | "contains";
     value: string | number;
   },
   lead: LeadFacts,
 ): boolean {
+  if (check.field === "product") {
+    // Lista de nomes, sem diferença de caixa. `neq` = nenhum produto com esse nome; sem produto algum
+    // o lead não "tem o produto" (eq/contains falsos) e "não tem" é verdadeiro — é afirmação sobre lista.
+    const alvo = String(check.value).trim().toLowerCase();
+    const nomes = (lead.products ?? []).map((n) => n.trim().toLowerCase());
+    if (alvo === "") return false;
+    if (check.op === "eq") return nomes.includes(alvo);
+    if (check.op === "contains") return nomes.some((n) => n.includes(alvo));
+    if (check.op === "neq") return !nomes.includes(alvo);
+    return false;
+  }
   const actual: string | number | null | string[] =
     check.field === "lead_stage"
       ? lead.lead_stage

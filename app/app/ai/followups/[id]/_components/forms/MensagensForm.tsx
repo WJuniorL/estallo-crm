@@ -23,6 +23,7 @@ import { TIPOS_DO_ENVIO } from "@/lib/followup/vocabulario";
 import { Plus, Trash } from "@/lib/ui/icons";
 import { useT } from "@/hooks/i18n/useT";
 
+import { InserirVariavel, inserirNoCursor } from "../VariaveisDoFluxo";
 import type { ConfigOf } from "./shared";
 
 type TipoDoItem = "text" | TipoDeAnexo;
@@ -107,6 +108,7 @@ export function MensagensForm({
   );
   const [erro, setErro] = useState<string | null>(null);
   const entradas = useRef<Record<string, HTMLInputElement | null>>({});
+  const textos = useRef<Record<string, HTMLTextAreaElement | null>>({});
   // O upload termina depois da renderização que o iniciou: lê a lista de agora, não a do fechamento.
   const atual = useRef(lista);
 
@@ -192,10 +194,20 @@ export function MensagensForm({
               </Label>
               <Textarea
                 id={`envio-texto-${r.chave}`}
+                ref={(el) => {
+                  textos.current[r.chave] = el;
+                }}
                 maxLength={4000}
                 placeholder={t("Escreva a mensagem")}
                 value={r.body}
                 onChange={(e) => trocar(r.chave, (x) => (x.kind === "text" ? { ...x, body: e.target.value } : x))}
+              />
+              <InserirVariavel
+                onInserir={(marca) =>
+                  trocar(r.chave, (x) =>
+                    x.kind === "text" ? { ...x, body: inserirNoCursor(textos.current[r.chave] ?? null, x.body, marca) } : x,
+                  )
+                }
               />
             </div>
           ) : (

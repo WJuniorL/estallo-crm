@@ -10,6 +10,7 @@ import { pedeEscolhaDeReabertura } from "@/lib/leads/reabertura";
 import { frenteSobreCor } from "@/lib/branding/contraste";
 import type { BoardData, Stage } from "@/lib/kanban/types";
 import { CamposObrigatoriosDialog } from "./CamposObrigatoriosDialog";
+import { LoseLeadDialog } from "./LoseLeadDialog";
 import { RetomarComoNovoNegocioDialog } from "./RetomarComoNovoNegocioDialog";
 import type { Lead } from "@/lib/types/leads";
 import { CaretLeft, CaretRight } from "@/lib/ui/icons";
@@ -26,11 +27,13 @@ const SETA_INICIAL =
   "M9 1.5H122Q125 1.5 126.5 4.5L138 27.5Q139.3 30 138 32.5L126.5 55.5Q125 58.5 122 58.5H9Q2 58.5 2 51.5V8.5Q2 1.5 9 1.5Z";
 
 /**
- * As etapas ABERTAS do funil, em fila, no topo do dossiê. Um clique move o
+ * As etapas do funil — abertas, ganho e perdido —, em fila, no topo do dossiê. Um clique move o
  * negócio pelo MESMO caminho do arrasto (`useMoveCard` → `/leads/{id}/move`,
  * com `expected_updated_at`): a recusa de campos obrigatórios abre o mesmo
  * diálogo do quadro e reenvia o mesmo move, em vez de virar toast de erro.
- * Ganho e perda ficam fora: têm botões próprios, porque perda pede motivo.
+ * Ganho e perda também estão na fila (03/11/2026): quem vê o negócio num funil espera ver onde ele
+ * termina. Ganho sai pelo mesmo move (com o diálogo de campos obrigatórios e motivo do ganho); perda
+ * abre o diálogo do motivo, porque o servidor recusa fechar como perdido sem ele.
  *
  * OTIMISTA E SEM TRAVA. A etapa muda na tela no clique; o servidor confirma por
  * trás. Clicar de novo enquanto o primeiro move está em voo NÃO é ignorado: a
@@ -67,7 +70,9 @@ export function TrilhoDeEtapas({
   const [rola, setRola] = useState({ transborda: false, inicio: true, fim: true });
   // Lido uma vez por abertura: contar dias não precisa de relógio vivo.
   const [agora] = useState(() => Date.now());
-  const abertas = stages.filter((s) => !s.is_won && !s.is_lost && !s.is_archived);
+  const [perdendo, setPerdendo] = useState(false);
+  // Todas as etapas ativas, na ordem do funil. O nome `abertas` ficou: é a fila que o trilho desenha.
+  const abertas = stages.filter((s) => !s.is_archived);
   const atualId = alvo ?? lead.stage_id;
   const indiceAtual = abertas.findIndex((s) => s.id === atualId);
   const dias =
@@ -144,6 +149,11 @@ export function TrilhoDeEtapas({
 
   function escolher(stageId: string) {
     if (!podeMover || stageId === atualId) return;
+    // Perda pede o motivo: o diálogo fecha o negócio pela rota própria (`/lose`).
+    if (stages.find((s) => s.id === stageId)?.is_lost) {
+      setPerdendo(true);
+      return;
+    }
     // Ganho/perdido levado a uma etapa aberta: primeiro a pergunta "Criar novo
     // lead × Mover lead existente" — a etapa só muda na tela se a escolha for mover.
     const atual = leadNaCache() ?? lead;
@@ -236,7 +246,7 @@ export function TrilhoDeEtapas({
       </ol>
       {rola.transborda && (
         <div className="flex items-center justify-between gap-2 pt-1.5 text-[11px] text-text-muted">
-          {/* Negócio ganho/perdido não está em etapa aberta: sem "Etapa 0/N". */}
+          {/* Etapa arquivada não entra na fila: sem "Etapa 0/N". */}
           <span>
             {indiceAtual >= 0 ? (
               <>
@@ -288,6 +298,9 @@ export function TrilhoDeEtapas({
           );
         }}
       />
+      {perdendo && (
+        <LoseLeadDialog open onOpenChange={(v: boolean) => !v && setPerdendo(false)} leadId={lead.id} pipelineId={pipelineId} />
+      )}
       {retomada && (
         <RetomarComoNovoNegocioDialog
           open

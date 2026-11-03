@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { Label } from "@/components/ui/label";
 import {
@@ -20,6 +20,7 @@ import { useModelosAprovadosDoFluxo } from "@/hooks/followup/useModelosAprovados
 import { useT } from "@/hooks/i18n/useT";
 
 import { MensagensForm } from "./MensagensForm";
+import { InserirVariavel, inserirNoCursor } from "../VariaveisDoFluxo";
 import type { ConfigOf } from "./shared";
 
 /**
@@ -134,6 +135,7 @@ export function ActionForm({
   );
   const [templateId, setTemplateId] = useState(config.mode === "template" ? config.template_id : "");
   const [error, setError] = useState<string | null>(null);
+  const corpoRef = useRef<HTMLTextAreaElement | null>(null);
 
   const commit = (next: {
     mode: ModoDaAcao;
@@ -197,11 +199,19 @@ export function ActionForm({
           <Label htmlFor="action-body">{t("Texto enviado ao contato")}</Label>
           <Textarea
             id="action-body"
+            ref={corpoRef}
             maxLength={4000}
             value={body}
             onChange={(e) => {
               setBody(e.target.value);
               commit({ mode, ...fields, body: e.target.value });
+            }}
+          />
+          <InserirVariavel
+            onInserir={(marca) => {
+              const novo = inserirNoCursor(corpoRef.current, body, marca);
+              setBody(novo);
+              commit({ mode, ...fields, body: novo });
             }}
           />
           <p className="text-xs text-text-muted">

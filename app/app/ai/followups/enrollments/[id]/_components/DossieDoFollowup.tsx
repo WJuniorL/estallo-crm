@@ -44,6 +44,7 @@ import { useFollowupEnrollment, useIntervirNoFollowup } from "@/hooks/followup/u
 import { useCancelFollowupEnrollment } from "@/hooks/followup/useFollowupQueue";
 import { useT } from "@/hooks/i18n/useT";
 
+import { CaminhoPercorrido } from "./CaminhoPercorrido";
 import { PlanoDeTempoBloco } from "./PlanoDeTempo";
 
 interface Props {
@@ -367,6 +368,14 @@ export function DossieDoFollowup({ id, canWrite }: Props) {
         plano={data.plano_de_tempo}
         nos={data.nos}
         decididoRelativo={relativa(data.plano_de_tempo?.decidido_em ?? null, localeDaData)}
+      />
+
+      <CaminhoPercorrido
+        passos={data.passos ?? []}
+        nos={data.nos}
+        arestas={data.arestas ?? []}
+        verDados={data.pode_ver_dados === true}
+        grafo={data.grafo ?? null}
       />
 
       <section className="rounded-md border border-border p-4">

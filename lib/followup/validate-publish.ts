@@ -14,6 +14,7 @@ import { recusaDeMotivoForaDoVocabulario } from '../leads/motivo-da-perda';
 import { capabilitiesOf, transportaMensagem, type ChannelProvider } from '../channels/capabilities';
 import { nodeTypesForSurface } from './node-catalog';
 import { EXECUTION_CONTRACT_AVAILABLE } from './execution-contract';
+import { ancestrais, extrairReferencias, textosDoBloco } from './variaveis-de-blocos';
 import { NODES_INTEGRATED_IN_EXECUTION_CONTRACT } from '@/lib/automation/execution-capability';
 
 /**
@@ -58,6 +59,9 @@ export const PUBLISH_ERROR_CODES = [
   'motivo_da_perda_ausente',
   'motivo_da_perda_invalido',
   'tag_ausente',
+  // Variáveis de blocos anteriores (`{{nodes.<bloco>.<campo>}}`) que não podem ser resolvidas.
+  'variavel_de_bloco_inexistente',
+  'variavel_de_bloco_nao_anterior',
 ] as const;
 export type PublishErrorCode = (typeof PUBLISH_ERROR_CODES)[number];
 
@@ -709,6 +713,37 @@ function conferirSaidaDeErro(graph: FlowGraph, errors: PublishValidationError[])
   }
 }
 
+/**
+ * Toda `{{nodes.<bloco>.<campo>}}` de um texto tem de citar um bloco que EXISTE e que vem ANTES do que a usa. Citar
+ * um bloco futuro, ou de outro ramo, daria um texto sem valor na hora de enviar — a publicação recusa antes.
+ */
+function validarVariaveisDeBlocos(graph: FlowGraph, errors: PublishValidationError[]): void {
+  const ids = new Set(graph.nodes.map((n) => n.id));
+  for (const no of graph.nodes) {
+    const referencias = textosDoBloco(no).flatMap(extrairReferencias);
+    if (referencias.length === 0) continue;
+    const anteriores = ancestrais(graph, no.id);
+    const vistas = new Set<string>();
+    for (const ref of referencias) {
+      if (vistas.has(ref.no_id)) continue;
+      vistas.add(ref.no_id);
+      if (!ids.has(ref.no_id)) {
+        errors.push({
+          node_id: no.id,
+          code: 'variavel_de_bloco_inexistente',
+          message: `A caixa "${no.label}" usa a variável ${ref.marca}, mas não existe um bloco "${ref.no_id}" neste fluxo.`,
+        });
+      } else if (!anteriores.has(ref.no_id)) {
+        errors.push({
+          node_id: no.id,
+          code: 'variavel_de_bloco_nao_anterior',
+          message: `A caixa "${no.label}" usa a variável ${ref.marca}, mas esse bloco não vem antes dela no caminho do fluxo.`,
+        });
+      }
+    }
+  }
+}
+
 const UUID_RX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function validateFlowForPublish(
@@ -946,6 +981,8 @@ export function validateFlowForPublish(
       message: `Ciclo sem espera mínima de 5min detectado (contém "${nodeId}").`,
     });
   }
+
+  validarVariaveisDeBlocos(graph, errors);
 
   if (errors.length === 0) return { ok: true };
 

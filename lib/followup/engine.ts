@@ -21,6 +21,7 @@ import { ZodError } from "zod";
 import { idsDoContatoEGemeos } from "@/lib/channels/contato-por-telefone";
 import { logger } from "@/lib/logger";
 
+import { resolverReferencias } from "./variaveis-de-blocos";
 import {
   flowGraphSchema,
   type FlowGraph,
@@ -188,6 +189,11 @@ export interface AdminClient {
     contactId: string,
     target?: ExecutionLeadTarget,
   ): Promise<Record<string, unknown> | null>;
+  /**
+   * As saídas dos blocos já concluídos DESTA inscrição (`output_snapshot` do diário), por id do bloco — é o que
+   * `{{nodes.<bloco>.<campo>}}` lê. Só existe para inscrição de contrato 1; sem o diário, nenhuma saída.
+   */
+  loadStepOutputs?(orgId: string, enrollmentId: string): Promise<Record<string, unknown>>;
   /** Latest inbound `messages.body` for the contact (optionally scoped to the enrollment conversation). */
   loadLastInboundBody(
     orgId: string,
@@ -436,6 +442,18 @@ function eventPayload(result: NodeResult): Record<string, unknown> {
  * A ordem não é livre: a volta entra PRIMEIRO, senão o render de CRM apagaria
  * `{{volta}}` (não é campo de contato nem de negócio).
  */
+/** O contexto do render com as saídas dos blocos anteriores desta inscrição (`nodes`), quando o diário as tem. */
+export async function comSaidasDosBlocos(
+  db: AdminClient,
+  enrollment: EnrollmentRow,
+  contexto: Record<string, unknown> | null | undefined,
+): Promise<Record<string, unknown> | null> {
+  const base = contexto ?? null;
+  if (enrollment.execution_contract !== 1 || !db.loadStepOutputs) return base;
+  const nodes = await db.loadStepOutputs(enrollment.organization_id, enrollment.id);
+  return { ...(base ?? {}), nodes };
+}
+
 function interpolarVolta(
   texto: string,
   events: EnrollmentEventRef[],
@@ -447,7 +465,15 @@ function interpolarVolta(
         .replaceAll("{{volta}}", String(volta.index))
         .replaceAll("{{voltas}}", String(volta.total))
     : texto;
-  return contexto ? renderizarTextoDeFollowup(comVolta, contexto) : comVolta;
+  if (!contexto) return comVolta;
+  // `{{nodes.<bloco>.<campo>}}` — a saída de um bloco anterior desta execução — vem ANTES do render do CRM:
+  // o id do bloco tem hífen, que a marca de CRM (`[w.]+`) não reconhece.
+  const nodes = contexto.nodes;
+  const comBlocos =
+    nodes && typeof nodes === "object"
+      ? resolverReferencias(comVolta, nodes as Record<string, unknown>).texto
+      : resolverReferencias(comVolta, {}).texto;
+  return renderizarTextoDeFollowup(comBlocos, contexto);
 }
 
 /**
@@ -1417,9 +1443,13 @@ async function processEnrollment(
     result.kind === "enqueue_turn" &&
     node.type === "action" &&
     (node.config.mode === "text" || node.config.mode === "messages")
-      ? target
-        ? await db.loadRenderContext?.(enrollment.organization_id, enrollment.contact_id, target)
-        : await db.loadRenderContext?.(enrollment.organization_id, enrollment.contact_id)
+      ? await comSaidasDosBlocos(
+          db,
+          enrollment,
+          target
+            ? await db.loadRenderContext?.(enrollment.organization_id, enrollment.contact_id, target)
+            : await db.loadRenderContext?.(enrollment.organization_id, enrollment.contact_id),
+        )
       : null;
 
   await applyResult(
@@ -1613,6 +1643,38 @@ export function createSupabaseAdminClient(admin: SupabaseClient): AdminClient {
       if (contact) contexto.contact = contact;
       if (lead) contexto.lead = lead;
       return contexto;
+    },
+    async loadStepOutputs(orgId, enrollmentId) {
+      const { data: passos, error } = await admin
+        .from("followup_execution_steps")
+        .select("id, node_id, entered_at")
+        .eq("organization_id", orgId)
+        .eq("enrollment_id", enrollmentId)
+        .eq("status", "succeeded")
+        .order("entered_at", { ascending: true })
+        .limit(200);
+      if (error) throw new Error(error.message);
+      const lista = passos ?? [];
+      if (lista.length === 0) return {};
+      const { data: tentativas, error: tentativasErr } = await admin
+        .from("followup_execution_attempts")
+        .select("step_id, attempt_no, output_snapshot")
+        .eq("organization_id", orgId)
+        .in("step_id", lista.map((p) => p.id as string));
+      if (tentativasErr) throw new Error(tentativasErr.message);
+      const ultimaPorPasso = new Map<string, { n: number; saida: unknown }>();
+      for (const t of tentativas ?? []) {
+        const atual = ultimaPorPasso.get(t.step_id as string);
+        if (!atual || (t.attempt_no as number) > atual.n)
+          ultimaPorPasso.set(t.step_id as string, { n: t.attempt_no as number, saida: t.output_snapshot });
+      }
+      // Em ordem de entrada: numa volta (laço) a ÚLTIMA visita do bloco é a que vale.
+      const saidas: Record<string, unknown> = {};
+      for (const p of lista) {
+        const u = ultimaPorPasso.get(p.id as string);
+        if (u && u.saida !== null && u.saida !== undefined) saidas[p.node_id as string] = u.saida;
+      }
+      return saidas;
     },
     async loadLastInboundBody(orgId, contactId, conversationId, naoAntesDe) {
       const ids = await idsDoContatoEGemeos(admin, orgId, contactId);

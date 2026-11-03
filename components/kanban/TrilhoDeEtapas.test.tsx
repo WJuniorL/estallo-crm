@@ -10,6 +10,8 @@ import type { Lead } from "@/lib/types/leads";
 const post = vi.hoisted(() => vi.fn(async (..._args: unknown[]) => ({ data: {} })));
 vi.mock("@/lib/api/client", () => ({ apiClient: { post } }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), warning: vi.fn(), error: vi.fn() } }));
+// O diálogo de perda tem hooks próprios (motivos do funil); aqui só importa que ele abre.
+vi.mock("./LoseLeadDialog", () => ({ LoseLeadDialog: () => <div data-testid="dialogo-de-perda" /> }));
 vi.mock("@/components/feedback/ApiErrorToast", () => ({ showApiError: vi.fn() }));
 
 const etapa = (id: string, extra: Partial<Stage> = {}) =>
@@ -30,12 +32,29 @@ function renderTrilho(podeMover = true) {
 }
 
 describe("TrilhoDeEtapas", () => {
-  it("mostra só as etapas abertas, com a atual marcada", () => {
+  it("mostra as etapas abertas, ganho e perdido, com a atual marcada", () => {
     renderTrilho();
     expect(screen.getByTestId("trilho-etapa-a")).toHaveAttribute("aria-current", "step");
     expect(screen.getByTestId("trilho-etapa-b")).toBeInTheDocument();
-    expect(screen.queryByTestId("trilho-etapa-ganho")).toBeNull();
-    expect(screen.queryByTestId("trilho-etapa-perdido")).toBeNull();
+    expect(screen.getByTestId("trilho-etapa-ganho")).toBeInTheDocument();
+    expect(screen.getByTestId("trilho-etapa-perdido")).toBeInTheDocument();
+  });
+
+  it("clicar em Ganho move pela mesma rota do arrasto", async () => {
+    post.mockClear();
+    renderTrilho();
+    await userEvent.click(screen.getByTestId("trilho-etapa-ganho"));
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith("/api/v1/leads/l-1/move", expect.objectContaining({ stage_id: "ganho" })),
+    );
+  });
+
+  it("clicar em Perdido abre o diálogo do motivo e NÃO move o negócio", async () => {
+    post.mockClear();
+    renderTrilho();
+    await userEvent.click(screen.getByTestId("trilho-etapa-perdido"));
+    expect(await screen.findByTestId("dialogo-de-perda")).toBeInTheDocument();
+    expect(post).not.toHaveBeenCalled();
   });
 
   it("um clique move pela mesma rota do arrasto, com a versão do lead", async () => {

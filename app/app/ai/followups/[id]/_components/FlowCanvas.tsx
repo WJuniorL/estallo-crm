@@ -49,50 +49,15 @@ import { NodeConfigPanel } from "./NodeConfigPanel";
 import { EdgeConfigPanel } from "./EdgeConfigPanel";
 import { EtapasDoFluxoProvider, useEtapasDoFluxo } from "./EtapasDoFluxo";
 import { SaidaDeErroProvider } from "./SaidaDeErro";
+import { VariaveisDoFluxoProvider } from "./VariaveisDoFluxo";
 import { NodePalette } from "./NodePalette";
 import { PublishBar } from "./PublishBar";
 import { NODE_VISUALS, configPadraoDaAcao } from "./nodes/nodeVisuals";
-import { TriggerNode } from "./nodes/TriggerNode";
-import { WaitNode } from "./nodes/WaitNode";
-import { ConditionNode } from "./nodes/ConditionNode";
-import { ClassifyNode } from "./nodes/ClassifyNode";
-import { MatchReplyNode } from "./nodes/MatchReplyNode";
-import { RepeatNode } from "./nodes/RepeatNode";
-import { ActionNode } from "./nodes/ActionNode";
-import { EndNode } from "./nodes/EndNode";
-import { CollectNode } from "./nodes/CollectNode";
-import { InternalTaskNode } from "./nodes/InternalTaskNode";
-import { MoveLeadNode } from "./nodes/MoveLeadNode";
-import { EditLeadTagNode } from "./nodes/EditLeadTagNode";
-import { SkillNode } from "./nodes/SkillNode";
+import { nodeTypes } from "./nodes/node-types";
 
 const EMPTY_GRAPH: FlowGraph = { nodes: [], edges: [] };
 const DND_MIME = "application/x-followup-node-type";
 
-// Defined outside the component — React Flow warns (and re-mounts nodes) if
-// nodeTypes is a fresh object every render.
-const nodeTypes: NodeTypes = {
-  trigger: TriggerNode,
-  wait: WaitNode,
-  condition: ConditionNode,
-  ai_classify: ClassifyNode,
-  match_reply: MatchReplyNode,
-  repeat: RepeatNode,
-  action: ActionNode,
-  // `internal_task` estava na paleta, no schema, no publish e no motor — e não
-  // aqui (#1540): o React Flow caía no fallback da caixa desconhecida, sem
-  // rótulo e sem formulário. Completar o nó é esta linha mais o formulário do
-  // painel (`forms/InternalTaskForm`).
-  internal_task: InternalTaskNode,
-  // #2065 — as duas caixas novas da issue: sem estas linhas o React Flow cai
-  // no fallback da caixa desconhecida (o mesmo defeito do #1540 medido ali em
-  // cima), sem rótulo e sem formulário.
-  move_lead: MoveLeadNode,
-  edit_lead_tag: EditLeadTagNode,
-  end: EndNode,
-  collect: CollectNode,
-  skill: SkillNode,
-};
 
 interface Props {
   flowId: string;
@@ -449,17 +414,19 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
               </Button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 pt-0 lg:pt-4">
-              <NodeConfigPanel
-                key={selectedNode.id}
-                node={selectedNode}
-                onChange={(patch) => updateNodeData(selectedNode.id, patch)}
-                onDelete={() => deleteNode(selectedNode.id)}
-                ramosLigados={ramosLigadosDoSelecionado}
-                surface={surface}
-                flowId={flowId}
-                settings={settings}
-                onSettingsChange={setSettings}
-              />
+              <VariaveisDoFluxoProvider grafo={liveGraph} noId={selectedNode.id}>
+                <NodeConfigPanel
+                  key={selectedNode.id}
+                  node={selectedNode}
+                  onChange={(patch) => updateNodeData(selectedNode.id, patch)}
+                  onDelete={() => deleteNode(selectedNode.id)}
+                  ramosLigados={ramosLigadosDoSelecionado}
+                  surface={surface}
+                  flowId={flowId}
+                  settings={settings}
+                  onSettingsChange={setSettings}
+                />
+              </VariaveisDoFluxoProvider>
             </div>
           </aside>
         )}

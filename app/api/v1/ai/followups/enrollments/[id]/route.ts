@@ -34,6 +34,8 @@ import {
 import { carregaEtapasCitadas, nomesDasEtapas } from "@/lib/followup/etapas-citadas";
 import { leituraDoPlano, type TimingPlan } from "@/lib/followup/plano-de-tempo";
 import { flowGraphSchema } from "@/lib/followup/graph-schema";
+import { montarPassos, type PassoDaExecucao } from "@/lib/followup/passos-da-execucao";
+import { ROLE_RANK } from "@/lib/auth/types";
 import { createClient } from "@/lib/supabase/server";
 import { traduzir } from "@/lib/i18n/dicionario";
 
@@ -83,6 +85,19 @@ export interface DossieDoEnrollment {
   agent_name: string | null;
   no_atual: NoDoDossie | null;
   nos: NoDoDossie[];
+  /** As ligações do grafo pinado (só origem e destino): é o que permite desenhar o caminho percorrido. */
+  arestas: Array<{ id: string; source: string; target: string }>;
+  /**
+   * O caminho percorrido, em ordem, do diário de execução. Vazio para execução anterior ao diário (contrato 0).
+   * `entrada`/`saida` de cada passo só vêm para quem edita fluxo (`pode_ver_dados`).
+   */
+  passos: PassoDaExecucao[];
+  pode_ver_dados: boolean;
+  /**
+   * O grafo pinado COM posições e configuração, para desenhar o caminho no canvas. Só para quem edita fluxos
+   * (`pode_ver_dados`): o cartão de cada bloco mostra a configuração, que tem o texto que o dono escreveu.
+   */
+  grafo: { nodes: unknown[]; edges: unknown[] } | null;
   /** Saídas do nó atual — é o que a tela oferece para "pular este passo". */
   saidas: Array<{ edge_id: string; target_id: string; target_rotulo: string; quando: string }>;
   eventos: EventoDeEnrollment[];
@@ -202,6 +217,28 @@ export async function GET(_req: NextRequest, ctx: RouteCtx): Promise<Response> {
       quando: rotuloDaAresta(e, noDeOrigem, nomesDeEtapa),
     }));
 
+  // O diário (contrato 1). A leitura é pela sessão da pessoa: a RLS das tabelas decide o que ela vê.
+  const podeVerDados = ROLE_RANK[org.role] >= ROLE_RANK.manager;
+  const { data: passosBrutos, error: passosErr } = await supabase
+    .from("followup_execution_steps")
+    .select("id, node_id, visit, status, branch_id, entered_at, completed_at")
+    .eq("organization_id", org.orgId)
+    .eq("enrollment_id", id)
+    .order("entered_at", { ascending: true })
+    .limit(TETO_DE_EVENTOS);
+  if (passosErr) return fail("internal_error", passosErr.message, 500, { requestId });
+  const idsDosPassos = (passosBrutos ?? []).map((p) => p.id);
+  const { data: tentativasBrutas, error: tentativasErr } =
+    idsDosPassos.length === 0
+      ? { data: [], error: null }
+      : await supabase
+          .from("followup_execution_attempts")
+          .select("step_id, attempt_no, status, started_at, completed_at, input_snapshot, output_snapshot, error_snapshot")
+          .eq("organization_id", org.orgId)
+          .in("step_id", idsDosPassos);
+  if (tentativasErr) return fail("internal_error", tentativasErr.message, 500, { requestId });
+  const passos = montarPassos(passosBrutos ?? [], tentativasBrutas ?? [], porId, podeVerDados);
+
   const contato = embedded(
     row.contacts as
       | { id: string; name: string | null; display_name: string | null; phone_number: string | null }
@@ -244,6 +281,10 @@ export async function GET(_req: NextRequest, ctx: RouteCtx): Promise<Response> {
     agent_name: agente?.name ?? null,
     no_atual: porId.get(row.current_node_id) ?? null,
     nos,
+    arestas: (grafo?.success ? grafo.data.edges : []).map((e) => ({ id: e.id, source: e.source, target: e.target })),
+    passos,
+    pode_ver_dados: podeVerDados,
+    grafo: podeVerDados && grafo?.success ? { nodes: grafo.data.nodes, edges: grafo.data.edges } : null,
     saidas,
     eventos: lidos.slice(0, TETO_DE_EVENTOS) as EventoDeEnrollment[],
     eventos_truncados: truncado,

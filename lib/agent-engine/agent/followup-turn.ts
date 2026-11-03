@@ -703,8 +703,11 @@ async function runFlowDrivenTurn(
   const { enrollmentId, nodeId } = input;
   const runLog = withFields(deps.log, { job_id: job.id, tenant_id: target.tenantId, lead_id: target.leadId, enrollment_id: enrollmentId });
 
+  const pessoaNoComandoPermitida =
+    input.purpose === 'send_message' && (await politicaDoFluxoPermitePessoaNoComando(pool, target.tenantId, enrollmentId));
+
   if (input.purpose === 'send_message' && input.fixedItems !== undefined) {
-    const desfecho = await sendFlowItems(deps, job, pool, ctx, clock, target, input.fixedItems, runLog);
+    const desfecho = await sendFlowItems(deps, job, pool, ctx, clock, target, input.fixedItems, runLog, pessoaNoComandoPermitida);
     if (desfecho.kind === 'sent') {
       await complete(pool, { jobId: job.id, jobClaim: claimOfJob(job), organizationId: target.tenantId, enrollmentId, nodeId, result: { kind: 'sent' } });
     } else if (desfecho.kind === 'skipped') {
@@ -740,6 +743,7 @@ async function runFlowDrivenTurn(
       const desfecho = await sendFixedOutbound(
         deps, job, pool, ctx, clock, target, passo.body, false,
         passo.tipo === 'modelo_aprovado' ? passo.modelo : undefined,
+        { pessoaNoComandoPermitida },
       );
       // TODO OS TRÊS DESFECHOS VOLTAM PARA O ENROLLMENT. O adiado era o que não
       // voltava, e o silêncio dele custava o enrollment inteiro: o motor ficava
@@ -1123,13 +1127,22 @@ async function sendFixedOutbound(
    * passar, que é o que um modelo aprovado é — como no `send_template` do agente.
    */
   modelo?: { name: string; language: string; values: Record<string, string> },
-  /** Envio de um item do bloco de mensagens: a posição dele no job e, se for anexo, a mídia já na pasta da conversa. */
-  item?: { seq: number; media?: { storagePath: string; mime: string; kind: 'image' | 'video' | 'audio' | 'document' } },
+  /**
+   * Envio de um item do bloco de mensagens: a posição dele no job e, se for anexo, a mídia já na pasta da conversa.
+   * `pessoaNoComandoPermitida`: o fluxo tem `handoff_policy='allow'` — roda mesmo com a conversa assumida por uma pessoa.
+   */
+  item?: {
+    seq?: number;
+    media?: { storagePath: string; mime: string; kind: 'image' | 'video' | 'audio' | 'document' };
+    pessoaNoComandoPermitida?: boolean;
+  },
 ): Promise<EnvioFixoDesfecho> {
   const { tenantId, leadId, channelSessionId, conversationId } = target;
   const runLog = withFields(deps.log, { job_id: job.id, tenant_id: tenantId, lead_id: leadId });
 
-  if (await isLeadInHandoff(pool, tenantId, leadId)) {
+  // `handoff_policy='allow'` é a escolha de quem montou o fluxo de rodar com pessoa no comando (a equipe move o
+  // card e o fluxo avisa o aluno). Só dispensa o silêncio da IA: o STOP/opt-out do contato segue na cadeia abaixo.
+  if (item?.pessoaNoComandoPermitida !== true && (await isLeadInHandoff(pool, tenantId, leadId))) {
     runLog.info('envio fixo pulado — lead silenciado (handoff/opt-out)', { kind: job.kind });
     return { kind: "skipped" };
   }
@@ -1230,6 +1243,17 @@ async function sendFixedOutbound(
   }
 }
 
+/** O fluxo desta inscrição roda com pessoa no comando? (`followup_flow_pointers.handoff_policy = 'allow'`) */
+async function politicaDoFluxoPermitePessoaNoComando(pool: pg.Pool, tenantId: string, enrollmentId: string): Promise<boolean> {
+  const { rows } = await pool.query<{ handoff_policy: string | null }>(
+    `select p.handoff_policy from followup_enrollments e
+       join followup_flow_pointers p on p.id = e.pointer_id and p.organization_id = e.organization_id
+      where e.organization_id = $1 and e.id = $2`,
+    [tenantId, enrollmentId],
+  );
+  return rows[0]?.handoff_policy === 'allow';
+}
+
 /**
  * Envia os itens do bloco de mensagens EM ORDEM, cada um pela mesma cadeia de guardrails do texto fixo.
  * A posição do item (1..n) é o `seq` do ledger: o retry de um job que caiu no meio reenvia só o que falta,
@@ -1250,12 +1274,13 @@ async function sendFlowItems(
   target: ReentrySendTarget,
   items: ItemDoFluxo[],
   runLog: { warn(msg: string, fields?: Record<string, unknown>): void },
+  pessoaNoComandoPermitida: boolean,
 ): Promise<FlowItemsDesfecho> {
   for (const [i, item] of items.entries()) {
     const seq = i + 1;
     let desfecho: EnvioFixoDesfecho;
     if (item.kind === 'text') {
-      desfecho = await sendFixedOutbound(deps, job, pool, ctx, clock, target, item.body, false, undefined, { seq });
+      desfecho = await sendFixedOutbound(deps, job, pool, ctx, clock, target, item.body, false, undefined, { seq, pessoaNoComandoPermitida });
     } else {
       const copia = await copiarAnexoParaConversa(runLog, {
         orgId: target.tenantId,
@@ -1267,6 +1292,7 @@ async function sendFlowItems(
       const legenda = item.kind === 'audio' ? '' : (item.caption ?? '');
       desfecho = await sendFixedOutbound(deps, job, pool, ctx, clock, target, legenda, false, undefined, {
         seq,
+        pessoaNoComandoPermitida,
         media: { storagePath: copia.storagePath, mime: item.mime, kind: item.kind },
       });
     }

@@ -7,6 +7,8 @@ import { apiClient } from "@/lib/api/client";
 import { useT } from "@/hooks/i18n/useT";
 import type { EventoDeEnrollment, NoDoDossie } from "@/lib/followup/eventos-legiveis";
 import type { TimingPlan } from "@/lib/followup/plano-de-tempo";
+import type { PassoDaExecucao } from "@/lib/followup/passos-da-execucao";
+import type { FlowGraph } from "@/lib/followup/graph-schema";
 
 export interface SaidaDoPasso {
   edge_id: string;
@@ -40,6 +42,10 @@ export interface FollowupEnrollmentDossie {
   agent_name: string | null;
   no_atual: NoDoDossie | null;
   nos: NoDoDossie[];
+  arestas: Array<{ id: string; source: string; target: string }>;
+  passos: PassoDaExecucao[];
+  pode_ver_dados: boolean;
+  grafo: Pick<FlowGraph, "nodes" | "edges"> | null;
   saidas: SaidaDoPasso[];
   eventos: EventoDeEnrollment[];
   eventos_truncados: boolean;

@@ -147,6 +147,16 @@ export function FlowsList({ initialData, canWrite, surface }: Props) {
                   Atualizado em {formatUpdatedAt(flow.updated_at, tagDoIdioma)}
                 </p>
               </Link>
+              {/* O histórico de execuções deste fluxo: a Fila já filtrada por ele, com o caminho de cada uma. */}
+              <div className="flex items-center justify-between gap-2 border-t border-border pt-2">
+                <Link
+                  href={`${baseHref}?aba=fila&fluxo=${flow.id}`}
+                  className="text-xs text-accent underline-offset-[3px] hover:underline"
+                  data-testid="fluxo-ver-execucoes"
+                >
+                  {t("Ver execuções")}
+                </Link>
+              </div>
               {canWrite && (
                 <div className="flex flex-wrap justify-end gap-2 border-t border-border pt-2">
                   <RenameFollowupFlowButton flowId={flow.id} flowName={flow.name} />

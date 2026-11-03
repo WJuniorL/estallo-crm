@@ -62,8 +62,11 @@ export interface SendMessageInput {
    * colidirem no ledger e o segundo virar `already_sent` sem ter saído.
    */
   template?: { name: string; language: string; values: Record<string, string> };
-  /** Presente = imagem da pasta da conversa em `whatsapp-media`; `body` é a legenda. */
-  media?: { storagePath: string; mime: string };
+  /**
+   * Presente = mídia da pasta da conversa em `whatsapp-media`; `body` é a legenda. Sem `kind` é imagem
+   * (a foto do catálogo); o bloco de mensagens do fluxo manda também vídeo, áudio e documento.
+   */
+  media?: { storagePath: string; mime: string; kind?: 'image' | 'video' | 'audio' | 'document' };
 }
 
 /**
@@ -86,7 +89,7 @@ export function corpoDoEnvio(
         }
       : input.media
         ? {
-            type: 'image' as const,
+            type: input.media.kind ?? ('image' as const),
             media_storage_path: input.media.storagePath,
             media_mime: input.media.mime,
           }

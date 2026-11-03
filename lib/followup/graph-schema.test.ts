@@ -74,12 +74,10 @@ describe('graph-schema', () => {
         expect(result.success).toBe(true);
       });
 
-      it('rejects duration below 5 min', () => {
-        const result = waitConfigSchema.safeParse({
-          mode: 'fixed',
-          duration_ms: 299_999,
-        });
-        expect(result.success).toBe(false);
+      it('accepts a short wait (3 min, 30 s) and rejects below 1 s', () => {
+        for (const duration_ms of [180_000, 30_000, 1_000])
+          expect(waitConfigSchema.safeParse({ mode: 'fixed', duration_ms }).success).toBe(true);
+        expect(waitConfigSchema.safeParse({ mode: 'fixed', duration_ms: 999 }).success).toBe(false);
       });
 
       it('rejects duration above 90 days', () => {

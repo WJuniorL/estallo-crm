@@ -19,6 +19,7 @@ import { useMessageTemplates } from "@/hooks/inbox/useMessageTemplates";
 import { useModelosAprovadosDoFluxo } from "@/hooks/followup/useModelosAprovadosDoFluxo";
 import { useT } from "@/hooks/i18n/useT";
 
+import { MensagensForm } from "./MensagensForm";
 import type { ConfigOf } from "./shared";
 
 /**
@@ -141,6 +142,8 @@ export function ActionForm({
     fallbackTemplateId: string;
     templateId: string;
   }) => {
+    // O bloco de mensagens guarda a própria lista e confirma pelo `MensagensForm`.
+    if (next.mode === "messages") return;
     const candidate =
       next.mode === "text"
         ? { mode: "text" as const, body: next.body }
@@ -187,7 +190,9 @@ export function ActionForm({
         </Select>
       </div>
 
-      {mode === "text" ? (
+      {mode === "messages" ? (
+        <MensagensForm items={config.mode === "messages" ? config.items : []} onChange={onChange} />
+      ) : mode === "text" ? (
         <div className="space-y-2">
           <Label htmlFor="action-body">{t("Texto enviado ao contato")}</Label>
           <Textarea

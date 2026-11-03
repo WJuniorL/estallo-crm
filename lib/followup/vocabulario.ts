@@ -89,7 +89,7 @@ export function opcoes<K extends string>(mapa: Record<K, string>): ReadonlyArray
  * `stage_id` (um UUID, veja `engine.ts` → `loadLeadFacts`), então um campo de
  * texto livre pede ao dono da clínica que digite um identificador interno.
  */
-export type TipoDeValor = "etapa" | "etiqueta" | "numero" | "texto";
+export type TipoDeValor = "etapa" | "etiqueta" | "numero" | "texto" | "produto";
 
 export interface CampoDeCondicao {
   rotulo: string;
@@ -101,7 +101,9 @@ export const CAMPOS_DA_CONDICAO: Record<CampoDaCondicao, CampoDeCondicao> = {
   tag: { rotulo: "Etiqueta do contato", tipoDeValor: "etiqueta" },
   steps_taken: { rotulo: "Passos já dados no fluxo", tipoDeValor: "numero" },
   last_outcome: { rotulo: "Desfecho do passo anterior", tipoDeValor: "texto" },
-  product: { rotulo: "Produto do negócio", tipoDeValor: "texto" },
+  // ESCOLHIDO no catálogo, nunca digitado: o motor compara o NOME do item do negócio (copiado do
+  // catálogo ao vincular), e um campo livre pedia ao dono que acertasse a grafia à mão.
+  product: { rotulo: "Produto do negócio", tipoDeValor: "produto" },
 };
 
 // ─── condição: o par (campo, operador) ───────────────────────────────────
@@ -285,12 +287,8 @@ const COMPARADORES: Record<CampoDaCondicao, Record<OperadorDaCondicao, Comparado
   },
   product: {
     // No motor, `product` é lista de nomes (como `tag`), comparada sem diferença de caixa.
-    // `contains` é o uso comum ("Coleta na Prática" acha `Coleta na Prática SSA` e `... VCA`).
-    contains: {
-      rotulo: "tem um produto com o nome contendo",
-      frase: (v) => `O negócio tem um produto com o nome contendo ${aspas(v)}`,
-      oferecido: true,
-    },
+    // O valor é ESCOLHIDO no catálogo, então o par que a tela oferece é o exato. `contains` continua
+    // entendido pelo motor (fluxo salvo com ele precisa ser lido), mas fica fora do seletor.
     eq: {
       rotulo: "tem o produto",
       frase: (v) => `O negócio tem o produto ${aspas(v)}`,
@@ -300,6 +298,11 @@ const COMPARADORES: Record<CampoDaCondicao, Record<OperadorDaCondicao, Comparado
       rotulo: "não tem o produto",
       frase: (v) => `O negócio não tem o produto ${aspas(v)}`,
       oferecido: true,
+    },
+    contains: {
+      rotulo: "tem um produto com o nome contendo",
+      frase: (v) => `O negócio tem um produto com o nome contendo ${aspas(v)}`,
+      oferecido: false,
     },
     gte: {
       rotulo: "é pelo menos",
@@ -546,6 +549,7 @@ export const MODOS_DE_ESPERA: Record<ModoDeEspera, string> = {
 
 export const MODOS_DA_ACAO: Record<ModoDaAcao, string> = {
   text: "Texto fixo",
+  messages: "Mensagens com anexos (texto, imagem, vídeo, áudio, documento)",
   ai_message: "Mensagem escrita pela IA",
   template: "Modelo de mensagem pronto",
 };
@@ -566,6 +570,15 @@ export const PRIORIDADES_DA_TAREFA: Record<PrioridadeDaTarefa, string> = {
 export const DESTINOS_DA_TAG: Record<"card" | "contato", string> = {
   card: "No negócio",
   contato: "No contato",
+};
+
+/** Tipos de envio do bloco de mensagens — rótulos do seletor de cada envio. */
+export const TIPOS_DO_ENVIO: Record<"text" | "image" | "video" | "audio" | "document", string> = {
+  text: "Texto",
+  image: "Imagem",
+  video: "Vídeo",
+  audio: "Áudio",
+  document: "Documento",
 };
 
 // ─── pergunta do fluxo de atendimento (nó collect) ───────────────────────

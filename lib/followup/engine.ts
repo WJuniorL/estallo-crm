@@ -21,7 +21,13 @@ import { ZodError } from "zod";
 import { idsDoContatoEGemeos } from "@/lib/channels/contato-por-telefone";
 import { logger } from "@/lib/logger";
 
-import { flowGraphSchema, type FlowGraph, type FlowNode, type ReplySaveTo } from "./graph-schema";
+import {
+  flowGraphSchema,
+  type FlowGraph,
+  type FlowNode,
+  type ItemDeEnvio,
+  type ReplySaveTo,
+} from "./graph-schema";
 import {
   ACTION_RECHECK_MS,
   BACKOFF_MS,
@@ -124,6 +130,8 @@ export interface FollowupJobRequest {
     fallback_template_id?: string;
     /** action (mode 'text') — corpo pronto; o turno envia sem chamar o modelo. */
     fixed_body?: string;
+    /** action (mode 'messages') — os envios do bloco, textos já renderizados; saem em ordem, sem IA. */
+    fixed_items?: ItemDeEnvio[];
     /**
      * action (mode 'template') — id em `message_templates` (texto pronto) OU em
      * `meta_templates` (modelo aprovado do canal, o único que sai com a janela de 24 h
@@ -464,6 +472,18 @@ function turnPayloadExtras(
   }
   if (node.type === "action" && node.config.mode === "text") {
     return { fixed_body: interpolarVolta(node.config.body, events, contexto) };
+  }
+  if (node.type === "action" && node.config.mode === "messages") {
+    // Texto e legenda ganham a volta e os dados de quem recebe, como o texto fixo; o anexo segue como está.
+    return {
+      fixed_items: node.config.items.map((item) =>
+        item.kind === "text"
+          ? { ...item, body: interpolarVolta(item.body, events, contexto) }
+          : item.caption
+            ? { ...item, caption: interpolarVolta(item.caption, events, contexto) }
+            : item,
+      ),
+    };
   }
   if (node.type === "action" && node.config.mode === "template") {
     const volta = latestRepeatIndex(events);
@@ -1394,7 +1414,9 @@ async function processEnrollment(
   // (`enviar-texto-fixo.ts`), que não tem segunda passada. Só o nó que manda
   // texto paga a leitura — os demais não renderizam nada.
   const contexto =
-    result.kind === "enqueue_turn" && node.type === "action" && node.config.mode === "text"
+    result.kind === "enqueue_turn" &&
+    node.type === "action" &&
+    (node.config.mode === "text" || node.config.mode === "messages")
       ? target
         ? await db.loadRenderContext?.(enrollment.organization_id, enrollment.contact_id, target)
         : await db.loadRenderContext?.(enrollment.organization_id, enrollment.contact_id)

@@ -17,6 +17,8 @@ import { completeTurnForEnrollment, type TurnBridgeAdminClient } from "@/lib/fol
 import { logger } from "@/lib/logger";
 import { OrgNaoOperanteError } from "@/lib/organizacao/operante";
 import { executionContractProblem } from "@/lib/automation/execution-capability";
+import { copiarAnexoParaConversa, itemDoFluxoSchema } from "@/lib/agent-engine/agent/anexos-do-fluxo";
+import { z } from "zod";
 
 function ponteSupabase(admin: SupabaseClient): TurnBridgeAdminClient {
   const base = createSupabaseAdminClient(admin);
@@ -86,11 +88,18 @@ export async function enviarTextoFixoPendente(
   const ponte = ponteSupabase(admin);
   for (const job of jobs ?? []) {
     const payload = (job.payload ?? {}) as FollowupJobRequest["payload"];
-    const body = payload.fixed_body;
+    // Um texto fixo é o caso de um item só; o bloco de mensagens traz a lista (`fixed_items`).
+    const itensLidos = z.array(itemDoFluxoSchema).min(1).max(10).safeParse(payload.fixed_items);
+    const itens: Array<z.infer<typeof itemDoFluxoSchema>> =
+      typeof payload.fixed_body === "string" && payload.fixed_body
+        ? [{ kind: "text", body: payload.fixed_body }]
+        : itensLidos.success
+          ? itensLidos.data
+          : [];
     const enrollmentId = payload.followup_enrollment_id;
     const nodeId = payload.node_id;
     const contactId = job.contact_id as string | null;
-    if (typeof body !== "string" || !body || !enrollmentId || !nodeId || !contactId) continue;
+    if (itens.length === 0 || !enrollmentId || !nodeId || !contactId) continue;
     if (somenteContactIds && !somenteContactIds.includes(contactId)) continue;
 
     const { data: claimed, error: claimErr } = await admin
@@ -196,12 +205,42 @@ export async function enviarTextoFixoPendente(
 
       const proactiveContext={organizationId:job.organization_id as string,contactId,enrollmentId,nodeId,jobId:job.id,jobClaim};
       await assertAgendaEffectSupabase(admin,proactiveContext);
-      const resultado=await sendWithLedger(supabaseSendLedger(admin),{tenantId:job.organization_id,leadId:contactId,jobId:job.id,seq:1,body},async(key,messageId)=>sendMessageHandler(
-        admin,
-        {organization_id:job.organization_id,actor:{type:"webhook_source",id:enrollmentId},serviceBoundary:boundary,proactiveContext,internalMessageId:messageId,requestId:key},
-        {conversation_id:conversationId,type:"text",body,metadata:{idempotency_key:key}},
-      ));
-      if(resultado.kind!=="sent" && resultado.kind!=="already_sent") throw new Error(`message_${resultado.kind}`);
+      // Em ordem, parando no primeiro que não saiu: o `seq` (posição do item) é a chave do ledger, e o retry
+      // de um job que caiu no meio reenvia só o que falta — os já aceitos voltam como `already_sent`.
+      let pulado: string | null = null;
+      for (const [i, item] of itens.entries()) {
+        const seq = i + 1;
+        const midia =
+          item.kind === "text"
+            ? null
+            : await copiarAnexoParaConversa(logger, { orgId: job.organization_id as string, conversationId, path: item.path });
+        if (midia && !midia.ok) {
+          pulado = midia.motivo;
+          break;
+        }
+        const legenda = item.kind === "text" ? item.body : item.kind === "audio" ? "" : (item.caption ?? "");
+        const resultado=await sendWithLedger(supabaseSendLedger(admin),{tenantId:job.organization_id,leadId:contactId,jobId:job.id,seq,body:legenda},async(key,messageId)=>sendMessageHandler(
+          admin,
+          {organization_id:job.organization_id,actor:{type:"webhook_source",id:enrollmentId},serviceBoundary:boundary,proactiveContext,internalMessageId:messageId,requestId:key},
+          item.kind === "text"
+            ? {conversation_id:conversationId,type:"text",body:item.body,metadata:{idempotency_key:key}}
+            : {
+                conversation_id:conversationId,
+                type:item.kind,
+                media_storage_path:midia!.ok ? midia!.storagePath : "",
+                media_mime:item.mime,
+                media_size_bytes:item.size_bytes,
+                ...(legenda ? {body:legenda} : {}),
+                metadata:{idempotency_key:key},
+              },
+        ));
+        if(resultado.kind!=="sent" && resultado.kind!=="already_sent") throw new Error(`message_${resultado.kind}`);
+      }
+      if (pulado !== null) {
+        await completeTurnForEnrollment(ponte, job.organization_id, enrollmentId, nodeId, { kind: "skipped", reason: pulado },undefined,job.id,jobClaim);
+        await settle(job.organization_id,job.id,jobClaim.acquired_at,true);
+        continue;
+      }
       enviados++;
       await completeTurnForEnrollment(ponte, job.organization_id, enrollmentId, nodeId, {
         kind: "sent",

@@ -45,7 +45,7 @@ export interface ChannelSendInput {
    * (`agent/fotos-do-produto.ts`). Caminho, nunca URL nem bytes: quem assina a
    * URL curta para o canal é o handler de mensagens, como em toda mídia.
    */
-  media?: { storagePath: string; mime: string };
+  media?: { storagePath: string; mime: string; kind?: 'image' | 'video' | 'audio' | 'document' };
 }
 
 /**

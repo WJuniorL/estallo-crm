@@ -54,6 +54,7 @@ import {
 import { isLeadInHandoff } from './human-handoff';
 import { aplicarPessoaNoComandoAoTurno } from '@/lib/followup/pessoa-no-comando-no-turno';
 import { fusoDaOrganizacao } from './fuso-da-org';
+import { copiarAnexoParaConversa, itemDoFluxoSchema, type ItemDoFluxo } from './anexos-do-fluxo';
 import {
   followupPublicadoDoEnrollment,
   proximaAberturaDoFollowup,
@@ -97,6 +98,8 @@ export const followupTurnPayloadSchema = z
     prompt_hint: z.string().optional(),
     /** action mode `text` — enviado pela cadeia de guardrails, sem LLM. */
     fixed_body: z.string().min(1).max(4000).optional(),
+    /** action mode `messages` — vários envios em ordem (texto e anexos), sem LLM. */
+    fixed_items: z.array(itemDoFluxoSchema).min(1).max(10).optional(),
     /** action mode `template` — `message_templates` (texto) ou `meta_templates` (modelo aprovado do canal). */
     template_id: z.string().uuid().optional(),
     /** action mode `ai_message` — modelo aprovado que sai no lugar da IA com a janela de 24 h fechada. */
@@ -588,6 +591,7 @@ export function createFollowupTurnHandler(deps: FollowupTurnDeps) {
           purpose: payload.purpose,
           promptHint: payload.prompt_hint,
           fixedBody: payload.fixed_body,
+          fixedItems: payload.fixed_items,
           templateId: payload.template_id,
           fallbackTemplateId: payload.fallback_template_id,
           voltaIndex: payload.volta_index,
@@ -677,6 +681,7 @@ async function runFlowDrivenTurn(
     purpose: 'send_message' | 'classify' | 'plan_timing' | undefined;
     promptHint: string | undefined;
     fixedBody: string | undefined;
+    fixedItems: ItemDoFluxo[] | undefined;
     templateId: string | undefined;
     fallbackTemplateId: string | undefined;
     voltaIndex: number | undefined;
@@ -697,6 +702,18 @@ async function runFlowDrivenTurn(
   }
   const { enrollmentId, nodeId } = input;
   const runLog = withFields(deps.log, { job_id: job.id, tenant_id: target.tenantId, lead_id: target.leadId, enrollment_id: enrollmentId });
+
+  if (input.purpose === 'send_message' && input.fixedItems !== undefined) {
+    const desfecho = await sendFlowItems(deps, job, pool, ctx, clock, target, input.fixedItems, runLog);
+    if (desfecho.kind === 'sent') {
+      await complete(pool, { jobId: job.id, jobClaim: claimOfJob(job), organizationId: target.tenantId, enrollmentId, nodeId, result: { kind: 'sent' } });
+    } else if (desfecho.kind === 'skipped') {
+      await complete(pool, { jobId: job.id, jobClaim: claimOfJob(job), organizationId: target.tenantId, enrollmentId, nodeId, result: { kind: 'skipped', reason: desfecho.reason } });
+    } else {
+      await complete(pool, { jobId: job.id, jobClaim: claimOfJob(job), organizationId: target.tenantId, enrollmentId, nodeId, result: { kind: 'deferred', until: desfecho.until, reason: desfecho.reason } });
+    }
+    return;
+  }
 
   if (input.purpose === 'send_message') {
     let passo = await resolveFlowSendBody(pool, target.tenantId, target.channelSessionId, target.leadId, input);
@@ -1106,6 +1123,8 @@ async function sendFixedOutbound(
    * passar, que é o que um modelo aprovado é — como no `send_template` do agente.
    */
   modelo?: { name: string; language: string; values: Record<string, string> },
+  /** Envio de um item do bloco de mensagens: a posição dele no job e, se for anexo, a mídia já na pasta da conversa. */
+  item?: { seq: number; media?: { storagePath: string; mime: string; kind: 'image' | 'video' | 'audio' | 'document' } },
 ): Promise<EnvioFixoDesfecho> {
   const { tenantId, leadId, channelSessionId, conversationId } = target;
   const runLog = withFields(deps.log, { job_id: job.id, tenant_id: tenantId, lead_id: leadId });
@@ -1166,8 +1185,9 @@ async function sendFixedOutbound(
       : {}),
     send: (finalBody) =>
       channel.send({
-        tenantId, leadId, jobId: job.id, jobClaim: claimOfJob(job), seq: 1, conversationId, body: finalBody,
+        tenantId, leadId, jobId: job.id, jobClaim: claimOfJob(job), seq: item?.seq ?? 1, conversationId, body: finalBody,
         ...(modelo !== undefined ? { template: modelo } : {}),
+        ...(item?.media !== undefined ? { media: item.media } : {}),
       }),
   });
 
@@ -1208,6 +1228,54 @@ async function sendFixedOutbound(
     case 'unavailable':
       throw new Error(`envio fixo: canal indisponível (${outcome.reason}) — run re-tentado pela fila`);
   }
+}
+
+/**
+ * Envia os itens do bloco de mensagens EM ORDEM, cada um pela mesma cadeia de guardrails do texto fixo.
+ * A posição do item (1..n) é o `seq` do ledger: o retry de um job que caiu no meio reenvia só o que falta,
+ * porque os itens já aceitos voltam como `already_sent`. Para no primeiro item que não seja de sucesso —
+ * adiado, vetado ou recusado —, como o envio em bolhas: mandar o 3º com o 2º pendente embaralharia a conversa.
+ */
+type FlowItemsDesfecho =
+  | { kind: 'sent' }
+  | { kind: 'skipped'; reason: string }
+  | { kind: 'deferred'; until: Date; reason: string };
+
+async function sendFlowItems(
+  deps: InboundTurnDeps,
+  job: JobRow,
+  pool: pg.Pool,
+  ctx: { workerId: string },
+  clock: () => Date,
+  target: ReentrySendTarget,
+  items: ItemDoFluxo[],
+  runLog: { warn(msg: string, fields?: Record<string, unknown>): void },
+): Promise<FlowItemsDesfecho> {
+  for (const [i, item] of items.entries()) {
+    const seq = i + 1;
+    let desfecho: EnvioFixoDesfecho;
+    if (item.kind === 'text') {
+      desfecho = await sendFixedOutbound(deps, job, pool, ctx, clock, target, item.body, false, undefined, { seq });
+    } else {
+      const copia = await copiarAnexoParaConversa(runLog, {
+        orgId: target.tenantId,
+        conversationId: target.conversationId,
+        path: item.path,
+      });
+      if (!copia.ok) return { kind: 'skipped', reason: copia.motivo };
+      // Áudio não tem legenda no WhatsApp; os demais levam a legenda como corpo.
+      const legenda = item.kind === 'audio' ? '' : (item.caption ?? '');
+      desfecho = await sendFixedOutbound(deps, job, pool, ctx, clock, target, legenda, false, undefined, {
+        seq,
+        media: { storagePath: copia.storagePath, mime: item.mime, kind: item.kind },
+      });
+    }
+    if (desfecho.kind === 'deferred') return desfecho;
+    if (desfecho.kind === 'skipped') {
+      return { kind: 'skipped', reason: 'O envio foi recusado pelas regras do atendimento.' };
+    }
+  }
+  return { kind: 'sent' };
 }
 
 /**

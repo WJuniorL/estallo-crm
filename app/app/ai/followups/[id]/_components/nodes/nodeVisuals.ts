@@ -214,6 +214,14 @@ function minutos(ms: number): string {
   return `${Math.round(ms / 60_000)} min`;
 }
 
+/** Espera fixa na unidade em que foi escolhida: "30 s", "3 min", "2 h", "1 d". */
+function tempoCurto(ms: number): string {
+  if (ms < 60_000) return `${Math.max(1, Math.round(ms / 1_000))} s`;
+  if (ms % 86_400_000 === 0) return `${ms / 86_400_000} d`;
+  if (ms % 3_600_000 === 0) return `${ms / 3_600_000} h`;
+  return minutos(ms);
+}
+
 /**
  * One-line summary of a node's config — shown as the card subtitle. Takes the
  * RF node's own `type`/`data.config` pair (not a reconstructed `FlowNode`)
@@ -234,7 +242,7 @@ export function describeNodeConfig(
     case "wait": {
       const c = config as ConfigOf<"wait">;
       return c.mode === "fixed"
-        ? minutos(c.duration_ms)
+        ? tempoCurto(c.duration_ms)
         : `${Math.round(c.min_ms / 60_000)}–${minutos(c.max_ms)} ${t("(adaptativo)")}`;
     }
     case "condition": {
@@ -277,6 +285,16 @@ export function describeNodeConfig(
       const c = config as ConfigOf<"action">;
       if (c.mode === "ai_message") return c.prompt_hint;
       if (c.mode === "text") return c.body;
+      if (c.mode === "messages") {
+        const anexos = c.items.filter((i) => i.kind !== "text").length;
+        const textos = c.items.length - anexos;
+        return [
+          textos > 0 ? `${textos} ${textos === 1 ? t("texto") : t("textos")}` : null,
+          anexos > 0 ? `${anexos} ${anexos === 1 ? t("anexo") : t("anexos")}` : null,
+        ]
+          .filter(Boolean)
+          .join(" + ");
+      }
       return t("Template fixo");
     }
     case "internal_task": {

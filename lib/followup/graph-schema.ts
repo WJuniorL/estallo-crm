@@ -108,7 +108,10 @@ export const waitConfigSchema = z
   .discriminatedUnion('mode', [
     z.strictObject({
       mode: z.literal('fixed'),
-      duration_ms: z.number().int().min(300_000).max(7_776_000_000),
+      // Piso de 1 s: quem escolhe a espera é quem monta o fluxo (3 min entre o agradecimento e o áudio).
+      // A precisão real é a do tick do motor (~1 min); o ciclo sem espera segue barrado na publicação
+      // (`MIN_CYCLE_WAIT_MS`, validate-publish).
+      duration_ms: z.number().int().min(1_000).max(7_776_000_000),
       /**
        * A espera NÃO é encurtada nem cancelada quando o contato manda mensagem.
        *
@@ -265,10 +268,47 @@ export const aiClassifyConfigSchema = z
  * - ai_message: generate a message using AI with a prompt hint
  * - template: send a canned message from Ajustes → Modelos
  */
+/** Tipos de anexo que um bloco de mensagens envia — os mesmos do envio da caixa de entrada. */
+export const TIPOS_DE_ANEXO = ['image', 'video', 'audio', 'document'] as const;
+export type TipoDeAnexo = (typeof TIPOS_DE_ANEXO)[number];
+
+/** 50 MB, o teto do envio de mídia (`MAX_MEDIA_BYTES`). Escrito aqui para o esquema não importar o módulo de mensagens. */
+const TAMANHO_MAXIMO_DO_ANEXO = 50 * 1024 * 1024;
+
+/**
+ * Um envio dentro do bloco de mensagens: um texto OU um anexo. O anexo guarda o CAMINHO do arquivo
+ * (o upload da tela devolve `{org}/flow-assets/{uuid}/{arquivo}`), nunca URL nem bytes — quem copia
+ * para a pasta da conversa e assina a URL curta é o envio, como em toda mídia.
+ */
+export const itemDeEnvioSchema = z.discriminatedUnion('kind', [
+  z.strictObject({
+    kind: z.literal('text'),
+    body: z.string().min(1, 'Escreva o texto ou remova este envio.').max(4000),
+  }),
+  z.strictObject({
+    kind: z.enum(TIPOS_DE_ANEXO),
+    path: z.string().min(1).max(400),
+    mime: z.string().min(1).max(120),
+    filename: z.string().min(1).max(200),
+    size_bytes: z.number().int().positive().max(TAMANHO_MAXIMO_DO_ANEXO),
+    /** Legenda (imagem, vídeo, documento). Áudio não tem legenda no WhatsApp. */
+    caption: z.string().max(1024).optional(),
+  }),
+]);
+export type ItemDeEnvio = z.infer<typeof itemDeEnvioSchema>;
+
+/** Quantos envios cabem num bloco: acima disso é outro fluxo, e o canal estranha rajada. */
+export const MAX_ITENS_DO_ENVIO = 10;
+
 export const actionConfigSchema = z.discriminatedUnion('mode', [
   z.strictObject({
     mode: z.literal('text'),
     body: z.string().min(1).max(4000),
+  }),
+  /** Vários envios em sequência no mesmo bloco: texto, imagem, vídeo, áudio, documento. */
+  z.strictObject({
+    mode: z.literal('messages'),
+    items: z.array(itemDeEnvioSchema).min(1, 'Adicione ao menos um envio.').max(MAX_ITENS_DO_ENVIO),
   }),
   z.strictObject({
     mode: z.literal('ai_message'),

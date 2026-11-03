@@ -354,6 +354,7 @@ export const AUDIT_ACTIONS = [
   "followup_flow.deleted",
   "followup_flow.duplicated",
   "followup_flow.rolled_back",
+  "followup_flow.media_uploaded",
   "followup.worker_run",
   "followup.silence_sweep_run",
   // Roteiros de atendimento encerrados por prazo (0397) — só quando houve efeito.

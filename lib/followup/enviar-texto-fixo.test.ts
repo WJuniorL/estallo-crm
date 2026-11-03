@@ -27,6 +27,12 @@ vi.mock("@/lib/followup/turn-bridge", () => ({
 vi.mock("@/lib/followup/engine", () => ({
   createSupabaseAdminClient: () => ({ loadFlowGraph: async () => ({ nodes: [], edges: [] }) }),
 }));
+// A cópia do anexo para a pasta da conversa é do Storage; aqui só importa o que o envio faz com o resultado.
+const copiarAnexo = vi.fn(async (..._a: unknown[]) => ({ ok: true as const, storagePath: "org-1/conv-1/fluxo-x-audio.ogg" }));
+vi.mock("@/lib/agent-engine/agent/anexos-do-fluxo", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/agent-engine/agent/anexos-do-fluxo")>()),
+  copiarAnexoParaConversa: (...a: unknown[]) => copiarAnexo(...a),
+}));
 vi.mock("@/lib/logger", () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
 
 import { enviarTextoFixoPendente } from "./enviar-texto-fixo";
@@ -329,5 +335,77 @@ describe("enviarTextoFixoPendente · janela de disparo (#2658)", () => {
 
     expect(enviados).toBe(1);
     expect(sendMessageHandler).toHaveBeenCalledOnce();
+  });
+});
+
+describe("enviarTextoFixoPendente · bloco de mensagens (texto + anexo)", () => {
+  const audio = {
+    kind: "audio" as const,
+    path: "org-1/flow-assets/u/audio.ogg",
+    mime: "audio/ogg",
+    filename: "audio.ogg",
+    size_bytes: 78_000,
+  };
+  const original = JOB.payload;
+  const comItens = (items: unknown[]) => {
+    (JOB as { payload: Record<string, unknown> }).payload = {
+      service_boundary: boundary,
+      fixed_items: items,
+      followup_enrollment_id: "enr-1",
+      node_id: "node-1",
+    };
+  };
+  const restaurar = () => {
+    (JOB as { payload: unknown }).payload = original;
+  };
+
+  it("texto → áudio → texto saem NESTA ordem, cada um com o seu tipo, e o job fecha uma vez", async () => {
+    decidir.mockResolvedValue({ permite: true });
+    comItens([{ kind: "text", body: "Texto Coleta" }, audio, { kind: "text", body: "Fico no seu aguardo!!" }]);
+    try {
+      expect(await enviarTextoFixoPendente(admin())).toBe(1);
+    } finally {
+      restaurar();
+    }
+    const corpos = sendMessageHandler.mock.calls.map((c) => c[2] as Record<string, unknown>);
+    expect(corpos.map((c) => c.type)).toEqual(["text", "audio", "text"]);
+    expect(corpos[0]).toMatchObject({ body: "Texto Coleta" });
+    // O áudio vai da pasta da CONVERSA (a cópia), sem legenda: áudio não a tem no WhatsApp.
+    expect(corpos[1]).toMatchObject({ media_storage_path: "org-1/conv-1/fluxo-x-audio.ogg", media_mime: "audio/ogg" });
+    expect(corpos[1]).not.toHaveProperty("body");
+    expect(corpos[2]).toMatchObject({ body: "Fico no seu aguardo!!" });
+    expect(completeTurnForEnrollment).toHaveBeenCalledOnce();
+    expect(copiarAnexo).toHaveBeenCalledOnce();
+  });
+
+  it("anexo recusado (arquivo sumiu / caminho alheio) → o passo é pulado com o motivo, e o texto seguinte NÃO sai", async () => {
+    decidir.mockResolvedValue({ permite: true });
+    copiarAnexo.mockResolvedValueOnce({ ok: false, motivo: "O arquivo anexado ao fluxo não existe mais no armazenamento." } as never);
+    comItens([audio, { kind: "text", body: "Fico no seu aguardo!!" }]);
+    try {
+      expect(await enviarTextoFixoPendente(admin())).toBe(0);
+    } finally {
+      restaurar();
+    }
+    expect(sendMessageHandler).not.toHaveBeenCalled();
+    expect(completeTurnForEnrollment).toHaveBeenCalledWith(
+      expect.anything(), "org-1", "enr-1", "node-1",
+      { kind: "skipped", reason: "O arquivo anexado ao fluxo não existe mais no armazenamento." },
+      undefined, "job-1", expect.anything(),
+    );
+  });
+
+  it("falha no 2º envio: o job NÃO avança o fluxo (o retry reenvia só o que falta, pelo seq do ledger)", async () => {
+    decidir.mockResolvedValue({ permite: true });
+    sendMessageHandler.mockResolvedValueOnce({ id: "m1", status: "sent" }).mockResolvedValueOnce({ id: "m2", status: "failed" });
+    comItens([{ kind: "text", body: "um" }, { kind: "text", body: "dois" }, { kind: "text", body: "três" }]);
+    try {
+      expect(await enviarTextoFixoPendente(admin())).toBe(0);
+    } finally {
+      restaurar();
+    }
+    expect(sendMessageHandler).toHaveBeenCalledTimes(2);
+    expect(completeTurnForEnrollment).not.toHaveBeenCalled();
+    expect(statusUpdates).toContain("pending");
   });
 });

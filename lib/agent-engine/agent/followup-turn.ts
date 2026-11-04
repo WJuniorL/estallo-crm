@@ -1201,6 +1201,8 @@ async function sendFixedOutbound(
         tenantId, leadId, jobId: job.id, jobClaim: claimOfJob(job), seq: item?.seq ?? 1, conversationId, body: finalBody,
         ...(modelo !== undefined ? { template: modelo } : {}),
         ...(item?.media !== undefined ? { media: item.media } : {}),
+        // Texto fixo do fluxo: a autoria é da automação, não da IA (rótulo "Robô" e contagem de envios).
+        autoria: 'automacao',
       }),
   });
 
@@ -1236,8 +1238,25 @@ async function sendFixedOutbound(
         queuedRetryDelayMs: deps.knobs.queuedRetryDelayMs,
       });
       throw new JobSettledError('envio fixo vetado pelo sink (is_blocked) — job cancelado em definitivo');
-    case 'failed':
-      throw new Error('envio fixo: CRM marcou o envio como failed — run re-tentado pela fila');
+    case 'failed': {
+      // O motivo mora na mensagem (ex.: canal em modo de teste). Sem ele o operador só via "failed" e a fila
+      // tentava de novo até esgotar — a causa aparecia só no banco.
+      const motivo = outcome.messageId
+        ? await pool
+            .query<{ error_code: string | null; error_message: string | null }>(
+              'select error_code, error_message from messages where organization_id = $1 and id = $2',
+              [tenantId, outcome.messageId],
+            )
+            .then((r) => r.rows[0])
+            .catch(() => undefined)
+        : undefined;
+      const detalhe = motivo?.error_message ?? motivo?.error_code;
+      throw new Error(
+        detalhe
+          ? `envio fixo: o CRM recusou o envio — ${detalhe}`
+          : 'envio fixo: CRM marcou o envio como failed — run re-tentado pela fila',
+      );
+    }
     case 'unavailable':
       throw new Error(`envio fixo: canal indisponível (${outcome.reason}) — run re-tentado pela fila`);
   }

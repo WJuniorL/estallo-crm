@@ -132,7 +132,8 @@ function fakeDb(seed: Record<string, Row[]>) {
     return builder;
   }
 
-  return { client: { from } as never, tables };
+  // `rpc`: o encerramento da origem avisa a entrada na etapa (emit_event) — aqui só interessa que não quebre.
+  return { client: { from, rpc: async () => ({ error: null }) } as never, tables };
 }
 
 function seed() {

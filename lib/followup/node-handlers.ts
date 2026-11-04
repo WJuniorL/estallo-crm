@@ -677,6 +677,12 @@ export function processNode(input: {
   actionRecheckCount?: number;
   /** action: `action_sent` já existe nesta estadia — o envio fechou; avançar (sara corrida com recheck). */
   actionCompleted?: boolean;
+  /**
+   * action: o job de envio desta estadia MORREU (esgotou as tentativas) e este é o motivo. Sem isto o
+   * motor só via "o turno não voltou" e conferia de hora em hora por ~14 horas — com a inscrição viva
+   * barrando qualquer entrada nova do mesmo contato. Ausente = o turno segue em voo ou ainda pode tentar.
+   */
+  actionTurnFalhou?: string;
   /** trigger: as esperas adaptativas do grafo pinado (`coletarEsperasAdaptativas`). Vazio/ausente
    *  ⇒ não há o que planejar e o acionamento NÃO paga uma chamada de modelo. */
   smartWaits?: EsperaAdaptativa[];
@@ -707,6 +713,7 @@ export function processNode(input: {
     actionEnqueued,
     actionRecheckCount,
     actionCompleted,
+    actionTurnFalhou,
     smartWaits,
     planEnqueued,
     planRecheckCount,
@@ -1137,6 +1144,10 @@ export function processNode(input: {
         const edge = selectEdge(edges, node.id, { type: "always" });
         if (!edge) return { kind: "fail", error: `action node "${node.id}" has no outbound edge` };
         return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
+      }
+      // O envio morreu de vez (tentativas esgotadas): não há o que esperar. Para já, com o motivo real.
+      if (actionTurnFalhou) {
+        return { kind: "dead", reason: `action_turn_failed: ${actionTurnFalhou}` };
       }
       // Dead-man: the turn never completed. Rechecks count THIS occupancy only
       // (`occupancyEventCount`) so a `repeat` that volta no mesmo nó de ação não

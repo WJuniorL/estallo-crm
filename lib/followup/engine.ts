@@ -178,6 +178,16 @@ export interface AdminClient {
   }>;
   loadEnrollmentEvents(enrollmentId: string): Promise<EnrollmentEventRef[]>;
   /**
+   * O motivo, se o job de envio da estadia ATUAL neste bloco de ação MORREU (tentativas esgotadas).
+   * `null` = em voo, concluído ou nunca enfileirado. Opcional como os demais: adaptador que não o
+   * implementa mantém o comportamento anterior (conferir de hora em hora até o dead-man).
+   */
+  loadFalhaDefinitivaDoEnvio?(
+    orgId: string,
+    enrollmentId: string,
+    nodeId: string,
+  ): Promise<string | null>;
+  /**
    * #2528 — o contexto `{ contact, lead }` do render das mensagens de follow-up
    * (`lib/automation/template.ts`). Opcional como os demais avisos deste
    * adaptador: adapter que não implementa manda o texto com as marcações como
@@ -454,7 +464,7 @@ export async function comSaidasDosBlocos(
   return { ...(base ?? {}), nodes };
 }
 
-function interpolarVolta(
+export function interpolarVolta(
   texto: string,
   events: EnrollmentEventRef[],
   contexto?: Record<string, unknown> | null,
@@ -469,11 +479,27 @@ function interpolarVolta(
   // `{{nodes.<bloco>.<campo>}}` — a saída de um bloco anterior desta execução — vem ANTES do render do CRM:
   // o id do bloco tem hífen, que a marca de CRM (`[w.]+`) não reconhece.
   const nodes = contexto.nodes;
-  const comBlocos =
-    nodes && typeof nodes === "object"
-      ? resolverReferencias(comVolta, nodes as Record<string, unknown>).texto
-      : resolverReferencias(comVolta, {}).texto;
-  return renderizarTextoDeFollowup(comBlocos, contexto);
+  const resolvido = resolverReferencias(
+    comVolta,
+    nodes && typeof nodes === "object" ? (nodes as Record<string, unknown>) : {},
+  );
+  // Com as saídas CARREGADAS (diário do contrato 1), variável sem valor é defeito do fluxo: mandar a frase com
+  // o pedaço sumido ("Seu link: ") é pior que não mandar. Sem saídas carregadas não há como saber — segue sumindo.
+  if (nodes && typeof nodes === "object" && resolvido.sem_valor.length > 0) {
+    throw new VariavelSemValorError([...new Set(resolvido.sem_valor.map((r) => r.marca))]);
+  }
+  return renderizarTextoDeFollowup(resolvido.texto, contexto);
+}
+
+/** Uma `{{nodes...}}` do texto não tinha valor na saída do bloco citado — o passo NÃO envia a frase incompleta. */
+export class VariavelSemValorError extends Error {
+  constructor(readonly marcas: string[]) {
+    super(
+      `A mensagem cita ${marcas.join(", ")}, mas o bloco citado não produziu esse valor nesta execução. ` +
+        "Revise a variável ou o caminho até este bloco.",
+    );
+    this.name = "VariavelSemValorError";
+  }
 }
 
 /**
@@ -836,6 +862,25 @@ async function applyResult(
             return;
           }
         }
+        let extras: ReturnType<typeof turnPayloadExtras>;
+        try {
+          extras = turnPayloadExtras(node, smartWaits, events, contexto);
+        } catch (error) {
+          if (error instanceof VariavelSemValorError && journal) {
+            // A tentativa já nasceu: fecha como falha de CONFIGURAÇÃO (definitiva, roteável pelo "Fallback erro").
+            await recordJournalFailure(
+              db,
+              journal,
+              enrollment,
+              handle,
+              new ExecutionConfigurationError("variavel_sem_valor", error.message),
+              summary,
+              "send",
+            );
+            return;
+          }
+          throw error;
+        }
         const enqueued = await enqueueJob({
           organization_id: enrollment.organization_id,
           contact_id: enrollment.contact_id,
@@ -845,7 +890,7 @@ async function applyResult(
             node_id: node.id,
             source_step_key: idemKey,
             purpose: result.purpose,
-            ...turnPayloadExtras(node, smartWaits, events, contexto),
+            ...extras,
             ...(result.fixed_body ? { fixed_body: result.fixed_body } : {}),
           },
         });
@@ -1111,6 +1156,7 @@ async function processEnrollment(
   let actionEnqueued: boolean | undefined;
   let actionRecheckCount: number | undefined;
   let actionCompleted: boolean | undefined;
+  let actionTurnFalhou: string | undefined;
   let planEnqueued: boolean | undefined;
   let planRecheckCount: number | undefined;
   let repeatTaken: number | undefined;
@@ -1173,6 +1219,14 @@ async function processEnrollment(
       // `rechecksOciososDaAcao` / `EVENTO_ACAO_ADIADA` em node-handlers.ts.
       actionRecheckCount = rechecksOciososDaAcao(events, node.id);
       actionCompleted = actionTurnCompleted(events, node.id);
+      if (actionEnqueued && !actionCompleted && db.loadFalhaDefinitivaDoEnvio) {
+        actionTurnFalhou =
+          (await db.loadFalhaDefinitivaDoEnvio(
+            enrollment.organization_id,
+            enrollment.id,
+            node.id,
+          )) ?? undefined;
+      }
     }
   }
   const textoInbound = inboundBodyOverride?.trim() ?? "";
@@ -1366,6 +1420,7 @@ async function processEnrollment(
     actionEnqueued,
     actionRecheckCount,
     actionCompleted,
+    actionTurnFalhou,
     smartWaits,
     planEnqueued,
     planRecheckCount,
@@ -1712,6 +1767,36 @@ export function createSupabaseAdminClient(admin: SupabaseClient): AdminClient {
         (data ?? []).map((m) => ({ id: m.id as string, body: (m.body as string | null) ?? "" })),
         texto,
       );
+    },
+    async loadFalhaDefinitivaDoEnvio(orgId, enrollmentId, nodeId) {
+      // A estadia atual começa no último `turn_enqueued` deste bloco: um job morto de uma volta
+      // anterior (`repeat` que volta no mesmo bloco) não pode matar a de agora.
+      const { data: ultimo, error: eventoErr } = await admin
+        .from("followup_enrollment_events")
+        .select("created_at")
+        .eq("organization_id", orgId)
+        .eq("enrollment_id", enrollmentId)
+        .eq("node_id", nodeId)
+        .eq("event_type", "turn_enqueued")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (eventoErr) throw new Error(eventoErr.message);
+      if (!ultimo) return null;
+      const { data: jobs, error } = await admin
+        .from("job_queue")
+        .select("status, last_error, created_at")
+        .eq("organization_id", orgId)
+        .eq("kind", "followup_turn")
+        .eq("payload->>followup_enrollment_id", enrollmentId)
+        .eq("payload->>node_id", nodeId)
+        .gte("created_at", new Date(new Date(ultimo.created_at as string).getTime() - 5_000).toISOString())
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (error) throw new Error(error.message);
+      const job = (jobs ?? [])[0] as { status: string; last_error: string | null } | undefined;
+      if (!job || job.status !== "dead") return null;
+      return (job.last_error ?? "o envio falhou").slice(0, 300);
     },
     async loadEnrollmentEvents(enrollmentId) {
       const { data, error } = await admin

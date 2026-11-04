@@ -67,6 +67,12 @@ export interface SendMessageInput {
    * (a foto do catálogo); o bloco de mensagens do fluxo manda também vídeo, áudio e documento.
    */
   media?: { storagePath: string; mime: string; kind?: 'image' | 'video' | 'audio' | 'document' };
+  /**
+   * Quem ESCREVEU o texto. `automacao` = texto fixo de um fluxo (ninguém o redigiu na hora: nem a IA nem uma
+   * pessoa) — a linha sai carimbada `sent_via=automation` e o balão diz 'Robô', em vez de 'IA'.
+   * Ausente = o agente de IA, como sempre.
+   */
+  autoria?: 'automacao';
 }
 
 /**
@@ -180,7 +186,10 @@ export async function sendTurnMessage(
         cfg.supabase,
         {
           organization_id: input.tenantId,
-          actor: { type: 'ai_agent', id: cfg.agentActorId ?? AGENT_ACTOR_ID, role: 'manager' },
+          actor:
+            input.autoria === 'automacao'
+              ? { type: 'webhook_source', id: cfg.agentActorId ?? AGENT_ACTOR_ID }
+              : { type: 'ai_agent', id: cfg.agentActorId ?? AGENT_ACTOR_ID, role: 'manager' },
           requestId: idempotencyKey,
           serviceBoundary: parseServiceBoundary(sourceJobs[0]?.payload.service_boundary),
           proactiveContext,

@@ -481,8 +481,14 @@ export function descreveEvento(
         ...motor,
       };
     }
-    case "flow_dead":
-      return { titulo: "O fluxo parou de tentar", detalhe: texto(p.reason), ...motor };
+    case "flow_dead": {
+      // O envio do bloco esgotou as tentativas: o motivo vem depois do prefixo técnico.
+      const motivo = texto(p.reason);
+      const envio = motivo?.startsWith("action_turn_failed:")
+        ? `O envio deste bloco falhou: ${motivo.slice("action_turn_failed:".length).trim()}`
+        : motivo;
+      return { titulo: "O fluxo parou de tentar", detalhe: envio, ...motor };
+    }
     case "node_failed":
       return { titulo: "Falhou neste passo", detalhe: texto(p.error), ...motor };
     case "execution_error_routed":

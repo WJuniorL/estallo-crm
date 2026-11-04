@@ -198,7 +198,9 @@ describe("MessageBubble — rótulo de origem", () => {
     // o rótulo ganhou emissor e o caso inverte de lado. O par continua vigiado
     // nas duas direções por tests/unit/rotulo-de-origem-tem-emissor.test.ts.
     render(<MessageBubble message={msg({ sent_via: "automation" })} />);
-    expect(screen.getByText("Automação")).toBeInTheDocument();
+    // O balão diz "Robô", com o mesmo ícone da IA: a regra falou, não o agente.
+    expect(screen.getByText("Robô")).toBeInTheDocument();
+    expect(screen.queryByText("IA")).not.toBeInTheDocument();
   });
 
   it("digitada no CRM por QUEM ESTÁ LENDO mostra 'Você'", () => {

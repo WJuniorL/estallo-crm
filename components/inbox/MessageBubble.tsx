@@ -176,7 +176,7 @@ export function MessageBubble({
     // A REGRA falou, e não a IA: texto fixo de automação, follow-up ou lembrete
     // de agenda (#652). O ramo passou a existir porque o valor passou a ser
     // gravado — antes dele, um rótulo aqui seria promessa sem dado atrás.
-    if (message.sent_via === "automation") return "Automação";
+    if (message.sent_via === "automation") return "Robô";
     // A integração falou, a IA não. Sem este ramo a bolha omite a autoria e o
     // dono lê a conversa como se tudo tivesse saído do CRM — que é o defeito do
     // #866 visto de dentro da tela.
@@ -350,7 +350,7 @@ export function MessageBubble({
         )}
         {senderLabel && (
           <div className="ibx-bubble-label flex items-center gap-1">
-            {senderLabel === "IA" ? (
+            {senderLabel === "IA" || senderLabel === "Robô" ? (
               <Robot size={10} weight="duotone" aria-hidden />
             ) : null}
             {senderLabel && t(senderLabel)}

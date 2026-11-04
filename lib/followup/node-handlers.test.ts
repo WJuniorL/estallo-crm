@@ -230,6 +230,38 @@ describe("processNode — action after send closed", () => {
     });
     expect(result.kind).toBe("recheck");
   });
+
+  it("para na hora, com o motivo, quando o job de envio morreu — em vez de conferir por horas", () => {
+    const result = processNode({
+      node,
+      edges,
+      enrollment: enrollment({ current_node_id: "a1" }),
+      lead: lead(),
+      clock,
+      actionEnqueued: true,
+      actionCompleted: false,
+      actionRecheckCount: 0,
+      actionTurnFalhou: "envio fixo: o CRM recusou o envio — Envio automático bloqueado pelo modo de teste do canal.",
+    });
+    expect(result).toEqual({
+      kind: "dead",
+      reason: "action_turn_failed: envio fixo: o CRM recusou o envio — Envio automático bloqueado pelo modo de teste do canal.",
+    });
+  });
+
+  it("o envio que já fechou vence a falha antiga (a corrida de recheck se cura)", () => {
+    const result = processNode({
+      node,
+      edges,
+      enrollment: enrollment({ current_node_id: "a1" }),
+      lead: lead(),
+      clock,
+      actionEnqueued: true,
+      actionCompleted: true,
+      actionTurnFalhou: "qualquer",
+    });
+    expect(result).toMatchObject({ kind: "advance", next_node_id: "cap" });
+  });
 });
 
 describe("processNode — collect/skill (passagem no relógio)", () => {

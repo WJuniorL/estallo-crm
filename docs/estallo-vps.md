@@ -116,9 +116,9 @@ Não agendar `docker image prune -a` nesta VPS. As imagens do CRM não existem e
 registro, então a limpeza apagaria a versão anterior e o rollback deixaria de funcionar.
 
 As três imagens próprias têm o mesmo SHA completo. O caminho inicial usou
-imagens publicadas pelo CI; enquanto o Actions não roda (cobrança do GitHub),
-é permitido gerar imagens Linux/AMD64 no computador da Estallo e
-transferi-las por SSH.
+imagens publicadas pelo CI; enquanto a publicação no GHCR não estiver provada
+(ver "Deploy pelo GitHub Actions"), é permitido gerar imagens Linux/AMD64 no
+computador da Estallo e transferi-las por SSH.
 O deploy verifica que todas existem antes de trocar qualquer serviço.
 Nenhuma tag móvel é usada na instalação.
 
@@ -135,24 +135,45 @@ e acompanha os backups. Ele também é usado ao retornar a uma versão anterior.
 python3 scripts/estallo-vps.py deploy --sha 1692ad9eb367b8cb9bfc39b79c0ca84cf9abc87a --image-tag 1692ad9eb367b8cb9bfc39b79c0ca84cf9abc87a-amd64
 ```
 
-## Deploy pelo GitHub Actions (quando a cobrança do GitHub for regularizada)
+## Deploy pelo GitHub Actions (caminho de destino)
 
-Os workflows foram reativados em 31/10/2026, mas o GitHub ainda recusa iniciar
-os jobs por pendência de cobrança. Quando voltarem a rodar: merge na `main`
-dispara `publish-image.yml`, que publica as três imagens no GHCR com o SHA
-completo. Na VPS, aplicar as migrations novas e implantar pelo registro:
+**Estado medido em 05/11/2026:** a cobrança foi regularizada e o GitHub voltou a
+executar jobs (o `vigia-de-colisao` de 05/11 rodou os 8 passos; os runs de
+31/10 tinham sido recusados com zero passos). O que ainda falta para este
+caminho valer:
+
+1. **`publish-image.yml` não rodou desde a regularização.** Ele só publica em
+   push na `main`; o último run é de 31/10, recusado pela cobrança. A primeira
+   publicação de verdade é a prova de que o caminho funciona.
+2. **Os pacotes do GHCR continuam privados** (pedido anônimo de
+   `ghcr.io/estallosolucoes/estallo-crm{,-worker,-scheduler}` devolve 403), mas
+   **a VPS já tem `docker login ghcr.io`** — confirmado pelo proprietário em
+   05/11/2026, com deploys anteriores feitos pelo registro. Se o pull falhar com
+   `unauthorized`, o token de leitura expirou: refazer o login com um token só de
+   `read:packages` (nunca um token com escrita).
+
+Para conferir sem confiar neste parágrafo:
+
+```bash
+gh run list -R estallosolucoes/estallo-crm -w publish-image.yml --limit 3
+gh run list -R estallosolucoes/estallo-crm --limit 5   # jobs executando = cobrança ok
+```
+
+Quando os dois itens estiverem resolvidos: PR → merge na `main` →
+`publish-image.yml` publica as três imagens no GHCR com o SHA completo. Na VPS,
+aplicar as migrations novas e implantar pelo registro:
 
 ```bash
 python3 scripts/estallo-vps.py deploy --sha COMMIT_COMPLETO
 python3 scripts/estallo-vps.py verify
 ```
 
-`deploy` não aplica migrations (só o fluxo `agent` aplica). A VPS precisa de
-acesso de leitura ao GHCR quando o pacote é privado (`docker login ghcr.io`).
+`deploy` não aplica migrations (só o fluxo `agent` aplica).
 
 ## Deploy direto, sem GitHub Actions (caminho em uso)
 
-Em uso desde 13/10/2026, enquanto o Actions não roda. Para uma revisão nova, construir as três imagens pelos Dockerfiles do projeto
+Em uso desde 13/10/2026, até a primeira publicação pelo GHCR ser provada (ver
+a seção anterior). Para uma revisão nova, construir as três imagens pelos Dockerfiles do projeto
 em um Docker Linux externo à VPS. Usar o SHA completo em
 `APP_VERSION`, na tag e no label OCI `org.opencontainers.image.revision`;
 o label de origem dos Dockerfiles deve ser preservado. Nenhuma credencial

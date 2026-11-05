@@ -1178,7 +1178,6 @@ async function sendFixedOutbound(
     channelSessionId,
     body,
     optedOutThisTurn,
-    crmDailyLimit: null,
     now: clock(),
     sleep: deps.sleep,
     lgpd: context.lgpd,

@@ -62,10 +62,6 @@ import {
   RETENCAO_CANDIDATOS_GOLDEN_DIAS_PISO,
   RETENCAO_CHECKPOINTS_DIAS_PADRAO,
   RETENCAO_CHECKPOINTS_DIAS_PISO,
-  RETENCAO_COPIAS_ENVIADAS_DIAS_PADRAO,
-  RETENCAO_COPIAS_ENVIADAS_DIAS_PISO,
-  RETENCAO_RITMO_DE_ENVIO_DIAS_PADRAO,
-  RETENCAO_RITMO_DE_ENVIO_DIAS_PISO,
   RETENCAO_TELEMETRIA_DE_IA_DIAS_PADRAO,
   RETENCAO_TELEMETRIA_DE_IA_DIAS_PISO,
   RETENCAO_AVISO_DE_CASO_DIAS_PADRAO,
@@ -187,16 +183,6 @@ export interface ResultadoDaRetencao {
   lotes_telemetria_de_ia: number;
   telemetria_de_ia_tem_resto: boolean;
   retencao_telemetria_de_ia_dias: number;
-  /** O ritmo de envio vencido — pacing_ledger, menos a última linha de cada número (0587). */
-  ritmo_de_envio_apagado: number;
-  lotes_ritmo_de_envio: number;
-  ritmo_de_envio_tem_resto: boolean;
-  retencao_ritmo_de_envio_dias: number;
-  /** As cópias enviadas vencidas — outbound_copies, menos a janela do anti-repetição (0587). */
-  copias_enviadas_apagadas: number;
-  lotes_copias_enviadas: number;
-  copias_enviadas_tem_resto: boolean;
-  retencao_copias_enviadas_dias: number;
   /** Os checkpoints superados — nunca o último da fronteira nem o de job vivo (0587). */
   checkpoints_apagados: number;
   lotes_checkpoints: number;
@@ -240,8 +226,6 @@ export interface PodaDb {
       | "fn_expurgar_observacoes_do_jev"
       | "fn_expurgar_candidatos_do_golden"
       | "fn_expurgar_telemetria_de_ia_vencida"
-      | "fn_expurgar_ritmo_de_envio_vencido"
-      | "fn_expurgar_copias_enviadas_vencidas"
       | "fn_expurgar_checkpoints_superados"
       | "fn_expurgar_payloads_de_automacao"
       | "fn_expurgar_execucoes_de_automacao",
@@ -309,8 +293,6 @@ async function drenar(
     | "fn_expurgar_observacoes_do_jev"
     | "fn_expurgar_candidatos_do_golden"
     | "fn_expurgar_telemetria_de_ia_vencida"
-    | "fn_expurgar_ritmo_de_envio_vencido"
-    | "fn_expurgar_copias_enviadas_vencidas"
     | "fn_expurgar_checkpoints_superados"
     | "fn_expurgar_payloads_de_automacao"
     | "fn_expurgar_execucoes_de_automacao",
@@ -491,8 +473,6 @@ export async function podarHistorico(
     DRAFT_RETENTION_DAYS?: string;
     GOLDEN_CANDIDATES_RETENTION_DAYS?: string;
     AI_TELEMETRY_RETENTION_DAYS?: string;
-    PACING_LEDGER_RETENTION_DAYS?: string;
-    OUTBOUND_COPIES_RETENTION_DAYS?: string;
     LEAD_CHECKPOINT_RETENTION_DAYS?: string;
   },
 ): Promise<ResultadoDaRetencao> {
@@ -561,18 +541,6 @@ export async function podarHistorico(
     piso: RETENCAO_TELEMETRIA_DE_IA_DIAS_PISO,
   });
 
-  const ritmoDeEnvio = interpretarRetencao(ambiente.PACING_LEDGER_RETENTION_DAYS, {
-    chave: "PACING_LEDGER_RETENTION_DAYS",
-    padrao: RETENCAO_RITMO_DE_ENVIO_DIAS_PADRAO,
-    piso: RETENCAO_RITMO_DE_ENVIO_DIAS_PISO,
-  });
-
-  const copiasEnviadas = interpretarRetencao(ambiente.OUTBOUND_COPIES_RETENTION_DAYS, {
-    chave: "OUTBOUND_COPIES_RETENTION_DAYS",
-    padrao: RETENCAO_COPIAS_ENVIADAS_DIAS_PADRAO,
-    piso: RETENCAO_COPIAS_ENVIADAS_DIAS_PISO,
-  });
-
   const checkpoints = interpretarRetencao(ambiente.LEAD_CHECKPOINT_RETENTION_DAYS, {
     chave: "LEAD_CHECKPOINT_RETENTION_DAYS",
     padrao: RETENCAO_CHECKPOINTS_DIAS_PADRAO,
@@ -634,15 +602,11 @@ export async function podarHistorico(
   // do corpo da função —, então o que este laço decide é só QUANTO drenar por
   // rodada: lotes de 1000, teto de 20, parando no primeiro incompleto.
   const midiaDrenada = await executarDreno(falhas, "fn_enfileirar_midia_vencida", () => drenarMidia(db), { enfileirada: 0, expurgada: 0, lotes: 0, temResto: false });
-  // Da décima terceira à décima sexta: as tabelas append-only da IA (0587). As
-  // guardas de cada uma — a última linha do número no ritmo, a janela do
-  // anti-repetição nas cópias, o último checkpoint da fronteira e o de job vivo
-  // — moram no CORPO das funções, como o piso. `event_log` não entra: é o
+  // As tabelas append-only da IA (0587). As guardas — o último checkpoint da
+  // fronteira e o de job vivo — moram no CORPO das funções, como o piso. `event_log` não entra: é o
   // livro-razão de idempotência dos gatilhos de tempo, e podá-lo reenviaria
   // WhatsApp.
   const telemetriaDrenada = await executarDreno(falhas, "fn_expurgar_telemetria_de_ia_vencida", () => drenar(db, "fn_expurgar_telemetria_de_ia_vencida", telemetriaDeIa.dias), zerado);
-  const ritmoDrenado = await executarDreno(falhas, "fn_expurgar_ritmo_de_envio_vencido", () => drenar(db, "fn_expurgar_ritmo_de_envio_vencido", ritmoDeEnvio.dias), zerado);
-  const copiasDrenadas = await executarDreno(falhas, "fn_expurgar_copias_enviadas_vencidas", () => drenar(db, "fn_expurgar_copias_enviadas_vencidas", copiasEnviadas.dias), zerado);
   const checkpointsDrenados = await executarDreno(falhas, "fn_expurgar_checkpoints_superados", () => drenar(db, "fn_expurgar_checkpoints_superados", checkpoints.dias), zerado);
   // O banco resolve a política por organização e protege execuções vivas e
   // checkpoints herdados. Falha em uma poda não impede a outra nem a LGPD.
@@ -695,14 +659,6 @@ export async function podarHistorico(
     lotes_telemetria_de_ia: telemetriaDrenada.lotes,
     telemetria_de_ia_tem_resto: telemetriaDrenada.temResto,
     retencao_telemetria_de_ia_dias: telemetriaDeIa.dias,
-    ritmo_de_envio_apagado: ritmoDrenado.apagadas,
-    lotes_ritmo_de_envio: ritmoDrenado.lotes,
-    ritmo_de_envio_tem_resto: ritmoDrenado.temResto,
-    retencao_ritmo_de_envio_dias: ritmoDeEnvio.dias,
-    copias_enviadas_apagadas: copiasDrenadas.apagadas,
-    lotes_copias_enviadas: copiasDrenadas.lotes,
-    copias_enviadas_tem_resto: copiasDrenadas.temResto,
-    retencao_copias_enviadas_dias: copiasEnviadas.dias,
     checkpoints_apagados: checkpointsDrenados.apagadas,
     lotes_checkpoints: checkpointsDrenados.lotes,
     checkpoints_tem_resto: checkpointsDrenados.temResto,
@@ -730,8 +686,6 @@ export async function podarHistorico(
       rascunho.aviso,
       candidatosDoGolden.aviso,
       telemetriaDeIa.aviso,
-      ritmoDeEnvio.aviso,
-      copiasEnviadas.aviso,
       checkpoints.aviso,
     ].filter((a): a is string => a !== null),
     falhas,
@@ -794,10 +748,8 @@ export function houveEfeito(resultado: ResultadoDaRetencao): boolean {
     // que não fez nada.
     resultado.midia_enfileirada > 0 ||
     resultado.midia_expurgada > 0 ||
-    // As quatro da 0587, pela mesma razão: o predicado esquecido é mudo.
+    // As duas da 0587, pela mesma razão: o predicado esquecido é mudo.
     resultado.telemetria_de_ia_apagada > 0 ||
-    resultado.ritmo_de_envio_apagado > 0 ||
-    resultado.copias_enviadas_apagadas > 0 ||
     resultado.checkpoints_apagados > 0
   );
 }
@@ -859,8 +811,6 @@ async function handle(req: NextRequest): Promise<Response> {
       DRAFT_RETENTION_DAYS: env.DRAFT_RETENTION_DAYS,
       GOLDEN_CANDIDATES_RETENTION_DAYS: env.GOLDEN_CANDIDATES_RETENTION_DAYS,
       AI_TELEMETRY_RETENTION_DAYS: env.AI_TELEMETRY_RETENTION_DAYS,
-      PACING_LEDGER_RETENTION_DAYS: env.PACING_LEDGER_RETENTION_DAYS,
-      OUTBOUND_COPIES_RETENTION_DAYS: env.OUTBOUND_COPIES_RETENTION_DAYS,
       LEAD_CHECKPOINT_RETENTION_DAYS: env.LEAD_CHECKPOINT_RETENTION_DAYS,
     });
   } catch (err) {

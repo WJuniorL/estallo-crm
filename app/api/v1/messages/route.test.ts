@@ -11,9 +11,8 @@ vi.mock("@/lib/api/auth-dual", () => ({ resolveAuthDual: vi.fn() }));
 vi.mock("@/lib/ai/dispatcher/rate-limit", () => ({ checkRateLimit: vi.fn() }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn(() => ({})) }));
 vi.mock("@/lib/messaging/ritmo-do-envio-por-token", () => ({
-  depsDoRitmo: vi.fn(async () => ({})),
-  segurarEnvioPorToken: vi.fn(async () => null),
-  registrarEnvioPorToken: vi.fn(async () => {}),
+  depsDoRitmo: vi.fn(() => ({})),
+  segurarEnvioPorToken: vi.fn(async () => undefined),
 }));
 vi.mock("./_handler", () => ({ sendMessageHandler: vi.fn() }));
 vi.mock("@/lib/audit", () => ({ audit: vi.fn() }));
@@ -23,7 +22,7 @@ import { checkRateLimit } from "@/lib/ai/dispatcher/rate-limit";
 import { resolveAuthDual } from "@/lib/api/auth-dual";
 import { ApiError } from "@/lib/api/types";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { registrarEnvioPorToken, segurarEnvioPorToken } from "@/lib/messaging/ritmo-do-envio-por-token";
+import { segurarEnvioPorToken } from "@/lib/messaging/ritmo-do-envio-por-token";
 
 import { sendMessageHandler } from "./_handler";
 import { POST } from "./route";
@@ -35,7 +34,6 @@ const SESSION_ID = "22222222-2222-4222-8222-222222222222";
 const mockedAuth = vi.mocked(resolveAuthDual);
 const mockedTeto = vi.mocked(checkRateLimit);
 const mockedSegurar = vi.mocked(segurarEnvioPorToken);
-const mockedRegistrar = vi.mocked(registrarEnvioPorToken);
 const mockedSend = vi.mocked(sendMessageHandler);
 
 // ─── Banco falso de estado (#1613) ────────────────────────────────────────────
@@ -172,7 +170,7 @@ function pedido(opcoes: { chave?: string; corpo?: Record<string, unknown> } = {}
 beforeEach(() => {
   vi.clearAllMocks();
   mockedTeto.mockResolvedValue({ allowed: true } as never);
-  mockedSegurar.mockResolvedValue(null);
+  mockedSegurar.mockResolvedValue(undefined);
   mockedSend.mockResolvedValue({ id: "m1", status: "sent" } as never);
 });
 
@@ -252,7 +250,6 @@ describe("POST /api/v1/messages — idempotência (#1613, item A)", () => {
     // mentira (a cota de uma integração em laço cairia com retentativas).
     expect(mockedTeto).toHaveBeenCalledTimes(2); // 1 execução × (token + org)
     expect(mockedSegurar).toHaveBeenCalledTimes(1);
-    expect(mockedRegistrar).toHaveBeenCalledTimes(1);
   });
 
   it("mesma chave com corpo DIFERENTE devolve 409 idempotency_conflict e não reenvia", async () => {
@@ -366,13 +363,10 @@ describe("POST /api/v1/messages — ritmo por token", () => {
     expect(res.status).toBe(201);
     expect(mockedTeto).not.toHaveBeenCalled();
     expect(mockedSegurar).not.toHaveBeenCalled();
-    expect(mockedRegistrar).not.toHaveBeenCalled();
   });
 
-  it("por token, passa pelo freio antes de enviar e conta o envio", async () => {
+  it("por token, espera o ritmo do número antes de enviar", async () => {
     autenticado("token");
-    const segurado = { channelSessionId: SESSION_ID };
-    mockedSegurar.mockResolvedValue(segurado);
 
     const res = await POST(pedido());
 
@@ -382,7 +376,6 @@ describe("POST /api/v1/messages — ritmo por token", () => {
     expect(mockedSegurar.mock.invocationCallOrder[0]!).toBeLessThan(
       mockedSend.mock.invocationCallOrder[0]!,
     );
-    expect(mockedRegistrar).toHaveBeenCalledWith(expect.anything(), ORG_ID, segurado, "sent");
   });
 
   it("por token, acima do teto de chamadas por token devolve 429 sem enviar", async () => {
@@ -405,27 +398,6 @@ describe("POST /api/v1/messages — ritmo por token", () => {
 
     expect(res.status).toBe(429);
     expect(res.headers.get("Retry-After")).toBeTruthy();
-    expect(mockedSend).not.toHaveBeenCalled();
-  });
-
-  it("por token, quando o número estourou o teto diário devolve 429 com Retry-After", async () => {
-    autenticado("token");
-    mockedSegurar.mockRejectedValue(
-      new ApiError(
-        429,
-        "rate_limited",
-        { motivo: "teto_diario", libera_em: "2026-09-23T03:00:00.000Z", retry_after_seconds: 43_200 },
-        "req",
-      ),
-    );
-
-    const res = await POST(pedido());
-
-    expect(res.status).toBe(429);
-    expect(res.headers.get("Retry-After")).toBe("43200");
-    const corpo = (await res.json()) as { error: { code: string; details?: { motivo?: string } } };
-    expect(corpo.error.code).toBe("rate_limited");
-    expect(corpo.error.details?.motivo).toBe("teto_diario");
     expect(mockedSend).not.toHaveBeenCalled();
   });
 
@@ -461,6 +433,5 @@ describe("POST /api/v1/messages — ritmo por token", () => {
       use: "template",
       codigo_plataforma: "131047",
     });
-    expect(mockedRegistrar).not.toHaveBeenCalled();
   });
 });

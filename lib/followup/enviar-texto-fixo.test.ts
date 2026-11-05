@@ -245,17 +245,8 @@ it("falha ao consultar revogação não inventa fato nem settle", async () => {
 describe("enviarTextoFixoPendente · janela de disparo (#2658)", () => {
   const FAIXA_SEG_A_SEX = { send_window: { start: "08:00", end: "18:00", weekdays: [1, 2, 3, 4, 5] } };
 
-  /** Pinos: canal 8h–18h (a tela de Proteção de envio) + faixa seg–sex 8h–18h. */
+  /** Pino: a faixa PRÓPRIA do agente, seg–sex 8h–18h (não existe mais janela do canal). */
   function configurarJanelaReal() {
-    CONFIG.knobs = {
-      throttle_ms: null,
-      jitter_max_ms: 0,
-      window_start_hour: 8,
-      window_end_hour: 18,
-      allow_sunday: true,
-      timezone: null,
-      warmup_daily_caps: null,
-    };
     CONFIG.followup = FAIXA_SEG_A_SEX;
   }
 
@@ -268,7 +259,7 @@ describe("enviarTextoFixoPendente · janela de disparo (#2658)", () => {
     }
   }
 
-  it("03h da madrugada (canal 8h–18h) → NÃO envia, adia para a abertura e registra o motivo", async () => {
+  it("03h da madrugada (faixa 8h–18h) → NÃO envia, adia para a abertura e registra o motivo", async () => {
     configurarJanelaReal();
     decidir.mockResolvedValue({ permite: true, motivo: "autorizado" });
     // 2026-10-08 é quinta; 04:00Z = 01:00 de Brasília. A abertura de hoje é
@@ -283,7 +274,7 @@ describe("enviarTextoFixoPendente · janela de disparo (#2658)", () => {
     expect(completeTurnForEnrollment.mock.calls[0]![4]).toEqual({
       kind: "deferred",
       until: new Date("2026-10-08T11:00:00Z"),
-      reason: "outside_window",
+      reason: "followup_send_window",
     });
     // E o job volta pra `pending` com `run_after` na abertura, SEM gastar
     // tentativa (p_hold) — o envio sai sozinho quando a janela abrir.

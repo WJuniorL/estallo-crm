@@ -169,8 +169,6 @@ export async function enviarTextoFixoPendente(
       // caminho do worker para o dossiê ter um vocabulário só.
       const adiamento = await decidirAdiamentoPorJanela(admin, {
         organizationId: job.organization_id as string,
-        contactId,
-        conversationId,
         enrollmentId,
       });
       if (adiamento !== null) {

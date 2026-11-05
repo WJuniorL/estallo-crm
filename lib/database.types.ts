@@ -2484,7 +2484,6 @@ export type Database = {
           id: string
           job_id: string
           organization_id: string
-          tipo_envio: string | null
           trace: NonNullable<Json>
           vetoed_code: string | null
           vetoed_gate: string | null
@@ -2497,7 +2496,6 @@ export type Database = {
           id?: string
           job_id: string
           organization_id: string
-          tipo_envio?: string | null
           trace: NonNullable<Json>
           vetoed_code?: string | null
           vetoed_gate?: string | null
@@ -2509,7 +2507,6 @@ export type Database = {
           id?: string
           job_id?: string
           organization_id?: string
-          tipo_envio?: string | null
           trace?: NonNullable<Json>
           vetoed_code?: string | null
           vetoed_gate?: string | null
@@ -3883,74 +3880,26 @@ export type Database = {
       }
       channel_knobs: {
         Row: {
-          allow_sunday: boolean | null
-          atraso_maximo_ms: number | null
-          atraso_minimo_ms: number | null
-          atraso_notar_ms: number | null
           channel_session_id: string
           created_at: string
           health_knobs: Json | null
-          jitter_max_ms: number | null
-          ms_por_caractere: number | null
-          number_activated_at: string
           organization_id: string
-          prospeccao_dias: number[]
-          resposta_end_hour: number | null
-          resposta_start_hour: number | null
-          spinning_knobs: Json | null
-          throttle_ms: number | null
-          timezone: string | null
           updated_at: string
-          warmup_daily_caps: Json | null
-          window_end_hour: number | null
-          window_start_hour: number | null
         }
         ComputedFields: never
         Insert: {
-          allow_sunday?: boolean | null
-          atraso_maximo_ms?: number | null
-          atraso_minimo_ms?: number | null
-          atraso_notar_ms?: number | null
           channel_session_id: string
           created_at?: string
           health_knobs?: Json | null
-          jitter_max_ms?: number | null
-          ms_por_caractere?: number | null
-          number_activated_at?: string
           organization_id: string
-          prospeccao_dias?: number[]
-          resposta_end_hour?: number | null
-          resposta_start_hour?: number | null
-          spinning_knobs?: Json | null
-          throttle_ms?: number | null
-          timezone?: string | null
           updated_at?: string
-          warmup_daily_caps?: Json | null
-          window_end_hour?: number | null
-          window_start_hour?: number | null
         }
         Update: {
-          allow_sunday?: boolean | null
-          atraso_maximo_ms?: number | null
-          atraso_minimo_ms?: number | null
-          atraso_notar_ms?: number | null
           channel_session_id?: string
           created_at?: string
           health_knobs?: Json | null
-          jitter_max_ms?: number | null
-          ms_por_caractere?: number | null
-          number_activated_at?: string
           organization_id?: string
-          prospeccao_dias?: number[]
-          resposta_end_hour?: number | null
-          resposta_start_hour?: number | null
-          spinning_knobs?: Json | null
-          throttle_ms?: number | null
-          timezone?: string | null
           updated_at?: string
-          warmup_daily_caps?: Json | null
-          window_end_hour?: number | null
-          window_start_hour?: number | null
         }
         Relationships: [
           {
@@ -4234,52 +4183,6 @@ export type Database = {
           },
           {
             foreignKeyName: "channel_session_health_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      channel_session_warmup: {
-        Row: {
-          channel_session_id: string
-          day: string
-          id: string
-          messages_received: number
-          messages_sent: number
-          organization_id: string
-          unique_contacts: number
-        }
-        ComputedFields: never
-        Insert: {
-          channel_session_id: string
-          day: string
-          id?: string
-          messages_received?: number
-          messages_sent?: number
-          organization_id: string
-          unique_contacts?: number
-        }
-        Update: {
-          channel_session_id?: string
-          day?: string
-          id?: string
-          messages_received?: number
-          messages_sent?: number
-          organization_id?: string
-          unique_contacts?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "channel_session_warmup_channel_session_id_fkey"
-            columns: ["channel_session_id"]
-            isOneToOne: false
-            referencedRelation: "channel_sessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "channel_session_warmup_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -10659,86 +10562,6 @@ export type Database = {
         }
         Relationships: []
       }
-      outbound_copies: {
-        Row: {
-          channel_session_id: string
-          id: string
-          normalized_hash: string
-          normalized_text: string
-          organization_id: string
-          sent_at: string
-        }
-        ComputedFields: never
-        Insert: {
-          channel_session_id: string
-          id?: string
-          normalized_hash: string
-          normalized_text: string
-          organization_id: string
-          sent_at?: string
-        }
-        Update: {
-          channel_session_id?: string
-          id?: string
-          normalized_hash?: string
-          normalized_text?: string
-          organization_id?: string
-          sent_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "outbound_copies_channel_session_id_fkey"
-            columns: ["channel_session_id"]
-            isOneToOne: false
-            referencedRelation: "channel_sessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "outbound_copies_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      pacing_ledger: {
-        Row: {
-          channel_session_id: string
-          id: string
-          organization_id: string
-          sent_at: string
-        }
-        ComputedFields: never
-        Insert: {
-          channel_session_id: string
-          id?: string
-          organization_id: string
-          sent_at?: string
-        }
-        Update: {
-          channel_session_id?: string
-          id?: string
-          organization_id?: string
-          sent_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pacing_ledger_channel_session_id_fkey"
-            columns: ["channel_session_id"]
-            isOneToOne: false
-            referencedRelation: "channel_sessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "pacing_ledger_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       passagens_de_atendimento: {
         Row: {
           aviso_motivo_codigo: string | null
@@ -14234,10 +14057,6 @@ export type Database = {
         Args: { p_limite?: number; p_retencao_dias?: number }
         Returns: number
       }
-      fn_expurgar_copias_enviadas_vencidas: {
-        Args: { p_limite?: number; p_retencao_dias?: number }
-        Returns: number
-      }
       fn_expurgar_espelho_da_agenda: {
         Args: { p_limite?: number; p_retencao_dias?: number }
         Returns: number
@@ -14263,10 +14082,6 @@ export type Database = {
         Returns: number
       }
       fn_expurgar_prospeccao_vencida: {
-        Args: { p_limite?: number; p_retencao_dias?: number }
-        Returns: number
-      }
-      fn_expurgar_ritmo_de_envio_vencido: {
         Args: { p_limite?: number; p_retencao_dias?: number }
         Returns: number
       }

@@ -76,13 +76,12 @@ export interface ChannelDeletionImpact {
   /**
    * Referências com ON DELETE CASCADE que NÃO são estado de runtime: sumiriam em
    * silêncio junto com a linha. `ai_routers` leva os `ai_router_members` dele
-   * atrás; `channel_knobs` é o ajuste anti-ban que o operador calibrou;
-   * `before_send_traces` é auditoria durável de decisão de envio.
+   * atrás; `before_send_traces` é auditoria durável de decisão de envio.
    *
-   * Warm-up, saúde, pacing e cópias recentes também cascateiam e NÃO entram aqui
+   * Saúde do canal também cascateia e NÃO entram aqui
    * de propósito: são contadores derivados, que se regeneram sozinhos.
    */
-  configuration: { ai_routers: number; channel_knobs: number; before_send_traces: number };
+  configuration: { ai_routers: number; before_send_traces: number };
 }
 
 /** Tabelas que apontam para `channel_sessions` e cujo conteúdo decide o desfecho. */
@@ -92,14 +91,13 @@ type DependentTable =
   | "ai_agent_versions"
   | "voice_calls"
   | "ai_routers"
-  | "channel_knobs"
   | "before_send_traces";
 
 /**
  * Conta tudo que está pendurado no canal, com o CLIENTE ADMIN e filtro explícito
  * de organização.
  *
- * O cliente do usuário não serve aqui: `ai_routers`, `channel_knobs` e
+ * O cliente do usuário não serve aqui: `ai_routers` e
  * `before_send_traces` nasceram no apêndice do baseline e não têm policy de RLS
  * para o papel `authenticated`. Uma contagem que volta zero por falta de
  * permissão é indistinguível de "não há nada" — e o zero silencioso reabriria
@@ -112,8 +110,7 @@ async function loadDeletionImpact(
 ): Promise<ChannelDeletionImpact> {
   const admin = createAdminClient();
   // `select("*")` com `head` não devolve linha nenhuma — só o contador. Pedir uma
-  // coluna concreta quebraria em `channel_knobs`, cuja chave é (org, sessão): ela
-  // não tem `id`.
+  // coluna concreta quebraria nas tabelas cuja chave não é `id`.
   const count = async (table: DependentTable): Promise<number> => {
     const { count: n } = await admin
       .from(table)
@@ -123,14 +120,13 @@ async function loadDeletionImpact(
     return n ?? 0;
   };
 
-  const [conversations, messages, agentVersions, voiceCalls, routers, knobs, traces] =
+  const [conversations, messages, agentVersions, voiceCalls, routers, traces] =
     await Promise.all([
       count("conversations"),
       count("messages"),
       count("ai_agent_versions"),
       count("voice_calls"),
       count("ai_routers"),
-      count("channel_knobs"),
       count("before_send_traces"),
     ]);
 
@@ -142,7 +138,6 @@ async function loadDeletionImpact(
   };
   const configuration = {
     ai_routers: routers,
-    channel_knobs: knobs,
     before_send_traces: traces,
   };
   const nada =

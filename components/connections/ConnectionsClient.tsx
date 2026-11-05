@@ -24,8 +24,6 @@ import {
   capabilitiesOf,
 } from "@/lib/channels/capabilities";
 import type { ChannelProvider } from "@/lib/channels/capabilities";
-import { usePacingKnobs } from "@/hooks/channels/usePacingKnobs";
-import { AntiBanSheet } from "./AntiBanSheet";
 import { GruposSheet } from "./GruposSheet";
 import { PairingOptions } from "./PairingOptions";
 import { ChannelAcervo } from "./ChannelAcervo";
@@ -49,7 +47,6 @@ import {
   Phone,
   Play,
   Plus,
-  ShieldCheck,
   Trash,
   UsersThree,
   Warning,
@@ -219,10 +216,8 @@ export function ConnectionsClient({ wahaConfigured }: { wahaConfigured: boolean 
   const [creating, setCreating] = useState(false);
   const [checking, setChecking] = useState(false);
   const [qr, setQr] = useState<{ sessionId: string; title: string } | null>(null);
-  const [antiBanId, setAntiBanId] = useState<string | null>(null);
   const [gruposId, setGruposId] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<ChannelSession | null>(null);
-  const pacingItems = usePacingKnobs().data?.items ?? [];
 
   // A mesma lista que a tela desenha é a que a ação em lote comanda: filtrar
   // social aqui (como a tela já faz) evita um botão que pede ids que ninguém vê.
@@ -231,14 +226,9 @@ export function ConnectionsClient({ wahaConfigured }: { wahaConfigured: boolean 
   const paraPausar = list.filter((c) => !canalDesativado(c.metadata));
   const paraRetomar = list.filter((c) => canalDesativado(c.metadata));
 
-  // Mexer nos canais (criar, excluir, reconectar, health check) muda a LISTA de
-  // conexões — e a ficha de Proteção de envio (`pacing-knobs`) é indexada por
-  // ela. Invalidando só a primeira, a ficha ficava velha: o painel abria sem os
-  // dados da conexão recém-criada (ou apontando para a excluída). As duas
-  // listas andam juntas.
+  // Mexer nos canais (criar, excluir, reconectar, health check) muda a LISTA de conexões.
   const invalidate = useCallback(() => {
     void qc.invalidateQueries({ queryKey: ["channel-sessions"] });
-    void qc.invalidateQueries({ queryKey: ["pacing-knobs"] });
   }, [qc]);
 
   // Health check ao vivo de todos os canais — consulta o WAHA e grava
@@ -617,10 +607,6 @@ export function ConnectionsClient({ wahaConfigured }: { wahaConfigured: boolean 
                       {t("Reconectar")}
                     </Button>
                   )}
-                  <Button variant="outline" size="sm" onClick={() => setAntiBanId(c.id)}>
-                    <ShieldCheck size={14} aria-hidden />
-                    {t("Proteção de envio")}
-                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
@@ -668,21 +654,9 @@ export function ConnectionsClient({ wahaConfigured }: { wahaConfigured: boolean 
         </div>
       )}
 
-      {/* Só monta quando alguém pediu para abrir: assim o AntiBanSheet distingue
-          "painel fechado" de "a conexão pedida sumiu da lista" — o segundo caso
-          vira estado visível ali dentro, não um painel mudo. */}
-      {antiBanId !== null && (
-        <AntiBanSheet
-          item={pacingItems.find((i) => i.channel_session.id === antiBanId) ?? null}
-          canWrite
-          onClose={() => setAntiBanId(null)}
-        />
-      )}
-
       {/* Sem checagem de papel aqui: quem chega a `ConnectionsClient` já passou
           pelo gate de `/app/connections` (admin+, `app/app/connections/page.tsx`),
-          o mesmo motivo por trás do `canWrite` fixo do `AntiBanSheet` acima. A
-          rota `groups` também exige `manager+` do lado do servidor. */}
+          a rota `groups` também exige `manager+` do lado do servidor. */}
       {gruposId !== null && <GruposSheet channelId={gruposId} onClose={() => setGruposId(null)} />}
 
       {toDelete && (
@@ -740,12 +714,6 @@ export function frasesDoImpacto(
     [
       contar(impact.history.agent_versions, "versão de agente", "versões de agente", t),
       contar(impact.configuration.ai_routers, "roteador de IA", "roteadores de IA", t),
-      contar(
-        impact.configuration.channel_knobs,
-        "ajuste de proteção de envio",
-        "ajustes de proteção de envio",
-        t,
-      ),
     ],
     t,
   );

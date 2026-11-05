@@ -393,7 +393,7 @@ describe("podarHistorico — o laço de lotes", () => {
     const r = await podarHistorico(db, {});
 
     // Inclui as duas podas de automação, além das anteriores, mídia e rascunhos.
-    expect(r.falhas).toHaveLength(18);
+    expect(r.falhas).toHaveLength(16);
     expect(r.falhas.some((f) => f.includes("fn_expurgar_payloads_de_automacao"))).toBe(true);
     expect(r.falhas.some((f) => f.includes("fn_expurgar_execucoes_de_automacao"))).toBe(true);
     expect(r.falhas.some((f) => f.includes("conversation_drafts"))).toBe(true);
@@ -450,7 +450,7 @@ describe("podarHistorico — o laço de lotes", () => {
     const r = await podarHistorico(db, {});
 
     // Só os drenos do rpc falham nesta rodada (mídia e rascunhos vão bem).
-    expect(r.falhas).toHaveLength(16);
+    expect(r.falhas).toHaveLength(14);
     for (const f of r.falhas) expect(f.length).toBeLessThanOrEqual(300);
   });
 });
@@ -626,14 +626,6 @@ describe("houveEfeito — as duas direções", () => {
     lotes_telemetria_de_ia: 0,
     telemetria_de_ia_tem_resto: false,
     retencao_telemetria_de_ia_dias: 400,
-    ritmo_de_envio_apagado: 0,
-    lotes_ritmo_de_envio: 0,
-    ritmo_de_envio_tem_resto: false,
-    retencao_ritmo_de_envio_dias: 2,
-    copias_enviadas_apagadas: 0,
-    lotes_copias_enviadas: 0,
-    copias_enviadas_tem_resto: false,
-    retencao_copias_enviadas_dias: 30,
     checkpoints_apagados: 0,
     lotes_checkpoints: 0,
     checkpoints_tem_resto: false,

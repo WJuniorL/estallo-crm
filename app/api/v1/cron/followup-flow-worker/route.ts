@@ -82,7 +82,8 @@ async function handle(req: NextRequest): Promise<Response> {
 
   let summary;
   try {
-    summary = await runFollowupTick(deps);
+    // Encadeia as passadas por ~18 s (o cron tem 25): o fluxo corre em segundos, não um bloco por minuto.
+    summary = await runFollowupTick(deps, { encadearMs: 18_000 });
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     logger.error("[followup-flow-worker.cron] runFollowupTick threw", { error: detail, requestId });

@@ -19,9 +19,7 @@ import { traduzir } from "@/lib/i18n/dicionario";
 import { JANELA_SEGUNDOS, TETO_DE_ESCRITA, TETO_POR_ORGANIZACAO } from "@/lib/mcp/rate-limit";
 import {
   depsDoRitmo,
-  registrarEnvioPorToken,
   segurarEnvioPorToken,
-  type EnvioSegurado,
 } from "@/lib/messaging/ritmo-do-envio-por-token";
 import { sendMessageSchema, validateRequest, type SendMessageInput } from "@/lib/schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -217,16 +215,14 @@ export async function POST(req: NextRequest): Promise<Response> {
       }
     }
 
-    // Freio anti-ban do número (espaçamento + teto diário), só para token:
-    // ver o cabeçalho de `lib/messaging/ritmo-do-envio-por-token.ts`.
-    const ritmo = authz.via === "token" ? await depsDoRitmo(createAdminClient()) : null;
-    const segurado: EnvioSegurado = ritmo
-      ? await segurarEnvioPorToken(ritmo, {
-          organizationId,
-          conversationId: (input as SendMessageInput).conversation_id,
-          requestId,
-        })
-      : null;
+    // Ritmo fixo do número, só para token: ver o cabeçalho de `lib/messaging/ritmo-do-envio-por-token.ts`.
+    if (authz.via === "token") {
+      await segurarEnvioPorToken(depsDoRitmo(createAdminClient()), {
+        organizationId,
+        conversationId: (input as SendMessageInput).conversation_id,
+        requestId,
+      });
+    }
 
     // Observe ANTES do envio: um fechamento ocorrido enquanto o canal responde
     // deve prevalecer. A revisão é conferida pela RPC canônica de atendimento.
@@ -338,7 +334,6 @@ export async function POST(req: NextRequest): Promise<Response> {
         console.error("[messages.send] claim after reply failed", claimError);
       }
     }
-    if (ritmo) await registrarEnvioPorToken(ritmo, organizationId, segurado, message.status);
     return message;
   };
 

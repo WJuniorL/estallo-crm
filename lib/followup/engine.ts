@@ -1520,7 +1520,42 @@ async function processEnrollment(
   );
 }
 
+/** Espera entre uma conferência e outra quando o tick encadeia: curta se acabou de andar, mais longa se está ocioso. */
+const ENCADEAR_APOS_ATIVIDADE_MS = 150;
+const ENCADEAR_OCIOSO_MS = 1_500;
+
+/**
+ * O tick do motor. Sem `encadearMs`, UMA passada: reivindica os vencidos e processa um bloco de cada.
+ *
+ * Com `encadearMs`, repete a passada até esse tempo. É o que faz o fluxo correr em segundos em vez de um bloco por
+ * minuto: o bloco que acabou de andar já está vencido (`next_eval_at = agora`), o texto que o worker acabou de enviar
+ * libera o bloco seguinte, e a inscrição que o gatilho criou nesse mesmo minuto entra sem esperar o próximo cron. O
+ * lease do claim (`CLAIM_LEASE_SECONDS`) segue valendo, então duas rodadas simultâneas nunca pegam a mesma inscrição.
+ */
 export async function runFollowupTick(
+  deps: TickDeps,
+  opts?: { limit?: number; encadearMs?: number; sleep?: (ms: number) => Promise<void> },
+): Promise<TickSummary> {
+  const total: TickSummary = { claimed: 0, advanced: 0, scheduled: 0, failed: 0, dead: 0 };
+  const limite = opts?.encadearMs ?? 0;
+  const dorme = opts?.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+  const inicio = Date.now();
+  for (;;) {
+    const passada = await umaPassadaDoTick(deps, opts);
+    total.claimed += passada.claimed;
+    total.advanced += passada.advanced;
+    total.scheduled += passada.scheduled;
+    total.failed += passada.failed;
+    total.dead += passada.dead;
+    if (passada.claim_falhou) total.claim_falhou = true;
+    if (limite <= 0 || passada.claim_falhou) return total;
+    const espera = passada.claimed > 0 ? ENCADEAR_APOS_ATIVIDADE_MS : ENCADEAR_OCIOSO_MS;
+    if (Date.now() - inicio + espera >= limite) return total;
+    await dorme(espera);
+  }
+}
+
+async function umaPassadaDoTick(
   deps: TickDeps,
   opts?: { limit?: number },
 ): Promise<TickSummary> {

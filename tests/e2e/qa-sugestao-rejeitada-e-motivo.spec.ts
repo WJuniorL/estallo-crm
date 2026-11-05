@@ -80,15 +80,6 @@ async function fixture(pool: pg.Pool) {
     webhook_secret_encrypted: "\\x00",
     metadata: { ai_gate: "allowlist" },
   });
-  const knobs = await db.from("channel_knobs").insert({
-    organization_id: org,
-    channel_session_id: channel,
-    throttle_ms: 0,
-    jitter_max_ms: 0,
-    window_start_hour: 0,
-    window_end_hour: 24,
-  });
-  if (knobs.error) throw knobs.error;
   const contact = await inserir("contacts", {
     organization_id: org,
     name: "Joana Revisão",

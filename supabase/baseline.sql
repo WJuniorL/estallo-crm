@@ -46489,9 +46489,8 @@ notify pgrst, 'reload schema';
 
 -- ---- as tabelas append-only da IA ganham prazo (migration 0587) ----
 -- llm_calls/metrics/skill_activations/ai_router_decisions (400/100),
--- pacing_ledger (2/2, a última linha do número fica), outbound_copies (30/7,
--- as últimas windowSize do número ficam) e lead_checkpoints (180/30, só o
--- superado e sem job vivo). event_log NÃO entra. Corpo IDÊNTICO ao da
+-- e lead_checkpoints (180/30, só o superado e sem job vivo). As funções do
+-- ritmo de envio e das cópias enviadas saíram na migration 0713. event_log NÃO entra. Corpo IDÊNTICO ao da
 -- migration 0587, com o racional inteiro lá. ANTES da varredura anon: cria
 -- função.
 -- Índices de poda: sem eles o DELETE por idade vira seq scan diário. Nenhuma
@@ -46504,10 +46503,6 @@ create index if not exists idx_skill_activations_expurgo_created_at
   on public.skill_activations (created_at);
 create index if not exists idx_ai_router_decisions_expurgo_created_at
   on public.ai_router_decisions (created_at);
-create index if not exists idx_pacing_ledger_expurgo_sent_at
-  on public.pacing_ledger (sent_at);
-create index if not exists idx_outbound_copies_expurgo_sent_at
-  on public.outbound_copies (sent_at);
 create index if not exists idx_lead_checkpoints_expurgo_created_at
   on public.lead_checkpoints (created_at);
 
@@ -46571,95 +46566,6 @@ end;
 $$;
 revoke execute on function public.fn_expurgar_telemetria_de_ia_vencida(int,int) from public, anon, authenticated;
 grant  execute on function public.fn_expurgar_telemetria_de_ia_vencida(int,int) to service_role;
-
--- 2. Ritmo de envio: a última linha de cada número nunca sai.
-create or replace function public.fn_expurgar_ritmo_de_envio_vencido(
-  p_retencao_dias int default null,
-  p_limite int default null
-) returns int
-language plpgsql
-security definer
-set search_path = public, pg_temp
-as $$
-declare
-  v_dias int := greatest(coalesce(p_retencao_dias, 2), 2);
-  v_limite int := least(greatest(coalesce(p_limite, 1000), 1), 10000);
-  v_apagadas int;
-begin
-  -- O "existe um mais novo" fica no `where`, ANTES do `limit` (a lição da
-  -- 0167): filtrar depois faria um lote só de últimas linhas devolver 0 e o
-  -- cron parar com backlog atrás.
-  with vencidas as (
-    select p.id from public.pacing_ledger p
-     where p.sent_at < now() - make_interval(days => v_dias)
-       and exists (
-         select 1 from public.pacing_ledger n
-          where n.organization_id = p.organization_id
-            and n.channel_session_id = p.channel_session_id
-            and n.sent_at > p.sent_at
-       )
-     order by p.sent_at limit v_limite
-  )
-  delete from public.pacing_ledger p using vencidas v where p.id = v.id;
-  get diagnostics v_apagadas = row_count;
-  return v_apagadas;
-end;
-$$;
-revoke execute on function public.fn_expurgar_ritmo_de_envio_vencido(int,int) from public, anon, authenticated;
-grant  execute on function public.fn_expurgar_ritmo_de_envio_vencido(int,int) to service_role;
-
--- 3. Cópias enviadas: nunca as últimas `windowSize` do número.
-create or replace function public.fn_expurgar_copias_enviadas_vencidas(
-  p_retencao_dias int default null,
-  p_limite int default null
-) returns int
-language plpgsql
-security definer
-set search_path = public, pg_temp
-as $$
-declare
-  v_dias int := greatest(coalesce(p_retencao_dias, 30), 7);
-  v_limite int := least(greatest(coalesce(p_limite, 1000), 1), 10000);
-  v_apagadas int;
-begin
-  with janelas as (
-    -- A janela de cada número, como `loadSpinningKnobs` a resolveria, nunca
-    -- menor que o padrão de 20 (`SPINNING_DEFAULTS.windowSize`).
-    select ck.organization_id, ck.channel_session_id,
-           -- O `case` repete o filtro de propósito: com a CTE embutida no
-           -- plano, nada garante que o `where` rode antes do cast.
-           greatest(20, case when jsonb_typeof(ck.spinning_knobs->'windowSize') = 'number'
-                             then ceil((ck.spinning_knobs->>'windowSize')::numeric) end) as janela
-      from public.channel_knobs ck
-     where jsonb_typeof(ck.spinning_knobs) = 'object'
-       and jsonb_typeof(ck.spinning_knobs->'windowSize') = 'number'
-  ),
-  vencidas as (
-    select o.id from public.outbound_copies o
-      left join janelas j
-        on j.organization_id = o.organization_id and j.channel_session_id = o.channel_session_id
-     where o.sent_at < now() - make_interval(days => v_dias)
-       and coalesce(j.janela, 20) <= 10000
-       and (
-         select count(*) from (
-           select 1 from public.outbound_copies n
-            where n.organization_id = o.organization_id
-              and n.channel_session_id = o.channel_session_id
-              and n.sent_at > o.sent_at
-            -- `least` ANTES do cast: o Postgres não promete avaliar o `<= 10000`
-            -- acima primeiro, e um knob de 1e20 estouraria o `::int` aqui.
-            limit least(coalesce(j.janela, 20), 10000)::int
-         ) mais_novas
-       ) >= coalesce(j.janela, 20)
-     order by o.sent_at limit v_limite
-  )
-  delete from public.outbound_copies o using vencidas v where o.id = v.id;
-  get diagnostics v_apagadas = row_count;
-  return v_apagadas;
-end;
-$$;
-revoke execute on function public.fn_expurgar_copias_enviadas_vencidas(int,int) from public, anon, authenticated;
-grant  execute on function public.fn_expurgar_copias_enviadas_vencidas(int,int) to service_role;
 
 -- 4. Checkpoints: só o superado, de job morto, passado do prazo.
 create or replace function public.fn_expurgar_checkpoints_superados(
@@ -56161,9 +56067,6 @@ begin
   ) then
     alter table public.channel_knobs
       add column prospeccao_dias smallint[] not null default '{0,1,2,3,4,5,6}';
-    update public.channel_knobs
-      set prospeccao_dias = '{1,2,3,4,5,6}'
-      where allow_sunday is false;
   end if;
   alter table public.channel_knobs
     drop constraint if exists channel_knobs_prospeccao_dias_validos;
@@ -56382,3 +56285,56 @@ create policy "message_templates_select" on public.message_templates
     )
     or (select public.fn_is_platform_admin())
   );
+
+-- ---- realtime do negócio traz o valor antigo (migration 0712) ----
+-- O realtime só entrega `old` completo com replica identity full. Sem isto os avisos "Lead atribuído a você",
+-- "Lead ganho" e "Lead perdido" comparavam com um valor sempre nulo e disparavam a cada update do negócio.
+alter table if exists public.crm_leads replica identity full;
+
+-- ---- remove a Proteção de envio: ritmo, janela, aquecimento e spinning por canal (migration 0713) ----
+-- A "Proteção de envio" (ritmo, janela, aquecimento, teto diário e spinning por canal) foi removida do produto:
+-- o ritmo entre envios é fixo (300-800 ms, em memória, no código) e nada mais lê estas tabelas e colunas.
+-- O disjuntor de saúde do canal FICA: channel_session_health e channel_knobs.health_knobs não são tocados.
+--
+-- 1. Tabelas sem leitor nem escritor (drop cascata leva índices, policies, grants e FKs próprios).
+drop table if exists public.pacing_ledger cascade;
+drop table if exists public.channel_session_warmup cascade;
+drop table if exists public.outbound_copies cascade;
+
+-- 2. As podas dessas tabelas.
+drop function if exists public.fn_expurgar_ritmo_de_envio_vencido(int, int);
+drop function if exists public.fn_expurgar_copias_enviadas_vencidas(int, int);
+
+-- 3. Colunas de channel_knobs que eram só da Proteção de envio. A tabela fica (health_knobs). O fuso vem de
+--    organizations.timezone; nenhum código lê channel_knobs.timezone.
+alter table if exists public.channel_knobs
+  drop constraint if exists channel_knobs_warmup_caps_is_array,
+  drop constraint if exists channel_knobs_spinning_is_object,
+  drop constraint if exists channel_knobs_resposta_horas_validas,
+  drop constraint if exists channel_knobs_atraso_humano_saneamento,
+  drop constraint if exists channel_knobs_prospeccao_dias_validos;
+alter table if exists public.channel_knobs
+  drop column if exists throttle_ms,
+  drop column if exists jitter_max_ms,
+  drop column if exists window_start_hour,
+  drop column if exists window_end_hour,
+  drop column if exists allow_sunday,
+  drop column if exists timezone,
+  drop column if exists warmup_daily_caps,
+  drop column if exists spinning_knobs,
+  drop column if exists number_activated_at,
+  drop column if exists resposta_start_hour,
+  drop column if exists resposta_end_hour,
+  drop column if exists atraso_notar_ms,
+  drop column if exists ms_por_caractere,
+  drop column if exists atraso_minimo_ms,
+  drop column if exists atraso_maximo_ms,
+  drop column if exists prospeccao_dias;
+
+-- 4. O trace de envio vetado deixou de dizer se era resposta ou disparo: a janela por tipo de envio não existe mais.
+alter table if exists public.before_send_traces
+  drop constraint if exists before_send_traces_tipo_envio_check,
+  drop column if exists tipo_envio;
+
+-- Fica: channel_sessions.daily_message_limit / warmup_started_at / warmup_completed_at / is_warmup_complete. Ainda são lidas
+-- pelo webhook do WAHA, pela API de canais e por um trigger de channel_sessions; sairão num PR próprio.

@@ -32,6 +32,17 @@ export interface TentativaBruta {
   error_snapshot: unknown;
 }
 
+/** Uma tentativa de um nó — o que a pessoa escolhe para ver entrada, saída e erro daquela vez, e não só da última. */
+export interface TentativaDoPasso {
+  numero: number;
+  status: string;
+  started_at: string | null;
+  completed_at: string | null;
+  erro: string | null;
+  entrada?: unknown;
+  saida?: unknown;
+}
+
 export interface PassoDaExecucao {
   step_id: string;
   node_id: string;
@@ -48,6 +59,8 @@ export interface PassoDaExecucao {
   duracao_ms: number | null;
   tentativas: number;
   erro: string | null;
+  /** Cada tentativa, da primeira à última. Vazia em passo sem tentativa registrada (nó pulado, p.ex.). */
+  tentativas_detalhe?: TentativaDoPasso[];
   entrada?: unknown;
   saida?: unknown;
 }
@@ -99,6 +112,15 @@ export function montarPassos(
         duracao_ms: fim ? Math.max(0, Date.parse(fim) - Date.parse(p.entered_at)) : null,
         tentativas: lista.length,
         erro: erroEmTexto(ultima?.error_snapshot),
+        tentativas_detalhe: lista.map((t) => ({
+          numero: t.attempt_no,
+          status: t.status,
+          started_at: t.started_at,
+          completed_at: t.completed_at,
+          erro: erroEmTexto(t.error_snapshot),
+          // Como no passo: a entrada carrega a configuração do nó, então só sai para quem pode ver dados.
+          ...(verDados ? { entrada: t.input_snapshot ?? null, saida: t.output_snapshot ?? null } : {}),
+        })),
         ...(verDados && ultima
           ? { entrada: ultima.input_snapshot ?? null, saida: ultima.output_snapshot ?? null }
           : {}),

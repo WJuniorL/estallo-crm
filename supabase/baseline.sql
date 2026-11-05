@@ -56338,3 +56338,11 @@ alter table if exists public.before_send_traces
 
 -- Fica: channel_sessions.daily_message_limit / warmup_started_at / warmup_completed_at / is_warmup_complete. Ainda são lidas
 -- pelo webhook do WAHA, pela API de canais e por um trigger de channel_sessions; sairão num PR próprio.
+
+-- ---- execução passo a passo: o operador conduz um bloco por vez (migration 0714) ----
+-- Marca de COMO conduzir a execução: com `passo_a_passo`, o motor pausa (paused_manual) depois de cada bloco concluído.
+-- Nasce falsa em toda execução existente. Fora da trava de imutabilidade de propósito («continuar automaticamente»).
+alter table if exists public.followup_enrollments
+  add column if not exists passo_a_passo boolean not null default false;
+comment on column public.followup_enrollments.passo_a_passo is
+  'Execução conduzida bloco a bloco pelo operador: o motor pausa (paused_manual) depois de cada bloco concluído.';

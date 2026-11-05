@@ -54,6 +54,37 @@ describe("montarPassos", () => {
   });
 });
 
+describe("montarPassos — tentativas", () => {
+  const passos = [passo("s1", "a", "2026-11-03T20:00:00Z", { status: "succeeded" })];
+  const duas = [
+    tentativa("s1", 2, { status: "succeeded", output_snapshot: { ok: 2 } }),
+    tentativa("s1", 1, { status: "failed", output_snapshot: null, error_snapshot: { message: "timeout" } }),
+  ];
+
+  it("traz cada tentativa em ordem, com o erro DAQUELA tentativa", () => {
+    const r = montarPassos(passos, duas, nos, false)[0]!;
+    expect(r.tentativas_detalhe?.map((t) => [t.numero, t.status, t.erro])).toEqual([
+      [1, "failed", "timeout"],
+      [2, "succeeded", null],
+    ]);
+  });
+
+  it("entrada e saída de cada tentativa só saem para quem pode ver dados", () => {
+    const fechado = montarPassos(passos, duas, nos, false)[0]!;
+    for (const t of fechado.tentativas_detalhe ?? []) {
+      expect(t).not.toHaveProperty("entrada");
+      expect(t).not.toHaveProperty("saida");
+    }
+    const aberto = montarPassos(passos, duas, nos, true)[0]!;
+    expect(aberto.tentativas_detalhe?.[1]?.saida).toEqual({ ok: 2 });
+    expect(aberto.tentativas_detalhe?.[0]?.entrada).toEqual({ config: { body: "texto do dono" } });
+  });
+
+  it("passo sem tentativa registrada: lista vazia, nada inventado", () => {
+    expect(montarPassos(passos, [], nos, true)[0]?.tentativas_detalhe).toEqual([]);
+  });
+});
+
 describe("erroEmTexto", () => {
   it("aceita texto, objeto com message/code e ignora o resto; corta o excesso", () => {
     expect(erroEmTexto(null)).toBeNull();

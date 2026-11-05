@@ -1,4 +1,5 @@
 import type { JobClaim } from "@/lib/agent-engine/queue/claim";
+import { pausaDepoisDoBloco } from "./passo-a-passo";
 import { assertAgendaEffectSupabase } from "@/lib/agenda/efeito";
 import { AgendaDeferredError } from "@/lib/agenda/protecao-followup";
 import type { ServiceBoundary } from "@/lib/atendimento/fronteira";
@@ -787,14 +788,18 @@ async function applyResult(
         result.kind === "advance" &&
         (prior.event_type === "action_sent" || prior.event_type === "wait_started")
       ) {
-        await db.updateEnrollment(enrollment.id, enrollment.organization_id, {
-          current_node_id: result.next_node_id,
-          status: "active",
-          next_eval_at: result.next_eval_at.toISOString(),
-          steps_taken: enrollment.steps_taken + 1,
-          claimed_until: null,
-          updated_at: clock().toISOString(),
-        });
+        await db.updateEnrollment(
+          enrollment.id,
+          enrollment.organization_id,
+          pausaDepoisDoBloco(enrollment, {
+            current_node_id: result.next_node_id,
+            status: "active",
+            next_eval_at: result.next_eval_at.toISOString(),
+            steps_taken: enrollment.steps_taken + 1,
+            claimed_until: null,
+            updated_at: clock().toISOString(),
+          }),
+        );
         tallyOutcome(result, summary);
       }
       return;
@@ -926,7 +931,8 @@ async function applyResult(
     await db.abrirAvisoRecuperacaoEsgotada?.(avisoEsgotada);
   }
 
-  await db.updateEnrollment(enrollment.id, enrollment.organization_id, patch);
+  // Passo a passo: o bloco que acabou de concluir (patch que muda o bloco atual) deixa a execução pausada no seguinte.
+  await db.updateEnrollment(enrollment.id, enrollment.organization_id, pausaDepoisDoBloco(enrollment, patch));
 
   if (
     result.kind === "advance" &&
@@ -1231,6 +1237,11 @@ async function processEnrollment(
   }
   const textoInbound = inboundBodyOverride?.trim() ?? "";
   if (textoInbound && (node.type === "match_reply" || node.type === "wait")) {
+    wokeEarly = true;
+  }
+  // Passo a passo: quem decide quando seguir é a pessoa, então o tempo de um bloco de espera não é cumprido —
+  // o bloco conclui e o motor pausa no seguinte, como em qualquer outro.
+  if (enrollment.passo_a_passo === true && node.type === "wait") {
     wokeEarly = true;
   }
 

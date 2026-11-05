@@ -147,10 +147,10 @@ export function FlowsList({ initialData, canWrite, surface }: Props) {
                   Atualizado em {formatUpdatedAt(flow.updated_at, tagDoIdioma)}
                 </p>
               </Link>
-              {/* O histórico de execuções deste fluxo: a Fila já filtrada por ele, com o caminho de cada uma. */}
+              {/* O histórico de execuções deste fluxo: abre no próprio editor dele, com o desenho de cada execução. */}
               <div className="flex items-center justify-between gap-2 border-t border-border pt-2">
                 <Link
-                  href={`${baseHref}?aba=fila&fluxo=${flow.id}`}
+                  href={deAtendimento ? `${baseHref}?aba=fila&fluxo=${flow.id}` : `${baseHref}/${flow.id}?painel=execucoes`}
                   className="text-xs text-accent underline-offset-[3px] hover:underline"
                   data-testid="fluxo-ver-execucoes"
                 >

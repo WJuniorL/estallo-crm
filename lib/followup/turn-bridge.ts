@@ -1,4 +1,5 @@
 import type { JobClaim } from "@/lib/agent-engine/queue/claim";
+import { pausaDepoisDoBloco } from "./passo-a-passo";
 import { assertAgendaEffectPg } from "@/lib/agenda/efeito";
 import {
   isFollowupCasRecusado,
@@ -163,8 +164,10 @@ export async function completeTurnForEnrollment(
   const applyStep = async (
     eventType: string,
     payload: Record<string, unknown>,
-    patch: EnrollmentPatch,
+    patchBruto: EnrollmentPatch,
   ): Promise<void> => {
+    // Passo a passo: concluir o bloco (patch que muda de bloco) deixa a execução pausada no seguinte.
+    const patch = pausaDepoisDoBloco(enrollment, patchBruto);
     await db.assertServiceBoundary?.(enrollment);
     if (result.kind === "planned" || result.kind === "classified")
       await db.assertAgenda?.(enrollment);
@@ -460,6 +463,8 @@ function mapEnrollmentRow(row: Record<string, unknown>): EnrollmentRow {
     // `?? null` e não `as TimingPlan`: num clone sem a migration 0144 a chave
     // simplesmente não vem, e "sem plano" é exatamente o que null significa.
     timing_plan: row.timing_plan ?? null,
+    // Clone sem a migration 0714: a chave não vem, e "não é passo a passo" é exatamente o que falso significa.
+    passo_a_passo: row.passo_a_passo === true,
   };
 }
 

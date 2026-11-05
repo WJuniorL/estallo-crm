@@ -38,16 +38,34 @@ function Json({ valor }: { valor: unknown }) {
   );
 }
 
-function Passo({ passo, verDados, ramo }: { passo: PassoDaExecucao; verDados: boolean; ramo: string | null }) {
+export function Passo({
+  passo,
+  verDados,
+  ramo,
+  abertoInicial = false,
+}: {
+  passo: PassoDaExecucao;
+  verDados: boolean;
+  ramo: string | null;
+  /** Entrada e saída já abertas — o inspetor do editor mostra os dados de cara, sem exigir um clique a mais. */
+  abertoInicial?: boolean;
+}) {
   const t = useT();
-  const [aberto, setAberto] = useState(false);
+  const [aberto, setAberto] = useState(abertoInicial);
+  // Com mais de uma tentativa, a pessoa escolhe qual olhar; por padrão a última, que é a que decidiu o passo.
+  const tentativas = passo.tentativas_detalhe ?? [];
+  const [escolhida, setEscolhida] = useState<number | null>(null);
+  const atual = tentativas.length > 1 ? (tentativas.find((x) => x.numero === escolhida) ?? tentativas[tentativas.length - 1]) : undefined;
+  const erro = atual ? atual.erro : passo.erro;
+  const entrada = atual ? atual.entrada : passo.entrada;
+  const saida = atual ? atual.saida : passo.saida;
   const estado = ESTADO[passo.status] ?? {
     rotulo: passo.status,
     tom: "neutral" as const,
     borda: "border-l-border-strong",
   };
   const tempo = duracao(passo.duracao_ms);
-  const temDados = verDados && (passo.entrada !== undefined || passo.saida !== undefined);
+  const temDados = verDados && (entrada !== undefined || saida !== undefined);
 
   return (
     <li className={cn("border-l-4 pl-3", estado.borda)} data-testid="caminho-passo" data-status={passo.status}>
@@ -72,9 +90,30 @@ function Passo({ passo, verDados, ramo }: { passo: PassoDaExecucao; verDados: bo
           </span>
         )}
       </div>
-      {passo.erro && (
+      {atual && (
+        <div className="mt-1 flex flex-wrap items-center gap-1" role="group" aria-label={t("Tentativas deste passo")}>
+          <span className="text-[11px] text-text-muted">{t("Tentativa")}</span>
+          {tentativas.map((x) => (
+            <button
+              key={x.numero}
+              type="button"
+              data-testid="caminho-tentativa"
+              aria-pressed={x.numero === atual.numero}
+              onClick={() => setEscolhida(x.numero)}
+              className={cn(
+                "rounded-full border px-2 py-0.5 text-[11px]",
+                x.numero === atual.numero ? "border-accent text-accent" : "border-border text-text-muted",
+                x.status === "failed" && "border-error text-error-fg",
+              )}
+            >
+              {x.numero}
+            </button>
+          ))}
+        </div>
+      )}
+      {erro && (
         <p className="mt-1 text-xs text-error-fg" data-testid="caminho-erro">
-          {passo.erro}
+          {erro}
         </p>
       )}
       {temDados && (
@@ -91,11 +130,11 @@ function Passo({ passo, verDados, ramo }: { passo: PassoDaExecucao; verDados: bo
             <div className="mt-1 grid gap-2 md:grid-cols-2">
               <div>
                 <p className="mb-1 text-[11px] font-medium text-text-muted">{t("Entrada")}</p>
-                <Json valor={passo.entrada} />
+                <Json valor={entrada} />
               </div>
               <div>
                 <p className="mb-1 text-[11px] font-medium text-text-muted">{t("Saída")}</p>
-                <Json valor={passo.saida} />
+                <Json valor={saida} />
               </div>
             </div>
           )}

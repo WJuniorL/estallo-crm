@@ -369,6 +369,11 @@ export const AUDIT_ACTIONS = [
   "followup_enrollment.resumed",
   "followup_enrollment.snoozed",
   "followup_enrollment.step_skipped",
+  // Reinício de uma execução terminada (cria uma execução nova ligada à original).
+  "followup_enrollment.restarted",
+  // Execução passo a passo: o operador manda rodar o próximo bloco, ou solta a execução para seguir sozinha.
+  "followup_enrollment.step_executed",
+  "followup_enrollment.auto_continued",
   "template.created",
   "template.updated",
   "template.deleted",

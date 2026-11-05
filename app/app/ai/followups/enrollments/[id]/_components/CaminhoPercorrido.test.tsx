@@ -63,4 +63,31 @@ describe("CaminhoPercorrido", () => {
     expect(screen.getByTestId("caminho-vazio")).toBeInTheDocument();
     expect(screen.queryByTestId("caminho-nao-percorridos")).toBeNull();
   });
+
+  it("com várias tentativas, escolhe-se qual ver: erro e saída mudam, a última vem marcada", async () => {
+    const p = passo("m1", {
+      tentativas: 2,
+      erro: null,
+      tentativas_detalhe: [
+        { numero: 1, status: "failed", started_at: null, completed_at: null, erro: "timeout", entrada: { vez: 1 }, saida: null },
+        { numero: 2, status: "succeeded", started_at: null, completed_at: null, erro: null, entrada: { vez: 2 }, saida: { ok: true } },
+      ],
+    });
+    render(<CaminhoPercorrido passos={[p]} nos={nos} arestas={arestas} verDados />);
+    const botoes = screen.getAllByTestId("caminho-tentativa");
+    expect(botoes).toHaveLength(2);
+    expect(botoes[1]).toHaveAttribute("aria-pressed", "true"); // a última é a padrão
+    expect(screen.queryByTestId("caminho-erro")).toBeNull();
+    await userEvent.click(botoes[0]!);
+    expect(botoes[0]).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByTestId("caminho-erro")).toHaveTextContent("timeout");
+    await userEvent.click(screen.getByText("Ver entrada e saída"));
+    expect(screen.getByText(/"vez": 1/)).toBeInTheDocument();
+  });
+
+  it("uma tentativa só: sem seletor", () => {
+    const p = passo("m1", { tentativas_detalhe: [{ numero: 1, status: "succeeded", started_at: null, completed_at: null, erro: null }] });
+    render(<CaminhoPercorrido passos={[p]} nos={nos} arestas={arestas} verDados={false} />);
+    expect(screen.queryAllByTestId("caminho-tentativa")).toHaveLength(0);
+  });
 });

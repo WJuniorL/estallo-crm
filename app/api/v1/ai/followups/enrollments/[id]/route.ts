@@ -92,6 +92,12 @@ export interface DossieDoEnrollment {
    * `entrada`/`saida` de cada passo só vêm para quem edita fluxo (`pode_ver_dados`).
    */
   passos: PassoDaExecucao[];
+  /** Conduzida bloco a bloco pelo operador (o motor pausa depois de cada bloco). */
+  passo_a_passo: boolean;
+  /** De qual execução esta nasceu (reinício), ou `null` quando é a original. */
+  origem: { id: string; tipo: string } | null;
+  /** Reexecuções nascidas desta (mais novas primeiro). */
+  reexecucoes: Array<{ id: string; tipo: string; status: string; started_at: string }>;
   pode_ver_dados: boolean;
   /**
    * O grafo pinado COM posições e configuração, para desenhar o caminho no canvas. Só para quem edita fluxos
@@ -166,7 +172,7 @@ export async function GET(_req: NextRequest, ctx: RouteCtx): Promise<Response> {
     .select(
       `id, status, contact_id, pointer_id, version_id, current_node_id, next_eval_at, claimed_until,
        started_at, completed_at, updated_at, outcome, cancel_reason, last_error, attempts, max_attempts,
-       steps_taken, timing_plan,
+       steps_taken, timing_plan, source_enrollment_id, recovery_kind, passo_a_passo,
        contacts:contact_id(id, name, display_name, phone_number),
        followup_flow_pointers:pointer_id(name),
        ai_agents:agent_id(name),
@@ -188,6 +194,14 @@ export async function GET(_req: NextRequest, ctx: RouteCtx): Promise<Response> {
     .order("id", { ascending: true })
     .limit(TETO_DE_EVENTOS + 1);
   if (evErr) return fail("internal_error", evErr.message, 500, { requestId });
+
+  const { data: filhas } = await supabase
+    .from("followup_enrollments")
+    .select("id, status, recovery_kind, started_at")
+    .eq("organization_id", org.orgId)
+    .eq("source_enrollment_id", id)
+    .order("started_at", { ascending: false })
+    .limit(50);
 
   const lidos = eventos ?? [];
   const truncado = lidos.length > TETO_DE_EVENTOS;
@@ -283,6 +297,16 @@ export async function GET(_req: NextRequest, ctx: RouteCtx): Promise<Response> {
     nos,
     arestas: (grafo?.success ? grafo.data.edges : []).map((e) => ({ id: e.id, source: e.source, target: e.target })),
     passos,
+    passo_a_passo: row.passo_a_passo === true,
+    origem: row.source_enrollment_id
+      ? { id: row.source_enrollment_id, tipo: row.recovery_kind ?? "restart" }
+      : null,
+    reexecucoes: (filhas ?? []).map((f) => ({
+      id: f.id,
+      tipo: f.recovery_kind ?? "restart",
+      status: f.status,
+      started_at: f.started_at,
+    })),
     pode_ver_dados: podeVerDados,
     grafo: podeVerDados && grafo?.success ? { nodes: grafo.data.nodes, edges: grafo.data.edges } : null,
     saidas,

@@ -7636,6 +7636,7 @@ export type Database = {
           next_eval_at: string | null
           organization_id: string
           outcome: string | null
+          passo_a_passo: boolean
           pointer_id: string
           recovery_kind: string | null
           revision: number
@@ -7669,6 +7670,7 @@ export type Database = {
           next_eval_at?: string | null
           organization_id: string
           outcome?: string | null
+          passo_a_passo?: boolean
           pointer_id: string
           recovery_kind?: string | null
           revision?: number
@@ -7701,6 +7703,7 @@ export type Database = {
           next_eval_at?: string | null
           organization_id?: string
           outcome?: string | null
+          passo_a_passo?: boolean
           pointer_id?: string
           recovery_kind?: string | null
           revision?: number

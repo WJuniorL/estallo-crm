@@ -20,7 +20,21 @@ const ANEL: Record<string, string> = {
   running: "ring-2 ring-accent-500 ring-offset-2 ring-offset-bg rounded-md",
 };
 
-function Interno({ grafo, passos }: { grafo: Pick<FlowGraph, "nodes" | "edges">; passos: PassoDaExecucao[] }) {
+interface OpcoesDoCanvas {
+  /** Clique num bloco do desenho — o inspetor do editor abre o que aconteceu nele. */
+  onSelecionarNo?: (nodeId: string) => void;
+  noSelecionado?: string | null;
+  /** Classe de altura; o dossiê usa 420px, o editor ocupa a área inteira. */
+  altura?: string;
+}
+
+function Interno({
+  grafo,
+  passos,
+  onSelecionarNo,
+  noSelecionado = null,
+  altura = "h-[420px]",
+}: { grafo: Pick<FlowGraph, "nodes" | "edges">; passos: PassoDaExecucao[] } & OpcoesDoCanvas) {
   const t = useT();
   const { nodes, edges } = useMemo(() => {
     const base = toReactFlow({ nodes: grafo.nodes, edges: grafo.edges } as FlowGraph);
@@ -33,7 +47,12 @@ function Interno({ grafo, passos }: { grafo: Pick<FlowGraph, "nodes" | "edges">;
           draggable: false,
           selectable: false,
           connectable: false,
-          className: estado ? (ANEL[estado] ?? ANEL.running) : "opacity-40",
+          className: [
+            estado ? (ANEL[estado] ?? ANEL.running) : "opacity-40",
+            n.id === noSelecionado ? "outline outline-2 outline-offset-4 outline-accent-500 rounded-md" : "",
+          ]
+            .filter(Boolean)
+            .join(" "),
           "data-estado": estado ?? "nao-percorrido",
         } as typeof n;
       }),
@@ -47,10 +66,10 @@ function Interno({ grafo, passos }: { grafo: Pick<FlowGraph, "nodes" | "edges">;
         };
       }),
     };
-  }, [grafo, passos]);
+  }, [grafo, passos, noSelecionado]);
 
   return (
-    <div className="h-[420px] w-full rounded-md border border-border" data-testid="caminho-canvas" aria-label={t("Fluxo com o caminho percorrido")}>
+    <div className={`${altura} w-full rounded-md border border-border`} data-testid="caminho-canvas" aria-label={t("Fluxo com o caminho percorrido")}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -58,6 +77,7 @@ function Interno({ grafo, passos }: { grafo: Pick<FlowGraph, "nodes" | "edges">;
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable={false}
+        onNodeClick={onSelecionarNo ? (_e, no) => onSelecionarNo(no.id) : undefined}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         proOptions={{ hideAttribution: true }}
@@ -74,10 +94,14 @@ function Interno({ grafo, passos }: { grafo: Pick<FlowGraph, "nodes" | "edges">;
  * vermelho, amarelo), as ligações atravessadas em destaque, e tudo o mais apagado. Só para quem edita fluxos — o cartão
  * do bloco mostra a configuração dele.
  */
-export function CaminhoNoCanvas({ grafo, passos }: { grafo: Pick<FlowGraph, "nodes" | "edges">; passos: PassoDaExecucao[] }) {
+export function CaminhoNoCanvas({
+  grafo,
+  passos,
+  ...opcoes
+}: { grafo: Pick<FlowGraph, "nodes" | "edges">; passos: PassoDaExecucao[] } & OpcoesDoCanvas) {
   return (
     <ReactFlowProvider>
-      <Interno grafo={grafo} passos={passos} />
+      <Interno grafo={grafo} passos={passos} {...opcoes} />
     </ReactFlowProvider>
   );
 }

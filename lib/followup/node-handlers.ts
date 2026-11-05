@@ -56,6 +56,11 @@ export type EnrollmentOutcome = "converted" | "replied" | "exhausted" | "opted_o
  * can produce it. Field names mirror the table (migration 0054) 1:1.
  */
 export interface EnrollmentRow {
+  /**
+   * Execução conduzida bloco a bloco pelo operador (migration 0714): o motor pausa (`paused_manual`) depois de cada
+   * bloco concluído, e a espera de um bloco `wait` não é cumprida — quem decide quando seguir é a pessoa.
+   */
+  passo_a_passo?: boolean;
   execution_contract?: 0 | 1;
   lead_id?: string | null;
   service_boundary?: ServiceBoundary | null;

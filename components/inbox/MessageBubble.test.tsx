@@ -224,6 +224,30 @@ describe("MessageBubble — rótulo de origem", () => {
     expect(screen.queryByText("Você")).not.toBeInTheDocument();
   });
 
+  it("digitada pelo COLEGA com nome conhecido mostra o NOME dele", () => {
+    render(
+      <MessageBubble
+        message={msg({ sent_via: "user", sent_by_user_id: "u-colega" })}
+        viewerUserId="u-eu"
+        nomeDoAutor="Mariana Silva"
+      />,
+    );
+    expect(screen.getByText("Mariana Silva")).toBeInTheDocument();
+    expect(screen.queryByText("Atendente")).not.toBeInTheDocument();
+  });
+
+  it("a minha mensagem segue 'Você' mesmo com nome conhecido", () => {
+    render(
+      <MessageBubble
+        message={msg({ sent_via: "user", sent_by_user_id: "u-eu" })}
+        viewerUserId="u-eu"
+        nomeDoAutor="Wilson"
+      />,
+    );
+    expect(screen.getByText("Você")).toBeInTheDocument();
+    expect(screen.queryByText("Wilson")).not.toBeInTheDocument();
+  });
+
   it("sem emissor gravado (sent_by_user_id nulo) mostra 'Atendente'", () => {
     // Os dois nulos se equivalem em `===`. Sem a guarda de `viewerUserId != null`
     // este caso voltaria a dizer "Você" para uma mensagem de dono desconhecido.

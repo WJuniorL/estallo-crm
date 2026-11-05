@@ -60,6 +60,7 @@ export {
   Checks,
   X,
   Plus,
+  Package,
   Trash,
   Eraser,
   PushPinSlash,

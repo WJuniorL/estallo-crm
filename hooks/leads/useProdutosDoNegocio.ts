@@ -32,6 +32,19 @@ export function useCatalogoDeProdutos(enabled = true) {
 
 const chave = (leadId: string) => ["produtos-do-negocio", leadId] as const;
 
+/** Chave e busca dos produtos — as mesmas para o hook e para o prefetch do card. */
+export function opcoesDosProdutosDoNegocio(leadId: string) {
+  return {
+    queryKey: chave(leadId),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      (
+        await apiClient.get<ApiSuccess<ProdutoDoNegocio[]>>(`/api/v1/leads/${leadId}/produtos`, {
+          signal,
+        })
+      ).data,
+  };
+}
+
 /**
  * Os produtos de um negócio, e cada ação gravando NA HORA (30/10/2026): a lista
  * muda na tela antes do servidor responder; erro devolve a lista de antes e
@@ -41,25 +54,22 @@ const chave = (leadId: string) => ["produtos-do-negocio", leadId] as const;
  */
 export function useProdutosDoNegocio(leadId: string, pipelineId: string) {
   const qc = useQueryClient();
-  const query = useQuery({
-    queryKey: chave(leadId),
-    queryFn: async () =>
-      (await apiClient.get<ApiSuccess<ProdutoDoNegocio[]>>(`/api/v1/leads/${leadId}/produtos`))
-        .data,
-  });
+  const query = useQuery(opcoesDosProdutosDoNegocio(leadId));
 
   async function otimista(
     mudar: (lista: ItemDoRascunho[]) => ItemDoRascunho[],
     chamada: () => Promise<unknown>,
-  ): Promise<void> {
+  ): Promise<boolean> {
     await qc.cancelQueries({ queryKey: chave(leadId) });
     const antes = qc.getQueryData<ProdutoDoNegocio[]>(chave(leadId));
     qc.setQueryData<ItemDoRascunho[]>(chave(leadId), (l) => mudar(l ?? []));
     try {
       await chamada();
+      return true;
     } catch (erro) {
       qc.setQueryData(chave(leadId), antes);
       showApiError(erro);
+      return false;
     } finally {
       void qc.invalidateQueries({ queryKey: chave(leadId) });
       void qc.invalidateQueries({ queryKey: chaveDoQuadro(pipelineId) });

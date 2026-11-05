@@ -69,8 +69,7 @@ export function ProdutosDoNegocio({
   }
 
   return (
-    <div className="space-y-2" data-testid="produtos-do-negocio">
-      <Label>{t("Produtos")}</Label>
+    <div className="space-y-2" data-testid="produtos-do-negocio" aria-label={t("Produtos")}>
       {itens.length > 0 && (
         <ul className="space-y-2">
           {itens.map((item) => (

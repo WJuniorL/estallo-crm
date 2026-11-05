@@ -17,6 +17,8 @@ import { usePassagensDaConversa } from "@/hooks/inbox/usePassagensDaConversa";
 import { useClaimConversation } from "@/hooks/inbox/useClaimConversation";
 import { useDeleteNote } from "@/hooks/inbox/useDeleteNote";
 import { useAlterarMensagem } from "@/hooks/inbox/useAlterarMensagem";
+import { useAssignableMembers } from "@/hooks/inbox/useAssignableMembers";
+import { useTeamMembers } from "@/hooks/team/useTeamMembers";
 import { useDebugToggle } from "@/hooks/ai/useDebugToggle";
 import { useActiveOrg, useUser } from "@/hooks/auth/AuthProvider";
 import { ROLE_RANK } from "@/lib/auth/types";
@@ -128,6 +130,22 @@ export function ChatThread({
   const deleteNote = useDeleteNote(conversationId ?? "");
   const { editar, apagar, ocultar, restaurar } = useAlterarMensagem(conversationId);
   const canManage = activeOrg != null && ROLE_RANK[activeOrg.role] >= ROLE_RANK.manager;
+  /**
+   * O NOME de quem enviou cada mensagem (`sent_by_user_id`), no lugar do
+   * genérico "Atendente". A lista dos ativos (agent+) serve a todo atendente;
+   * manager+ soma a equipe inteira, que guarda também quem já saiu — a mensagem
+   * antiga continua dizendo quem a mandou. Sem nome conhecido (viewer, que não
+   * lê a lista; ou autor fora das duas), o rótulo segue "Atendente".
+   */
+  const podeLerEquipe = activeOrg != null && ROLE_RANK[activeOrg.role] >= ROLE_RANK.agent;
+  const ativos = useAssignableMembers(podeLerEquipe);
+  const equipe = useTeamMembers({ enabled: canManage });
+  const nomePorUsuario = useMemo(() => {
+    const mapa = new Map<string, string>();
+    for (const m of equipe.data?.data ?? []) if (m.full_name?.trim()) mapa.set(m.user_id, m.full_name.trim());
+    for (const m of ativos.data ?? []) if (m.full_name?.trim()) mapa.set(m.user_id, m.full_name.trim());
+    return mapa;
+  }, [equipe.data, ativos.data]);
   const canalAlteraEnviada = transportaMensagem(provider)
     && capabilitiesOf(provider as ChannelProvider).alteraMensagemEnviada;
   const { enabled: debugCitations } = useDebugToggle(activeOrg?.role ?? null);
@@ -503,6 +521,7 @@ export function ChatThread({
                   // CRM — inclusive nas do colega, porque `sent_via='user'` só
                   // registra que um humano digitou, nunca qual.
                   viewerUserId={currentUser.id}
+                  nomeDoAutor={item.data.sent_by_user_id ? nomePorUsuario.get(item.data.sent_by_user_id) : undefined}
                   onEditar={canalAlteraEnviada && item.data.sent_by_user_id === currentUser.id
                     ? (text) => editar.mutateAsync({ id: item.data.id, text }).then(() => undefined)
                     : undefined}

@@ -14,6 +14,7 @@
  */
 import { randomUUID } from "node:crypto";
 import { type NextRequest } from "next/server";
+import { z } from "zod";
 
 import { fail, ok } from "@/lib/api/wrappers";
 import { loadAuthUser } from "@/lib/auth/server";
@@ -519,14 +520,17 @@ const LEADS_POR_PAGINA = 1000;
 async function leadsDoFunil(
   supabase: Awaited<ReturnType<typeof createClient>>,
   pipelineId: string,
+  soOLead: string | null,
 ): Promise<{ data: Lead[]; error: { message: string } | null }> {
   const todos: Lead[] = [];
   for (let desde = 0; ; desde += LEADS_POR_PAGINA) {
-    const { data, error } = await supabase
+    let consulta = supabase
       .from("crm_leads")
       .select("*")
       .eq("pipeline_id", pipelineId)
-      .neq("status", "archived")
+      .neq("status", "archived");
+    if (soOLead) consulta = consulta.eq("id", soOLead);
+    const { data, error } = await consulta
       .order("position_in_stage")
       .order("id")
       .range(desde, desde + LEADS_POR_PAGINA - 1);
@@ -536,20 +540,35 @@ async function leadsDoFunil(
   }
 }
 
-export async function GET(_req: NextRequest, ctx: RouteCtx): Promise<Response> {
+/**
+ * `?lead_id=` — O QUADRO DE UM NEGÓCIO SÓ. O dossiê aberto fora do quadro
+ * (Inbox › Leads recentes) precisa do lead no MESMO formato e com o MESMO
+ * enriquecimento do card (responsável, conversa, score, tarefas, produtos…),
+ * mas não do funil inteiro: baixar 1.000+ negócios para mostrar um fazia a
+ * gaveta esperar segundos. Mesma rota, mesma RLS, mesmo shape — só a lista
+ * de leads vem com um item (ou nenhum, se ele não é visível a quem pede).
+ */
+const leadIdSchema = z.string().uuid();
+
+export async function GET(req: NextRequest, ctx: RouteCtx): Promise<Response> {
   const requestId = randomUUID();
   const { id: pipelineId } = await ctx.params;
+  const leadIdBruto = req.nextUrl.searchParams.get("lead_id");
+  const leadIdParse = leadIdBruto === null ? null : leadIdSchema.safeParse(leadIdBruto);
+  const soOLead = leadIdParse?.success ? leadIdParse.data : null;
 
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: authErr,
-  } = await supabase.auth.getUser();
-  if (authErr || !user) {
+  // Uma ida ao GoTrue só: `loadAuthUser` já valida o JWT (`getUser()`), e o
+  // `getUser()` próprio que vinha antes dele repetia a chamada a cada abertura
+  // de lead. Sem usuário, o mesmo 401 de antes.
+  const authUser = await loadAuthUser();
+  if (!authUser) {
     return fail("unauthenticated", "Auth required.", 401, { requestId });
   }
-  const authUser = await loadAuthUser();
   const t = (texto: string) => traduzir(texto, authUser?.idioma ?? "pt-BR");
+  if (leadIdParse && !leadIdParse.success) {
+    return fail("validation_failed", t("lead_id inválido."), 400, { requestId });
+  }
 
   const [
     { data: pipeline, error: pipelineErr },
@@ -563,7 +582,7 @@ export async function GET(_req: NextRequest, ctx: RouteCtx): Promise<Response> {
       .eq("pipeline_id", pipelineId)
       .eq("is_archived", false)
       .order("position"),
-    leadsDoFunil(supabase, pipelineId),
+    leadsDoFunil(supabase, pipelineId, soOLead),
   ]);
 
   if (pipelineErr) return fail("internal_error", pipelineErr.message, 500, { requestId });

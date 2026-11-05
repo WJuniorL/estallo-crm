@@ -49,6 +49,8 @@ interface Props {
    * "Atendente", que é verdadeiro para todo mundo.
    */
   viewerUserId?: string | null;
+  /** Nome cadastrado de quem enviou (`sent_by_user_id`), quando a equipe é conhecida. */
+  nomeDoAutor?: string | null;
   onEditar?: (text: string) => Promise<void>;
   onApagar?: () => Promise<void>;
   onOcultar?: () => Promise<void>;
@@ -62,6 +64,7 @@ export function MessageBubble({
   onResponder,
   citada,
   viewerUserId,
+  nomeDoAutor,
   onEditar,
   onApagar,
   onOcultar,
@@ -74,6 +77,15 @@ export function MessageBubble({
   const [ocupado, setOcupado] = useState(false);
   const salvandoEdicao = useRef(false);
   const editorRef = useRef<HTMLDivElement | null>(null);
+  /**
+   * A LARGURA DA BOLHA AO ENTRAR NA EDIÇÃO. A bolha é item flex sem largura e
+   * se mede pelo conteúdo: trocado o texto pelo textarea (`w-full` sobre um pai
+   * sem largura), ela encolhia ao tamanho default do textarea (~20 colunas). A
+   * largura medida no clique fica fixa enquanto se edita — o teto de max-width
+   * da régua continua valendo.
+   */
+  const bolhaRef = useRef<HTMLDivElement | null>(null);
+  const [larguraNaEdicao, setLarguraNaEdicao] = useState<number | null>(null);
   const abrindoEdicao = useRef(false);
   /**
    * "Responder" só vale depois que o menu FECHA. Ao fechar, o Radix devolve o
@@ -187,9 +199,10 @@ export function MessageBubble({
       // qualquer uma, o rótulo cai para "Atendente" — que continua dizendo o
       // que `sent_via` de fato garante (um humano, pelo CRM) sem afirmar uma
       // identidade que o dado não sustenta.
-      return viewerUserId != null && message.sent_by_user_id === viewerUserId
-        ? "Você"
-        : "Atendente";
+      if (viewerUserId != null && message.sent_by_user_id === viewerUserId) return "Você";
+      // O colega pelo NOME — o autor real desta linha, não o dono atual da
+      // conversa. Sem nome conhecido, "Atendente" segue verdadeiro.
+      return nomeDoAutor?.trim() || "Atendente";
     }
     return null;
   })();
@@ -226,6 +239,8 @@ export function MessageBubble({
         // classe utilitária entrava na conta — foi assim que o painel flutuante
         // fez a spec achar que havia mensagem onde não havia (issue #1318).
         data-testid="message-bubble"
+        ref={bolhaRef}
+        style={editando && larguraNaEdicao ? { width: larguraNaEdicao } : undefined}
         className={cn(
           "relative max-w-[75%] min-w-0 text-sm",
           isBareSticker
@@ -282,6 +297,9 @@ export function MessageBubble({
                 <DropdownMenuItem onSelect={() => {
                   abrindoEdicao.current = true;
                   setTexto(message.body ?? "");
+                  // ponytail: piso de 240px só para Cancelar/Salvar caberem numa bolha de "ok".
+                  const largura = bolhaRef.current?.getBoundingClientRect().width ?? 0;
+                  setLarguraNaEdicao(largura > 0 ? Math.max(largura, 240) : null);
                   setEditando(true);
                 }}>
                   <PencilSimple size={16} aria-hidden />{t("Editar mensagem")}
@@ -370,7 +388,7 @@ export function MessageBubble({
                 }
               }}
               maxLength={4096}
-              className="min-h-20 w-full rounded-md border border-border bg-background p-2 text-foreground"
+              className="block max-h-[50vh] min-h-20 w-full resize-y rounded-md border border-border bg-background p-2 leading-snug text-foreground [field-sizing:content]"
             />
             <div className="flex justify-end gap-2">
               <Button size="sm" variant="ghost" disabled={ocupado} onClick={() => setEditando(false)}>{t("Cancelar")}</Button>

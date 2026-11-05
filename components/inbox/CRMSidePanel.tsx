@@ -32,8 +32,10 @@ import {
   DotsThree,
   Trash,
   ListChecks,
+  Package,
 } from "@/lib/ui/icons";
 import { FormularioDeTarefa } from "@/app/app/tasks/_components/FormularioDeTarefa";
+import { AdicionarProdutoDialog } from "@/components/kanban/AdicionarProdutoDialog";
 import { useTasks } from "@/hooks/tasks/useTasks";
 import {
   DropdownMenu,
@@ -84,6 +86,7 @@ interface LeadRow {
   value_cents: number | null;
   currency: string | null;
   updated_at: string;
+  expected_close_date?: string | null;
   pipeline_id: string;
   custom_fields: Record<string, unknown> | null;
   field_defs: CustomFieldDef[];
@@ -512,6 +515,7 @@ function CardDoNegocio({
   const [criandoTarefa, setCriandoTarefa] = useState(false);
   // Chave de remontagem: cada abertura começa com o formulário limpo.
   const [aberturasDaTarefa, setAberturasDaTarefa] = useState(0);
+  const [adicionandoProduto, setAdicionandoProduto] = useState(false);
   return (
     <li className="flex items-stretch overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-accent/60">
       <button
@@ -569,6 +573,13 @@ function CardDoNegocio({
                   {t("Criar tarefa")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
+                  data-testid={`inbox-lead-adicionar-produto-${l.id}`}
+                  onSelect={() => setAdicionandoProduto(true)}
+                >
+                  <Package size={15} className="mr-2" aria-hidden />
+                  {t("Adicionar produto")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
                   data-testid={`inbox-lead-excluir-${l.id}`}
                   disabled={excluir.isPending}
                   onSelect={() => setConfirmandoExclusao(true)}
@@ -606,6 +617,15 @@ function CardDoNegocio({
             </>
           )}
         </div>
+      )}
+      {/* Montado só aberto, como a tarefa: cada card teria a sua consulta. */}
+      {adicionandoProduto && (
+        <AdicionarProdutoDialog
+          aberto={adicionandoProduto}
+          aoMudarAbertura={setAdicionandoProduto}
+          lead={l}
+          aoAdicionar={onFechado}
+        />
       )}
       {/* Montado só aberto: cada card da lista teria a sua consulta da equipe. */}
       {criandoTarefa && (

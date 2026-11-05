@@ -235,7 +235,7 @@ describe("ContatoDoNegocio — as abas do dossiê", () => {
     useContact.mockReturnValue({ data: undefined, isLoading: true, isError: false });
     comQuery(<ContatoDoNegocio contactId="c-1" pipelineId="p-1" />);
 
-    expect(screen.getByText("Carregando…")).toBeInTheDocument();
+    expect(screen.getByLabelText("Carregando…")).toHaveAttribute("aria-busy", "true");
   });
 
   it("falha ao carregar o contato é dita, não silenciada", () => {

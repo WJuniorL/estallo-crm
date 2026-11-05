@@ -1,6 +1,6 @@
 "use client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ehEcoLocal } from "@/lib/kanban/local-echo";
 import { useRealtimeChannel } from "@/hooks/realtime/useRealtimeChannel";
 import { useRefetchDeSeguranca } from "@/hooks/realtime/useRefetchDeSeguranca";
@@ -15,12 +15,12 @@ import type { BoardData } from "@/lib/kanban/types";
  * and PostgREST returns PGRST116. Routing through /api/v1/pipelines/[id]/board
  * uses the server-side cookie reader, identical to every other authed query.
  */
-async function fetchBoard(pipelineId: string): Promise<BoardData> {
+async function fetchBoard(pipelineId: string, signal?: AbortSignal, leadId?: string): Promise<BoardData> {
   // 30s, não os 10s padrão: o quadro devolve o funil inteiro (ganhos e perdidos
   // inclusos), e funil de mais de mil negócios é real.
   const res = await apiClient.get<{ data: BoardData }>(
-    `/api/v1/pipelines/${pipelineId}/board`,
-    { timeoutMs: 30_000 },
+    `/api/v1/pipelines/${pipelineId}/board${leadId ? `?lead_id=${encodeURIComponent(leadId)}` : ""}`,
+    { timeoutMs: 30_000, signal },
   );
   // apiClient unwraps { data, meta } envelope already in some helpers;
   // ours returns the parsed JSON literally. Handle both shapes safely.
@@ -66,9 +66,37 @@ export function chaveDoQuadro(pipelineId: string | null) {
   return ["board", pipelineId] as const;
 }
 
+/**
+ * O QUADRO DE UM NEGÓCIO SÓ — o dossiê aberto fora do quadro (Inbox).
+ *
+ * Mesma rota e mesmo formato (`BoardData`) do quadro, com `?lead_id=`: o lead
+ * chega com o mesmo enriquecimento do card sem baixar o funil inteiro. A chave
+ * fica DEBAIXO de `chaveDoQuadro`, então toda mutação que já invalida o quadro
+ * (editar, mover, ganhar, produtos) relê este também — sem lista paralela de
+ * invalidações para esquecer.
+ *
+ * Se o quadro inteiro já está na cache (a pessoa passou pelo funil), ele serve
+ * de partida — a gaveta abre preenchida e a releitura corre por trás.
+ */
+export function useQuadroDoLead(pipelineId: string, leadId: string) {
+  const qc = useQueryClient();
+  return useQuery({
+    queryKey: [...chaveDoQuadro(pipelineId), "lead", leadId] as const,
+    queryFn: ({ signal }) => fetchBoard(pipelineId, signal, leadId),
+    initialData: () => {
+      const inteiro = qc.getQueryData<BoardData>(chaveDoQuadro(pipelineId));
+      const lead = inteiro?.leads.find((l) => l.id === leadId);
+      return inteiro && lead ? { ...inteiro, leads: [lead] } : undefined;
+    },
+    initialDataUpdatedAt: () => qc.getQueryState(chaveDoQuadro(pipelineId))?.dataUpdatedAt,
+  });
+}
+
 export function useBoard(pipelineId: string | null) {
   const qc = useQueryClient();
-  const queryKey = chaveDoQuadro(pipelineId);
+  // Estável: a chave entra em `useCallback`/efeitos (releitura, refetch de
+  // segurança) e um array novo por render os recriava a cada render.
+  const queryKey = useMemo(() => chaveDoQuadro(pipelineId), [pipelineId]);
 
   /**
    * Cards que acabaram de mudar POR EVENTO REMOTO — o pulso da Wave 3.

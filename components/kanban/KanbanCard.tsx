@@ -6,7 +6,10 @@ import { CalendarBlank } from "@/lib/ui/icons";
 import { IconeWhatsapp } from "@/components/chat-suspenso/IconeWhatsapp";
 import { useChatSuspenso } from "@/components/chat-suspenso/ChatSuspensoContext";
 import { Draggable } from "@hello-pangea/dnd";
-import { memo, useMemo, type MouseEvent } from "react";
+import { memo, useMemo, useRef, type MouseEvent } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { opcoesDaTimeline } from "@/hooks/leads/useLeadTimeline";
+import { opcoesDosProdutosDoNegocio } from "@/hooks/leads/useProdutosDoNegocio";
 import { useT } from "@/hooks/i18n/useT";
 import { cn } from "@/lib/utils";
 import { formatValorDoNegocio, MOEDA_PADRAO } from "@/lib/money";
@@ -129,6 +132,24 @@ export const KanbanCard = memo(function KanbanCard({
   };
   const handleClick = (e: MouseEvent<HTMLDivElement>) => decidirClique(e);
 
+  // PREFETCH DO DOSSIÊ: parar o ponteiro (ou o foco) no card por um instante
+  // já busca as seções mais pesadas do dossiê — a timeline e os produtos —,
+  // então o clique abre com elas prontas. O atraso evita buscar a cada card
+  // que o mouse só atravessa; `prefetchQuery` não repete o que está fresco.
+  const qc = useQueryClient();
+  const prefetch = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const agendarPrefetch = () => {
+    if (prefetch.current) return;
+    prefetch.current = setTimeout(() => {
+      void qc.prefetchQuery(opcoesDaTimeline(card.id));
+      void qc.prefetchQuery(opcoesDosProdutosDoNegocio(card.id));
+    }, 150);
+  };
+  const cancelarPrefetch = () => {
+    if (prefetch.current) clearTimeout(prefetch.current);
+    prefetch.current = null;
+  };
+
   return (
     <Draggable draggableId={card.id} index={index}>
       {(provided, snapshot) => (
@@ -143,6 +164,10 @@ export const KanbanCard = memo(function KanbanCard({
           role="group"
           aria-label={`${t("Lead")}: ${card.title}`}
           onClick={handleClick}
+          onPointerEnter={agendarPrefetch}
+          onPointerLeave={cancelarPrefetch}
+          onFocus={agendarPrefetch}
+          onBlur={cancelarPrefetch}
           // O título nativo também permite ler etiquetas truncadas.
           title={card.tags.length > 0 ? `Tags: ${card.tags.join(", ")}` : undefined}
           className={cn(

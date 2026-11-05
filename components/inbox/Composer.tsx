@@ -23,7 +23,12 @@ import {
   resolverMencao,
   type OpcaoDeMencao,
 } from "@/components/inbox/composer/MentionMenu";
-import { filtrarTemplates, resolveSlash, TemplateMenu } from "@/components/inbox/composer/TemplateMenu";
+import {
+  filtrarTemplates,
+  idDaOpcaoDeTemplate,
+  resolveSlash,
+  TemplateMenu,
+} from "@/components/inbox/composer/TemplateMenu";
 import { focarCampoDeMensagem } from "@/lib/inbox/foco-do-campo";
 import { useAssignableMembers } from "@/hooks/inbox/useAssignableMembers";
 import { useCreateNote } from "@/hooks/inbox/useCreateNote";
@@ -185,6 +190,7 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
   const [mencoes, setMencoes] = useState<MencaoEscolhida[]>([]);
   const [mencaoDispensada, setMencaoDispensada] = useState(false);
   const [mencaoIndice, setMencaoIndice] = useState(0);
+  const [slashIndice, setSlashIndice] = useState(0);
   useEffect(() => {
     onDraftChange?.(text, mode);
   }, [text, mode, onDraftChange]);
@@ -194,6 +200,7 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
   const createNote = useCreateNote();
   const templates = useMessageTemplates();
   const slash = resolveSlash(text);
+  const slashFiltrados = slash.open ? filtrarTemplates(templates.data ?? [], slash.query) : [];
   // Com espaços permitidos no termo, uma mensagem que começa com "/" manteria
   // o menu aberto — e o Enter, reservado ao menu, nunca enviaria. O menu só
   // conta como aberto enquanto há resposta rápida que case com o termo.
@@ -201,7 +208,10 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
     mode === "reply" &&
     slash.open &&
     !menuDismissed &&
-    (slash.query.trim() === "" || filtrarTemplates(templates.data ?? [], slash.query).length > 0);
+    (slash.query.trim() === "" || slashFiltrados.length > 0);
+  // O destaque do slash-menu: o MESMO desenho do `mencaoIndice`. Aberto, a
+  // primeira opção vem marcada; o índice volta a 0 a cada tecla digitada.
+  const slashAtual = menuOpen ? (slashFiltrados[slashIndice] ?? slashFiltrados[0]) : undefined;
 
   // SÓ em nota: a menção é assunto interno, e uma menção no campo de resposta
   // sairia para o cliente como texto solto. A query roda enquanto a lista está
@@ -418,9 +428,31 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Escape" && menuOpen) {
-      setMenuDismissed(true);
-      return;
+    if (menuOpen) {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setMenuDismissed(true);
+        return;
+      }
+      const total = slashFiltrados.length;
+      if (e.key === "ArrowDown" && total) {
+        e.preventDefault();
+        setSlashIndice((i) => (i + 1) % total);
+        return;
+      }
+      if (e.key === "ArrowUp" && total) {
+        e.preventDefault();
+        setSlashIndice((i) => (i - 1 + total) % total);
+        return;
+      }
+      // Enter (e Tab, quando há o que escolher) APLICA a resposta: insere o
+      // texto no campo e NÃO envia — o envio é o Enter seguinte, já com o menu
+      // fechado. Shift+Enter segue sendo quebra de linha.
+      if ((e.key === "Enter" && !e.shiftKey) || (e.key === "Tab" && slashAtual)) {
+        e.preventDefault();
+        if (slashAtual) applyTemplate(slashAtual);
+        return;
+      }
     }
     // A lista de menções come as teclas ANTES do Enter salvar — a mesma lei
     // do slash-menu: com o menu aberto, Enter escolhe, não envia.
@@ -454,7 +486,6 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
     }
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (menuOpen) return; // deixa o Enter pro menu; não envia /query como mensagem
       handleSubmit();
     }
   }
@@ -481,8 +512,9 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
       >
         <TemplateMenu
           open={menuOpen}
-          query={slash.query}
-          templates={templates.data ?? []}
+          opcoes={slashFiltrados}
+          indice={slashAtual ? slashFiltrados.indexOf(slashAtual) : 0}
+          onHover={setSlashIndice}
           onPick={applyTemplate}
           onClose={() => setMenuDismissed(true)}
         />
@@ -613,11 +645,13 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
           <textarea
             ref={taRef}
             value={text}
+            aria-activedescendant={slashAtual ? idDaOpcaoDeTemplate(slashAtual.id) : undefined}
             onChange={(e) => {
               setText(e.target.value);
               const pos = e.target.selectionStart ?? e.target.value.length;
               setCaret(pos);
               setMencaoIndice(0);
+              setSlashIndice(0);
               // A escolha que sumiu do texto sai da lista AGORA (#2463): com
               // duas pessoas de mesmo rótulo, a escolha apagada roubava o
               // `@Nome` da próxima e a nota notificava quem não foi mencionado.

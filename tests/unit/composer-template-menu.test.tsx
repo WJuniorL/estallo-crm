@@ -45,10 +45,17 @@ describe("TemplateMenu", () => {
     { id: "1", title: "Saudação", body: "Oi {{primeiro_nome}}", shortcut: "oi" },
     { id: "2", title: "Fechamento", body: "Fechado!", shortcut: "fech" },
   ];
-  it("filtra por título/shortcut e devolve o escolhido", () => {
+  it("devolve o escolhido no clique", () => {
     const onPick = vi.fn();
-    render(<TemplateMenu open query="fech" templates={templates as never} onPick={onPick} onClose={() => {}} />);
+    const opcoes = filtrarTemplates(templates as never, "fech");
+    render(<TemplateMenu open opcoes={opcoes} indice={0} onPick={onPick} onClose={() => {}} />);
     fireEvent.click(screen.getByText("Fechamento"));
     expect(onPick).toHaveBeenCalledWith(expect.objectContaining({ id: "2" }));
+  });
+  it("marca a opção do índice como selecionada", () => {
+    render(<TemplateMenu open opcoes={templates as never} indice={1} onPick={() => {}} onClose={() => {}} />);
+    const opcoes = screen.getAllByRole("option");
+    expect(opcoes[0]).toHaveAttribute("aria-selected", "false");
+    expect(opcoes[1]).toHaveAttribute("aria-selected", "true");
   });
 });

@@ -28,6 +28,7 @@ vi.mock("@/hooks/auth/AuthProvider", () => ({
 vi.mock("@/hooks/kanban/useBoard", () => ({
   chaveDoQuadro: (id: string | null) => ["board", id],
   useBoard: () => ({ data: undefined }),
+  useQuadroDoLead: () => ({ data: undefined, isError: false, refetch: () => {}, isFetching: true }),
 }));
 vi.mock("@/hooks/inbox/useAssignableMembers", () => ({
   useAssignableMembers: () => ({ data: [] }),

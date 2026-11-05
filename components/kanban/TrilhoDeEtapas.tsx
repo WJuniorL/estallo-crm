@@ -224,22 +224,25 @@ export function TrilhoDeEtapas({
                 >
                   <path d={i === 0 ? SETA_INICIAL : SETA} />
                 </svg>
-                <span className="pointer-events-none flex w-full min-w-0 flex-col items-center justify-center gap-[3px]">
-                  <span
-                    className={cn(
-                      "line-clamp-2 text-center text-[11px] leading-[14px]",
-                      atual ? "font-extrabold" : "font-semibold",
-                    )}
-                  >
-                    {s.name}
-                  </span>
-                  {atual && (
-                    <span className="inline-flex items-center whitespace-nowrap rounded-full bg-white/40 px-1.5 text-[9px] font-bold leading-3 text-[#26333d]">
-                      {t("Atual")} · {rotuloDias}
-                    </span>
+                <span
+                  className={cn(
+                    "pointer-events-none line-clamp-2 w-full min-w-0 text-center text-[11px] leading-[14px]",
+                    atual ? "font-extrabold" : "font-semibold",
                   )}
+                >
+                  {s.name}
                 </span>
               </button>
+              {/* O TEMPO NA ETAPA mora FORA do chevron, logo abaixo da etapa
+                  atual: dentro dele disputava as duas linhas do nome e
+                  espremia o texto. A linha existe em TODA etapa (vazia nas
+                  outras) para a altura do trilho não pular ao trocar de etapa. */}
+              <span
+                className="block h-4 truncate pt-1 text-center text-[10px] font-semibold leading-3 text-text-muted"
+                data-testid={atual ? "trilho-dias-na-etapa" : undefined}
+              >
+                {atual && lead.stage_changed_at && atualId === lead.stage_id ? `${rotuloDias} ${t("na etapa")}` : null}
+              </span>
             </li>
           );
         })}

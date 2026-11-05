@@ -12,7 +12,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { useEditLead } from "@/hooks/kanban/useUpdateLead";
 import type { Lead } from "@/lib/types/leads";
 import { updateLeadSchema, type UpdateLeadInput } from "@/lib/schemas/leads";
-import { centavosParaCampo, formatCents, MOEDA_PADRAO, parseReaisToCents, simboloDaMoeda } from "@/lib/money";
+import {
+  centavosParaCampo,
+  formatCents,
+  MOEDA_PADRAO,
+  parseReaisToCents,
+  simboloDaMoeda,
+} from "@/lib/money";
 import { ROLE_RANK } from "@/lib/auth/types";
 import { useProdutosDoNegocio } from "@/hooks/leads/useProdutosDoNegocio";
 import { totalDoItem } from "@/lib/schemas/produtos-do-negocio";
@@ -62,14 +68,17 @@ export function LeadFieldsForm({ lead, pipelineId, fieldDefs: todosOsCampos = []
   // vira leitura e nada aqui manda `value_cents`, senão sobrescreveria a conta.
   const produtos = useProdutosDoNegocio(lead.id, pipelineId);
   const itens = produtos.data ?? [];
-  const valorPelosProdutos = itens.length > 0 ? itens.reduce((s, i) => s + totalDoItem(i), 0) : null;
+  const valorPelosProdutos =
+    itens.length > 0 ? itens.reduce((s, i) => s + totalDoItem(i), 0) : null;
 
   const [titulo, setTitulo] = useState(lead.title);
   const [descricao, setDescricao] = useState(lead.description ?? "");
   const [valor, setValor] = useState(centavosParaCampo(lead.value_cents));
   const [fechamento, setFechamento] = useState(lead.expected_close_date ?? "");
   const [tags, setTags] = useState<string[]>(lead.tags ?? []);
-  const [customFields, setCustomFields] = useState<Record<string, unknown>>(lead.custom_fields ?? {});
+  const [customFields, setCustomFields] = useState<Record<string, unknown>>(
+    lead.custom_fields ?? {},
+  );
   // A RÉGUA do diff (issue #2132): só o que a pessoa mudou viaja — devolver o
   // objeto inteiro sobrescrevia o que outra pessoa (ou o MCP) mudou com a ficha
   // aberta. Avança a cada gravação.
@@ -175,95 +184,108 @@ export function LeadFieldsForm({ lead, pipelineId, fieldDefs: todosOsCampos = []
   };
 
   return (
-    <div className="space-y-4" data-testid="ficha-do-lead">
-      <div className="space-y-2">
-        <Label htmlFor="title">{t("Título")}</Label>
-        <Input
-          id="title"
-          value={titulo}
-          onChange={(e) => {
-            const v = e.target.value;
-            setTitulo(v);
-            textoPendente.current = () => gravarTitulo(v);
-          }}
-          onBlur={(e) => gravarTitulo(e.currentTarget.value)}
-          onKeyDown={enterSai}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="description">{t("Descrição")}</Label>
-        <Textarea
-          id="description"
-          rows={3}
-          value={descricao}
-          onChange={(e) => {
-            const v = e.target.value;
-            setDescricao(v);
-            textoPendente.current = () => gravarDescricao(v);
-          }}
-          onBlur={(e) => gravarDescricao(e.currentTarget.value)}
-        />
-      </div>
-
-      <ProdutosDoNegocio
-        itens={itens}
-        moeda={moedaDoValor}
-        podeEditar={podeEditarProdutos}
-        onAdicionar={(item) => void produtos.adicionar(item)}
-        onRemover={(id) => void produtos.remover(id)}
-        onAlterar={(id, campos) => void produtos.alterar(id, campos)}
-      />
-
-      <div className="grid grid-cols-2 gap-3">
-        {valorPelosProdutos !== null ? (
-          <div className="space-y-2">
-            <Label htmlFor="valorPelosProdutos">{t("Valor")} ({simboloDaMoeda(moedaDoValor)})</Label>
-            <Input
-              id="valorPelosProdutos"
-              readOnly
-              value={formatCents(valorPelosProdutos, moedaDoValor)}
-              data-testid="valor-pelos-produtos"
-            />
-            <p className="text-xs text-muted-foreground">{t("Calculado pelos produtos, já com os descontos.")}</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {/* O rótulo segue a moeda do NEGÓCIO (a organização é a reserva):
-                `R$` em duro mentia para quem opera em euro. */}
-            <Label htmlFor="valueReais">{t("Valor")} ({simboloDaMoeda(moedaDoValor)})</Label>
-            {/* A máscara É o eco: o que aparece no campo é o que será gravado. */}
-            <CampoDeDinheiro
-              id="valueReais"
-              moeda={moedaDoValor}
-              value={valor}
-              onChange={(e) => {
-                const v = e.target.value;
-                setValor(v);
-                textoPendente.current = () => gravarValor(v);
-              }}
-              onBlur={(e) => gravarValor(e.currentTarget.value)}
-              onKeyDown={enterSai}
-            />
-          </div>
-        )}
+    <div className="divide-y divide-border" data-testid="ficha-do-lead">
+      <Grupo>
         <div className="space-y-2">
-          <Label htmlFor="expected_close_date">{t("Fechamento previsto")}</Label>
+          <Label htmlFor="title">{t("Título")}</Label>
           <Input
-            id="expected_close_date"
-            type="date"
-            value={fechamento}
+            id="title"
+            value={titulo}
             onChange={(e) => {
-              const antes = fechamento;
-              setFechamento(e.target.value);
-              salvar({ expected_close_date: e.target.value || null }, () => setFechamento(antes));
+              const v = e.target.value;
+              setTitulo(v);
+              textoPendente.current = () => gravarTitulo(v);
             }}
+            onBlur={(e) => gravarTitulo(e.currentTarget.value)}
+            onKeyDown={enterSai}
           />
         </div>
-      </div>
 
-      <div className="space-y-2">
-        <Label>{t("Tags")}</Label>
+        <div className="space-y-2">
+          <Label htmlFor="description">{t("Descrição")}</Label>
+          <Textarea
+            id="description"
+            rows={3}
+            value={descricao}
+            onChange={(e) => {
+              const v = e.target.value;
+              setDescricao(v);
+              textoPendente.current = () => gravarDescricao(v);
+            }}
+            onBlur={(e) => gravarDescricao(e.currentTarget.value)}
+          />
+        </div>
+      </Grupo>
+
+      <Grupo
+        titulo={t("Produtos e valor")}
+        contagem={itens.length || undefined}
+        testId="grupo-produtos"
+      >
+        <ProdutosDoNegocio
+          itens={itens}
+          moeda={moedaDoValor}
+          podeEditar={podeEditarProdutos}
+          onAdicionar={(item) => void produtos.adicionar(item)}
+          onRemover={(id) => void produtos.remover(id)}
+          onAlterar={(id, campos) => void produtos.alterar(id, campos)}
+        />
+
+        <div className="grid grid-cols-2 gap-3">
+          {valorPelosProdutos !== null ? (
+            <div className="space-y-2">
+              <Label htmlFor="valorPelosProdutos">
+                {t("Valor")} ({simboloDaMoeda(moedaDoValor)})
+              </Label>
+              <Input
+                id="valorPelosProdutos"
+                readOnly
+                value={formatCents(valorPelosProdutos, moedaDoValor)}
+                data-testid="valor-pelos-produtos"
+              />
+              <p className="text-xs text-muted-foreground">
+                {t("Calculado pelos produtos, já com os descontos.")}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {/* O rótulo segue a moeda do NEGÓCIO (a organização é a reserva):
+                `R$` em duro mentia para quem opera em euro. */}
+              <Label htmlFor="valueReais">
+                {t("Valor")} ({simboloDaMoeda(moedaDoValor)})
+              </Label>
+              {/* A máscara É o eco: o que aparece no campo é o que será gravado. */}
+              <CampoDeDinheiro
+                id="valueReais"
+                moeda={moedaDoValor}
+                value={valor}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setValor(v);
+                  textoPendente.current = () => gravarValor(v);
+                }}
+                onBlur={(e) => gravarValor(e.currentTarget.value)}
+                onKeyDown={enterSai}
+              />
+            </div>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="expected_close_date">{t("Fechamento previsto")}</Label>
+            <Input
+              id="expected_close_date"
+              type="date"
+              value={fechamento}
+              onChange={(e) => {
+                const antes = fechamento;
+                setFechamento(e.target.value);
+                salvar({ expected_close_date: e.target.value || null }, () => setFechamento(antes));
+              }}
+            />
+          </div>
+        </div>
+      </Grupo>
+
+      <Grupo titulo={t("Tags")} contagem={tags.length || undefined} testId="grupo-tags">
         <SeletorDeTags
           entidade="lead"
           valor={tags}
@@ -274,11 +296,10 @@ export function LeadFieldsForm({ lead, pipelineId, fieldDefs: todosOsCampos = []
           }}
           rotulo={t("Tags da oportunidade")}
         />
-      </div>
+      </Grupo>
 
       {fieldDefs.length > 0 && (
-        <div className="space-y-2 border-t border-border pt-4">
-          <p className="text-sm font-medium">{t("Campos personalizados")}</p>
+        <Grupo titulo={t("Campos personalizados")} testId="grupo-campos">
           <CustomFieldsEditor
             fields={fieldDefs}
             value={customFields}
@@ -290,8 +311,47 @@ export function LeadFieldsForm({ lead, pipelineId, fieldDefs: todosOsCampos = []
             }}
             mode="lead"
           />
-        </div>
+        </Grupo>
       )}
     </div>
+  );
+}
+
+/**
+ * UM GRUPO DA FICHA. Os dados do negócio são quatro assuntos independentes
+ * (identificação, produtos e valor, tags, campos personalizados); com todos no
+ * mesmo `space-y` e o mesmo `<Label>`, tags e campos pareciam parte dos
+ * produtos. O grupo dá a cada assunto um sobretítulo próprio e o divisor sutil
+ * entre eles vem do `divide-y` do pai — sem caixa dentro da caixa do bloco.
+ */
+function Grupo({
+  titulo,
+  contagem,
+  testId,
+  children,
+}: {
+  titulo?: string;
+  contagem?: number;
+  testId?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      className="space-y-3 py-4 first:pt-0 last:pb-0"
+      data-testid={testId}
+      aria-label={titulo}
+    >
+      {titulo && (
+        <h4 className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+          {titulo}
+          {contagem !== undefined && (
+            <span className="rounded-full bg-muted px-1.5 text-[10px] leading-4 font-semibold tabular-nums">
+              {contagem}
+            </span>
+          )}
+        </h4>
+      )}
+      {children}
+    </section>
   );
 }

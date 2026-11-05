@@ -238,6 +238,7 @@ export function LeadDossier({
           chegouAoVivo={timeline.chegouAoVivo}
           isLoading={timeline.isLoading}
           isError={timeline.isError}
+          onRetry={timeline.refetch}
         />
       </BlocoRecolhivel>
 

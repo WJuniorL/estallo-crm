@@ -17,12 +17,12 @@ vi.mock("@/components/feedback/ApiErrorToast", () => ({ showApiError: vi.fn() })
 const etapa = (id: string, extra: Partial<Stage> = {}) =>
   ({ id, name: id, color: "#3b82f6", is_won: false, is_lost: false, is_archived: false, ...extra }) as Stage;
 
-function renderTrilho(podeMover = true) {
+function renderTrilho(podeMover = true, stage_changed_at: string | null = null) {
   const client = new QueryClient();
   return render(
     <QueryClientProvider client={client}>
       <TrilhoDeEtapas
-        lead={{ id: "l-1", stage_id: "a", stage_changed_at: null, updated_at: "2026-10-14T10:00:00Z" } as Lead}
+        lead={{ id: "l-1", stage_id: "a", stage_changed_at, updated_at: "2026-10-14T10:00:00Z" } as Lead}
         stages={[etapa("a"), etapa("b"), etapa("ganho", { is_won: true }), etapa("perdido", { is_lost: true })]}
         pipelineId="p-1"
         podeMover={podeMover}
@@ -38,6 +38,15 @@ describe("TrilhoDeEtapas", () => {
     expect(screen.getByTestId("trilho-etapa-b")).toBeInTheDocument();
     expect(screen.getByTestId("trilho-etapa-ganho")).toBeInTheDocument();
     expect(screen.getByTestId("trilho-etapa-perdido")).toBeInTheDocument();
+  });
+
+  it("o tempo na etapa aparece FORA do chevron, abaixo da etapa atual", () => {
+    const tresDiasAtras = new Date(Date.now() - 3 * 86_400_000 - 60_000).toISOString();
+    renderTrilho(true, tresDiasAtras);
+    const dias = screen.getByTestId("trilho-dias-na-etapa");
+    expect(dias).toHaveTextContent("3 dias na etapa");
+    expect(screen.getByTestId("trilho-etapa-a")).not.toContainElement(dias);
+    expect(dias.closest("li")).toContainElement(screen.getByTestId("trilho-etapa-a"));
   });
 
   it("clicar em Ganho move pela mesma rota do arrasto", async () => {

@@ -9,6 +9,7 @@ import { useT } from "@/hooks/i18n/useT";
 import { useTasks } from "@/hooks/tasks/useTasks";
 import { resumoDasTarefas, type NovaTarefa, type Tarefa } from "@/lib/tarefas/tipos";
 import { Plus } from "@/lib/ui/icons";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Props {
   leadId: string;
@@ -100,9 +101,10 @@ export function TarefasDoNegocio({ leadId, contactId, podeEditar, aberto }: Prop
       {falhou ? (
         <p className="text-xs text-destructive">{t("Não foi possível carregar as tarefas.")}</p>
       ) : carregando ? (
-        <p className="text-xs text-text-muted" aria-busy>
-          {t("Carregando…")}
-        </p>
+        <div aria-busy="true" aria-label={t("Carregando…")} className="space-y-2">
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
       ) : tarefas.length === 0 ? (
         // Vazio CURTO, e não o quadro tracejado da tela de Tarefas: no painel
         // estreito do dossiê ele empurraria a linha do tempo para baixo da dobra.

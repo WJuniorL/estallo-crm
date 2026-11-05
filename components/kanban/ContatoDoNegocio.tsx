@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -84,7 +85,7 @@ function ContatoVinculado({
   lead: { pipeline_id: string; stage_id: string } | null;
 }) {
   const t = useT();
-  const { data, isLoading, isError } = useContact(contactId);
+  const { data, isLoading, isError, refetch, isFetching } = useContact(contactId);
   const contato = data?.data;
   const cadastro = useCamposPersonalizados("contact");
   const camposDoContato: CustomFieldDef[] = (cadastro.data?.definicoes ?? [])
@@ -98,10 +99,23 @@ function ContatoVinculado({
     }));
 
   if (isLoading) {
-    return <p className="text-xs text-text-muted">{t("Carregando…")}</p>;
+    return (
+      <div aria-busy="true" aria-label={t("Carregando…")} className="space-y-2">
+        <Skeleton className="h-8 w-1/2" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-3/4" />
+      </div>
+    );
   }
   if (isError || !contato) {
-    return <p className="text-xs text-text-muted">{t("Não consegui carregar o contato.")}</p>;
+    return (
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs text-text-muted">{t("Não consegui carregar o contato.")}</p>
+        <Button type="button" variant="outline" size="sm" disabled={isFetching} onClick={() => void refetch()}>
+          {t("Tentar de novo")}
+        </Button>
+      </div>
+    );
   }
 
   return (

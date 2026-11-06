@@ -4,6 +4,7 @@ import { createContext, useContext, useMemo, type ReactNode } from "react";
 
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { FlowGraph } from "@/lib/followup/graph-schema";
+import { previaDoTexto } from "@/lib/followup/previa-do-texto";
 import { ancestrais, CAMPOS_DE_SAIDA } from "@/lib/followup/variaveis-de-blocos";
 import { useT } from "@/hooks/i18n/useT";
 
@@ -95,4 +96,26 @@ export function inserirNoCursor(campo: HTMLTextAreaElement | null, texto: string
   const inicio = campo?.selectionStart ?? texto.length;
   const fim = campo?.selectionEnd ?? texto.length;
   return texto.slice(0, inicio) + marca + texto.slice(fim);
+}
+
+/**
+ * «Como vai sair»: o texto com uma amostra EXPLÍCITA (contato e saídas de exemplo). Não é dado de cliente nem de
+ * execução — o rótulo diz isso. Só aparece quando o texto tem variável: sem ela a prévia seria o próprio campo.
+ */
+export function PreviaDoTexto({ texto }: { texto: string }) {
+  const t = useT();
+  const { grafo, noId } = useContext(Contexto);
+  const previa = useMemo(() => previaDoTexto(texto, grafo, noId), [texto, grafo, noId]);
+  if (!/\{\{[^}]+\}\}/.test(texto)) return null;
+  return (
+    <div className="rounded-sm border border-dashed border-border p-2 text-xs" data-testid="previa-do-texto">
+      <p className="mb-1 font-medium text-text-muted">{t("Como vai sair (exemplo simulado)")}</p>
+      <p className="whitespace-pre-wrap">{previa.texto}</p>
+      {previa.sem_valor.length > 0 && (
+        <p className="mt-1 text-warning-fg" data-testid="previa-sem-valor">
+          {t("Ficaria sem valor com este exemplo:")} {previa.sem_valor.join(", ")}
+        </p>
+      )}
+    </div>
+  );
 }

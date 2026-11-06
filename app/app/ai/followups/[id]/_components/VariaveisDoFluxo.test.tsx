@@ -1,3 +1,4 @@
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { flowGraphSchema } from "@/lib/followup/graph-schema";
@@ -46,5 +47,20 @@ describe("inserirNoCursor", () => {
     expect(inserirNoCursor(campo, "Oi !", "{{nome}}")).toBe("Oi {{nome}}!");
     expect(inserirNoCursor({ selectionStart: 0, selectionEnd: 2 } as HTMLTextAreaElement, "Oi x", "{{nome}}")).toBe("{{nome}} x");
     expect(inserirNoCursor(null, "Oi", " {{nome}}")).toBe("Oi {{nome}}");
+  });
+});
+
+describe("PreviaDoTexto", () => {
+  it("mostra o texto com a amostra, rotulada como exemplo, e avisa a variável sem valor", async () => {
+    const { PreviaDoTexto } = await import("./VariaveisDoFluxo");
+    render(<PreviaDoTexto texto="Oi {{primeiro_nome}} {{apelido}}!" />);
+    expect(screen.getByTestId("previa-do-texto")).toHaveTextContent("Como vai sair (exemplo simulado)");
+    expect(screen.getByTestId("previa-do-texto")).toHaveTextContent("Oi Maria!");
+    expect(screen.getByTestId("previa-sem-valor")).toHaveTextContent("{{apelido}}");
+  });
+  it("sem variável no texto, não aparece", async () => {
+    const { PreviaDoTexto } = await import("./VariaveisDoFluxo");
+    render(<PreviaDoTexto texto="Oi!" />);
+    expect(screen.queryByTestId("previa-do-texto")).toBeNull();
   });
 });

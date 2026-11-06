@@ -20,7 +20,7 @@ import { useModelosAprovadosDoFluxo } from "@/hooks/followup/useModelosAprovados
 import { useT } from "@/hooks/i18n/useT";
 
 import { MensagensForm } from "./MensagensForm";
-import { InserirVariavel, inserirNoCursor } from "../VariaveisDoFluxo";
+import { InserirVariavel, inserirNoCursor, PreviaDoTexto } from "../VariaveisDoFluxo";
 import type { ConfigOf } from "./shared";
 
 /**
@@ -214,6 +214,7 @@ export function ActionForm({
               commit({ mode, ...fields, body: novo });
             }}
           />
+          <PreviaDoTexto texto={body} />
           <p className="text-xs text-text-muted">
             {t("Sai exatamente assim, sem IA. No laço,")} {t("{{volta}}")} {t("e")} {t("{{voltas}}")} {t("viram o número da volta.")}
           </p>

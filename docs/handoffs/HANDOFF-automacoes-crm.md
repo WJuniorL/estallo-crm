@@ -935,3 +935,12 @@ Capturas pela tela da fase 2 (criar fluxo e retenção do diário):
 - **Fase 4, recorte 2:** `validateFlowForPublish` recusa `{{nodes.<bloco>.<campo>}}` quando o campo (1º trecho) não está na saída DECLARADA do tipo do bloco citado (`declaredNodeOutputSchema`), com a lista dos que existem (`variavel_de_bloco_campo_inexistente`). Provas: 2 casos novos em `variaveis-de-blocos.test.ts` (80 testes verdes nos 3 arquivos de publicação/contrato) e contraprova (desligar a checagem derruba o caso novo).
 - **NÃO FEITO da Fase 4:** seletor/arraste, prévia do valor resolvido, nó «Mapear dados», validação de tipos, distinção contrato × exemplo × valor real.
 - **NÃO MEDIDO:** tela do navegador; que o motor 1 aceite campos aninhados além do 1º trecho (só o 1º é validado).
+
+### 2026-11-06 (2) — Fase 4, recorte 3: prévia «Como vai sair» (sem deploy)
+
+- **Já existia (não refeito):** o seletor «Inserir variável» (`InserirVariavel`) com contato e saídas dos blocos anteriores, e a validação de bloco inexistente/não anterior/campo inexistente na publicação.
+- **Feito:** `lib/followup/previa-do-texto.ts` (pura: amostra fixa de contato e saídas de exemplo só dos blocos ancestrais, mesma régua do envio — variável sem valor some com o espaço vizinho e é listada) e `PreviaDoTexto` em `VariaveisDoFluxo.tsx`, mostrada sob o texto fixo (`ActionForm`) e sob cada texto do bloco de mensagens (`MensagensForm`), rotulada «exemplo simulado»; só aparece se o texto tem variável.
+- **Provas:** `previa-do-texto.test.ts` (4), `VariaveisDoFluxo.test.tsx` (+2); 12 arquivos/128 testes de `app/app/ai/followups/[id]` verdes.
+- **Decisão de desenho:** a amostra é fixa e declarada, não um valor «escolhido» pela pessoa nem o de uma execução (hoje o contrato 0 não registra saídas). Escolher a amostra e usar o valor real da execução selecionada ficam para quando o contrato 1 estiver ligado.
+- **NÃO FEITO da Fase 4:** arraste para o campo, escolha da amostra, nó «Mapear dados», validação de tipos.
+- **NÃO MEDIDO:** a prévia no navegador (só jsdom).

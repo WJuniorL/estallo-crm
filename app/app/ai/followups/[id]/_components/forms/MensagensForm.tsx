@@ -23,7 +23,7 @@ import { TIPOS_DO_ENVIO } from "@/lib/followup/vocabulario";
 import { Plus, Trash } from "@/lib/ui/icons";
 import { useT } from "@/hooks/i18n/useT";
 
-import { InserirVariavel, inserirNoCursor } from "../VariaveisDoFluxo";
+import { InserirVariavel, inserirNoCursor, PreviaDoTexto } from "../VariaveisDoFluxo";
 import type { ConfigOf } from "./shared";
 
 type TipoDoItem = "text" | TipoDeAnexo;
@@ -209,6 +209,7 @@ export function MensagensForm({
                   )
                 }
               />
+              <PreviaDoTexto texto={r.body} />
             </div>
           ) : (
             <div className="space-y-2">

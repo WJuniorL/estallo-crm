@@ -2827,6 +2827,8 @@ export const DICIONARIO: Traducoes = {
   "tentativas": { es: "intentos" },
   "Esconder entrada e saída": { es: "Ocultar entrada y salida" },
   "Ver entrada e saída": { es: "Ver entrada y salida" },
+  "Como vai sair (exemplo simulado)": { es: "Cómo saldrá (ejemplo simulado)" },
+  "Ficaria sem valor com este exemplo:": { es: "Quedaría sin valor con este ejemplo:" },
   "Valor desta execução": { es: "Valor de esta ejecución" },
   "Configuração do bloco": { es: "Configuración del bloque" },
   "Forma de ver os dados": { es: "Forma de ver los datos" },

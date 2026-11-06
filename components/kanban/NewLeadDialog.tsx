@@ -638,7 +638,7 @@ function LinhaDoProdutoEscolhido({
           type="button"
           aria-label={`${t("Remover")} ${produto?.nome ?? ""}`}
           onClick={onRemover}
-          className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-text"
+          className="shrink-0 rounded-md p-0.5 text-muted-foreground hover:bg-muted hover:text-text"
         >
           <X size={14} aria-hidden />
         </button>

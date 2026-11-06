@@ -890,6 +890,11 @@ const HOSTS_DECLARADOS: Record<string, EntradaDeHost> = {
     motivo:
       "sufixo do JID do WhatsApp. Aparece em `lib/waha/resolve-contact-whatsapp-id.ts` desde antes desta régua existir, num `endsWith` que distingue `@lid`, `@c.us` e `@s.whatsapp.net` — é o protocolo do WhatsApp falando, não endereço que o produto chama nem palavra de interface. Trocar pela marca do revendedor faz o CRM deixar de reconhecer o identificador que o próprio WhatsApp manda.",
   },
+  "www.w3.org": {
+    categoria: "PROTOCOLO",
+    motivo:
+      "namespace XML do SVG inline (`xmlns=\"http://www.w3.org/2000/svg\"`) em `components/chat-suspenso/IconeWhatsapp.tsx`. É um identificador que o navegador reconhece, não um endereço: o código não faz requisição para ele e ele não aparece na tela.",
+  },
   // ── destino de chamada: o código fala com eles, sempre foi assim ──────────
   "api.openai.com": {
     categoria: "FORNECEDOR",
@@ -1273,6 +1278,8 @@ describe("catraca de host de terceiro no código que embarca", () => {
       // AUTORIDADE, porque não é painel, amostra nem plataforma: é o endereço
       // a que a lei manda o titular ir. País novo com lei revisada traz a sua.
       "www.cnpd.pt",
+      // Decisão escrita: namespace XML de SVG inline (`xmlns`), identificador de fio como o `s.whatsapp.net`.
+      "www.w3.org",
     ]);
   });
 

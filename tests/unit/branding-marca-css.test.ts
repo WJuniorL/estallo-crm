@@ -330,9 +330,10 @@ describe("guardas de mecanismo", () => {
       }
     }
     // Controle positivo: uma varredura que não achasse chamada nenhuma passaria
-    // no `toEqual([])` acima sem medir nada. Quatro é o que existe hoje — o
-    // layout raiz, o layout de `/app` e as duas telas de marca.
-    expect(chamadas.length, chamadas.join("\n")).toBeGreaterThanOrEqual(4);
+    // no `toEqual([])` acima sem medir nada. Três é o que existe hoje — o
+    // layout raiz e as duas telas de marca. O layout de `/app` deixou de aplicar a cor
+    // da organização: a identidade do produto é fixa (Estallo).
+    expect(chamadas.length, chamadas.join("\n")).toBeGreaterThanOrEqual(3);
     expect(forasteiros).toEqual([]);
   });
 

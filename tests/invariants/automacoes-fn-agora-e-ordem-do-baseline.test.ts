@@ -116,19 +116,11 @@ describe("baseline.sql - ordem dos blocos de automacao", () => {
     expect(pos("(migration 0703) ----")).toBeGreaterThan(varredura);
   });
 
-  it("so as 3 funcoes de divida do HEAD sao criadas depois da varredura", () => {
-    // DIVIDA DO HEAD (nao desta branch): estas 3 ja estavam depois da varredura
-    // no baseline do HEAD. Quando forem movidas, remova daqui.
-    const DIVIDA_DO_HEAD = [
-      "fn_crm_lead_products_recalcula_valor",
-      "fn_orgs_veem_todos_os_negocios",
-      "fn_orgs_veem_negocios_sem_dono",
-    ];
+  it("nenhuma funcao e criada depois da varredura (a divida do HEAD foi paga: 0660/0661 subiram)", () => {
     const re = /^[ \t]*create[ \t]+(?:or[ \t]+replace[ \t]+)?function[ \t]+(?:public\.)?(\w+)/gim;
     const depois = [...sql.matchAll(re)]
       .filter((m) => m.index > varredura)
       .map((m) => `${m[1]} (linha ${linha(m.index)})`);
-    expect(depois.map((d) => d.split(" ")[0]).sort()).toEqual([...new Set(DIVIDA_DO_HEAD)].sort());
-    expect(depois.length).toBe(3);
+    expect(depois).toEqual([]);
   });
 });

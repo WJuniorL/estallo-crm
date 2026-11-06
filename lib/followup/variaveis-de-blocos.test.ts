@@ -85,6 +85,18 @@ describe("ancestrais e validação na publicação", () => {
     expect(r).toMatchObject({ ok: false, errors: [{ code: "variavel_de_bloco_nao_anterior", node_id: "m1" }] });
   });
 
+  it("campo que o tipo do bloco não produz é recusado, listando os que existem", () => {
+    const r = validateFlowForPublish(base("Tarefa {{nodes.c.task_id}}"), {});
+    expect(r).toMatchObject({ ok: false, errors: [{ code: "variavel_de_bloco_campo_inexistente", node_id: "m1" }] });
+    const msg = (r as { errors: Array<{ message: string }> }).errors[0]!.message;
+    expect(msg).toContain('"task_id"');
+    expect(msg).toContain("branch_id"); // diz o que PODE ser citado
+  });
+
+  it("campo declarado, com caminho dentro dele, continua publicando", () => {
+    expect(validateFlowForPublish(base("Item {{nodes.c.checks.0.matched}}"), {})).toEqual({ ok: true });
+  });
+
   it("textosDoBloco cobre texto fixo, textos e legendas do bloco de mensagens", () => {
     const g = flowGraphSchema.parse({
       nodes: [

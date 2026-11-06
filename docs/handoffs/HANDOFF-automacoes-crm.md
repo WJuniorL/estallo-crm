@@ -927,3 +927,11 @@ Capturas pela tela da fase 2 (criar fluxo e retenção do diário):
 - `evidence/automacoes-fundacao/2026-10-18/retencao-desktop.png`
 - `evidence/automacoes-fundacao/2026-10-18/retencao-mobile-escuro.png`
 - `evidence/automacoes-fundacao/2026-10-18/retencao-mobile.png`
+
+### 2026-11-06 — CI do PR #2, correções e Fase 4, recorte 2: caminho impossível na publicação
+
+- **CI do PR #2 (rodada de `168d0f850`):** `invariants-majors` caiu a UM arquivo vermelho, `automacoes-sigkill-do-processo-node` (nos dois majors). Causa provável: o teste matava o wrapper `tsx/dist/cli.mjs`, e em Linux o filho dono da conexão sobrevivia e concluía a transação (`effects: 1`). Trocado por `node --import tsx` (`90b720e45`); passa localmente (Windows, onde já passava), **a confirmação é a CI**. Baseline: blocos 0660/0661 antes da varredura de anon, uma definição final por policy, invariante de ordem exige zero funções depois da varredura.
+- **Vermelhos que NÃO são desta frente:** `branding-contraste/rampa/tema-escuro` (a identidade «Estallo» trocou a paleta que a régua espera), `traducao-nao-defasa`, `i18n-espanhol-cobre-a-tela`; não investigados: `lgpd-texto-segue-o-pais`, `tailwind-tokens`, `rotulo-do-contato`, `dica-do-relatorio-de-dados`, `controle-decorativo`, evidências do Inbox. `e2e`: 5 de 6 partes estouraram os 28 min (capacidade da CI).
+- **Fase 4, recorte 2:** `validateFlowForPublish` recusa `{{nodes.<bloco>.<campo>}}` quando o campo (1º trecho) não está na saída DECLARADA do tipo do bloco citado (`declaredNodeOutputSchema`), com a lista dos que existem (`variavel_de_bloco_campo_inexistente`). Provas: 2 casos novos em `variaveis-de-blocos.test.ts` (80 testes verdes nos 3 arquivos de publicação/contrato) e contraprova (desligar a checagem derruba o caso novo).
+- **NÃO FEITO da Fase 4:** seletor/arraste, prévia do valor resolvido, nó «Mapear dados», validação de tipos, distinção contrato × exemplo × valor real.
+- **NÃO MEDIDO:** tela do navegador; que o motor 1 aceite campos aninhados além do 1º trecho (só o 1º é validado).

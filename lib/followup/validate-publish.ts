@@ -14,6 +14,7 @@ import { recusaDeMotivoForaDoVocabulario } from '../leads/motivo-da-perda';
 import { capabilitiesOf, transportaMensagem, type ChannelProvider } from '../channels/capabilities';
 import { nodeTypesForSurface } from './node-catalog';
 import { EXECUTION_CONTRACT_AVAILABLE } from './execution-contract';
+import { declaredNodeOutputSchema } from './node-output-contracts';
 import { ancestrais, extrairReferencias, textosDoBloco } from './variaveis-de-blocos';
 import { NODES_INTEGRATED_IN_EXECUTION_CONTRACT } from '@/lib/automation/execution-capability';
 
@@ -62,6 +63,7 @@ export const PUBLISH_ERROR_CODES = [
   // Variáveis de blocos anteriores (`{{nodes.<bloco>.<campo>}}`) que não podem ser resolvidas.
   'variavel_de_bloco_inexistente',
   'variavel_de_bloco_nao_anterior',
+  'variavel_de_bloco_campo_inexistente',
 ] as const;
 export type PublishErrorCode = (typeof PUBLISH_ERROR_CODES)[number];
 
@@ -739,6 +741,23 @@ function validarVariaveisDeBlocos(graph: FlowGraph, errors: PublishValidationErr
           code: 'variavel_de_bloco_nao_anterior',
           message: `A caixa "${no.label}" usa a variável ${ref.marca}, mas esse bloco não vem antes dela no caminho do fluxo.`,
         });
+      } else {
+        // Caminho impossível: o campo (primeiro trecho) tem de existir na saída DECLARADA do tipo do bloco citado.
+        const alvo = graph.nodes.find((n) => n.id === ref.no_id)!;
+        const declarados = Object.keys(
+          (declaredNodeOutputSchema(alvo.type)?.properties as Record<string, unknown> | undefined) ?? {},
+        );
+        const campo = ref.caminho.split('.')[0]!;
+        if (!declarados.includes(campo)) {
+          errors.push({
+            node_id: no.id,
+            code: 'variavel_de_bloco_campo_inexistente',
+            message:
+              declarados.length === 0
+                ? `A caixa "${no.label}" usa a variável ${ref.marca}, mas o bloco "${alvo.label}" não produz dados para citar.`
+                : `A caixa "${no.label}" usa a variável ${ref.marca}, mas o bloco "${alvo.label}" não produz o campo "${campo}". Campos disponíveis: ${declarados.join(', ')}.`,
+          });
+        }
       }
     }
   }

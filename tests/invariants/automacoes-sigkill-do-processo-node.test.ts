@@ -338,7 +338,9 @@ const sendCounts = async (run: string) =>
 import { spawn, type ChildProcess } from "node:child_process";
 import path from "node:path";
 
-const TSX = path.resolve("node_modules/tsx/dist/cli.mjs");
+// `node --import tsx` e NAO o `tsx/dist/cli.mjs`: o cli e um wrapper que cria um processo filho, e SIGKILL no wrapper
+// nao chega ao filho (que e quem tem a conexao). Em Linux o filho sobrevivia e concluia a transacao.
+const TSX_IMPORT = ["--import", "tsx"];
 const CHILD = path.resolve("tests/invariants/_sigkill-child-completesend.ts");
 const APP = "sigkill-child";
 
@@ -356,7 +358,7 @@ describe("SIGKILL do processo Node durante o completeSend", () => {
     ponto: "meio-da-transacao" | "commit",
     env: Record<string, string>,
   ): Promise<{ child: ChildProcess; stdout: () => string; exited: Promise<string> }> {
-    const child = spawn(process.execPath, [TSX, CHILD], {
+    const child = spawn(process.execPath, [...TSX_IMPORT, CHILD], {
       env: {
         ...process.env,
         ...env,
@@ -461,7 +463,7 @@ describe("controle positivo do filho", () => {
   it("sem trigger e sem kill, o filho conclui (DONE) — o teste de SIGKILL mede algo que acontece", async () => {
     const { f, jobId, claim, accept } = await envioEnfileirado();
     await accept();
-    const child = spawn(process.execPath, [TSX, CHILD], {
+    const child = spawn(process.execPath, [...TSX_IMPORT, CHILD], {
       env: {
         ...process.env,
         DB_PORT: String(process.env.TEST_DB_PORT ?? 54329),

@@ -459,7 +459,14 @@ export function ExecucoesDoFluxo({
                     ) : (
                       <ol className="space-y-4">
                         {passosDoNo.map((p) => (
-                          <Passo key={p.step_id} passo={p} verDados={exec.pode_ver_dados} ramo={null} abertoInicial />
+                          <Passo
+                            key={p.step_id}
+                            passo={p}
+                            verDados={exec.pode_ver_dados}
+                            ramo={null}
+                            abertoInicial
+                            configuracao={exec.grafo?.nodes.find((n) => n.id === noId)?.config}
+                          />
                         ))}
                       </ol>
                     )}

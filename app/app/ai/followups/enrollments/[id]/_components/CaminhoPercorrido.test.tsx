@@ -55,7 +55,7 @@ describe("CaminhoPercorrido", () => {
     expect(screen.queryByText("Ver entrada e saída")).toBeNull();
     rerender(<CaminhoPercorrido passos={[comDados]} nos={nos} arestas={arestas} verDados />);
     await userEvent.click(screen.getByText("Ver entrada e saída"));
-    expect(screen.getByText(/"ok": true/)).toBeInTheDocument();
+    expect(screen.getAllByTestId("dados-arvore")[1]).toHaveTextContent(/ok: true/);
   });
 
   it("execução anterior ao diário diz isso, sem inventar caminho", () => {
@@ -82,12 +82,31 @@ describe("CaminhoPercorrido", () => {
     expect(botoes[0]).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByTestId("caminho-erro")).toHaveTextContent("timeout");
     await userEvent.click(screen.getByText("Ver entrada e saída"));
-    expect(screen.getByText(/"vez": 1/)).toBeInTheDocument();
+    expect(screen.getAllByTestId("dados-arvore")[0]).toHaveTextContent(/vez: 1/);
   });
 
   it("uma tentativa só: sem seletor", () => {
     const p = passo("m1", { tentativas_detalhe: [{ numero: 1, status: "succeeded", started_at: null, completed_at: null, erro: null }] });
     render(<CaminhoPercorrido passos={[p]} nos={nos} arestas={arestas} verDados={false} />);
     expect(screen.queryAllByTestId("caminho-tentativa")).toHaveLength(0);
+  });
+});
+
+describe("DadosInspecionados — as três visões mostram o mesmo conteúdo", () => {
+  it("árvore, tabela e JSON; vazio, nulo e ausente têm nome próprio", async () => {
+    const { DadosInspecionados } = await import("./DadosInspecionados");
+    render(<DadosInspecionados valor={{ nome: "Ana", obs: "", fone: null, tags: [] }} origem="execucao" />);
+    expect(screen.getByTestId("dados-arvore")).toHaveTextContent(/nome: Ana/);
+    await userEvent.click(screen.getByTestId("dados-visao-tabela"));
+    expect(screen.getByTestId("dados-tabela")).toHaveTextContent(/obs\s*texto vazio/);
+    expect(screen.getByTestId("dados-tabela")).toHaveTextContent(/fone\s*nulo/);
+    expect(screen.getByTestId("dados-tabela")).toHaveTextContent(/tags\s*lista vazia/);
+    await userEvent.click(screen.getByTestId("dados-visao-json"));
+    expect(screen.getByTestId("dados-json")).toHaveTextContent(/"nome": "Ana"/);
+  });
+  it("valor ausente não vira vazio: o selo diz «sem valor»", async () => {
+    const { DadosInspecionados } = await import("./DadosInspecionados");
+    render(<DadosInspecionados valor={undefined} origem="configuracao" />);
+    expect(screen.getByTestId("dados-tipo-raiz")).toHaveTextContent("sem valor");
   });
 });

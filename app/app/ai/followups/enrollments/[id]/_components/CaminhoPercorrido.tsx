@@ -9,6 +9,7 @@ import { tipoDoNo } from "@/lib/followup/eventos-legiveis";
 import type { FlowGraph } from "@/lib/followup/graph-schema";
 import type { PassoDaExecucao } from "@/lib/followup/passos-da-execucao";
 import { useT } from "@/hooks/i18n/useT";
+import { DadosInspecionados } from "./DadosInspecionados";
 import { cn } from "@/lib/utils";
 
 /** O xyflow é pesado: só carrega quando a pessoa pede o desenho do fluxo. */
@@ -30,25 +31,20 @@ function duracao(ms: number | null): string | null {
   return `${Math.round(ms / 3_600_000)} h`;
 }
 
-function Json({ valor }: { valor: unknown }) {
-  return (
-    <pre className="max-h-56 overflow-auto rounded-sm bg-surface-muted p-2 text-[11px] leading-4">
-      {JSON.stringify(valor, null, 2)}
-    </pre>
-  );
-}
-
 export function Passo({
   passo,
   verDados,
   ramo,
   abertoInicial = false,
+  configuracao,
 }: {
   passo: PassoDaExecucao;
   verDados: boolean;
   ramo: string | null;
   /** Entrada e saída já abertas — o inspetor do editor mostra os dados de cara, sem exigir um clique a mais. */
   abertoInicial?: boolean;
+  /** Configuração do bloco na versão fixada da execução; quando vem, ganha a sua própria seção. */
+  configuracao?: unknown;
 }) {
   const t = useT();
   const [aberto, setAberto] = useState(abertoInicial);
@@ -127,14 +123,20 @@ export function Passo({
             {aberto ? t("Esconder entrada e saída") : t("Ver entrada e saída")}
           </button>
           {aberto && (
-            <div className="mt-1 grid gap-2 md:grid-cols-2">
+            <div className={cn("mt-1 grid gap-2", configuracao === undefined ? "md:grid-cols-2" : "md:grid-cols-3")}>
               <div>
                 <p className="mb-1 text-[11px] font-medium text-text-muted">{t("Entrada")}</p>
-                <Json valor={entrada} />
+                <DadosInspecionados valor={entrada} origem="execucao" />
               </div>
+              {configuracao !== undefined && (
+                <div>
+                  <p className="mb-1 text-[11px] font-medium text-text-muted">{t("Configuração")}</p>
+                  <DadosInspecionados valor={configuracao} origem="configuracao" />
+                </div>
+              )}
               <div>
                 <p className="mb-1 text-[11px] font-medium text-text-muted">{t("Saída")}</p>
-                <Json valor={saida} />
+                <DadosInspecionados valor={saida} origem="execucao" />
               </div>
             </div>
           )}

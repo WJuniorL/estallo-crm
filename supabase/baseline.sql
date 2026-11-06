@@ -5412,10 +5412,6 @@ grant execute on function public.fn_can_view_conversation(uuid, uuid)
   to authenticated, service_role;
 
 drop policy if exists "conversations_select" on public.conversations;
-create policy "conversations_select" on public.conversations
-  for select using (
-    public.fn_can_view_conversation(organization_id, assigned_to_user_id)
-  );
 
 drop policy if exists "conversations_agent_write" on public.conversations;
 drop policy if exists "conversations_agent_insert" on public.conversations;
@@ -5451,14 +5447,6 @@ drop policy if exists "messages_insert" on public.messages;
 drop policy if exists "messages_update" on public.messages;
 drop policy if exists "messages_delete" on public.messages;
 
-create policy "messages_select" on public.messages
-  for select using (
-    public.fn_is_platform_admin()
-    or exists (
-      select 1 from public.conversations c
-      where c.id = messages.conversation_id
-    )
-  );
 
 create policy "messages_insert" on public.messages
   for insert with check (
@@ -5601,10 +5589,6 @@ drop policy if exists "crm_leads_insert" on public.crm_leads;
 drop policy if exists "crm_leads_update" on public.crm_leads;
 drop policy if exists "crm_leads_delete" on public.crm_leads;
 
-create policy "crm_leads_select" on public.crm_leads
-  for select using (
-    public.fn_can_view_lead(organization_id, owner_user_id)
-  );
 
 create policy "crm_leads_insert" on public.crm_leads
   for insert with check (
@@ -6228,14 +6212,6 @@ drop policy if exists "tenant_isolation_crm_lead_activities_insert" on public.cr
 drop policy if exists "crm_lead_activities_select" on public.crm_lead_activities;
 drop policy if exists "crm_lead_activities_insert" on public.crm_lead_activities;
 
-create policy "crm_lead_activities_select" on public.crm_lead_activities
-  for select using (
-    exists (
-      select 1 from public.crm_leads l
-      where l.id = crm_lead_activities.lead_id
-        and public.fn_can_view_lead(l.organization_id, l.owner_user_id)
-    )
-  );
 
 create policy "crm_lead_activities_insert" on public.crm_lead_activities
   for insert with check (
@@ -6249,14 +6225,6 @@ drop policy if exists "crm_lead_links_insert" on public.crm_lead_links;
 drop policy if exists "crm_lead_links_update" on public.crm_lead_links;
 drop policy if exists "crm_lead_links_delete" on public.crm_lead_links;
 
-create policy "crm_lead_links_select" on public.crm_lead_links
-  for select using (
-    exists (
-      select 1 from public.crm_leads l
-      where l.id = crm_lead_links.lead_id
-        and public.fn_can_view_lead(l.organization_id, l.owner_user_id)
-    )
-  );
 
 create policy "crm_lead_links_insert" on public.crm_lead_links
   for insert with check (
@@ -7531,14 +7499,6 @@ create index if not exists idx_message_templates_org on message_templates (organ
 alter table message_templates enable row level security;
 
 drop policy if exists "message_templates_select" on message_templates;
-create policy "message_templates_select" on message_templates
-  for select using (
-    (
-      organization_id in (select fn_user_org_ids())
-      and (owner_user_id is null or owner_user_id = auth.uid())
-    )
-    or fn_is_platform_admin()
-  );
 
 drop policy if exists "message_templates_write" on message_templates;
 create policy "message_templates_write" on message_templates
@@ -53437,6 +53397,228 @@ revoke execute on function public.ultimo_status_de_saida(public.conversations) f
 grant execute on function public.ultimo_status_de_saida(public.conversations) to authenticated, service_role;
 
 
+-- ---- produtos no negócio (migration 0660) ----
+--
+-- Estallo: o card do lead escolhe produtos do catálogo; o preço vem do produto e
+-- o desconto (em centavos, por item) abate do total. `crm_leads.value_cents` é
+-- CALCULADO daqui por trigger — uma fonte só, seja quem for que mexa nos itens
+-- (tela, API ou MCP). Nome e preço são COPIADOS na hora de vincular: mudar o
+-- preço do catálogo depois não reescreve negócio já montado, e apagar o produto
+-- não apaga o histórico (`product_id` vira nulo, o item fica).
+
+create table if not exists public.crm_lead_products (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations(id) on delete cascade,
+  lead_id uuid not null references public.crm_leads(id) on delete cascade,
+  product_id uuid references public.catalog_products(id) on delete set null,
+  nome text not null,
+  quantidade integer not null default 1,
+  preco_unitario_cents bigint not null,
+  desconto_cents bigint not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint crm_lead_products_quantidade_positiva check (quantidade > 0),
+  constraint crm_lead_products_preco_nao_negativo check (preco_unitario_cents >= 0),
+  constraint crm_lead_products_desconto_nao_negativo check (desconto_cents >= 0)
+);
+
+create index if not exists crm_lead_products_lead_idx
+  on public.crm_lead_products (organization_id, lead_id);
+-- O filtro por produto no quadro do funil.
+create index if not exists crm_lead_products_produto_idx
+  on public.crm_lead_products (organization_id, product_id);
+
+alter table public.crm_lead_products enable row level security;
+
+-- Leitura: quem vê o negócio vê os itens dele (molde de crm_lead_links).
+drop policy if exists crm_lead_products_select on public.crm_lead_products;
+
+-- Escrita: `agent` para cima, e o negócio precisa ser da MESMA organização.
+drop policy if exists crm_lead_products_insert on public.crm_lead_products;
+create policy crm_lead_products_insert on public.crm_lead_products
+  for insert with check (
+    (select public.fn_is_platform_admin_full())
+    or ((organization_id in (select public.fn_user_org_ids()))
+        and public.fn_role_at_least(organization_id, 'agent')
+        and exists (
+          select 1 from public.crm_leads l
+          where l.id = crm_lead_products.lead_id
+            and l.organization_id = crm_lead_products.organization_id
+        ))
+  );
+
+drop policy if exists crm_lead_products_update on public.crm_lead_products;
+create policy crm_lead_products_update on public.crm_lead_products
+  for update using (
+    (select public.fn_is_platform_admin_full())
+    or ((organization_id in (select public.fn_user_org_ids()))
+        and public.fn_role_at_least(organization_id, 'agent'))
+  )
+  with check (
+    (select public.fn_is_platform_admin_full())
+    or ((organization_id in (select public.fn_user_org_ids()))
+        and public.fn_role_at_least(organization_id, 'agent'))
+  );
+
+drop policy if exists crm_lead_products_delete on public.crm_lead_products;
+create policy crm_lead_products_delete on public.crm_lead_products
+  for delete using (
+    (select public.fn_is_platform_admin_full())
+    or ((organization_id in (select public.fn_user_org_ids()))
+        and public.fn_role_at_least(organization_id, 'agent'))
+  );
+
+revoke all on public.crm_lead_products from anon;
+grant select, insert, update, delete on public.crm_lead_products to authenticated;
+grant all on public.crm_lead_products to service_role;
+
+drop trigger if exists trg_crm_lead_products_updated_at on public.crm_lead_products;
+create trigger trg_crm_lead_products_updated_at
+  before update on public.crm_lead_products
+  for each row execute function public.fn_set_updated_at();
+
+-- O valor do negócio = soma de (quantidade × preço − desconto), nunca negativa
+-- por item. Invoker de propósito: quem mexe no item precisa poder mexer no
+-- negócio, e a RLS de crm_leads continua valendo. Sem HTTP (anti-pattern 9).
+create or replace function public.fn_crm_lead_products_recalcula_valor()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+declare
+  v_lead uuid := coalesce(new.lead_id, old.lead_id);
+begin
+  update public.crm_leads l
+     set value_cents = coalesce((
+           select sum(greatest(p.quantidade * p.preco_unitario_cents - p.desconto_cents, 0))
+             from public.crm_lead_products p
+            where p.lead_id = v_lead
+         ), 0)
+   where l.id = v_lead;
+  -- Item trocado de negócio (não há rota para isso, mas o UPDATE permite):
+  -- o negócio antigo também se recalcula.
+  if tg_op = 'UPDATE' and old.lead_id is distinct from new.lead_id then
+    update public.crm_leads l
+       set value_cents = coalesce((
+             select sum(greatest(p.quantidade * p.preco_unitario_cents - p.desconto_cents, 0))
+               from public.crm_lead_products p
+              where p.lead_id = old.lead_id
+           ), 0)
+     where l.id = old.lead_id;
+  end if;
+  return null;
+end
+$$;
+
+revoke execute on function public.fn_crm_lead_products_recalcula_valor() from public, anon;
+grant execute on function public.fn_crm_lead_products_recalcula_valor() to authenticated, service_role;
+
+drop trigger if exists trg_crm_lead_products_recalcula_valor on public.crm_lead_products;
+create trigger trg_crm_lead_products_recalcula_valor
+  after insert or update or delete on public.crm_lead_products
+  for each row execute function public.fn_crm_lead_products_recalcula_valor();
+
+comment on table public.crm_lead_products is
+  'Produtos do negócio (Estallo, 0660): nome e preço copiados do catálogo; o valor do negócio é a soma dos itens menos o desconto.';
+
+notify pgrst, 'reload schema';
+
+-- ---- RLS de negócio sem fn_can_view_lead por linha (migration 0661) ----
+--
+-- Medido em produção (Estallo, 15/10/2026, plano gratuito do Supabase): a leitura
+-- do quadro de um funil com 1.135 negócios fazia `fn_can_view_lead` rodar uma vez
+-- POR LINHA — função SECURITY DEFINER com SET search_path (o planner não a
+-- inline-a), com 4 a 5 subconsultas cada. Em `crm_lead_products` ela rodava duas
+-- vezes por linha (a policy chamava a função E consultava `crm_leads`, cuja
+-- policy chama a mesma função): 3,2 s de média por lote de 100. O pico saturava o
+-- banco a ponto de o `/auth/v1/user` de todos os usuários pendurar.
+--
+-- O QUE NÃO MUDA: quem vê qual negócio. `fn_can_view_lead` decide, nesta ordem:
+--   1. admin de plataforma → vê
+--   2. sem papel na organização → não vê
+--   3. viewer, manager ou admin → vê
+--   4. dono do negócio → vê
+--   5. senão, pela `visibility_mode` da organização: 'all' → vê;
+--      'own_and_unassigned' (o padrão) → só o sem dono; outro valor → não vê.
+-- As funções abaixo devolvem CONJUNTOS de organizações para cada caso, sem
+-- depender da linha — então entram como `in (select ...)`, que o Postgres avalia
+-- uma vez por consulta (initplan) em vez de uma vez por linha. "Tem papel" é
+-- exatamente `fn_user_org_ids()` (vínculo não revogado ou suporte ativo), o
+-- mesmo universo em que `fn_user_role_in_org` devolve algo diferente de nulo.
+--
+-- `fn_can_view_lead` continua existindo: as policies de UPDATE/DELETE de
+-- `crm_leads` a chamam só nas linhas afetadas, que são poucas.
+
+create or replace function public.fn_orgs_veem_todos_os_negocios()
+returns setof uuid
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select o.id
+  from public.organizations o
+  where o.id in (select public.fn_user_org_ids())
+    and (
+      public.fn_user_role_in_org(o.id) in ('viewer', 'manager', 'admin')
+      or coalesce(o.settings->>'visibility_mode', 'own_and_unassigned') = 'all'
+    );
+$$;
+
+create or replace function public.fn_orgs_veem_negocios_sem_dono()
+returns setof uuid
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select o.id
+  from public.organizations o
+  where o.id in (select public.fn_user_org_ids())
+    and coalesce(o.settings->>'visibility_mode', 'own_and_unassigned') = 'own_and_unassigned';
+$$;
+
+revoke execute on function public.fn_orgs_veem_todos_os_negocios() from public, anon;
+grant execute on function public.fn_orgs_veem_todos_os_negocios() to authenticated, service_role;
+revoke execute on function public.fn_orgs_veem_negocios_sem_dono() from public, anon;
+grant execute on function public.fn_orgs_veem_negocios_sem_dono() to authenticated, service_role;
+
+drop policy if exists crm_leads_select on public.crm_leads;
+create policy crm_leads_select on public.crm_leads
+  for select
+  using (
+    (select public.fn_is_platform_admin())
+    or organization_id in (select public.fn_orgs_veem_todos_os_negocios())
+    or (
+      owner_user_id = (select auth.uid())
+      and organization_id in (select public.fn_user_org_ids())
+    )
+    or (
+      owner_user_id is null
+      and organization_id in (select public.fn_orgs_veem_negocios_sem_dono())
+    )
+  );
+
+-- As tabelas que herdam a visibilidade do negócio passam a perguntar a
+-- `crm_leads` — cuja policy acima já decide quem vê — em vez de chamar a função
+-- de novo por linha. O admin de plataforma entra pela policy de `crm_leads`.
+drop policy if exists crm_lead_products_select on public.crm_lead_products;
+create policy crm_lead_products_select on public.crm_lead_products
+  for select
+  using (exists (select 1 from public.crm_leads l where l.id = crm_lead_products.lead_id));
+
+drop policy if exists crm_lead_activities_select on public.crm_lead_activities;
+create policy crm_lead_activities_select on public.crm_lead_activities
+  for select
+  using (exists (select 1 from public.crm_leads l where l.id = crm_lead_activities.lead_id));
+
+drop policy if exists crm_lead_links_select on public.crm_lead_links;
+create policy crm_lead_links_select on public.crm_lead_links
+  for select
+  using (exists (select 1 from public.crm_leads l where l.id = crm_lead_links.lead_id));
+
+notify pgrst, 'reload schema';
+
 -- ---- VARREDURA anon: função nova nasce exposta em quem ATUALIZA (migration 0116) ----
 --
 -- ⚠️ DE PROPÓSITO, NENHUMA FUNÇÃO É CRIADA DEPOIS DESTE BLOCO. Apêndice que cria
@@ -54309,237 +54491,6 @@ create policy "user_orgs_update" on "public"."user_organizations" for update usi
 -- ---- grants da função nova (espelha o bloco da fn_is_platform_admin) ----
 revoke execute on function public.fn_is_platform_admin_full() from public, anon;
 grant execute on function public.fn_is_platform_admin_full() to authenticated, service_role;
-
--- ---- produtos no negócio (migration 0660) ----
---
--- Estallo: o card do lead escolhe produtos do catálogo; o preço vem do produto e
--- o desconto (em centavos, por item) abate do total. `crm_leads.value_cents` é
--- CALCULADO daqui por trigger — uma fonte só, seja quem for que mexa nos itens
--- (tela, API ou MCP). Nome e preço são COPIADOS na hora de vincular: mudar o
--- preço do catálogo depois não reescreve negócio já montado, e apagar o produto
--- não apaga o histórico (`product_id` vira nulo, o item fica).
-
-create table if not exists public.crm_lead_products (
-  id uuid primary key default gen_random_uuid(),
-  organization_id uuid not null references public.organizations(id) on delete cascade,
-  lead_id uuid not null references public.crm_leads(id) on delete cascade,
-  product_id uuid references public.catalog_products(id) on delete set null,
-  nome text not null,
-  quantidade integer not null default 1,
-  preco_unitario_cents bigint not null,
-  desconto_cents bigint not null default 0,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  constraint crm_lead_products_quantidade_positiva check (quantidade > 0),
-  constraint crm_lead_products_preco_nao_negativo check (preco_unitario_cents >= 0),
-  constraint crm_lead_products_desconto_nao_negativo check (desconto_cents >= 0)
-);
-
-create index if not exists crm_lead_products_lead_idx
-  on public.crm_lead_products (organization_id, lead_id);
--- O filtro por produto no quadro do funil.
-create index if not exists crm_lead_products_produto_idx
-  on public.crm_lead_products (organization_id, product_id);
-
-alter table public.crm_lead_products enable row level security;
-
--- Leitura: quem vê o negócio vê os itens dele (molde de crm_lead_links).
-drop policy if exists crm_lead_products_select on public.crm_lead_products;
-create policy crm_lead_products_select on public.crm_lead_products
-  for select using (
-    exists (
-      select 1 from public.crm_leads l
-      where l.id = crm_lead_products.lead_id
-        and public.fn_can_view_lead(l.organization_id, l.owner_user_id)
-    )
-    or (select public.fn_is_platform_admin())
-  );
-
--- Escrita: `agent` para cima, e o negócio precisa ser da MESMA organização.
-drop policy if exists crm_lead_products_insert on public.crm_lead_products;
-create policy crm_lead_products_insert on public.crm_lead_products
-  for insert with check (
-    (select public.fn_is_platform_admin_full())
-    or ((organization_id in (select public.fn_user_org_ids()))
-        and public.fn_role_at_least(organization_id, 'agent')
-        and exists (
-          select 1 from public.crm_leads l
-          where l.id = crm_lead_products.lead_id
-            and l.organization_id = crm_lead_products.organization_id
-        ))
-  );
-
-drop policy if exists crm_lead_products_update on public.crm_lead_products;
-create policy crm_lead_products_update on public.crm_lead_products
-  for update using (
-    (select public.fn_is_platform_admin_full())
-    or ((organization_id in (select public.fn_user_org_ids()))
-        and public.fn_role_at_least(organization_id, 'agent'))
-  )
-  with check (
-    (select public.fn_is_platform_admin_full())
-    or ((organization_id in (select public.fn_user_org_ids()))
-        and public.fn_role_at_least(organization_id, 'agent'))
-  );
-
-drop policy if exists crm_lead_products_delete on public.crm_lead_products;
-create policy crm_lead_products_delete on public.crm_lead_products
-  for delete using (
-    (select public.fn_is_platform_admin_full())
-    or ((organization_id in (select public.fn_user_org_ids()))
-        and public.fn_role_at_least(organization_id, 'agent'))
-  );
-
-revoke all on public.crm_lead_products from anon;
-grant select, insert, update, delete on public.crm_lead_products to authenticated;
-grant all on public.crm_lead_products to service_role;
-
-drop trigger if exists trg_crm_lead_products_updated_at on public.crm_lead_products;
-create trigger trg_crm_lead_products_updated_at
-  before update on public.crm_lead_products
-  for each row execute function public.fn_set_updated_at();
-
--- O valor do negócio = soma de (quantidade × preço − desconto), nunca negativa
--- por item. Invoker de propósito: quem mexe no item precisa poder mexer no
--- negócio, e a RLS de crm_leads continua valendo. Sem HTTP (anti-pattern 9).
-create or replace function public.fn_crm_lead_products_recalcula_valor()
-returns trigger
-language plpgsql
-set search_path = public
-as $$
-declare
-  v_lead uuid := coalesce(new.lead_id, old.lead_id);
-begin
-  update public.crm_leads l
-     set value_cents = coalesce((
-           select sum(greatest(p.quantidade * p.preco_unitario_cents - p.desconto_cents, 0))
-             from public.crm_lead_products p
-            where p.lead_id = v_lead
-         ), 0)
-   where l.id = v_lead;
-  -- Item trocado de negócio (não há rota para isso, mas o UPDATE permite):
-  -- o negócio antigo também se recalcula.
-  if tg_op = 'UPDATE' and old.lead_id is distinct from new.lead_id then
-    update public.crm_leads l
-       set value_cents = coalesce((
-             select sum(greatest(p.quantidade * p.preco_unitario_cents - p.desconto_cents, 0))
-               from public.crm_lead_products p
-              where p.lead_id = old.lead_id
-           ), 0)
-     where l.id = old.lead_id;
-  end if;
-  return null;
-end
-$$;
-
-revoke execute on function public.fn_crm_lead_products_recalcula_valor() from public, anon;
-grant execute on function public.fn_crm_lead_products_recalcula_valor() to authenticated, service_role;
-
-drop trigger if exists trg_crm_lead_products_recalcula_valor on public.crm_lead_products;
-create trigger trg_crm_lead_products_recalcula_valor
-  after insert or update or delete on public.crm_lead_products
-  for each row execute function public.fn_crm_lead_products_recalcula_valor();
-
-comment on table public.crm_lead_products is
-  'Produtos do negócio (Estallo, 0660): nome e preço copiados do catálogo; o valor do negócio é a soma dos itens menos o desconto.';
-
-notify pgrst, 'reload schema';
-
--- ---- RLS de negócio sem fn_can_view_lead por linha (migration 0661) ----
---
--- Medido em produção (Estallo, 15/10/2026, plano gratuito do Supabase): a leitura
--- do quadro de um funil com 1.135 negócios fazia `fn_can_view_lead` rodar uma vez
--- POR LINHA — função SECURITY DEFINER com SET search_path (o planner não a
--- inline-a), com 4 a 5 subconsultas cada. Em `crm_lead_products` ela rodava duas
--- vezes por linha (a policy chamava a função E consultava `crm_leads`, cuja
--- policy chama a mesma função): 3,2 s de média por lote de 100. O pico saturava o
--- banco a ponto de o `/auth/v1/user` de todos os usuários pendurar.
---
--- O QUE NÃO MUDA: quem vê qual negócio. `fn_can_view_lead` decide, nesta ordem:
---   1. admin de plataforma → vê
---   2. sem papel na organização → não vê
---   3. viewer, manager ou admin → vê
---   4. dono do negócio → vê
---   5. senão, pela `visibility_mode` da organização: 'all' → vê;
---      'own_and_unassigned' (o padrão) → só o sem dono; outro valor → não vê.
--- As funções abaixo devolvem CONJUNTOS de organizações para cada caso, sem
--- depender da linha — então entram como `in (select ...)`, que o Postgres avalia
--- uma vez por consulta (initplan) em vez de uma vez por linha. "Tem papel" é
--- exatamente `fn_user_org_ids()` (vínculo não revogado ou suporte ativo), o
--- mesmo universo em que `fn_user_role_in_org` devolve algo diferente de nulo.
---
--- `fn_can_view_lead` continua existindo: as policies de UPDATE/DELETE de
--- `crm_leads` a chamam só nas linhas afetadas, que são poucas.
-
-create or replace function public.fn_orgs_veem_todos_os_negocios()
-returns setof uuid
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select o.id
-  from public.organizations o
-  where o.id in (select public.fn_user_org_ids())
-    and (
-      public.fn_user_role_in_org(o.id) in ('viewer', 'manager', 'admin')
-      or coalesce(o.settings->>'visibility_mode', 'own_and_unassigned') = 'all'
-    );
-$$;
-
-create or replace function public.fn_orgs_veem_negocios_sem_dono()
-returns setof uuid
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select o.id
-  from public.organizations o
-  where o.id in (select public.fn_user_org_ids())
-    and coalesce(o.settings->>'visibility_mode', 'own_and_unassigned') = 'own_and_unassigned';
-$$;
-
-revoke execute on function public.fn_orgs_veem_todos_os_negocios() from public, anon;
-grant execute on function public.fn_orgs_veem_todos_os_negocios() to authenticated, service_role;
-revoke execute on function public.fn_orgs_veem_negocios_sem_dono() from public, anon;
-grant execute on function public.fn_orgs_veem_negocios_sem_dono() to authenticated, service_role;
-
-drop policy if exists crm_leads_select on public.crm_leads;
-create policy crm_leads_select on public.crm_leads
-  for select
-  using (
-    (select public.fn_is_platform_admin())
-    or organization_id in (select public.fn_orgs_veem_todos_os_negocios())
-    or (
-      owner_user_id = (select auth.uid())
-      and organization_id in (select public.fn_user_org_ids())
-    )
-    or (
-      owner_user_id is null
-      and organization_id in (select public.fn_orgs_veem_negocios_sem_dono())
-    )
-  );
-
--- As tabelas que herdam a visibilidade do negócio passam a perguntar a
--- `crm_leads` — cuja policy acima já decide quem vê — em vez de chamar a função
--- de novo por linha. O admin de plataforma entra pela policy de `crm_leads`.
-drop policy if exists crm_lead_products_select on public.crm_lead_products;
-create policy crm_lead_products_select on public.crm_lead_products
-  for select
-  using (exists (select 1 from public.crm_leads l where l.id = crm_lead_products.lead_id));
-
-drop policy if exists crm_lead_activities_select on public.crm_lead_activities;
-create policy crm_lead_activities_select on public.crm_lead_activities
-  for select
-  using (exists (select 1 from public.crm_leads l where l.id = crm_lead_activities.lead_id));
-
-drop policy if exists crm_lead_links_select on public.crm_lead_links;
-create policy crm_lead_links_select on public.crm_lead_links
-  for select
-  using (exists (select 1 from public.crm_leads l where l.id = crm_lead_links.lead_id));
-
-notify pgrst, 'reload schema';
 
 -- ---- travas do modo somente leitura do suporte, depois de toda tabela (migration 0274) ----
 --

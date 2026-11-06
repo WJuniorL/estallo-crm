@@ -11,6 +11,7 @@ import {
   tipoDoValor,
 } from "@/lib/followup/dados-para-inspecao";
 import { useT } from "@/hooks/i18n/useT";
+import { copyToClipboard } from "@/lib/clipboard";
 import { cn } from "@/lib/utils";
 
 type Visao = "arvore" | "tabela" | "json";
@@ -36,12 +37,10 @@ export function DadosInspecionados({
   const tipoRaiz = tipoDoValor(valor);
 
   const copiar = async () => {
-    try {
-      await navigator.clipboard.writeText(jsonParaCopiar(valor));
+    // Helper do projeto: funciona também fora de contexto seguro. Se falhar, o JSON segue visível para copiar à mão.
+    if (await copyToClipboard(jsonParaCopiar(valor))) {
       setCopiado(true);
       setTimeout(() => setCopiado(false), 1500);
-    } catch {
-      // Sem permissão de área de transferência: o JSON continua visível para copiar à mão.
     }
   };
 

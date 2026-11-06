@@ -91,7 +91,10 @@ describe("inbox — texto longo não empurra a coluna (#1802)", () => {
 
   it("régua 2: o fato da Memória do contato quebra em qualquer ponto, e não volta break-words", () => {
     const fonte = ler(PAINEL);
-    const linha = fonte.split("\n").find((l) => l.includes("f.headline"));
+    // O bloco do fato é o <details> inteiro: o formatador pode pôr o <summary> e o <p> em linhas separadas.
+    const inicio = fonte.indexOf("f.headline");
+    const fimDoBloco = inicio < 0 ? -1 : fonte.indexOf("</details>", inicio);
+    const linha = inicio < 0 || fimDoBloco < 0 ? undefined : fonte.slice(fonte.lastIndexOf("<details", inicio), fimDoBloco);
     expect(linha, `não achei o bloco de fatos em ${PAINEL}`).toBeDefined();
 
     const summary = linha!.match(/<summary[^>]*>/)?.[0] ?? "";

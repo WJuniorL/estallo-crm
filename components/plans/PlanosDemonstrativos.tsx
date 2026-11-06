@@ -54,6 +54,7 @@ export function PlanosDemonstrativos() {
             </ul>
             <Button
               disabled
+              title="Contratação em breve: os preços desta etapa são demonstrativos."
               className="mt-auto w-full"
               variant={plano.destaque ? "primary" : "secondary"}
             >

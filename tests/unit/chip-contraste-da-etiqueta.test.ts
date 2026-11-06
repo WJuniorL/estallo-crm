@@ -304,8 +304,9 @@ describe("o caminho único de render do chip", () => {
     const importadores: string[] = [];
     for (const arquivo of arquivosDaUi()) {
       const texto = readFileSync(join(raiz, arquivo), "utf8");
-      if (texto.includes("estiloDoChip")) importadores.push(arquivo);
+      if (texto.includes("estiloDoChip")) importadores.push(arquivo.replace(/\\/g, "/"));
     }
-    expect(importadores.sort()).toEqual(["components/tags/ChipDeEtiqueta.tsx"]);
+    // `StageColumn` pinta a pílula do NOME DA ETAPA com a mesma régua de contraste (cor de etapa, não de etiqueta).
+    expect(importadores.sort()).toEqual(["components/kanban/StageColumn.tsx", "components/tags/ChipDeEtiqueta.tsx"]);
   });
 });

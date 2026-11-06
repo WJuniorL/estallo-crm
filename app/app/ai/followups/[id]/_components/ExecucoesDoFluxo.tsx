@@ -42,6 +42,7 @@ import { blocosComEfeito } from "@/lib/followup/efeitos-do-reinicio";
 import { CANCELAVEL, PAUSAVEL, RETOMAVEL, VIVA } from "@/lib/followup/intervencao-possivel";
 import { motivoDaEspera } from "@/lib/followup/motivo-da-espera";
 import { cn } from "@/lib/utils";
+import { randomId } from "@/lib/random-id";
 
 import { Passo } from "../../enrollments/[id]/_components/CaminhoPercorrido";
 
@@ -326,7 +327,7 @@ export function ExecucoesDoFluxo({
                     title={reexecucaoViva ? t("Já existe uma reexecução em andamento.") : undefined}
                     data-testid="reexecutar-inicio"
                     onClick={() => {
-                      chaveDoReinicio.current = crypto.randomUUID();
+                      chaveDoReinicio.current = randomId();
                       setRodarPassoAPasso(false);
                       setConfirmaReiniciar(true);
                     }}

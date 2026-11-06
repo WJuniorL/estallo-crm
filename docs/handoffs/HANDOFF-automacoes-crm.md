@@ -911,3 +911,19 @@ Pedido do dono (fluxos da Prática Biomed: formulário de alunos e indicação p
 - **Provas:** `dados-para-inspecao.test.ts`, `CaminhoPercorrido.test.tsx` (+2 casos), `ExecucoesDoFluxo.test.tsx`; 19 arquivos/159 testes de `app/app/ai/followups` + lib verdes; typecheck e eslint limpos. `i18n-espanhol-cobre-a-tela` e `i18n-catalogo-do-menu` seguem vermelhos como antes (dívida conhecida, nenhum arquivo meu na lista).
 - **NÃO FEITO da Fase 4:** seletor de variáveis/arraste, prévia do valor resolvido, referências por identidade do nó, validação de tipos na publicação, nó «Mapear dados», distinção contrato declarado × exemplo simulado.
 - **NÃO MEDIDO:** nada no navegador; execuções de contrato 0 (todas em produção) não têm entrada/saída, então hoje o visualizador só mostra a configuração até o contrato 1 ser ligado.
+
+### Evidência visual da fase 2 (2026-10-18)
+
+Capturas pela tela da fase 2 (criar fluxo e retenção do diário):
+- `evidence/automacoes-fase2/2026-10-18/followup-6.1-01-list.png`
+- `evidence/automacoes-fase2/2026-10-18/followup-6.1-02-dialog-open.png`
+- `evidence/automacoes-fase2/2026-10-18/followup-6.1-03-name-typed.png`
+- `evidence/automacoes-fase2/2026-10-18/followup-6.1-04-flow-in-list.png`
+- `evidence/automacoes-fase2/2026-10-18/retencao-desktop-escuro.png`
+- `evidence/automacoes-fase2/2026-10-18/retencao-desktop.png`
+- `evidence/automacoes-fase2/2026-10-18/retencao-mobile-escuro.png`
+- `evidence/automacoes-fase2/2026-10-18/retencao-mobile.png`
+- `evidence/automacoes-fundacao/2026-10-18/retencao-desktop-escuro.png`
+- `evidence/automacoes-fundacao/2026-10-18/retencao-desktop.png`
+- `evidence/automacoes-fundacao/2026-10-18/retencao-mobile-escuro.png`
+- `evidence/automacoes-fundacao/2026-10-18/retencao-mobile.png`

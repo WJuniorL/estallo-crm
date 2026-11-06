@@ -3,6 +3,8 @@ import { marcaEhADoProduto } from "@/lib/branding";
 import { marcaDaSaida } from "@/lib/branding/saida";
 import { createClient } from "@/lib/supabase/server";
 import { IdiomaProvider } from "@/lib/i18n/IdiomaProvider";
+import { traduzir } from "@/lib/i18n/dicionario";
+import { idiomaDoVisitante } from "@/lib/i18n/idiomaAnonimo";
 
 /**
  * A casca das telas de acesso — login, cadastro, recuperação, MFA, confirmar acesso.
@@ -53,6 +55,8 @@ export default async function PublicLayout({ children }: { children: React.React
     data: { user },
   } = await supabase.auth.getUser();
   const locale = (user?.user_metadata?.locale as string | undefined) ?? null;
+  const idioma = await idiomaDoVisitante(locale);
+  const t = (texto: string) => traduzir(texto, idioma);
 
   return (
     <IdiomaProvider locale={locale}>
@@ -62,20 +66,21 @@ export default async function PublicLayout({ children }: { children: React.React
             <LogotipoDoProduto nome={marca.nome} className="h-12 w-auto self-start" />
             <div>
               <p className="mb-4 text-xs font-semibold tracking-widest text-[#8fd9f5] uppercase">
-                Sua operação, conectada
+                {t("Sua operação, conectada")}
               </p>
               <h1 className="text-3xl leading-tight font-semibold">
-                Mais tempo para vender.
+                {t("Mais tempo para vender.")}
                 <br />
-                Mais clareza para crescer.
+                {t("Mais clareza para crescer.")}
               </h1>
               <p className="mt-5 text-sm leading-relaxed text-[#c4cdd4]">
-                Atendimento, clientes e próximos passos no mesmo lugar. Sua equipe trabalha com
-                contexto, e cada conversa continua.
+                {t(
+                  "Atendimento, clientes e próximos passos no mesmo lugar. Sua equipe trabalha com contexto, e cada conversa continua.",
+                )}
               </p>
             </div>
             <p className="text-xs text-[#c4cdd4]">
-              Tecnologia de empresa grande, no tamanho da sua.
+              {t("Tecnologia de empresa grande, no tamanho da sua.")}
             </p>
           </aside>
           <div className="mx-auto w-full max-w-md space-y-6 p-6 md:p-10">

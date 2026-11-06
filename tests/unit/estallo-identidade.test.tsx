@@ -51,7 +51,7 @@ describe("identidade fixa do SaaS", () => {
 
 describe("planos demonstrativos", () => {
   it("informa os preços e que não há cobrança nem limites aplicados", () => {
-    const html = renderToStaticMarkup(<PlanosDemonstrativos />);
+    const html = renderToStaticMarkup(<PlanosDemonstrativos idioma="pt-BR" />);
     for (const plano of PLANOS_DEMONSTRATIVOS) expect(html).toContain(plano.nome);
     expect(html).toContain("Nenhuma cobrança será feita");
     expect(html).toContain("ainda não são aplicados");
@@ -60,7 +60,7 @@ describe("planos demonstrativos", () => {
     expect(html).toMatch(/R\$[^0-9]*397/);
   });
   it("não oferece checkout, seleção de plano ou link de pagamento", () => {
-    const html = renderToStaticMarkup(<PlanosDemonstrativos />);
+    const html = renderToStaticMarkup(<PlanosDemonstrativos idioma="pt-BR" />);
     const botoes = html.match(/<button[^>]*>/g) ?? [];
     expect(botoes).toHaveLength(3);
     for (const botao of botoes) expect(botao).toMatch(/disabled/);

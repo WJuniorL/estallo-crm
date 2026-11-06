@@ -759,15 +759,15 @@ export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
           </DialogHeader>
           <dl className="space-y-4 text-sm">
             {[
-              ["Todas", "Todas as conversas, inclusive as fechadas."],
-              ["Sem resposta", "Primeiro contato: ainda não recebeu nenhuma resposta."],
-              ["Em espera", "Já foi respondido e escreveu novamente. Aguarda sua resposta."],
-              ["Em aberto", "Você enviou uma mensagem e aguarda o contato responder."],
-              ["Fechadas", "Conversas com atendimento encerrado."],
+              [t("Todas"), t("Todas as conversas, inclusive as fechadas.")],
+              [t("Sem resposta"), t("Primeiro contato: ainda não recebeu nenhuma resposta.")],
+              [t("Em espera"), t("Já foi respondido e escreveu novamente. Aguarda sua resposta.")],
+              [t("Em aberto"), t("Você enviou uma mensagem e aguarda o contato responder.")],
+              [t("Fechadas"), t("Conversas com atendimento encerrado.")],
             ].map(([titulo, descricao]) => (
               <div key={titulo}>
-                <dt className="font-semibold">{t(titulo!)}</dt>
-                <dd className="mt-1 text-text-muted">{t(descricao!)}</dd>
+                <dt className="font-semibold">{titulo}</dt>
+                <dd className="mt-1 text-text-muted">{descricao}</dd>
               </div>
             ))}
           </dl>

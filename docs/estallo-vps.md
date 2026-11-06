@@ -137,6 +137,8 @@ python3 scripts/estallo-vps.py deploy --sha 1692ad9eb367b8cb9bfc39b79c0ca84cf9ab
 
 ## Deploy pelo GitHub Actions (caminho de destino)
 
+> **Migrations não vão pelo `entregar.sh` nem pela ação `deploy`.** Só o fluxo `agent` chama `migrate(previous,target)`, que recusa migration já aplicada que apareça como modificada (`M`). Quem entrega imagem local aplica as migrations novas à mão (`psql --single-transaction -v ON_ERROR_STOP=1`) e nunca edita uma já aplicada. Medido em 05/11/2026 (0712–0714 aplicadas assim, com autorização).
+
 **Estado medido em 05/11/2026:** a cobrança foi regularizada e o GitHub voltou a
 executar jobs (o `vigia-de-colisao` de 05/11 rodou os 8 passos; os runs de
 31/10 tinham sido recusados com zero passos). O que ainda falta para este

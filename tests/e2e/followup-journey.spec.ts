@@ -145,7 +145,7 @@ async function connectHandles(
   // modo estrito recusa. Quem arrasta de um nó desses diz de qual saída.
   const sourceSel = sourceHandleId
     ? `.react-flow__node[data-id="${sourceNodeId}"] .react-flow__handle.source[data-handleid="${sourceHandleId}"]`
-    : `.react-flow__node[data-id="${sourceNodeId}"] .react-flow__handle.source`;
+    : `.react-flow__node[data-id="${sourceNodeId}"] .react-flow__handle.source:not([data-handleid="on_error"])`;
   const source = page.locator(sourceSel).first();
   const target = page.locator(`.react-flow__node[data-id="${targetNodeId}"] .react-flow__handle.target`);
   const sBox = await source.boundingBox();

@@ -41,6 +41,8 @@ async function fixture() {
     slug: `presenca-${randomUUID()}`,
     display_name: "Agenda local",
     legal_name: "Agenda local",
+    // A Agenda nasce desligada no Estallo (settings.agenda_habilitada): a org desta spec a liga.
+    settings: { agenda_habilitada: true },
     onboarded_at: new Date().toISOString(),
   });
   orgs.push(org);

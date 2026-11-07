@@ -4,6 +4,7 @@ import { createServer } from "node:http";
 import { mkdirSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { test, expect, type Page } from "./helpers/test";
+import { abrirFichaDoContato } from "./helpers/ficha-do-contato";
 import { credenciaisSupabaseDeTeste } from "../../scripts/lib/env-de-teste";
 
 const credentials = credenciaisSupabaseDeTeste();
@@ -64,6 +65,8 @@ const PRAZO_DA_RECARGA = { timeout: 15_000 };
 async function abrirConversa(page: Page, conversation: string): Promise<void> {
   await page.goto(`/app/inbox/${conversation}`);
   await page.waitForURL(new RegExp(`/app/inbox\\?id=${conversation}`));
+  // A ficha do contato (demandas, memória) é gaveta abaixo da faixa 2xl: abre como a pessoa abriria.
+  await abrirFichaDoContato(page);
 }
 
 test("fechar canal preserva demanda, desfecho explícito e nova entrada volta à fila", async ({

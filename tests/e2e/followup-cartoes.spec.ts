@@ -128,7 +128,7 @@ async function moverNo(page: Page, nodeId: string, x: number, y: number): Promis
 async function ligar(page: Page, origem: string, destino: string, ramo?: string): Promise<void> {
   const seletor = ramo
     ? `.react-flow__node[data-id="${origem}"] .react-flow__handle.source[data-handleid="${ramo}"]`
-    : `.react-flow__node[data-id="${origem}"] .react-flow__handle.source`;
+    : `.react-flow__node[data-id="${origem}"] .react-flow__handle.source:not([data-handleid="on_error"])`;
   const source = page.locator(seletor).first();
   const target = page.locator(`.react-flow__node[data-id="${destino}"] .react-flow__handle.target`);
   const sBox = await source.boundingBox();

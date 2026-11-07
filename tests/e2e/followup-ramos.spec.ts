@@ -75,7 +75,7 @@ async function ligar(
 ): Promise<void> {
   const seletor = ramo
     ? `.react-flow__node[data-id="${origem}"] .react-flow__handle.source[data-handleid="${ramo}"]`
-    : `.react-flow__node[data-id="${origem}"] .react-flow__handle.source`;
+    : `.react-flow__node[data-id="${origem}"] .react-flow__handle.source:not([data-handleid="on_error"])`;
   const source = page.locator(seletor).first();
   const target = page.locator(`.react-flow__node[data-id="${destino}"] .react-flow__handle.target`);
   const sBox = await source.boundingBox();
@@ -216,7 +216,7 @@ test.describe("condição com várias regras — uma bolinha por regra", () => {
     await expect(page.getByTestId(`node-branch-${condicaoId}-else`)).toHaveText("Nenhuma delas");
 
     // Cada saída tem a SUA bolinha, e são bolinhas distintas — não uma redesenhada.
-    const bolinhas = page.locator(`.react-flow__node[data-id="${condicaoId}"] .react-flow__handle.source`);
+    const bolinhas = page.locator(`.react-flow__node[data-id="${condicaoId}"] .react-flow__handle.source:not([data-handleid="on_error"])`);
     await expect(bolinhas).toHaveCount(3);
     const yDasBolinhas = await bolinhas.evaluateAll((els) =>
       els.map((el) => Math.round(el.getBoundingClientRect().top)),

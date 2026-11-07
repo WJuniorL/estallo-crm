@@ -103,7 +103,7 @@ async function login(page: Page, email: string): Promise<void> {
  */
 async function connectHandles(page: Page, sourceNodeId: string, targetNodeId: string): Promise<void> {
   const TENTATIVAS = 4;
-  const source = page.locator(`.react-flow__node[data-id="${sourceNodeId}"] .react-flow__handle.source`);
+  const source = page.locator(`.react-flow__node[data-id="${sourceNodeId}"] .react-flow__handle.source:not([data-handleid="on_error"])`);
   const target = page.locator(`.react-flow__node[data-id="${targetNodeId}"] .react-flow__handle.target`);
   const antes = await page.locator(".react-flow__edge").count();
 

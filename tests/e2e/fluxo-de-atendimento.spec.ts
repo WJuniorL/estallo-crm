@@ -85,7 +85,7 @@ async function loginGerente(page: Page, creds: CredsDoNascimento): Promise<void>
 }
 
 async function conectar(page: Page, origem: string, destino: string): Promise<void> {
-  const fonte = page.locator(`.react-flow__node[data-id="${origem}"] .react-flow__handle.source`).first();
+  const fonte = page.locator(`.react-flow__node[data-id="${origem}"] .react-flow__handle.source:not([data-handleid="on_error"])`).first();
   const alvo = page.locator(`.react-flow__node[data-id="${destino}"] .react-flow__handle.target`);
   const a = await fonte.boundingBox();
   const b = await alvo.boundingBox();

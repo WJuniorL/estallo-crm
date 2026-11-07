@@ -83,6 +83,14 @@ const GATILHO_ESPERADO: Record<string, { condicao: string | null; efeito: string
       "tag nasce, nenhuma imagem sai, `stable` congela, e a descoberta é um cliente " +
       "rodando `update.sh` e não recebendo nada.",
   },
+  "deploy-vps.yml::deploy": {
+    condicao:
+      "github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')",
+    efeito:
+      "Este job manda a VPS trocar as imagens pelo SHA publicado. A condição só o liga depois de " +
+      "o publish-image terminar com sucesso num push na main (ou à mão, com SHA). Sem ela, uma " +
+      "publicação que falhou ainda dispararia o deploy.",
+  },
   "publish-image.yml::a-tag-veio-da-main": {
     condicao: null,
     efeito:

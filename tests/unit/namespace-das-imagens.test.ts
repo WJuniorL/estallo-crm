@@ -18,7 +18,7 @@ import {
  * ── Por que este arquivo existe ────────────────────────────────────────────
  *
  * `tests/shell/update-guard.test.sh` e `hostgator-setup-kit/test-validators.sh`
- * repetiam `ghcr.io/estallosolucoes` à mão em 31 lugares — fixtures E asserções.
+ * repetiam `ghcr.io/wjuniorl` à mão em 31 lugares — fixtures E asserções.
  * Isso amarrava a suíte a UM publicador: um fork que publica as próprias
  * imagens ficava vermelho em 4 casos sem ter quebrado nada, com a mensagem de
  * falha apontando para o valor "certo" do upstream. Derivar tudo de `IMG_NS`
@@ -138,7 +138,7 @@ const RECADO_AO_FORK =
  * `gravar_imagens` escrevia no `.env` do cliente as referências do FORK.
  *
  * A catraca não pegava por acidente de forma: ela procura a string contígua
- * `ghcr.io/estallosolucoes`, e a URL do token parte o valor em
+ * `ghcr.io/wjuniorl`, e a URL do token parte o valor em
  * `ghcr.io/token?scope=repository:melgarafael/`. Instrução que promete mais do
  * que o gate confere é pior que instrução nenhuma — quem a segue conclui que
  * terminou.
@@ -339,7 +339,7 @@ describe("catraca: ninguém mais repete o namespace", () => {
     ".env.hostgator.example",
     // FIXTURE de comentário REAL de PR, capturada para os instrumentos de triagem.
     // O literal aparece dentro do texto que um humano escreveu num PR
-    // (`ghcr.io/estallosolucoes/estallo-crm:1.29.0`, citado ao diagnosticar o pdf.js).
+    // (`ghcr.io/wjuniorl/estallo-crm:1.29.0`, citado ao diagnosticar o pdf.js).
     //
     // Entra aqui e não em `excluiDir` de propósito: `PERMITIDO` casa o caminho
     // relativo EXATO, então o perdão vale para ESTE arquivo e só para ele —

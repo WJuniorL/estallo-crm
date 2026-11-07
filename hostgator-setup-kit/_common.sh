@@ -1901,7 +1901,7 @@ ler_rodada_do_banco() {
 # `publish-image.yml` digam o mesmo. Se você é um fork, é lá que está a lista do
 # que trocar junto — e, desde 18/09/2026, o CI do SEU fork não cobra este valor:
 # a asserção só vale quando o dono do runner é o dono deste repositório.
-IMG_NS="ghcr.io/estallosolucoes"
+IMG_NS="ghcr.io/wjuniorl"
 IMG_APP="${IMG_NS}/estallo-crm"
 IMG_WORKER="${IMG_NS}/estallo-crm-worker"
 IMG_SCHEDULER="${IMG_NS}/estallo-crm-scheduler"
@@ -1921,7 +1921,7 @@ IMG_VOICE_AGENT="${IMG_NS}/estallo-crm-voice-agent"
 # alguém porque não deu para resolver um número de versão seria trocar um
 # problema de previsibilidade por um de disponibilidade.
 ultima_versao_publicada() {
-  local url="${1:-https://github.com/estallosolucoes/estallo-crm.git}" ref
+  local url="${1:-https://github.com/wjuniorl/estallo-crm.git}" ref
   command -v git >/dev/null 2>&1 || return 0
   # `grep -v -- -` descarta PRERELEASE (v1.11.0-rc1, v1.1.1-jmpo.1 — esta última
   # existe de verdade neste repo). O `--sort=-v:refname` do git põe o prerelease
@@ -1949,7 +1949,7 @@ ultima_versao_publicada() {
 # passe 5 da triagem.
 #
 # E o literal escapava da catraca por acidente: `namespace-das-imagens.test.ts`
-# procura a string contígua `ghcr.io/estallosolucoes`, e a URL do token a parte em
+# procura a string contígua `ghcr.io/wjuniorl`, e a URL do token a parte em
 # `ghcr.io/token?scope=repository:melgarafael/`.
 ghcr_status() {
   local img="$1" tag="$2" tok registry owner

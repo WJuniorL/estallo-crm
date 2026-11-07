@@ -241,7 +241,7 @@ def inspect_local_images(sha):
         if (data.get('Os') != 'linux' or data.get('Architecture') != 'amd64'
                 or labels.get('org.opencontainers.image.revision') != sha
                 or labels.get('org.opencontainers.image.source') !=
-                'https://github.com/estallosolucoes/estallo-crm'):
+                'https://github.com/wjuniorl/estallo-crm'):
             raise ValueError('Imagem local sem arquitetura ou procedência do commit autorizado')
         records[image] = data['Id']
     return records

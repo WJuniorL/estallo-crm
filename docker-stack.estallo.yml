@@ -23,7 +23,7 @@ x-deploy: &deploy
 x-dns: &dns [172.18.0.1]
 services:
   app:
-    image: ghcr.io/estallosolucoes/estallo-crm:${ESTALLO_IMAGE_TAG}
+    image: ghcr.io/wjuniorl/estallo-crm:${ESTALLO_IMAGE_TAG}
     dns: *dns
     env_file: /opt/stacks/estallo-crm/runtime.env
     environment:
@@ -61,7 +61,7 @@ services:
         traefik.http.routers.estallo-crm.service: estallo-crm
         traefik.http.services.estallo-crm.loadbalancer.server.port: "3000"
   worker:
-    image: ghcr.io/estallosolucoes/estallo-crm-worker:${ESTALLO_IMAGE_TAG}
+    image: ghcr.io/wjuniorl/estallo-crm-worker:${ESTALLO_IMAGE_TAG}
     dns: *dns
     env_file: /opt/stacks/estallo-crm/runtime.env
     environment:
@@ -80,7 +80,7 @@ services:
         limits: { cpus: "0.75", memory: 512M }
         reservations: { memory: 128M }
   scheduler:
-    image: ghcr.io/estallosolucoes/estallo-crm-scheduler:${ESTALLO_IMAGE_TAG}
+    image: ghcr.io/wjuniorl/estallo-crm-scheduler:${ESTALLO_IMAGE_TAG}
     dns: *dns
     env_file: /opt/stacks/estallo-crm/runtime.env
     networks: [internal]

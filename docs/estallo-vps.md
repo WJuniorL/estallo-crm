@@ -2,7 +2,7 @@
 
 Fork privado de [DeskcommCRM](https://github.com/melgarafael/DeskcommCRM), sob MIT.
 O copyright e a licença originais são preservados em `LICENSE`. O histórico upstream
-é mantido pelo remoto `upstream`; `origin` é `estallosolucoes/estallo-crm`.
+é mantido pelo remoto `upstream`; `origin` é `WJuniorL/estallo-crm`.
 
 ## Topologia
 
@@ -148,7 +148,7 @@ caminho valer:
    push na `main`; o último run é de 31/10, recusado pela cobrança. A primeira
    publicação de verdade é a prova de que o caminho funciona.
 2. **Os pacotes do GHCR continuam privados** (pedido anônimo de
-   `ghcr.io/estallosolucoes/estallo-crm{,-worker,-scheduler}` devolve 403), mas
+   `ghcr.io/wjuniorl/estallo-crm{,-worker,-scheduler}` devolve 403), mas
    **a VPS já tem `docker login ghcr.io`** — confirmado pelo proprietário em
    05/11/2026, com deploys anteriores feitos pelo registro. Se o pull falhar com
    `unauthorized`, o token de leitura expirou: refazer o login com um token só de
@@ -157,8 +157,8 @@ caminho valer:
 Para conferir sem confiar neste parágrafo:
 
 ```bash
-gh run list -R estallosolucoes/estallo-crm -w publish-image.yml --limit 3
-gh run list -R estallosolucoes/estallo-crm --limit 5   # jobs executando = cobrança ok
+gh run list -R WJuniorL/estallo-crm -w publish-image.yml --limit 3
+gh run list -R WJuniorL/estallo-crm --limit 5   # jobs executando = cobrança ok
 ```
 
 Quando os dois itens estiverem resolvidos: PR → merge na `main` →

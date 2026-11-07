@@ -71,7 +71,7 @@ class EstalloVpsTests(unittest.TestCase):
                               Config=dict(Labels={
                                   'org.opencontainers.image.revision': NEW,
                                   'org.opencontainers.image.source':
-                                  'https://github.com/estallosolucoes/estallo-crm'}))]).encode()
+                                  'https://github.com/wjuniorl/estallo-crm'}))]).encode()
 
     @patch.object(vps, 'image_namespace', return_value='registry.example/estallo')
     def test_transferred_images_are_checked_without_registry_pull(self, _namespace):
@@ -94,7 +94,7 @@ class EstalloVpsTests(unittest.TestCase):
     @patch.object(vps, 'image_namespace', return_value='registry.example/estallo')
     def test_transferred_images_refuse_wrong_platform_or_source(self, _namespace):
         for before, after in [(b'linux', b'windows'), (b'amd64', b'arm64'),
-                              (b'estallosolucoes/estallo-crm', b'other/project')]:
+                              (b'WJuniorL/estallo-crm', b'other/project')]:
             with self.subTest(replacement=after):
                 def wrong_image(args, **kwargs):
                     return self.local_image_response(args, **kwargs).replace(before, after)

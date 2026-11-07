@@ -35,7 +35,7 @@ import { carregaEtapasCitadas, nomesDasEtapas } from "@/lib/followup/etapas-cita
 import { leituraDoPlano, type TimingPlan } from "@/lib/followup/plano-de-tempo";
 import { flowGraphSchema } from "@/lib/followup/graph-schema";
 import { montarPassos, type PassoDaExecucao } from "@/lib/followup/passos-da-execucao";
-import { ROLE_RANK } from "@/lib/auth/types";
+import { roleAtLeast } from "@/lib/auth/types";
 import { createClient } from "@/lib/supabase/server";
 import { traduzir } from "@/lib/i18n/dicionario";
 
@@ -232,7 +232,7 @@ export async function GET(_req: NextRequest, ctx: RouteCtx): Promise<Response> {
     }));
 
   // O diário (contrato 1). A leitura é pela sessão da pessoa: a RLS das tabelas decide o que ela vê.
-  const podeVerDados = ROLE_RANK[org.role] >= ROLE_RANK.manager;
+  const podeVerDados = roleAtLeast(org.role, "manager");
   const { data: passosBrutos, error: passosErr } = await supabase
     .from("followup_execution_steps")
     .select("id, node_id, visit, status, branch_id, entered_at, completed_at")

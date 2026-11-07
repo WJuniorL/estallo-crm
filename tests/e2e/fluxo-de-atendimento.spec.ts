@@ -212,7 +212,7 @@ test("liga o módulo, cria um roteiro pela tela, o cliente responde pelo WhatsAp
       await dialogo.getByLabel("Nome").fill(NOME_DO_ROTEIRO);
       await dialogo.getByRole("button", { name: "Criar fluxo" }).click();
       await expect(dialogo).not.toBeVisible();
-      await page.locator("li", { hasText: NOME_DO_ROTEIRO }).getByRole("link").click();
+      await page.locator("li", { hasText: NOME_DO_ROTEIRO }).getByRole("link").first().click();
       await page.waitForURL(/\/app\/ai\/atendimento\/[0-9a-f-]+$/);
       await expect(page.locator(".react-flow")).toBeVisible();
 

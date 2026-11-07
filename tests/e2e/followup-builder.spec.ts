@@ -271,7 +271,7 @@ test.describe("followup flow builder — canvas visual (Task 6.2)", () => {
     await dialog.getByLabel("Nome").fill(flowName);
     await dialog.getByRole("button", { name: "Criar fluxo" }).click();
     await expect(dialog).not.toBeVisible();
-    await page.locator("li", { hasText: flowName }).getByRole("link").click();
+    await page.locator("li", { hasText: flowName }).getByRole("link").first().click();
     await page.waitForURL(/\/app\/ai\/followups\/[0-9a-f-]+$/);
     await expect(page.locator(".react-flow")).toBeVisible();
 
@@ -325,7 +325,7 @@ test.describe("followup flow builder — canvas visual (Task 6.2)", () => {
     await dialog.getByLabel("Nome").fill(flowName);
     await dialog.getByRole("button", { name: "Criar fluxo" }).click();
     await expect(dialog).not.toBeVisible();
-    await page.locator("li", { hasText: flowName }).getByRole("link").click();
+    await page.locator("li", { hasText: flowName }).getByRole("link").first().click();
     await page.waitForURL(/\/app\/ai\/followups\/[0-9a-f-]+$/);
     await expect(page.locator(".react-flow")).toBeVisible();
 
@@ -397,7 +397,7 @@ test.describe("followup flow builder — canvas visual (Task 6.2)", () => {
     await dialog.getByLabel("Nome").fill(flowName);
     await dialog.getByRole("button", { name: "Criar fluxo" }).click();
     await expect(dialog).not.toBeVisible();
-    await page.locator("li", { hasText: flowName }).getByRole("link").click();
+    await page.locator("li", { hasText: flowName }).getByRole("link").first().click();
     await page.waitForURL(/\/app\/ai\/followups\/[0-9a-f-]+$/);
     await expect(page.locator(".react-flow")).toBeVisible();
 
@@ -451,7 +451,7 @@ test.describe("followup flow builder — canvas visual (Task 6.2)", () => {
     await dialog.getByLabel("Nome").fill(flowName);
     await dialog.getByRole("button", { name: "Criar fluxo" }).click();
     await expect(dialog).not.toBeVisible();
-    await page.locator("li", { hasText: flowName }).getByRole("link").click();
+    await page.locator("li", { hasText: flowName }).getByRole("link").first().click();
     await page.waitForURL(/\/app\/ai\/followups\/([0-9a-f-]+)$/);
     const flowUrl = page.url();
     await expect(page.locator(".react-flow")).toBeVisible();
@@ -586,7 +586,7 @@ test.describe("followup flow builder — canvas visual (Task 6.2)", () => {
     await dialog.getByLabel("Nome").fill(flowName);
     await dialog.getByRole("button", { name: "Criar fluxo" }).click();
     await expect(dialog).not.toBeVisible();
-    await page.locator("li", { hasText: flowName }).getByRole("link").click();
+    await page.locator("li", { hasText: flowName }).getByRole("link").first().click();
     await page.waitForURL(/\/app\/ai\/followups\/[0-9a-f-]+$/);
     await expect(page.locator(".react-flow")).toBeVisible();
 
@@ -720,7 +720,7 @@ test.describe("followup flow builder — editor de condição de aresta / ai_cla
     await dialog.getByLabel("Nome").fill(flowName);
     await dialog.getByRole("button", { name: "Criar fluxo" }).click();
     await expect(dialog).not.toBeVisible();
-    await page.locator("li", { hasText: flowName }).getByRole("link").click();
+    await page.locator("li", { hasText: flowName }).getByRole("link").first().click();
     await page.waitForURL(/\/app\/ai\/followups\/[0-9a-f-]+$/);
     await expect(page.locator(".react-flow")).toBeVisible();
 

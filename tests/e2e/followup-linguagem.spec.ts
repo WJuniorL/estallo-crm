@@ -123,7 +123,7 @@ test.describe("construtor de follow-up — a tela não fala em código (W2-LINGU
     await dialogo.getByRole("button", { name: "Criar fluxo" }).click();
     await expect(dialogo).not.toBeVisible({ timeout: PRAZO_SOB_CARGA });
 
-    await page.locator("li", { hasText: nomeDoFluxo }).getByRole("link").click();
+    await page.locator("li", { hasText: nomeDoFluxo }).getByRole("link").first().click();
     await page.waitForURL(/\/app\/ai\/followups\/[0-9a-f-]+$/);
     const flowId = page.url().split("/").pop()!;
     await expect(page.locator(".react-flow")).toBeVisible({ timeout: PRAZO_SOB_CARGA });

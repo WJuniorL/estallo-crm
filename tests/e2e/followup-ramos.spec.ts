@@ -136,7 +136,7 @@ test.describe("condição com várias regras — uma bolinha por regra", () => {
     await expect(campoNome).toHaveValue(nomeDoFluxo);
     await dialogo.getByRole("button", { name: "Criar fluxo" }).click();
     await expect(dialogo).not.toBeVisible({ timeout: PRAZO });
-    await page.locator("li", { hasText: nomeDoFluxo }).getByRole("link").click();
+    await page.locator("li", { hasText: nomeDoFluxo }).getByRole("link").first().click();
     await page.waitForURL(/\/app\/ai\/followups\/[0-9a-f-]+$/, { timeout: PRAZO });
     const flowId = page.url().split("/").pop()!;
     await expect(page.locator(".react-flow")).toBeVisible({ timeout: PRAZO });

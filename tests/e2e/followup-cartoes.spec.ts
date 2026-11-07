@@ -67,7 +67,7 @@ async function novoFluxo(page: Page, nome: string): Promise<string> {
   await campoNome.fill(nome);
   await dialogo.getByRole("button", { name: "Criar fluxo" }).click();
   await expect(dialogo).not.toBeVisible({ timeout: PRAZO });
-  await page.locator("li", { hasText: nome }).getByRole("link").click();
+  await page.locator("li", { hasText: nome }).getByRole("link").first().click();
   await page.waitForURL(/\/app\/ai\/followups\/[0-9a-f-]+$/, { timeout: PRAZO });
   await expect(page.locator(".react-flow")).toBeVisible({ timeout: PRAZO });
   return page.url().split("/").pop()!;

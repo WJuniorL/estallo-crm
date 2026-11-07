@@ -979,7 +979,6 @@ jobs:
         qa-telas-descobertas-w4.spec.ts
         retorno-anti-morte.spec.ts
         webhooks.spec.ts
-        logo-moldura-no-tema-escuro.spec.ts
         historico-de-captacao.spec.ts
         inbox-quem-manda.spec.ts
         inbox-rotulo-de-origem.spec.ts
@@ -1263,6 +1262,13 @@ jobs:
       # não da spec — ligá-lo no `.env.e2e` de todas as partes mudaria o que as
       # outras specs medem. Roda local; o comando está no cabeçalho da spec.
       #
+      # `logo-moldura-no-tema-escuro` entrou aqui em 2026-11-07: ela mede o ENVIO de logo de marca
+      # própria (camadas instalação e organização) e a moldura clara dele no tema escuro. O Estallo CRM tem
+      # identidade FIXA (CLAUDE.md, "Identidade fixa do SaaS"): os resolvedores white-label ficam só como
+      # compatibilidade técnica, e a tela de envio não é caminho de produto. No CI ela reprovava no passo
+      # que espera o campo de logo hidratar (`[data-campo-de-logo="instalacao"][data-hidratado]`). Volta
+      # para uma `SPECS_PARTE_N` se o produto reabrir a personalização de marca.
+      #
       # `cobranca-stripe-teste` entrou aqui em 2026-09-30 (PR 3a da cobrança do
       # revendedor): exige uma CHAVE DE TESTE da Stripe (STRIPE_TEST_SECRET_KEY,
       # sk_test_/rk_test_; a de produção é recusada ao carregar o arquivo) e uma
@@ -1278,6 +1284,7 @@ jobs:
         jev-chave-real.spec.ts
         modelos-do-parceiro-editar-apagar.spec.ts
         cobranca-stripe-teste.spec.ts
+        logo-moldura-no-tema-escuro.spec.ts
     steps:
       # ── O RELÓGIO DESTA PARTE: ONDE O TETO DE 30 MIN COMEÇA A CONTAR ──────
       #

@@ -126,6 +126,9 @@ test.describe("webhooks & automações — fluxo completo", () => {
     try {
       // --- Step 1: login como manager; sidebar mostra "Webhooks" ---
       await login(page, creds.users.manager!.email);
+      // No Estallo os grupos Agente de IA, Canais e Análise começam FECHADOS (padrão do menu): abre o de Canais.
+      const grupoCanais = page.getByRole("button", { name: "Canais", exact: true });
+      if ((await grupoCanais.getAttribute("aria-expanded")) === "false") await grupoCanais.click();
       await expect(page.getByRole("link", { name: "Webhooks" })).toBeVisible();
       await page.getByRole("link", { name: "Webhooks" }).click();
       await page.waitForURL(/\/app\/webhooks/);

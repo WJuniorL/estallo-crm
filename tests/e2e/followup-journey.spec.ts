@@ -249,7 +249,7 @@ test.describe("followup — jornada completa (Task 8.3)", () => {
     await dialog.getByLabel("Nome").fill(flowName);
     await dialog.getByRole("button", { name: "Criar fluxo" }).click();
     await expect(dialog).not.toBeVisible();
-    await page.locator("li", { hasText: flowName }).getByRole("link").click();
+    await page.locator("li", { hasText: flowName }).getByRole("link").first().click();
     await page.waitForURL(/\/app\/ai\/followups\/([0-9a-f-]+)$/);
     const flowId = page.url().match(/\/app\/ai\/followups\/([0-9a-f-]+)$/)![1]!;
     await expect(page.locator(".react-flow")).toBeVisible();

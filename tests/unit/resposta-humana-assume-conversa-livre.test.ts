@@ -20,6 +20,16 @@ const rpc = vi.fn();
 /** O `settings` da organização, lido pela rota antes de assumir. */
 let settings: unknown = null;
 const from = vi.fn((tabela: string) => {
+  // Responder a conversa FECHADA reabre o atendimento (bc9013f0a): antes do envio a rota lê a revisão
+  // em `conversations` (status closed). Aqui a conversa está livre, então não há fechada: nenhuma linha.
+  if (tabela === "conversations") {
+    const cadeiaConversa = {
+      select: () => cadeiaConversa,
+      eq: () => cadeiaConversa,
+      maybeSingle: async () => ({ data: null, error: null }),
+    };
+    return cadeiaConversa;
+  }
   expect(tabela).toBe("organizations");
   const cadeia = {
     select: () => cadeia,

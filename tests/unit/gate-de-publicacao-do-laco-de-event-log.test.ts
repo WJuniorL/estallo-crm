@@ -145,7 +145,7 @@ describe("o gate de publicação das imagens de fundo (#604)", () => {
 
   it("entra por baixo da fachada `imagens-ok` — sem criar check obrigatório novo", () => {
     const fachada = blocoDoJob("imagens-ok");
-    expect(fachada).toMatch(new RegExp(`needs: \\[[^\\]]*${JOB_DE_FUNDO}`));
+    expect(fachada).toMatch(new RegExp(`needs:\\s*\\[[^\\]]*${JOB_DE_FUNDO}`));
     // O resultado entra por env (FUNDO) e é exigido `success` — a única porta
     // para `skipped` é PR que não alcança imagem nenhuma, e quem mede a matriz
     // inteira de desfechos é imagens-ok-so-aceita-pulo-declarado.test.ts.
@@ -171,7 +171,7 @@ describe("o gate de publicação das imagens de fundo (#604)", () => {
 
   it("o canal `stable` não anda sobre um worker/scheduler que não sobe", () => {
     const promover = blocoDoJob("promover-stable");
-    expect(promover).toMatch(new RegExp(`needs: \\[[^\\]]*${JOB_DE_FUNDO}`));
+    expect(promover).toMatch(new RegExp(`needs:\\s*\\[[^\\]]*${JOB_DE_FUNDO}`));
     expect(promover).toContain("if: github.event_name == 'push'");
   });
 });

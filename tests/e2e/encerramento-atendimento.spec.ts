@@ -341,7 +341,8 @@ test("fechar canal preserva demanda, desfecho explícito e nova entrada volta à
       .getByRole("button", { name: "Cerrar", exact: true })
       .click();
     await expect.poll(async () => (await db.from("conversations").select("status").eq("organization_id",org).eq("id",conversation).single()).data?.status).toBe("closed");
-    expect(hits.filter((url) => url.includes("sendText"))).toHaveLength(1);
+    // Fechar não envia nada: seguem os 2 envios do teste (a resposta inicial e a que reabriu a conversa fechada).
+    expect(hits.filter((url) => url.includes("sendText"))).toHaveLength(2);
 
   } finally {
     await context.close().catch(() => undefined);

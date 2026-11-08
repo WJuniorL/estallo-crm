@@ -437,8 +437,10 @@ test.describe("followup — jornada completa (Task 8.3)", () => {
       //    funciona ponta a ponta.
       // =========================================================================
       async function tickCron(): Promise<void> {
+        // Teto de 90 s: a rodada do worker leva segundos; sem teto, uma que trava gasta os 300 s do teste inteiro e não diz nada.
         const res = await page.request.post("/api/v1/cron/followup-flow-worker", {
           headers: { Authorization: `Bearer ${secret}` },
+          timeout: 90_000,
         });
         expect(res.ok()).toBeTruthy();
       }

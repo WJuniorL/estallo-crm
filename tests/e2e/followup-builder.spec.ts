@@ -247,7 +247,7 @@ test.describe("followup flow builder — canvas visual (Task 6.2)", () => {
 
     const card = page.locator("li", { hasText: flowName });
     await expect(card).toBeVisible();
-    await card.getByRole("link").click();
+    await card.getByRole("link").first().click();
 
     await page.waitForURL(/\/app\/ai\/followups\/[0-9a-f-]+$/);
     await expect(page.getByTestId("flow-builder-shell")).toBeVisible();
@@ -408,7 +408,7 @@ test.describe("followup flow builder — canvas visual (Task 6.2)", () => {
     await page.locator('[data-testid^="node-card-wait-"]').click();
     const panel = page.getByTestId("node-config-panel");
     await expect(panel).toBeVisible();
-    const durationInput = panel.getByLabel("Duração (minutos)");
+    const durationInput = panel.getByLabel("Esperar", { exact: true });
     await durationInput.fill("10");
     await durationInput.blur();
     // Subtitle on the card derives straight from committed config — proves the
@@ -484,8 +484,8 @@ test.describe("followup flow builder — canvas visual (Task 6.2)", () => {
     // 3. Configure wait=10min + action prompt_hint.
     await page.locator(`[data-testid="node-card-${waitId}"]`).click();
     const panel = page.getByTestId("node-config-panel");
-    await panel.getByLabel("Duração (minutos)").fill("10");
-    await panel.getByLabel("Duração (minutos)").blur();
+    await panel.getByLabel("Esperar", { exact: true }).fill("10");
+    await panel.getByLabel("Esperar", { exact: true }).blur();
     await expect(page.locator(`[data-testid="node-card-${waitId}"]`)).toContainText("10 min");
 
     await page.locator(`[data-testid="node-card-${actionId}"]`).click();
@@ -816,7 +816,7 @@ test.describe("followup flow builder — editor de condição de aresta / ai_cla
     await expect(page.locator(`[data-testid="node-error-${classifyId}"]`)).toBeVisible();
     // Exactly one node carries an error — proves the failure is scoped to the classify
     // node's edge coverage, not some unrelated structural problem in the graph.
-    await expect(page.locator('[data-testid^="node-error-"]')).toHaveCount(1);
+    await expect(page.locator('[data-testid^="node-error-"]:not([data-testid^="node-error-handle-"])')).toHaveCount(1);
     const classifyErrorText = await page
       .locator(`[data-testid="node-error-${classifyId}"]`)
       .textContent();

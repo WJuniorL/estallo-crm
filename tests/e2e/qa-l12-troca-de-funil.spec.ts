@@ -244,8 +244,8 @@ test.describe("Lote 12 — #936 a troca de funil", () => {
     await expect(card).toBeVisible({ timeout: 60_000 });
 
     await card.getByRole("button", { name: "Ações do lead" }).click();
-    await page.getByRole("menuitem", { name: "Levar para outro funil" }).click();
-    const janela = page.getByRole("dialog", { name: "Levar para outro funil" });
+    await page.getByRole("menuitem", { name: "Mover de funil" }).click();
+    const janela = page.getByRole("dialog", { name: "Mover de funil" });
     await expect(janela).toBeVisible();
 
     // A lista é a da organização SEM o funil atual — o atendente não é

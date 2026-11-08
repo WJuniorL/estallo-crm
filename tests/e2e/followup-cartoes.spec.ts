@@ -157,7 +157,7 @@ async function ligar(page: Page, origem: string, destino: string, ramo?: string)
 async function publicarEExigirSucesso(page: Page): Promise<void> {
   await page.getByTestId("publish-button").click();
   const toast = page.getByText("Fluxo publicado.");
-  const recusa = page.locator('[data-testid^="node-error-"]').first();
+  const recusa = page.locator('[data-testid^="node-error-"]:not([data-testid^="node-error-handle-"])').first();
   await expect
     .poll(
       async () =>

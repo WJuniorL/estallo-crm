@@ -9,6 +9,7 @@ import { createServer } from "node:http";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { test, expect, type Page, type TestInfo } from "./helpers/test";
+import { abrirFichaDoContato } from "./helpers/ficha-do-contato";
 import { credenciaisSupabaseDeTeste } from "../../scripts/lib/env-de-teste";
 import { escolherDiaDesenhado, irParaASemanaSeguinte } from "./helpers/agenda-semana-integra";
 import { enviarTextoFixoPendente } from "../../lib/followup/enviar-texto-fixo";
@@ -296,6 +297,7 @@ test("Inbox marca cliente/conversa; detalhe antigo confirma presença com evidê
   await inbound(f, p, "Preciso marcar uma consulta");
   await login(page, f.email);
   await page.goto(`/app/inbox/${p.conversation}`);
+  await abrirFichaDoContato(page); // «Marcar compromisso» mora na ficha do contato (gaveta abaixo de 1536 px)
   await page.getByRole("link", { name: "Marcar compromisso", exact: true }).click();
   const panel = page.getByTestId("painel-de-marcacao");
   await expect(panel).toBeVisible();
@@ -499,6 +501,7 @@ test("ir para a Agenda pelo menu apaga o cliente da conversa — \"Novo agendame
   await inbound(f, p, "Preciso marcar uma consulta");
   await login(page, f.email);
   await page.goto(`/app/inbox/${p.conversation}`);
+  await abrirFichaDoContato(page); // «Marcar compromisso» mora na ficha do contato (gaveta abaixo de 1536 px)
   await page.getByRole("link", { name: "Marcar compromisso", exact: true }).click();
   await expect(page.getByTestId("painel-de-marcacao")).toBeVisible();
   await expect(page.getByTestId("quem-sera-atendido")).toHaveAttribute("data-contact-id", p.contact);

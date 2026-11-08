@@ -262,7 +262,11 @@ test.describe("Lote 12 — painel do contato no Inbox", () => {
     const campo = page.getByLabel("Adicionar tag ao contato");
     await expect(campo).toBeVisible();
 
-    const chips = await page.getByRole("button", { name: /^\+ / }).allInnerTexts();
+    // No Estallo a sugestão é uma lista (role=option) que abre ao focar o campo, e não mais fileira de chips «+ tag».
+    await campo.click();
+    const lista = page.getByRole("listbox", { name: "Sugestões de tags" });
+    await expect(lista).toBeVisible();
+    const chips = (await lista.getByRole("option").allInnerTexts()).map((x) => `+ ${x.trim()}`);
     registra(`#946 · chips oferecidos = ${JSON.stringify(chips)}`);
     // "VIP", "vip " e "vip" viraram UM chip — e ele não é oferecido, porque o
     // contato desta conversa já tem "VIP".
@@ -282,7 +286,7 @@ test.describe("Lote 12 — painel do contato no Inbox", () => {
     const resposta = page.waitForResponse(
       (r) => r.url().includes(`/contacts/${contatoId}`) && r.request().method() === "PATCH",
     );
-    await page.getByRole("button", { name: "+ obra", exact: true }).click();
+    await lista.getByRole("option", { name: "obra", exact: true }).click();
     const r = await resposta;
     const { data: depois } = await admin.from("contacts").select("tags").eq("id", contatoId).single();
     registra(`#946 · PATCH = ${r.status()} · antes=${JSON.stringify(antes)} depois=${JSON.stringify(depois)}`);

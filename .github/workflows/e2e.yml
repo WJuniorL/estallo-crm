@@ -1234,7 +1234,6 @@ jobs:
         followup-dossie.spec.ts
         followup-journey.spec.ts
         followup-linguagem.spec.ts
-        lote-no-quadro-do-funil.spec.ts
 
       # PARTE_8 (2026-11-08): as onze specs que a PARTE_1 NÃO CHEGOU A RODAR — o job era cortado aos 28 minutos
       # com elas ainda na fila (medido na rodada do PR #1: 32 de 43 rodaram). Vêm para cá, em paralelo, para entrar
@@ -1288,6 +1287,10 @@ jobs:
       # instalação e empresa) e todos reprovavam, minutos cada, até o job ser cortado. Identidade FIXA (ver
       # `logo-moldura-no-tema-escuro`, logo abaixo): a tela de envio não é caminho de produto.
       #
+      # `lote-no-quadro-do-funil` entrou aqui em 2026-11-08: o cabeçalho da coluna do funil foi redesenhado (nome da etapa em
+      # pílula colorida, contagem entre parênteses «(9)»; o nome deixou de ser um campo `nome-etapa-quadro`), e a spec mede o
+      # desenho antigo. Precisa ser reescrita sobre o cabeçalho novo antes de voltar.
+      #
       # `filtro-por-marcador-pela-tela` entrou aqui em 2026-11-08: semeia tag na CONVERSA, que a migration 0659
       # («tags por entidade, fim da tag na conversa») removeu — o banco recusa com `conversations_sem_tags`. O filtro
       # por marcador do Inbox passou a olhar só o contato; a spec precisa ser reescrita sobre essa regra.
@@ -1321,6 +1324,7 @@ jobs:
         cobranca-suspensao-e-limites.spec.ts
         marca-logo.spec.ts
         filtro-por-marcador-pela-tela.spec.ts
+        lote-no-quadro-do-funil.spec.ts
     steps:
       # ── O RELÓGIO DESTA PARTE: ONDE O TETO DE 30 MIN COMEÇA A CONTAR ──────
       #

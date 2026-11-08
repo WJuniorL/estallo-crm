@@ -184,7 +184,7 @@ jobs:
       # uma rodada por parte.
       fail-fast: false
       matrix:
-        parte: [1, 2, 3, 4, 5, 6]
+        parte: [1, 2, 3, 4, 5, 6, 7]
     # ─────────────────────────────────────────────────────────────────────────
     # A COBERTURA DEIXA DE SER PROSA DIGITADA À MÃO.
     #
@@ -645,16 +645,14 @@ jobs:
         risk-radar.spec.ts invite-lifecycle.spec.ts system-update.spec.ts
         agente-novo-e-uso.spec.ts
         agente-papeis-operador.spec.ts
-        followup-linguagem.spec.ts followup-ramos.spec.ts
+        followup-ramos.spec.ts
         wizard-do-funcionario.spec.ts mfa-opcional.spec.ts inbox-responder-citando.spec.ts
         agenda-tela-do-produto.spec.ts
         notificacoes-diz-o-que-falta.spec.ts
-        cobranca-asaas.spec.ts
         relogio-http-cron-externo.spec.ts
         j20-elegibilidade-respondi.spec.ts j20-elegibilidade-followup.spec.ts
         j20-elegibilidade-atendimento-manual.spec.ts
         juntar-contatos-duplicados.spec.ts
-        lote-no-quadro-do-funil.spec.ts
         motivos-de-perda-do-funil.spec.ts
         importar-leads-planilha.spec.ts
         relatorio-de-atividades.spec.ts
@@ -754,7 +752,6 @@ jobs:
         escalacao-ciclo.spec.ts
         distribuicao-atendimento.spec.ts
         capacidades-do-agente.spec.ts
-        cobranca-revendedor.spec.ts
         escopo-de-funil-do-agente.spec.ts
         followup-tempo-adaptativo.spec.ts
         gatilho-de-etapa.spec.ts
@@ -1144,9 +1141,6 @@ jobs:
         agenda-portao-de-hidratacao.spec.ts
         pausa-de-reentrada.spec.ts
         funil-arquivado-volta-pela-tela.spec.ts
-        followup-builder.spec.ts
-        followup-journey.spec.ts
-        followup-dossie.spec.ts
         automacoes-retencao.spec.ts
         followup-queue.spec.ts
         fluxo-de-atendimento.spec.ts
@@ -1220,11 +1214,7 @@ jobs:
       # `desligada` a apaga e confere a ausência; a outra devolve o valor
       # anterior no `finally`). PREVISÃO, não medida: ~1 min + ~2,5 min.
       SPECS_PARTE_6: >-
-        agenda-presenca-recuperacao.spec.ts
         celular-cabe-na-tela.spec.ts
-        cobranca-desligada.spec.ts
-        cobranca-suspensao-e-limites.spec.ts
-        filtro-por-marcador-pela-tela.spec.ts
         fonte-de-captacao-assina-os-envios.spec.ts
         inbox-busca-e-filtros-dizem-a-verdade.spec.ts
         mapas-em-provedores.spec.ts
@@ -1236,6 +1226,19 @@ jobs:
         redes-sociais-volta-nao-desloga.spec.ts
         sons-dos-avisos.spec.ts
         suspensao-administrativa.spec.ts
+
+      # PARTE_7 (2026-11-08): as specs que o PR #1 deixou vermelhas nas partes 1, 5 e 6, reunidas para que
+      # essas três voltem a fechar dentro do teto de 28 minutos (cada spec vermelha gastava 3 a 5 min de
+      # timeout, e a parte era cortada ANTES do relatório final — sem o motivo de nenhuma falha). Aqui o
+      # relatório sai inteiro. Quando uma delas passar a verde de forma estável, volte-a para a parte de origem.
+      SPECS_PARTE_7: >-
+        agenda-presenca-recuperacao.spec.ts
+        filtro-por-marcador-pela-tela.spec.ts
+        followup-builder.spec.ts
+        followup-dossie.spec.ts
+        followup-journey.spec.ts
+        followup-linguagem.spec.ts
+        lote-no-quadro-do-funil.spec.ts
 
       # ─── FORA_DO_CI — as que ficaram fora, e o motivo de cada uma ───
       #
@@ -1262,6 +1265,13 @@ jobs:
       # não da spec — ligá-lo no `.env.e2e` de todas as partes mudaria o que as
       # outras specs medem. Roda local; o comando está no cabeçalho da spec.
       #
+      # `cobranca-revendedor`, `cobranca-suspensao-e-limites`, `cobranca-desligada` e `cobranca-asaas` entraram aqui em
+      # 2026-11-08: medem o módulo de COBRANÇA DO REVENDEDOR herdado do upstream (checklist de conexão, régua, plano,
+      # suspensão por atraso, Asaas). O Estallo CRM não é revenda: a cobrança é do SaaS, a tela /admin/cobranca é
+      # demonstrativa («Planos e assinatura», entrada de menu SEMPRE presente, sem limites aplicados — CLAUDE.md, Visão) e
+      # `cobranca-desligada` afirma o contrário (sem a chave, nada aparece). Voltam para uma `SPECS_PARTE_N` quando a
+      # cobrança real (Stripe) existir e a tela tiver o contrato que elas medem.
+      #
       # `logo-moldura-no-tema-escuro` entrou aqui em 2026-11-07: ela mede o ENVIO de logo de marca
       # própria (camadas instalação e organização) e a moldura clara dele no tema escuro. O Estallo CRM tem
       # identidade FIXA (CLAUDE.md, "Identidade fixa do SaaS"): os resolvedores white-label ficam só como
@@ -1285,6 +1295,10 @@ jobs:
         modelos-do-parceiro-editar-apagar.spec.ts
         cobranca-stripe-teste.spec.ts
         logo-moldura-no-tema-escuro.spec.ts
+        cobranca-revendedor.spec.ts
+        cobranca-asaas.spec.ts
+        cobranca-desligada.spec.ts
+        cobranca-suspensao-e-limites.spec.ts
     steps:
       # ── O RELÓGIO DESTA PARTE: ONDE O TETO DE 30 MIN COMEÇA A CONTAR ──────
       #
@@ -2059,6 +2073,7 @@ jobs:
             4) LISTA="$SPECS_PARTE_4" ;;
             5) LISTA="$SPECS_PARTE_5" ;;
             6) LISTA="$SPECS_PARTE_6" ;;
+            7) LISTA="$SPECS_PARTE_7" ;;
             *) echo "::error::parte ${{ matrix.parte }} sem lista"; exit 1 ;;
           esac
           # Falha alto se a variável vier vazia: sem isto, um typo no nome faria
@@ -2385,7 +2400,7 @@ jobs:
                       dentro { exit }
                     ' .github/workflows/e2e.yml | grep -oE "[a-z0-9-]+\.spec\.ts" | sort -u; }
           NO_DISCO=$(ls tests/e2e/*.spec.ts | wc -l | tr -d " ")
-          RODOU=$( { bloco SPECS_PARTE_1; bloco SPECS_PARTE_2; bloco SPECS_PARTE_3; bloco SPECS_PARTE_4; bloco SPECS_PARTE_5; bloco SPECS_PARTE_6; } | sort -u | wc -l | tr -d " ")
+          RODOU=$( { bloco SPECS_PARTE_1; bloco SPECS_PARTE_2; bloco SPECS_PARTE_3; bloco SPECS_PARTE_4; bloco SPECS_PARTE_5; bloco SPECS_PARTE_6; bloco SPECS_PARTE_7; } | sort -u | wc -l | tr -d " ")
           FORA_LISTA=$(bloco FORA_DO_CI)
           FORA=$(echo "$FORA_LISTA" | grep -c . || true)
           # E o recorte passa a ter CONTROLE, não só um piso.

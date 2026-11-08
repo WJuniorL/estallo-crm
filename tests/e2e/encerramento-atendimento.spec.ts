@@ -243,6 +243,7 @@ test("fechar canal preserva demanda, desfecho explícito e nova entrada volta à
     await expect(panel.getByText("Demanda vigente neste canal")).toBeVisible(PRAZO_DA_RECARGA);
     await page.goto("/app/inbox?filter=unassigned");
     await page.getByText("Voltei para novo atendimento", { exact: true }).first().click();
+    await abrirFichaDoContato(page); // a navegação fecha a gaveta da ficha
     await expect(
       page.getByTestId("inbox-demandas").getByText("Demanda vigente neste canal"),
     ).toBeVisible(PRAZO_DA_RECARGA);
@@ -323,6 +324,7 @@ test("fechar canal preserva demanda, desfecho explícito e nova entrada volta à
     const language = await db.auth.admin.updateUserById(user, { user_metadata: { locale: "es" } });
     if (language.error) throw language.error;
     await page.reload();
+    await abrirFichaDoContato(page); // o reload fecha a gaveta da ficha
     await expect(page.getByTestId("inbox-memoria")).toContainText("Historial cerrado — sin tareas pendientes", PRAZO_DA_RECARGA);
     await expect(page.getByTestId("inbox-memoria")).toContainText("Resuelto");
     await page.screenshot({ path: `${evidence}/task4-historico-es.png`, fullPage: true });

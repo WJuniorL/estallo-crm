@@ -184,7 +184,7 @@ jobs:
       # uma rodada por parte.
       fail-fast: false
       matrix:
-        parte: [1, 2, 3, 4, 5, 6, 7]
+        parte: [1, 2, 3, 4, 5, 6, 7, 8]
     # ─────────────────────────────────────────────────────────────────────────
     # A COBERTURA DEIXA DE SER PROSA DIGITADA À MÃO.
     #
@@ -631,31 +631,29 @@ jobs:
       SPECS_PARTE_1: >-
         conversoes-reprocessamento.spec.ts
         pre-go-live-whatsapp.spec.ts
-        smoke.spec.ts auth.spec.ts error-pages.spec.ts
+        auth.spec.ts error-pages.spec.ts
         icone-da-marca.spec.ts
-        password-recovery.spec.ts signup-journey.spec.ts
+        password-recovery.spec.ts
         primeiro-acesso-sem-organizacao.spec.ts
-        rbac-roles.spec.ts inbox-scope.spec.ts reset-password-mfa.spec.ts
-        degradacao-silenciosa.spec.ts vps-webhook-outbound-ssrf.spec.ts
-        kanban-owner-filter.spec.ts queue-assign.spec.ts
+        inbox-scope.spec.ts
+        degradacao-silenciosa.spec.ts
+        kanban-owner-filter.spec.ts
         conversa-vira-lead.spec.ts contato-salva-email.spec.ts
         contato-pessoal-sai-da-operacao.spec.ts
         confirmar-dado-do-contato.spec.ts
         credenciais-de-ia.spec.ts
-        risk-radar.spec.ts invite-lifecycle.spec.ts system-update.spec.ts
+        invite-lifecycle.spec.ts
         agente-novo-e-uso.spec.ts
         agente-papeis-operador.spec.ts
         followup-ramos.spec.ts
-        wizard-do-funcionario.spec.ts mfa-opcional.spec.ts inbox-responder-citando.spec.ts
+        mfa-opcional.spec.ts inbox-responder-citando.spec.ts
         agenda-tela-do-produto.spec.ts
         notificacoes-diz-o-que-falta.spec.ts
-        relogio-http-cron-externo.spec.ts
         j20-elegibilidade-respondi.spec.ts j20-elegibilidade-followup.spec.ts
         j20-elegibilidade-atendimento-manual.spec.ts
         juntar-contatos-duplicados.spec.ts
         motivos-de-perda-do-funil.spec.ts
         importar-leads-planilha.spec.ts
-        relatorio-de-atividades.spec.ts
         canal-mudo-avisa-na-central.spec.ts
         qa-l12-troca-de-funil.spec.ts
         qa-l12-agente-ia.spec.ts
@@ -1148,7 +1146,6 @@ jobs:
         i18n-espanhol-na-tela.spec.ts
         extensoes-declarativas.spec.ts
         extensoes-versao.spec.ts
-        marca-logo.spec.ts
         suporte-temporario.spec.ts
         olhar-telas-do-epico.spec.ts
         jev-decisoes-rapidas.spec.ts
@@ -1233,12 +1230,27 @@ jobs:
       # relatório sai inteiro. Quando uma delas passar a verde de forma estável, volte-a para a parte de origem.
       SPECS_PARTE_7: >-
         agenda-presenca-recuperacao.spec.ts
-        filtro-por-marcador-pela-tela.spec.ts
         followup-builder.spec.ts
         followup-dossie.spec.ts
         followup-journey.spec.ts
         followup-linguagem.spec.ts
         lote-no-quadro-do-funil.spec.ts
+
+      # PARTE_8 (2026-11-08): as onze specs que a PARTE_1 NÃO CHEGOU A RODAR — o job era cortado aos 28 minutos
+      # com elas ainda na fila (medido na rodada do PR #1: 32 de 43 rodaram). Vêm para cá, em paralelo, para entrar
+      # no gate em vez de sumir no corte.
+      SPECS_PARTE_8: >-
+        queue-assign.spec.ts
+        rbac-roles.spec.ts
+        relatorio-de-atividades.spec.ts
+        relogio-http-cron-externo.spec.ts
+        reset-password-mfa.spec.ts
+        risk-radar.spec.ts
+        signup-journey.spec.ts
+        smoke.spec.ts
+        system-update.spec.ts
+        vps-webhook-outbound-ssrf.spec.ts
+        wizard-do-funcionario.spec.ts
 
       # ─── FORA_DO_CI — as que ficaram fora, e o motivo de cada uma ───
       #
@@ -1272,6 +1284,14 @@ jobs:
       # `cobranca-desligada` afirma o contrário (sem a chave, nada aparece). Voltam para uma `SPECS_PARTE_N` quando a
       # cobrança real (Stripe) existir e a tela tiver o contrato que elas medem.
       #
+      # `marca-logo` entrou aqui em 2026-11-08: os sete casos medem o envio de logo de marca própria (camadas
+      # instalação e empresa) e todos reprovavam, minutos cada, até o job ser cortado. Identidade FIXA (ver
+      # `logo-moldura-no-tema-escuro`, logo abaixo): a tela de envio não é caminho de produto.
+      #
+      # `filtro-por-marcador-pela-tela` entrou aqui em 2026-11-08: semeia tag na CONVERSA, que a migration 0659
+      # («tags por entidade, fim da tag na conversa») removeu — o banco recusa com `conversations_sem_tags`. O filtro
+      # por marcador do Inbox passou a olhar só o contato; a spec precisa ser reescrita sobre essa regra.
+      #
       # `logo-moldura-no-tema-escuro` entrou aqui em 2026-11-07: ela mede o ENVIO de logo de marca
       # própria (camadas instalação e organização) e a moldura clara dele no tema escuro. O Estallo CRM tem
       # identidade FIXA (CLAUDE.md, "Identidade fixa do SaaS"): os resolvedores white-label ficam só como
@@ -1299,6 +1319,8 @@ jobs:
         cobranca-asaas.spec.ts
         cobranca-desligada.spec.ts
         cobranca-suspensao-e-limites.spec.ts
+        marca-logo.spec.ts
+        filtro-por-marcador-pela-tela.spec.ts
     steps:
       # ── O RELÓGIO DESTA PARTE: ONDE O TETO DE 30 MIN COMEÇA A CONTAR ──────
       #
@@ -2074,6 +2096,7 @@ jobs:
             5) LISTA="$SPECS_PARTE_5" ;;
             6) LISTA="$SPECS_PARTE_6" ;;
             7) LISTA="$SPECS_PARTE_7" ;;
+            8) LISTA="$SPECS_PARTE_8" ;;
             *) echo "::error::parte ${{ matrix.parte }} sem lista"; exit 1 ;;
           esac
           # Falha alto se a variável vier vazia: sem isto, um typo no nome faria
@@ -2400,7 +2423,7 @@ jobs:
                       dentro { exit }
                     ' .github/workflows/e2e.yml | grep -oE "[a-z0-9-]+\.spec\.ts" | sort -u; }
           NO_DISCO=$(ls tests/e2e/*.spec.ts | wc -l | tr -d " ")
-          RODOU=$( { bloco SPECS_PARTE_1; bloco SPECS_PARTE_2; bloco SPECS_PARTE_3; bloco SPECS_PARTE_4; bloco SPECS_PARTE_5; bloco SPECS_PARTE_6; bloco SPECS_PARTE_7; } | sort -u | wc -l | tr -d " ")
+          RODOU=$( { bloco SPECS_PARTE_1; bloco SPECS_PARTE_2; bloco SPECS_PARTE_3; bloco SPECS_PARTE_4; bloco SPECS_PARTE_5; bloco SPECS_PARTE_6; bloco SPECS_PARTE_7; bloco SPECS_PARTE_8; } | sort -u | wc -l | tr -d " ")
           FORA_LISTA=$(bloco FORA_DO_CI)
           FORA=$(echo "$FORA_LISTA" | grep -c . || true)
           # E o recorte passa a ter CONTROLE, não só um piso.

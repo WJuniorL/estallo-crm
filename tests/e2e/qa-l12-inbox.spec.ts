@@ -13,6 +13,7 @@
 import { randomUUID } from "node:crypto";
 
 import { test } from "./helpers/test";
+import { abrirFichaDoContato } from "./helpers/ficha-do-contato";
 import { randomInt } from "node:crypto";
 
 import {
@@ -194,6 +195,8 @@ test.describe("Lote 12 — painel do contato no Inbox", () => {
     const rr = await respostaResumo;
     registra(`#944 · GET /crm-summary = ${rr.status()}`);
 
+    // A ficha do contato é gaveta abaixo da faixa 2xl: abre como a pessoa abriria.
+    await abrirFichaDoContato(page);
     // ── #909: o rótulo do botão é o TÍTULO do diálogo que ele abre ─────────
     const botao = page.getByRole("button", { name: "Novo Lead" });
     await expect(botao).toBeVisible({ timeout: 30_000 });
@@ -249,6 +252,7 @@ test.describe("Lote 12 — painel do contato no Inbox", () => {
     await abreConversa(page, conversaId);
     await expect(page.getByText(`Cliente L12 ${SUFIXO}`).first()).toBeVisible({ timeout: 60_000 });
 
+    await abrirFichaDoContato(page);
     await page.getByRole("button", { name: "Tags do contato", exact: true }).click();
     const rt = await respostaTags;
     const corpoTags = await rt.text();
@@ -294,7 +298,9 @@ test.describe("Lote 12 — painel do contato no Inbox", () => {
    * que o marcador com vírgula, parêntese e chave chega inteiro. Pela rota da
    * lista, com a sessão do navegador — a mesma chamada que o Inbox faz.
    */
-  test("#1206 — o filtro por marcador acha a conversa pelas duas caixas", async ({ page }) => {
+  // ESTALLO: a tag deixou de existir na CONVERSA (migration 0659, «tags por entidade e fim da tag na conversa»; a
+  // coluna ganhou a constraint conversations_sem_tags). O caso semeia tags na conversa, que o banco agora recusa.
+  test.fixme("#1206 — o filtro por marcador acha a conversa pelas duas caixas", async ({ page }) => {
     const soNoContato = `l12-contato-${SUFIXO}`;
     const soNaConversa = `l12-conversa-${SUFIXO}`;
     const reservado = `l12, (reservado) {${SUFIXO}}`;

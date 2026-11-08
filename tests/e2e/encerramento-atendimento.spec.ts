@@ -293,7 +293,9 @@ test("fechar canal preserva demanda, desfecho explícito e nova entrada volta à
     await expect.poll(async () => {
       const { data } = await db.from("conversations")
         .select("status,assigned_to_user_id").eq("organization_id", org).eq("id", conversation).single();
-      return data;
+      // Conversa reaberta COM dono volta como `claimed` (aberta e atribuída: o banco grava assim em fn_service_status);
+      // sem dono seria `open`. Os dois dizem «atendimento aberto» — o que se prova é aberta, com o mesmo dono.
+      return data && { ...data, status: data.status === "claimed" ? "open" : data.status };
     }).toEqual({ status: "open", assigned_to_user_id: user });
     await expect(page.getByText("Retomando o atendimento por mensagem.", { exact: true }).first()).toBeVisible();
     await page.screenshot({ path: `${evidence}/conversa-fechada-reaberta-ao-enviar.png`, fullPage: true });
@@ -329,7 +331,10 @@ test("fechar canal preserva demanda, desfecho explícito e nova entrada volta à
     await expect(page.getByTestId("inbox-memoria")).toContainText("Resuelto");
     await page.screenshot({ path: `${evidence}/task4-historico-es.png`, fullPage: true });
     await page.getByRole("button", { name: "Reabrir", exact: true }).click();
-    await expect.poll(async () => (await db.from("conversations").select("status").eq("organization_id",org).eq("id",conversation).single()).data?.status).toBe("open");
+    await expect.poll(async () => {
+      const status = (await db.from("conversations").select("status").eq("organization_id",org).eq("id",conversation).single()).data?.status;
+      return status === "claimed" ? "open" : status; // aberta com dono = claimed
+    }).toBe("open");
     await page.getByRole("button", { name: "Cerrar", exact: true }).click();
     await page
       .getByRole("alertdialog")

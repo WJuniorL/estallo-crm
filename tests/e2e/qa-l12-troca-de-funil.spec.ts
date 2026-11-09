@@ -254,7 +254,7 @@ test.describe("Lote 12 — #936 a troca de funil", () => {
     await expect(page.getByRole("option", { name: `Troca Origem ${S}` })).toHaveCount(0);
     await page.getByRole("option", { name: `Troca Destino ${S}` }).click();
     await captura(page, "1578-01-destino-escolhido");
-    await janela.getByRole("button", { name: "Confirmar" }).click();
+    await janela.getByRole("button", { name: "Mover", exact: true }).click();
     await expect(janela).toBeHidden({ timeout: 30_000 });
 
     // Efeito no BANCO: a origem fechou como perdida e o clone nasceu no destino.

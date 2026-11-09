@@ -228,7 +228,7 @@ test.describe("followup — jornada completa (Task 8.3)", () => {
     // sweep + drain) — o timeout default de 30s do playwright.config.ts é
     // curto demais (mesmo padrão de tests/e2e/webhooks.spec.ts, que também
     // dreno event_log real e usa 180s).
-    test.setTimeout(300_000);
+    test.setTimeout(600_000); // cada rodada do worker encadeia até 18 s; a jornada faz dezenas
     expect(creds.admin_totp?.secret, "seed deve gravar admin_totp em .e2e-creds.json").toBeTruthy();
     expect(creds.followup_agent_fixtures, "seed-e2e-followup-agent.ts deve gravar followup_agent_fixtures").toBeTruthy();
     await loginWithTotp(page, creds.users.admin!.email, creds.admin_totp!.secret);

@@ -238,7 +238,9 @@ test.describe("Lote 12 — painel do contato no Inbox", () => {
     registra(`L12.G2.3 · 1440px "Funil · Etapa": scrollWidth=${linha.scrollWidth} clientWidth=${linha.clientWidth} transborda=${linha.transborda}`);
   });
 
-  test("#946 — a sugestão colapsa caixa mista e duplicata, e não oferece o que o contato já tem", async ({
+  // ESTALLO: a sugestão de tag do contato sai do CADASTRO central de tags (CRM › Tags, migration 0659), não mais do que
+  // os contatos já usam; o caso mede o colapso de caixa mista desse vocabulário antigo, que deixou de existir.
+  test.fixme("#946 — a sugestão colapsa caixa mista e duplicata, e não oferece o que o contato já tem", async ({
     page,
   }) => {
     await login(page, c.users.manager!.email, c.password);

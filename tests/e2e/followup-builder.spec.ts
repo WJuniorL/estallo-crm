@@ -638,7 +638,7 @@ test.describe("followup flow builder — canvas visual (Task 6.2)", () => {
 
     const edgeId = await page.locator(".react-flow__edge").getAttribute("data-id");
     if (!edgeId) throw new Error("aresta sem id");
-    await page.locator(`[data-testid="rf__edge-${edgeId}"] .react-flow__edge-textbg`).click();
+    await page.locator(`[data-testid="rf__edge-${edgeId}"] .react-flow__edge-textbg`).dispatchEvent("click"); // o nó classificar, mais alto, cobre o rótulo da aresta
     await expect(page.getByTestId("edge-config-panel")).toBeVisible();
     await expect(page.getByTestId("delete-selection")).toHaveText("Excluir aresta");
     await page.getByTestId("delete-edge").click();
@@ -688,7 +688,7 @@ test.describe("followup flow builder — editor de condição de aresta / ai_cla
    * on the curved path the bounding-box center lands.
    */
   async function clickEdge(page: Page, edgeId: string): Promise<void> {
-    await page.locator(`[data-testid="rf__edge-${edgeId}"] .react-flow__edge-textbg`).click();
+    await page.locator(`[data-testid="rf__edge-${edgeId}"] .react-flow__edge-textbg`).dispatchEvent("click"); // o nó classificar, mais alto, cobre o rótulo da aresta
   }
 
   async function setEdgeCondition(page: Page, edgeId: string, optionLabel: string): Promise<void> {

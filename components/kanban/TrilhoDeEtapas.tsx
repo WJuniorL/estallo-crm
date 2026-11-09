@@ -185,7 +185,7 @@ export function TrilhoDeEtapas({
       <ol
         ref={trilho}
         onScroll={medir}
-        className="-mx-[3px] flex snap-x snap-proximity overflow-x-auto overscroll-x-contain p-[3px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="-mx-[3px] flex snap-x snap-proximity overflow-x-auto overscroll-x-contain px-[3px] pt-[3px] pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {abertas.map((s, i) => {
           const atual = s.id === atualId;
@@ -238,7 +238,7 @@ export function TrilhoDeEtapas({
                   espremia o texto. A linha existe em TODA etapa (vazia nas
                   outras) para a altura do trilho não pular ao trocar de etapa. */}
               <span
-                className="block h-4 truncate pt-1 text-center text-[10px] font-semibold leading-3 text-text-muted"
+                className="block min-h-5 overflow-x-clip pt-1 text-center text-[10px] font-semibold leading-4 text-ellipsis whitespace-nowrap text-text-muted"
                 data-testid={atual ? "trilho-dias-na-etapa" : undefined}
               >
                 {atual && lead.stage_changed_at && atualId === lead.stage_id ? `${rotuloDias} ${t("na etapa")}` : null}

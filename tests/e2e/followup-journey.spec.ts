@@ -589,7 +589,12 @@ test.describe("followup — jornada completa (Task 8.3)", () => {
       .locator('[data-testid="queue-row"]', { hasText: seed.contactName })
       .filter({ hasText: flowName });
     await expect(rowEsperando).toBeVisible({ timeout: 30_000 });
-    await rowEsperando.getByTestId("queue-abrir-dossie").click();
+    // A fila abre a execução NO PAINEL do fluxo; o dossiê completo continua na sua própria URL.
+    await expect(rowEsperando.getByTestId("queue-abrir-dossie")).toHaveAttribute(
+      "href",
+      new RegExp(`painel=execucoes&exec=${enrollmentId}`),
+    );
+    await page.goto(`/app/ai/followups/enrollments/${enrollmentId}`);
     await page.waitForURL(new RegExp(`/app/ai/followups/enrollments/${enrollmentId}`));
     const historia = page.getByTestId("dossie-timeline");
     await expect(historia).toContainText("Esperando a resposta do cliente", { timeout: 30_000 });

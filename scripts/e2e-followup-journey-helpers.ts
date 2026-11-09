@@ -330,6 +330,30 @@ async function main(): Promise<void> {
           );
           const jobId = (jobs[0] as { id: string } | undefined)?.id;
           if (!jobId) throw new Error(`sem job pendente do passo ${nodeId} da inscrição ${enrollmentId}`);
+          // O recibo do envio é o LEDGER (`send_ledger` aceito, com o id da mensagem do CRM): o worker real o grava ao
+          // enviar pelo canal. Aqui não há canal, então o helper grava a mensagem de saída e o recibo no lugar dele.
+          if (result.kind === "sent") {
+            const { rows: contexto } = await pool.query(
+              `select e.contact_id, e.conversation_id, c.channel_session_id
+                 from followup_enrollments e join conversations c on c.id = e.conversation_id
+                where e.id = $1`,
+              [enrollmentId],
+            );
+            const ctx = contexto[0] as { contact_id: string; conversation_id: string; channel_session_id: string } | undefined;
+            if (!ctx) throw new Error("inscrição sem conversa: não há onde registrar o envio");
+            const { rows: msg } = await pool.query<{ id: string }>(
+              `insert into messages (organization_id, conversation_id, channel_session_id, contact_id, type, direction, status, body, sent_via, sent_at)
+               values ($1, $2, $3, $4, 'text', 'outbound', 'sent', 'mensagem do e2e (simula o envio do worker)', 'ai', now())
+               returning id`,
+              [orgId, ctx.conversation_id, ctx.channel_session_id, ctx.contact_id],
+            );
+            await pool.query(
+              `insert into send_ledger (organization_id, contact_id, job_id, seq, body_hash, status, crm_message_id)
+               values ($1, $2, $3, 1, 'e2e', 'accepted', $4)
+               on conflict (job_id, seq) do nothing`,
+              [orgId, ctx.contact_id, jobId, msg[0]!.id],
+            );
+          }
           const { rows: tomados } = await pool.query(
             `update job_queue set status = 'running', locked_by = 'e2e-worker', locked_at = clock_timestamp(),
                     attempts = attempts + 1

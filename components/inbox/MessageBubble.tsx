@@ -391,8 +391,18 @@ export function MessageBubble({
               className="block max-h-[50vh] min-h-20 w-full resize-y rounded-md border border-border bg-background p-2 leading-snug text-foreground [field-sizing:content]"
             />
             <div className="flex justify-end gap-2">
-              <Button size="sm" variant="ghost" disabled={ocupado} onClick={() => setEditando(false)}>{t("Cancelar")}</Button>
-              <Button size="sm" disabled={ocupado || !texto.trim()} onClick={() => void salvarEdicao()}>{t("Salvar")}</Button>
+              {/* Dentro da bolha enviada o fundo JÁ É o azul de ação: o `ghost`
+                  (tinta + hover accent-soft) e o `primary` (azul) somem nela.
+                  Mesma régua da setinha do menu: frente branca, hover branco
+                  translúcido, e o Salvar invertido para ser a ação principal. */}
+              <Button size="sm" variant="ghost" disabled={ocupado} onClick={() => setEditando(false)}
+                className={cn(isOutbound && "text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground")}>
+                {t("Cancelar")}
+              </Button>
+              <Button size="sm" disabled={ocupado || !texto.trim()} onClick={() => void salvarEdicao()}
+                className={cn(isOutbound && "bg-primary-foreground text-accent shadow-none hover:bg-primary-foreground/90 dark:bg-primary-foreground dark:hover:bg-primary-foreground/90")}>
+                {t("Salvar")}
+              </Button>
             </div>
           </div>
         ) : apagada ? (

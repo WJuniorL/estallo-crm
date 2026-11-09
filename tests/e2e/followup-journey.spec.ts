@@ -443,6 +443,8 @@ test.describe("followup — jornada completa (Task 8.3)", () => {
           timeout: 90_000,
         });
         expect(res.ok()).toBeTruthy();
+        // Diagnóstico: o resumo de cada rodada do worker vai para o log do job (a falha do poll só mostra o estado final).
+        console.info("[tick]", (await res.text()).slice(0, 600));
       }
 
       async function pollEnrollment(
@@ -457,7 +459,8 @@ test.describe("followup — jornada completa (Task 8.3)", () => {
           e = runHelper(["get-enrollment", enrollmentId]) as EnrollmentRow;
         }
         if (!predicate(e)) {
-          throw new Error(`pollEnrollment timeout esperando "${label}"; estado atual: ${JSON.stringify(e)}`);
+          const eventos = JSON.stringify(runHelper(["list-events", enrollmentId]));
+          throw new Error(`pollEnrollment timeout esperando "${label}"; estado atual: ${JSON.stringify(e)}; eventos: ${eventos}`);
         }
         return e;
       }

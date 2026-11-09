@@ -627,6 +627,16 @@ test.describe("followup — jornada completa (Task 8.3)", () => {
     }
     expect(woke, "reactivity deveria ter gravado o evento inbound_woke").toBe(true);
 
+    // Motor único: acordada, a inscrição só ganha o NOVO job de classificação numa rodada do worker. Roda até ele existir
+    // (pendente ou em execução); sem isto o turno injetado abaixo não teria job para fechar.
+    let jobDeClassificacao: { status: string } | null = null;
+    for (let i = 0; i < 8 && !jobDeClassificacao; i++) {
+      await tickCron();
+      const job = runHelper(["find-job", seed.contactId, "classify"]) as { status: string } | null;
+      if (job && (job.status === "pending" || job.status === "running")) jobDeClassificacao = job;
+    }
+    expect(jobDeClassificacao, "o worker deveria ter enfileirado o job de classificação da resposta").toBeTruthy();
+
     // [INJETADO]
     runHelper([
       "complete-turn",

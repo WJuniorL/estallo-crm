@@ -85,7 +85,7 @@ async function loginGerente(page: Page, creds: CredsDoNascimento): Promise<void>
 }
 
 async function conectar(page: Page, origem: string, destino: string): Promise<void> {
-  const fonte = page.locator(`.react-flow__node[data-id="${origem}"] .react-flow__handle.source`).first();
+  const fonte = page.locator(`.react-flow__node[data-id="${origem}"] .react-flow__handle.source:not([data-handleid="on_error"])`).first();
   const alvo = page.locator(`.react-flow__node[data-id="${destino}"] .react-flow__handle.target`);
   const a = await fonte.boundingBox();
   const b = await alvo.boundingBox();
@@ -212,7 +212,7 @@ test("liga o módulo, cria um roteiro pela tela, o cliente responde pelo WhatsAp
       await dialogo.getByLabel("Nome").fill(NOME_DO_ROTEIRO);
       await dialogo.getByRole("button", { name: "Criar fluxo" }).click();
       await expect(dialogo).not.toBeVisible();
-      await page.locator("li", { hasText: NOME_DO_ROTEIRO }).getByRole("link").click();
+      await page.locator("li", { hasText: NOME_DO_ROTEIRO }).getByRole("link").first().click();
       await page.waitForURL(/\/app\/ai\/atendimento\/[0-9a-f-]+$/);
       await expect(page.locator(".react-flow")).toBeVisible();
 

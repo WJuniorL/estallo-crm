@@ -24,7 +24,7 @@ import {
   CONDITION_TRUE_BRANCH_ID,
   FALLBACK_BRANCH_ID,
   NO_REPLY_BRANCH_ID,
-  nodeBranches,
+  branchesForShape,
   type FlowEdge,
   type FlowNode,
 } from "./graph-schema";
@@ -201,7 +201,9 @@ export function resumoDoNo(node: FlowNode): NoDoDossie {
             ? "o agente escreve e envia a mensagem"
             : node.config.mode === "text"
               ? "envia um texto fixo"
-              : "envia uma mensagem de modelo pronto",
+              : node.config.mode === "messages"
+                ? `envia ${node.config.items.length} ${node.config.items.length === 1 ? "mensagem" : "mensagens"} em sequência (texto e anexos)`
+                : "envia uma mensagem de modelo pronto",
       };
     case "internal_task": {
       const prazo = node.config.vence_em_dias === 0 ? "hoje" : `em ${node.config.vence_em_dias} dia(s)`;
@@ -244,7 +246,7 @@ export function rotuloDaAresta(edge: FlowEdge, origem?: FlowNode, nomes: NomesDe
   if (c.type === "always") {
     // Num nó com saídas específicas, o escape não é o "caminho normal": é o que
     // sobra quando nenhuma das outras serve.
-    return origem !== undefined && nodeBranches(origem).length > 1
+    return origem !== undefined && branchesForShape(origem).length > 1
       ? FRASE_DE_OUTROS_CASOS
       : RAMOS_RESERVADOS_EM_FRASE[FALLBACK_BRANCH_ID];
   }
@@ -479,10 +481,23 @@ export function descreveEvento(
         ...motor,
       };
     }
-    case "flow_dead":
-      return { titulo: "O fluxo parou de tentar", detalhe: texto(p.reason), ...motor };
+    case "flow_dead": {
+      // O envio do bloco esgotou as tentativas: o motivo vem depois do prefixo técnico.
+      const motivo = texto(p.reason);
+      const envio = motivo?.startsWith("action_turn_failed:")
+        ? `O envio deste bloco falhou: ${motivo.slice("action_turn_failed:".length).trim()}`
+        : motivo;
+      return { titulo: "O fluxo parou de tentar", detalhe: envio, ...motor };
+    }
     case "node_failed":
       return { titulo: "Falhou neste passo", detalhe: texto(p.error), ...motor };
+    case "execution_error_routed":
+      // Falha definitiva do bloco, com "Fallback erro" ligado: o fluxo NÃO parou, desviou.
+      return {
+        titulo: "O passo falhou e o fluxo seguiu pela saída de erro",
+        detalhe: `foi para ${refDoNo(texto(p.next_node_id), nos)}${texto(p.code) ? ` (${texto(p.code)})` : ""}`,
+        ...motor,
+      };
     case "move_lead_failed":
       // O card NÃO andou: o motor foi recusado ao mover (ex.: etapa de perda
       // sem motivo) e o fluxo seguiu. Sem esta linha a trilha mostrava só o

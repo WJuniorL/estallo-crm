@@ -145,7 +145,7 @@ async function connectHandles(
   // modo estrito recusa. Quem arrasta de um nó desses diz de qual saída.
   const sourceSel = sourceHandleId
     ? `.react-flow__node[data-id="${sourceNodeId}"] .react-flow__handle.source[data-handleid="${sourceHandleId}"]`
-    : `.react-flow__node[data-id="${sourceNodeId}"] .react-flow__handle.source`;
+    : `.react-flow__node[data-id="${sourceNodeId}"] .react-flow__handle.source:not([data-handleid="on_error"])`;
   const source = page.locator(sourceSel).first();
   const target = page.locator(`.react-flow__node[data-id="${targetNodeId}"] .react-flow__handle.target`);
   const sBox = await source.boundingBox();
@@ -228,7 +228,7 @@ test.describe("followup — jornada completa (Task 8.3)", () => {
     // sweep + drain) — o timeout default de 30s do playwright.config.ts é
     // curto demais (mesmo padrão de tests/e2e/webhooks.spec.ts, que também
     // dreno event_log real e usa 180s).
-    test.setTimeout(300_000);
+    test.setTimeout(600_000); // cada rodada do worker encadeia até 18 s; a jornada faz dezenas
     expect(creds.admin_totp?.secret, "seed deve gravar admin_totp em .e2e-creds.json").toBeTruthy();
     expect(creds.followup_agent_fixtures, "seed-e2e-followup-agent.ts deve gravar followup_agent_fixtures").toBeTruthy();
     await loginWithTotp(page, creds.users.admin!.email, creds.admin_totp!.secret);
@@ -249,7 +249,7 @@ test.describe("followup — jornada completa (Task 8.3)", () => {
     await dialog.getByLabel("Nome").fill(flowName);
     await dialog.getByRole("button", { name: "Criar fluxo" }).click();
     await expect(dialog).not.toBeVisible();
-    await page.locator("li", { hasText: flowName }).getByRole("link").click();
+    await page.locator("li", { hasText: flowName }).getByRole("link").first().click();
     await page.waitForURL(/\/app\/ai\/followups\/([0-9a-f-]+)$/);
     const flowId = page.url().match(/\/app\/ai\/followups\/([0-9a-f-]+)$/)![1]!;
     await expect(page.locator(".react-flow")).toBeVisible();
@@ -437,10 +437,14 @@ test.describe("followup — jornada completa (Task 8.3)", () => {
       //    funciona ponta a ponta.
       // =========================================================================
       async function tickCron(): Promise<void> {
+        // Teto de 90 s: a rodada do worker leva segundos; sem teto, uma que trava gasta os 300 s do teste inteiro e não diz nada.
         const res = await page.request.post("/api/v1/cron/followup-flow-worker", {
           headers: { Authorization: `Bearer ${secret}` },
+          timeout: 90_000,
         });
         expect(res.ok()).toBeTruthy();
+        // Diagnóstico: o resumo de cada rodada do worker vai para o log do job (a falha do poll só mostra o estado final).
+        console.info("[tick]", (await res.text()).slice(0, 600));
       }
 
       async function pollEnrollment(
@@ -455,7 +459,8 @@ test.describe("followup — jornada completa (Task 8.3)", () => {
           e = runHelper(["get-enrollment", enrollmentId]) as EnrollmentRow;
         }
         if (!predicate(e)) {
-          throw new Error(`pollEnrollment timeout esperando "${label}"; estado atual: ${JSON.stringify(e)}`);
+          const eventos = JSON.stringify(runHelper(["list-events", enrollmentId]));
+          throw new Error(`pollEnrollment timeout esperando "${label}"; estado atual: ${JSON.stringify(e)}; eventos: ${eventos}`);
         }
         return e;
       }

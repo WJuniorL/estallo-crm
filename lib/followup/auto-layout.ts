@@ -1,5 +1,6 @@
 import {
   branchIdForCondition,
+  branchesForShape,
   nodeBranches,
   type FlowEdge,
   type FlowNode,
@@ -57,7 +58,7 @@ const TYPE_ORDER: Record<NodeType, number> = {
 export type NodeSize = { width: number; height: number };
 
 export function estimateNodeSize(node: FlowNode): NodeSize {
-  const branches = nodeBranches(node);
+  const branches = branchesForShape(node);
   const height =
     branches.length > 1 ? 48 + branches.length * BRANCH_ROW_HEIGHT : LAYOUT_NODE_HEIGHT;
   return { width: LAYOUT_NODE_WIDTH, height };
@@ -242,7 +243,7 @@ function estimateEdgeLabelWidth(text: string): number {
 
 /** Folga à direita de um nó com bolinhas laterais: offset do SmoothStep + etiqueta. */
 function rightExitGap(node: FlowNode, edges: readonly FlowEdge[], nomes: NomesDeValor): number {
-  const branches = nodeBranches(node);
+  const branches = branchesForShape(node);
   if (branches.length <= 1) return 0;
   let widest = 0;
   for (const e of edges) {

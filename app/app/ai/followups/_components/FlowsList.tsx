@@ -17,6 +17,7 @@ import { FlowStatusBadge } from "./FlowStatusBadge";
 import { ModelosDialog } from "./ModelosDialog";
 import { NewFlowDialog } from "./NewFlowDialog";
 import { RenameFollowupFlowButton } from "./RenameFollowupFlowButton";
+import { ExecutionRetentionButton } from "./ExecutionRetentionButton";
 
 interface Props {
   initialData: FollowupFlowPointerRow[];
@@ -102,6 +103,7 @@ export function FlowsList({ initialData, canWrite, surface }: Props) {
             <div className="mt-1 flex flex-col items-center gap-2 sm:flex-row">
               {!deAtendimento && modelosButton}
               {newFlowButton}
+              {!deAtendimento && <ExecutionRetentionButton />}
             </div>
           )}
         </Card>
@@ -116,6 +118,7 @@ export function FlowsList({ initialData, canWrite, surface }: Props) {
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
           {!deAtendimento && modelosButton}
           {newFlowButton}
+          {!deAtendimento && <ExecutionRetentionButton />}
         </div>
       )}
 
@@ -144,6 +147,16 @@ export function FlowsList({ initialData, canWrite, surface }: Props) {
                   Atualizado em {formatUpdatedAt(flow.updated_at, tagDoIdioma)}
                 </p>
               </Link>
+              {/* O histórico de execuções deste fluxo: abre no próprio editor dele, com o desenho de cada execução. */}
+              <div className="flex items-center justify-between gap-2 border-t border-border pt-2">
+                <Link
+                  href={deAtendimento ? `${baseHref}?aba=fila&fluxo=${flow.id}` : `${baseHref}/${flow.id}?painel=execucoes`}
+                  className="text-xs text-accent underline-offset-[3px] hover:underline"
+                  data-testid="fluxo-ver-execucoes"
+                >
+                  {t("Ver execuções")}
+                </Link>
+              </div>
               {canWrite && (
                 <div className="flex flex-wrap justify-end gap-2 border-t border-border pt-2">
                   <RenameFollowupFlowButton flowId={flow.id} flowName={flow.name} />

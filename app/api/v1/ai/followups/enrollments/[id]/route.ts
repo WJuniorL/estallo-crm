@@ -34,6 +34,8 @@ import {
 import { carregaEtapasCitadas, nomesDasEtapas } from "@/lib/followup/etapas-citadas";
 import { leituraDoPlano, type TimingPlan } from "@/lib/followup/plano-de-tempo";
 import { flowGraphSchema } from "@/lib/followup/graph-schema";
+import { montarPassos, type PassoDaExecucao } from "@/lib/followup/passos-da-execucao";
+import { roleAtLeast } from "@/lib/auth/types";
 import { createClient } from "@/lib/supabase/server";
 import { traduzir } from "@/lib/i18n/dicionario";
 
@@ -83,6 +85,25 @@ export interface DossieDoEnrollment {
   agent_name: string | null;
   no_atual: NoDoDossie | null;
   nos: NoDoDossie[];
+  /** As ligações do grafo pinado (só origem e destino): é o que permite desenhar o caminho percorrido. */
+  arestas: Array<{ id: string; source: string; target: string }>;
+  /**
+   * O caminho percorrido, em ordem, do diário de execução. Vazio para execução anterior ao diário (contrato 0).
+   * `entrada`/`saida` de cada passo só vêm para quem edita fluxo (`pode_ver_dados`).
+   */
+  passos: PassoDaExecucao[];
+  /** Conduzida bloco a bloco pelo operador (o motor pausa depois de cada bloco). */
+  passo_a_passo: boolean;
+  /** De qual execução esta nasceu (reinício), ou `null` quando é a original. */
+  origem: { id: string; tipo: string } | null;
+  /** Reexecuções nascidas desta (mais novas primeiro). */
+  reexecucoes: Array<{ id: string; tipo: string; status: string; started_at: string }>;
+  pode_ver_dados: boolean;
+  /**
+   * O grafo pinado COM posições e configuração, para desenhar o caminho no canvas. Só para quem edita fluxos
+   * (`pode_ver_dados`): o cartão de cada bloco mostra a configuração, que tem o texto que o dono escreveu.
+   */
+  grafo: { nodes: unknown[]; edges: unknown[] } | null;
   /** Saídas do nó atual — é o que a tela oferece para "pular este passo". */
   saidas: Array<{ edge_id: string; target_id: string; target_rotulo: string; quando: string }>;
   eventos: EventoDeEnrollment[];
@@ -151,7 +172,7 @@ export async function GET(_req: NextRequest, ctx: RouteCtx): Promise<Response> {
     .select(
       `id, status, contact_id, pointer_id, version_id, current_node_id, next_eval_at, claimed_until,
        started_at, completed_at, updated_at, outcome, cancel_reason, last_error, attempts, max_attempts,
-       steps_taken, timing_plan,
+       steps_taken, timing_plan, source_enrollment_id, recovery_kind, passo_a_passo,
        contacts:contact_id(id, name, display_name, phone_number),
        followup_flow_pointers:pointer_id(name),
        ai_agents:agent_id(name),
@@ -173,6 +194,14 @@ export async function GET(_req: NextRequest, ctx: RouteCtx): Promise<Response> {
     .order("id", { ascending: true })
     .limit(TETO_DE_EVENTOS + 1);
   if (evErr) return fail("internal_error", evErr.message, 500, { requestId });
+
+  const { data: filhas } = await supabase
+    .from("followup_enrollments")
+    .select("id, status, recovery_kind, started_at")
+    .eq("organization_id", org.orgId)
+    .eq("source_enrollment_id", id)
+    .order("started_at", { ascending: false })
+    .limit(50);
 
   const lidos = eventos ?? [];
   const truncado = lidos.length > TETO_DE_EVENTOS;
@@ -201,6 +230,28 @@ export async function GET(_req: NextRequest, ctx: RouteCtx): Promise<Response> {
       target_rotulo: porId.get(e.target)?.rotulo ?? e.target,
       quando: rotuloDaAresta(e, noDeOrigem, nomesDeEtapa),
     }));
+
+  // O diário (contrato 1). A leitura é pela sessão da pessoa: a RLS das tabelas decide o que ela vê.
+  const podeVerDados = roleAtLeast(org.role, "manager");
+  const { data: passosBrutos, error: passosErr } = await supabase
+    .from("followup_execution_steps")
+    .select("id, node_id, visit, status, branch_id, entered_at, completed_at")
+    .eq("organization_id", org.orgId)
+    .eq("enrollment_id", id)
+    .order("entered_at", { ascending: true })
+    .limit(TETO_DE_EVENTOS);
+  if (passosErr) return fail("internal_error", passosErr.message, 500, { requestId });
+  const idsDosPassos = (passosBrutos ?? []).map((p) => p.id);
+  const { data: tentativasBrutas, error: tentativasErr } =
+    idsDosPassos.length === 0
+      ? { data: [], error: null }
+      : await supabase
+          .from("followup_execution_attempts")
+          .select("step_id, attempt_no, status, started_at, completed_at, input_snapshot, output_snapshot, error_snapshot")
+          .eq("organization_id", org.orgId)
+          .in("step_id", idsDosPassos);
+  if (tentativasErr) return fail("internal_error", tentativasErr.message, 500, { requestId });
+  const passos = montarPassos(passosBrutos ?? [], tentativasBrutas ?? [], porId, podeVerDados);
 
   const contato = embedded(
     row.contacts as
@@ -244,6 +295,20 @@ export async function GET(_req: NextRequest, ctx: RouteCtx): Promise<Response> {
     agent_name: agente?.name ?? null,
     no_atual: porId.get(row.current_node_id) ?? null,
     nos,
+    arestas: (grafo?.success ? grafo.data.edges : []).map((e) => ({ id: e.id, source: e.source, target: e.target })),
+    passos,
+    passo_a_passo: row.passo_a_passo === true,
+    origem: row.source_enrollment_id
+      ? { id: row.source_enrollment_id, tipo: row.recovery_kind ?? "restart" }
+      : null,
+    reexecucoes: (filhas ?? []).map((f) => ({
+      id: f.id,
+      tipo: f.recovery_kind ?? "restart",
+      status: f.status,
+      started_at: f.started_at,
+    })),
+    pode_ver_dados: podeVerDados,
+    grafo: podeVerDados && grafo?.success ? { nodes: grafo.data.nodes, edges: grafo.data.edges } : null,
     saidas,
     eventos: lidos.slice(0, TETO_DE_EVENTOS) as EventoDeEnrollment[],
     eventos_truncados: truncado,

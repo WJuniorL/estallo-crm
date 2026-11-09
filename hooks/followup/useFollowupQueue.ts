@@ -34,17 +34,38 @@ export interface FollowupQueueRow {
   id: string;
   contact: { id: string; name: string };
   flow_name: string | null;
+  flow_id?: string | null;
   agent_name: string | null;
   node_or_reason: string;
   next_fire_at: string | null;
   status: string;
   detail: string | null;
+  started_at?: string | null;
+  completed_at?: string | null;
+  attempts?: number | null;
+  steps_taken?: number | null;
+  version_id?: string | null;
+  mode?: string | null;
+  reexecucao?: string | null;
 }
+
+export type FollowupExecutionMode = "production" | "simulation" | "test";
 
 export interface FollowupQueueFilters {
   status?: FollowupEnrollmentStatus;
   pointer_id?: string;
   q?: string;
+  /** Datas "AAAA-MM-DD": entrada da execução no intervalo (dia inteiro, UTC). */
+  desde?: string;
+  ate?: string;
+  modo?: FollowupExecutionMode;
+  versao?: string;
+  lead?: string;
+}
+
+export interface FollowupQueueOptions {
+  /** Atualização automática (polling) a cada `ms`; sem isto a lista só muda ao filtrar ou recarregar. */
+  refetchMs?: number | false;
 }
 
 interface ListResponse {
@@ -57,7 +78,7 @@ const QUEUE_LIMIT = 20;
 export const followupQueueQueryKey = (filters: FollowupQueueFilters) =>
   ["followup", "queue", filters] as const;
 
-export function useFollowupQueue(filters: FollowupQueueFilters = {}) {
+export function useFollowupQueue(filters: FollowupQueueFilters = {}, options: FollowupQueueOptions = {}) {
   return useInfiniteQuery({
     queryKey: followupQueueQueryKey(filters),
     initialPageParam: undefined as string | undefined,
@@ -66,6 +87,10 @@ export function useFollowupQueue(filters: FollowupQueueFilters = {}) {
       if (filters.status) qs.set("status", filters.status);
       if (filters.pointer_id) qs.set("pointer_id", filters.pointer_id);
       if (filters.q) qs.set("q", filters.q);
+      for (const k of ["desde", "ate", "modo", "versao", "lead"] as const) {
+        const v = filters[k];
+        if (v) qs.set(k, v);
+      }
       if (pageParam) qs.set("cursor", pageParam);
       qs.set("limit", String(QUEUE_LIMIT));
       try {
@@ -77,6 +102,7 @@ export function useFollowupQueue(filters: FollowupQueueFilters = {}) {
     },
     getNextPageParam: (last) => (last.meta?.has_more && last.meta.cursor ? last.meta.cursor : undefined),
     staleTime: 15_000,
+    refetchInterval: options.refetchMs ?? false,
   });
 }
 

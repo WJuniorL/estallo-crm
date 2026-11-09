@@ -36,6 +36,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import pg from "pg";
 
+import { completeJob } from "@/lib/agent-engine/queue/queue";
 import {
   createPgAdminClient,
   completeTurnForEnrollment,
@@ -202,6 +203,14 @@ async function main(): Promise<void> {
            where id = $1 returning id, current_node_id, status, next_eval_at`,
           [enrollmentId],
         );
+        // Motor único (contrato 1): o relógio da espera mora na TENTATIVA do passo (`followup_execution_attempts.next_eval_at`,
+        // status 'waiting'), e é ela que decide se a espera já passou. Adiantar só a inscrição deixava a tentativa esperando.
+        await pool.query(
+          `update followup_execution_attempts a set next_eval_at = now() - interval '1 second'
+             from followup_execution_steps st
+            where a.step_id = st.id and st.enrollment_id = $1 and a.status = 'waiting'`,
+          [enrollmentId],
+        );
         out(rows[0] ?? null);
         break;
       }
@@ -305,6 +314,35 @@ async function main(): Promise<void> {
         }
         const result = JSON.parse(resultJson) as TurnResult;
         const db = createPgAdminClient(pool);
+        // Motor único (contrato 1): o turno só fecha com o JOB e o CLAIM de quem o executa — é assim que o worker real
+        // chama. O helper faz o papel do worker: pega o job pendente deste passo, reivindica e fecha o turno com ele.
+        const { rows: inscricao } = await pool.query(
+          `select execution_contract from followup_enrollments where id = $1`,
+          [enrollmentId],
+        );
+        if ((inscricao[0] as { execution_contract?: number } | undefined)?.execution_contract === 1) {
+          const { rows: jobs } = await pool.query(
+            `select id from job_queue
+              where organization_id = $1 and kind = 'followup_turn' and status in ('pending', 'running')
+                and payload->>'followup_enrollment_id' = $2 and payload->>'node_id' = $3
+              order by created_at desc limit 1`,
+            [orgId, enrollmentId, nodeId],
+          );
+          const jobId = (jobs[0] as { id: string } | undefined)?.id;
+          if (!jobId) throw new Error(`sem job pendente do passo ${nodeId} da inscrição ${enrollmentId}`);
+          const { rows: tomados } = await pool.query(
+            `update job_queue set status = 'running', locked_by = 'e2e-worker', locked_at = clock_timestamp(),
+                    attempts = attempts + 1
+              where id = $1 returning locked_by, locked_at::text as claim_acquired_at`,
+            [jobId],
+          );
+          const tomado = tomados[0] as { locked_by: string; claim_acquired_at: string };
+          const claim = { worker_id: tomado.locked_by, acquired_at: tomado.claim_acquired_at };
+          await completeTurnForEnrollment(db, orgId, enrollmentId, nodeId, result, undefined, jobId, claim);
+          await completeJob(pool, jobId, claim.worker_id, undefined, claim.acquired_at);
+          out({ ok: true, job: jobId });
+          break;
+        }
         await completeTurnForEnrollment(db, orgId, enrollmentId, nodeId, result);
         out({ ok: true });
         break;

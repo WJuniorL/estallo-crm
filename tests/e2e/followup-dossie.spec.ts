@@ -327,9 +327,7 @@ test.describe("dossiê do follow-up — ler a história e intervir", () => {
     await limpa(page, cenario);
   });
 
-  // PENDENTE (08/11/2026): o fluxo publicado nasce no contrato 1, e o helper `complete-turn` simula o worker SEM job nem
-  // claim — o contrato 1 recusa (`execution_journal_unavailable`). Reescrever o helper para pegar o job e o claim.
-  test.fixme("o dossiê mostra o tempo que a IA escolheu — e quanto ela pediu antes do corte", async ({ page }) => {
+  test("o dossiê mostra o tempo que a IA escolheu — e quanto ela pediu antes do corte", async ({ page }) => {
     test.setTimeout(180_000);
     await login(page, creds.users.manager!.email);
 

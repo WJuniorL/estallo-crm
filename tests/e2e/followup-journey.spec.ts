@@ -589,7 +589,12 @@ test.describe("followup — jornada completa (Task 8.3)", () => {
       .locator('[data-testid="queue-row"]', { hasText: seed.contactName })
       .filter({ hasText: flowName });
     await expect(rowEsperando).toBeVisible({ timeout: 30_000 });
-    await rowEsperando.getByTestId("queue-abrir-dossie").click();
+    // A fila abre a execução NO PAINEL do fluxo; o dossiê completo continua na sua própria URL.
+    await expect(rowEsperando.getByTestId("queue-abrir-dossie")).toHaveAttribute(
+      "href",
+      new RegExp(`painel=execucoes&exec=${enrollmentId}`),
+    );
+    await page.goto(`/app/ai/followups/enrollments/${enrollmentId}`);
     await page.waitForURL(new RegExp(`/app/ai/followups/enrollments/${enrollmentId}`));
     const historia = page.getByTestId("dossie-timeline");
     await expect(historia).toContainText("Esperando a resposta do cliente", { timeout: 30_000 });
@@ -621,6 +626,16 @@ test.describe("followup — jornada completa (Task 8.3)", () => {
       woke = events.includes("inbound_woke");
     }
     expect(woke, "reactivity deveria ter gravado o evento inbound_woke").toBe(true);
+
+    // Motor único: acordada, a inscrição só ganha o NOVO job de classificação numa rodada do worker. Roda até ele existir
+    // (pendente ou em execução); sem isto o turno injetado abaixo não teria job para fechar.
+    let jobDeClassificacao: { status: string } | null = null;
+    for (let i = 0; i < 8 && !jobDeClassificacao; i++) {
+      await tickCron();
+      const job = runHelper(["find-job", seed.contactId, "classify"]) as { status: string } | null;
+      if (job && (job.status === "pending" || job.status === "running")) jobDeClassificacao = job;
+    }
+    expect(jobDeClassificacao, "o worker deveria ter enfileirado o job de classificação da resposta").toBeTruthy();
 
     // [INJETADO]
     runHelper([

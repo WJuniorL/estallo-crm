@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import type { FollowupFlowDetailRow } from "@/hooks/followup/useFollowupFlow";
+import { useFollowupFlow, type FollowupFlowDetailRow } from "@/hooks/followup/useFollowupFlow";
 import { useT } from "@/hooks/i18n/useT";
 import { cn } from "@/lib/utils";
 
@@ -45,6 +45,8 @@ export function FlowBuilder({ flowId, initialData }: Props) {
   const pathname = usePathname();
   const params = useSearchParams();
 
+  // Mesmo cache do editor: publicar uma versão nova atualiza o filtro de versões do histórico sem recarregar.
+  const fluxo = useFollowupFlow(flowId, { initialData });
   const painel: Painel = params.get("painel") === "execucoes" ? "execucoes" : "editor";
   const execucaoId = params.get("exec");
   const noId = params.get("no");
@@ -90,6 +92,7 @@ export function FlowBuilder({ flowId, initialData }: Props) {
       {painel === "execucoes" && (
         <ExecucoesDoFluxo
           flowId={flowId}
+          versoes={fluxo.data?.versions}
           execucaoId={execucaoId}
           noId={noId}
           onSelecionarExecucao={(id) => navegar({ exec: id, no: null })}

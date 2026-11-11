@@ -1,5 +1,7 @@
 "use client";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useRef } from "react";
+import { useRealtimeChannel, type RealtimeStatus } from "@/hooks/realtime/useRealtimeChannel";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api/client";
 import { showApiError } from "@/components/feedback/ApiErrorToast";
@@ -157,4 +159,38 @@ export function useCancelFollowupPromise() {
       showApiError(err);
     },
   });
+}
+
+/**
+ * Execuções de UM fluxo ao vivo: assina `followup_enrollments` (publicação desde a migration 0715) filtrada pelo fluxo
+ * e só INVALIDA a lista e o dossiê — o dado volta pela API, sob a RLS de sempre. O motor escreve na linha a cada passo,
+ * então os eventos são agrupados: no máximo uma releitura por segundo. Devolve o status do canal para quem chama
+ * escolher o polling de recuperação.
+ */
+export function useExecucoesAoVivo(flowId: string, enabled: boolean): RealtimeStatus {
+  const qc = useQueryClient();
+  const pendente = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (pendente.current) clearTimeout(pendente.current);
+    },
+    [],
+  );
+  const onChange = useCallback(() => {
+    if (pendente.current) return;
+    pendente.current = setTimeout(() => {
+      pendente.current = null;
+      void qc.invalidateQueries({ queryKey: ["followup", "queue"] });
+      void qc.invalidateQueries({ queryKey: ["followup", "enrollment"] });
+    }, 1_000);
+  }, [qc]);
+  const { status } = useRealtimeChannel({
+    name: `followup-execucoes-${flowId}`,
+    postgresChanges: { event: "*", schema: "public", table: "followup_enrollments", filter: `pointer_id=eq.${flowId}` },
+    onChange,
+    enabled,
+    // O que mudou entre a busca inicial e o SUBSCRIBED não vem pelo canal.
+    recuperarNaPrimeira: true,
+  });
+  return status;
 }

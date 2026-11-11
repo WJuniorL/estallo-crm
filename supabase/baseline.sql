@@ -56297,3 +56297,18 @@ alter table if exists public.followup_enrollments
   add column if not exists passo_a_passo boolean not null default false;
 comment on column public.followup_enrollments.passo_a_passo is
   'Execução conduzida bloco a bloco pelo operador: o motor pausa (paused_manual) depois de cada bloco concluído.';
+
+-- ---- execuções do fluxo ao vivo: followup_enrollments na publicação supabase_realtime (migration 0715) ----
+-- A aba Execuções do editor assina a tabela filtrada pelo fluxo e só invalida a leitura; os diários ficam fora.
+do $$
+begin
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime')
+     and not exists (
+       select 1 from pg_publication_tables
+        where pubname = 'supabase_realtime'
+          and schemaname = 'public'
+          and tablename = 'followup_enrollments'
+     ) then
+    execute 'alter publication supabase_realtime add table public.followup_enrollments';
+  end if;
+end $$;

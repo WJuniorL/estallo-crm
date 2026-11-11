@@ -29,8 +29,10 @@ import {
 } from "@/hooks/followup/useFollowupEnrollment";
 import {
   useCancelFollowupEnrollment,
+  useExecucoesAoVivo,
   useFollowupQueue,
   type FollowupEnrollmentStatus,
+  type FollowupExecutionMode,
   type FollowupQueueRow,
 } from "@/hooks/followup/useFollowupQueue";
 import { useT } from "@/hooks/i18n/useT";
@@ -65,15 +67,25 @@ const STATUS_FILTRAVEIS: FollowupEnrollmentStatus[] = [
 
 /** Atualização automática: curta o bastante para acompanhar uma execução andando. */
 const ATUALIZACAO_AUTOMATICA_MS = 10_000;
+/** Com o canal de pé, o polling só cobre evento perdido. */
+const RECUPERACAO_COM_CANAL_MS = 60_000;
+
+const MODOS_FILTRAVEIS: FollowupExecutionMode[] = ["production", "simulation", "test"];
 
 interface Props {
   flowId: string;
+  /** Versões publicadas do fluxo (da mais nova à mais antiga), para o filtro por versão. */
+  versoes?: { id: string; created_at: string; numero: number }[];
   /** Execução aberta (vem da URL, para o recarregar preservar o que a pessoa estava olhando). */
   execucaoId: string | null;
   noId: string | null;
   onSelecionarExecucao: (id: string | null) => void;
   onSelecionarNo: (id: string | null) => void;
   onVoltarAoEditor: () => void;
+}
+
+function rotuloDoModo(m: FollowupExecutionMode, t: (s: string) => string): string {
+  return m === "production" ? t("Produção") : m === "simulation" ? t("Simulação") : t("Teste");
 }
 
 function Cartao({ linha, ativa, onClick }: { linha: FollowupQueueRow; ativa: boolean; onClick: () => void }) {
@@ -117,6 +129,7 @@ function Cartao({ linha, ativa, onClick }: { linha: FollowupQueueRow; ativa: boo
  */
 export function ExecucoesDoFluxo({
   flowId,
+  versoes = [],
   execucaoId,
   noId,
   onSelecionarExecucao,
@@ -125,6 +138,10 @@ export function ExecucoesDoFluxo({
 }: Props) {
   const t = useT();
   const [status, setStatus] = useState<FollowupEnrollmentStatus | "all">("all");
+  const [modo, setModo] = useState<FollowupExecutionMode | "all">("all");
+  const [versao, setVersao] = useState("all");
+  const [desde, setDesde] = useState("");
+  const [ate, setAte] = useState("");
   const [busca, setBusca] = useState("");
   const [q, setQ] = useState("");
   const [automatica, setAutomatica] = useState(true);
@@ -140,10 +157,22 @@ export function ExecucoesDoFluxo({
   }, [busca]);
 
   const filtros = useMemo(
-    () => ({ pointer_id: flowId, status: status === "all" ? undefined : status, q: q || undefined }),
-    [flowId, status, q],
+    () => ({
+      pointer_id: flowId,
+      status: status === "all" ? undefined : status,
+      q: q || undefined,
+      modo: modo === "all" ? undefined : modo,
+      versao: versao === "all" ? undefined : versao,
+      desde: desde || undefined,
+      ate: ate || undefined,
+    }),
+    [flowId, status, q, modo, versao, desde, ate],
   );
-  const fila = useFollowupQueue(filtros, { refetchMs: automatica ? ATUALIZACAO_AUTOMATICA_MS : false });
+  // Ao vivo pelo Realtime; o polling é a recuperação — curto se o canal não subiu, longo (só rede de segurança) se subiu.
+  const canal = useExecucoesAoVivo(flowId, automatica);
+  const fila = useFollowupQueue(filtros, {
+    refetchMs: automatica ? (canal === "subscribed" ? RECUPERACAO_COM_CANAL_MS : ATUALIZACAO_AUTOMATICA_MS) : false,
+  });
   const linhas = (fila.data?.pages.flatMap((p) => p.data) ?? []).filter((l) => l.source === "enrollment");
 
   const dossie = useFollowupEnrollment(execucaoId ?? "");
@@ -192,6 +221,12 @@ export function ExecucoesDoFluxo({
     : [];
   const noEscolhido = exec && noId ? (exec.nos.find((n) => n.id === noId) ?? null) : null;
   const passosDoNo = exec && noId ? passosEfetivos.filter((p) => p.node_id === noId) : [];
+  // Bloco que rodou mais de uma vez (volta de Repetir, nova tentativa): uma passagem por vez, a mais recente por padrão.
+  // A escolha vale para o bloco em que foi feita: trocar de bloco ou de execução volta à mais recente.
+  const chaveDoBloco = `${execucaoId ?? ""}:${noId ?? ""}`;
+  const [passagemEscolhida, setPassagemEscolhida] = useState<{ chave: string; i: number } | null>(null);
+  const ultima = passosDoNo.length - 1;
+  const passagem = passagemEscolhida?.chave === chaveDoBloco ? Math.min(passagemEscolhida.i, ultima) : ultima;
   const eventosDoNo = exec && noId && derivado ? (exec.eventos ?? []).filter((e) => e.node_id === noId) : [];
 
   return (
@@ -226,9 +261,58 @@ export function ExecucoesDoFluxo({
               ))}
             </SelectContent>
           </Select>
+          <Select value={modo} onValueChange={(v) => setModo(v as FollowupExecutionMode | "all")}>
+            <SelectTrigger className="h-9 text-sm" aria-label={t("Filtrar por modo")}>
+              <SelectValue placeholder={t("Todos os modos")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("Todos os modos")}</SelectItem>
+              {MODOS_FILTRAVEIS.map((m) => (
+                <SelectItem key={m} value={m}>
+                  {rotuloDoModo(m, t)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {versoes.length > 0 && (
+            <Select value={versao} onValueChange={setVersao}>
+              <SelectTrigger className="h-9 text-sm" aria-label={t("Filtrar por versão")}>
+                <SelectValue placeholder={t("Todas as versões")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("Todas as versões")}</SelectItem>
+                {versoes.map((v) => (
+                  <SelectItem key={v.id} value={v.id}>
+                    {t("Versão")} {v.numero} · {format(new Date(v.created_at), "dd/MM/yyyy")}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <div className="grid grid-cols-2 gap-2">
+            <Input
+              type="date"
+              value={desde}
+              max={ate || undefined}
+              onChange={(e) => setDesde(e.target.value)}
+              aria-label={t("Execuções a partir de")}
+              className="h-9 text-xs"
+            />
+            <Input
+              type="date"
+              value={ate}
+              min={desde || undefined}
+              onChange={(e) => setAte(e.target.value)}
+              aria-label={t("Execuções até")}
+              className="h-9 text-xs"
+            />
+          </div>
           <label className="flex items-center gap-2 text-xs text-text-muted">
             <Switch checked={automatica} onCheckedChange={setAutomatica} aria-label={t("Atualizar automaticamente")} />
             {t("Atualizar automaticamente")}
+            {automatica && canal === "subscribed" && (
+              <span className="text-success-fg" data-testid="execucoes-ao-vivo">· {t("ao vivo")}</span>
+            )}
           </label>
         </div>
         <ul className="min-h-0 flex-1 overflow-y-auto" aria-label={t("Execuções deste fluxo")}>
@@ -407,6 +491,11 @@ export function ExecucoesDoFluxo({
                 {exec.last_error ?? exec.cancel_reason}
               </p>
             )}
+            {exec.passos_truncados && (
+              <p className="border-b border-border bg-surface-muted px-4 py-2 text-xs text-text-muted" data-testid="execucao-diario-truncado">
+                {t("Esta execução tem mais passos do que a tela carrega: o desenho mostra só os primeiros.")}
+              </p>
+            )}
 
             {derivado && (
               <p className="border-b border-border bg-surface-muted px-4 py-2 text-xs text-text-muted" data-testid="execucao-reconstruida">
@@ -458,8 +547,30 @@ export function ExecucoesDoFluxo({
                           : t("Esta execução não passou por este bloco.")}
                       </p>
                     ) : (
+                      <>
+                      {passosDoNo.length > 1 && (
+                        <div role="tablist" aria-label={t("Passagens por este bloco")} className="mb-3 flex flex-wrap gap-1">
+                          {passosDoNo.map((p, i) => (
+                            <button
+                              key={p.step_id}
+                              type="button"
+                              role="tab"
+                              aria-selected={i === passagem}
+                              data-testid="inspetor-passagem"
+                              onClick={() => setPassagemEscolhida({ chave: chaveDoBloco, i })}
+                              className={cn(
+                                "rounded-md border px-2 py-1 text-xs",
+                                i === passagem ? "border-accent bg-surface-muted font-medium" : "border-border text-text-muted hover:text-text",
+                              )}
+                            >
+                              {t("Passagem")} {i + 1}
+                              {p.entered_at ? ` · ${format(new Date(p.entered_at), "dd/MM HH:mm")}` : ""}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                       <ol className="space-y-4">
-                        {passosDoNo.map((p) => (
+                        {passosDoNo.slice(passagem, passagem + 1).map((p) => (
                           <Passo
                             key={p.step_id}
                             passo={p}
@@ -470,6 +581,7 @@ export function ExecucoesDoFluxo({
                           />
                         ))}
                       </ol>
+                      </>
                     )}
                     {eventosDoNo.length > 0 && (
                       <ul className="border-l border-border pl-3" data-testid="inspetor-eventos">

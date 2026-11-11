@@ -1,10 +1,13 @@
 "use client";
 
-import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { format } from "date-fns";
 
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { FlowGraph } from "@/lib/followup/graph-schema";
-import { previaDoTexto } from "@/lib/followup/previa-do-texto";
+import { previaDoTexto, saidasDosPassos } from "@/lib/followup/previa-do-texto";
+import { useFollowupEnrollment } from "@/hooks/followup/useFollowupEnrollment";
+import { useFollowupQueue } from "@/hooks/followup/useFollowupQueue";
 import { ancestrais, camposDeSaidaDoNo } from "@/lib/followup/variaveis-de-blocos";
 import { useT } from "@/hooks/i18n/useT";
 
@@ -12,12 +15,24 @@ import { useT } from "@/hooks/i18n/useT";
 interface Estado {
   grafo: Pick<FlowGraph, "nodes" | "edges"> | null;
   noId: string | null;
+  /** Com o fluxo, a prévia oferece execuções reais dele como amostra. */
+  flowId?: string;
 }
 
-const Contexto = createContext<Estado>({ grafo: null, noId: null });
+interface Contextual extends Estado {
+  /** A execução escolhida como amostra da prévia (`null` = exemplo simulado). Vale para todos os blocos do editor. */
+  amostra: string | null;
+  setAmostra: (id: string | null) => void;
+}
 
-export function VariaveisDoFluxoProvider({ grafo, noId, children }: Estado & { children: ReactNode }) {
-  const valor = useMemo(() => ({ grafo, noId }), [grafo, noId]);
+const Contexto = createContext<Contextual>({ grafo: null, noId: null, amostra: null, setAmostra: () => {} });
+
+export function VariaveisDoFluxoProvider({ grafo, noId, flowId, children }: Estado & { children: ReactNode }) {
+  const [amostra, setAmostra] = useState<string | null>(null);
+  const valor = useMemo(
+    () => ({ grafo, noId, ...(flowId ? { flowId } : {}), amostra, setAmostra }),
+    [grafo, noId, flowId, amostra],
+  );
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;
 }
 
@@ -114,17 +129,66 @@ export function inserirNoCursor(campo: HTMLTextAreaElement | null, texto: string
  * execução — o rótulo diz isso. Só aparece quando o texto tem variável: sem ela a prévia seria o próprio campo.
  */
 export function PreviaDoTexto({ texto }: { texto: string }) {
+  const { flowId, amostra } = useContext(Contexto);
+  if (!/\{\{[^}]+\}\}/.test(texto)) return null;
+  if (!flowId) return <CorpoDaPrevia texto={texto} />;
+  return (
+    <div className="space-y-1">
+      <EscolherAmostra flowId={flowId} />
+      {amostra ? <PreviaComExecucao texto={texto} execucaoId={amostra} /> : <CorpoDaPrevia texto={texto} />}
+    </div>
+  );
+}
+
+/** «Amostra»: o exemplo simulado ou uma das execuções recentes DESTE fluxo — escolha explícita, nunca automática. */
+function EscolherAmostra({ flowId }: { flowId: string }) {
+  const t = useT();
+  const { amostra, setAmostra } = useContext(Contexto);
+  const fila = useFollowupQueue({ pointer_id: flowId });
+  const execucoes = (fila.data?.pages[0]?.data ?? []).filter((l) => l.source === "enrollment").slice(0, 10);
+  return (
+    <Select value={amostra ?? "exemplo"} onValueChange={(v) => setAmostra(v === "exemplo" ? null : v)}>
+      <SelectTrigger aria-label={t("Amostra da prévia")} className="h-8 text-xs" data-testid="amostra-da-previa">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="exemplo">{t("Exemplo simulado")}</SelectItem>
+        {execucoes.map((e) => (
+          <SelectItem key={e.id} value={e.id}>
+            {e.contact.name}
+            {e.started_at ? ` · ${format(new Date(e.started_at), "dd/MM HH:mm")}` : ""}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+/** A prévia com as saídas REAIS da execução escolhida (sempre só dos blocos anteriores ao aberto). */
+function PreviaComExecucao({ texto, execucaoId }: { texto: string; execucaoId: string }) {
+  const t = useT();
+  const dossie = useFollowupEnrollment(execucaoId);
+  const saidas = useMemo(() => (dossie.data ? saidasDosPassos(dossie.data.passos) : null), [dossie.data]);
+  if (!saidas) return <p className="text-xs text-text-muted">{t("Carregando...")}</p>;
+  return <CorpoDaPrevia texto={texto} saidasReais={saidas} />;
+}
+
+function CorpoDaPrevia({ texto, saidasReais }: { texto: string; saidasReais?: Record<string, unknown> }) {
   const t = useT();
   const { grafo, noId } = useContext(Contexto);
-  const previa = useMemo(() => previaDoTexto(texto, grafo, noId), [texto, grafo, noId]);
-  if (!/\{\{[^}]+\}\}/.test(texto)) return null;
+  const previa = useMemo(() => previaDoTexto(texto, grafo, noId, saidasReais), [texto, grafo, noId, saidasReais]);
   return (
     <div className="rounded-sm border border-dashed border-border p-2 text-xs" data-testid="previa-do-texto">
-      <p className="mb-1 font-medium text-text-muted">{t("Como vai sair (exemplo simulado)")}</p>
+      <p className="mb-1 font-medium text-text-muted">
+        {saidasReais
+          ? t("Como vai sair (saídas da execução escolhida; contato de exemplo)")
+          : t("Como vai sair (exemplo simulado)")}
+      </p>
       <p className="whitespace-pre-wrap">{previa.texto}</p>
       {previa.sem_valor.length > 0 && (
         <p className="mt-1 text-warning-fg" data-testid="previa-sem-valor">
-          {t("Ficaria sem valor com este exemplo:")} {previa.sem_valor.join(", ")}
+          {saidasReais ? t("Ficaria sem valor nesta execução:") : t("Ficaria sem valor com este exemplo:")}{" "}
+          {previa.sem_valor.join(", ")}
         </p>
       )}
     </div>

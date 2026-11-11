@@ -34,11 +34,18 @@ export function extrairReferencias(texto: string): ReferenciaDeBloco[] {
 export function textosDoBloco(no: FlowNode): string[] {
   // Mapear dados: valor e valor padrão de cada campo citam blocos anteriores pela mesma marca.
   if (no.type === "map_data") return no.config.fields.flatMap((f) => (f.fallback ? [f.value, f.fallback] : [f.value]));
+  // Criar tarefa: o título pode citar a saída de um bloco anterior (ex.: um campo do Mapear dados).
+  if (no.type === "internal_task") return [no.config.titulo];
   if (no.type !== "action") return [];
   if (no.config.mode === "text") return [no.config.body];
   if (no.config.mode === "messages")
     return no.config.items.flatMap((i) => (i.kind === "text" ? [i.body] : i.caption ? [i.caption] : []));
   return [];
+}
+
+/** Os blocos que citam `noId` numa variável — quem fica sem valor se ele for excluído. */
+export function dependentesDoNo(graph: Pick<FlowGraph, "nodes">, noId: string): FlowNode[] {
+  return graph.nodes.filter((n) => n.id !== noId && textosDoBloco(n).flatMap(extrairReferencias).some((r) => r.no_id === noId));
 }
 
 /** Os ids dos blocos que podem ser percorridos ANTES de `noId` (qualquer caminho que chega nele). */

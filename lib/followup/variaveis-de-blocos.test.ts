@@ -190,3 +190,45 @@ describe("Mapear dados — campos montados viram variáveis dos blocos seguintes
     expect(validateFlowForPublish(renomeado, {})).toEqual({ ok: true });
   });
 });
+
+describe("prévia com amostra explícita (Fase 4)", () => {
+  it("execução real escolhida: usa as saídas dela, só dos blocos anteriores; passo falho não entra", async () => {
+    const { previaDoTexto, saidasDosPassos } = await import("./previa-do-texto");
+    const grafo = flowGraphSchema.parse({
+      nodes: [
+        no("t", "trigger", {}),
+        no("c", "condition", { combinator: "and", branching: "per_check", checks: [{ id: "a", field: "tag", op: "eq", value: "x" }] }),
+        no("m1", "action", { mode: "text", body: "x" }),
+        no("f", "end", { outcome: "converted" }),
+      ],
+      edges: [aresta("e1", "t", "c"), aresta("e2", "c", "m1"), aresta("e3", "m1", "f")],
+    });
+    const saidas = saidasDosPassos([
+      { node_id: "c", status: "succeeded", saida: { branch_id: "a" } },
+      { node_id: "m1", status: "failed", saida: { messages: [] } },
+      { node_id: "f", status: "succeeded", saida: { outcome: "converted" } },
+    ]);
+    expect(saidas).toEqual({ c: { branch_id: "a" }, f: { outcome: "converted" } });
+    expect(previaDoTexto("Ramo {{nodes.c.branch_id}}", grafo, "m1", saidas).texto).toBe("Ramo a");
+    // bloco FUTURO (f) nunca entra na prévia, mesmo presente na execução
+    expect(previaDoTexto("Fim {{nodes.f.outcome}}", grafo, "m1", saidas).sem_valor).toEqual(["{{nodes.f.outcome}}"]);
+    // sem amostra real, o exemplo simulado
+    expect(previaDoTexto("Ramo {{nodes.c.branch_id}}", grafo, "m1").texto).toBe("Ramo sim");
+  });
+});
+
+describe("dependentesDoNo — excluir mostra quem usa o bloco", () => {
+  it("lista os blocos cujos textos citam o bloco; ignora quem não cita", async () => {
+    const { dependentesDoNo } = await import("./variaveis-de-blocos");
+    const g = {
+      nodes: [
+        no("c", "condition", {}),
+        no("m1", "action", { mode: "text", body: "Ramo {{nodes.c.branch_id}}" }),
+        no("mapa", "map_data", { fields: [{ name: "x", value: "fixo", type: "text", fallback: "{{nodes.c.branch_id}}" }] }),
+        no("m2", "action", { mode: "text", body: "sem variável" }),
+      ],
+    } as never;
+    expect(dependentesDoNo(g, "c").map((n) => n.id)).toEqual(["m1", "mapa"]);
+    expect(dependentesDoNo(g, "m2")).toEqual([]);
+  });
+});

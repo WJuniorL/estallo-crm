@@ -50,6 +50,7 @@ import { EdgeConfigPanel } from "./EdgeConfigPanel";
 import { EtapasDoFluxoProvider, useEtapasDoFluxo } from "./EtapasDoFluxo";
 import { SaidaDeErroProvider } from "./SaidaDeErro";
 import { VariaveisDoFluxoProvider } from "./VariaveisDoFluxo";
+import { dependentesDoNo } from "@/lib/followup/variaveis-de-blocos";
 import { NodePalette } from "./NodePalette";
 import { PublishBar } from "./PublishBar";
 import { NODE_VISUALS, configPadraoDaAcao } from "./nodes/nodeVisuals";
@@ -414,12 +415,13 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
               </Button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 pt-0 lg:pt-4">
-              <VariaveisDoFluxoProvider grafo={liveGraph} noId={selectedNode.id}>
+              <VariaveisDoFluxoProvider grafo={liveGraph} noId={selectedNode.id} flowId={flowId}>
                 <NodeConfigPanel
                   key={selectedNode.id}
                   node={selectedNode}
                   onChange={(patch) => updateNodeData(selectedNode.id, patch)}
                   onDelete={() => deleteNode(selectedNode.id)}
+                  dependentes={dependentesDoNo(liveGraph, selectedNode.id).map((n) => n.label)}
                   ramosLigados={ramosLigadosDoSelecionado}
                   surface={surface}
                   flowId={flowId}

@@ -48,6 +48,7 @@ import {
   type NodeDecisionTrace,
 } from "./node-handlers";
 import { NODE_OUTPUT_CONTRACTS } from "./node-output-contracts";
+import { MARCA_DE_BLOCO, resolverReferencias } from "./variaveis-de-blocos";
 import {
   avisoDeRecuperacaoEsgotada,
   SQL_AVISO_RECUPERACAO_ESGOTADA,
@@ -81,12 +82,33 @@ const taskReadsSchema = z.object({
       display_name: z.string().nullable().optional(),
     })
     .nullable(),
+  /** Saídas dos blocos anteriores, congeladas no `begin` quando o título cita `{{nodes.…}}`. */
+  saidas: z.record(z.string(), z.json()).optional(),
 });
 
-function taskRequest(row: EnrollmentRow, node: Extract<FlowNode, { type: "internal_task" }>) {
+/**
+ * O título com as `{{nodes.<bloco>.<campo>}}` resolvidas pelas saídas congeladas. Variável sem valor NÃO vira título
+ * cortado: a tarefa falha com a explicação (a mesma régua do envio de mensagem).
+ */
+function tituloComSaidas(titulo: string, saidas: Record<string, unknown> | undefined): string {
+  if (!new RegExp(MARCA_DE_BLOCO.source).test(titulo)) return titulo;
+  const r = resolverReferencias(titulo, saidas ?? {});
+  if (r.sem_valor.length > 0)
+    throw new ExecutionTaskConfigurationError(
+      "variavel_sem_valor",
+      `O título da tarefa cita ${[...new Set(r.sem_valor.map((x) => x.marca))].join(", ")}, mas o bloco citado não produziu esse valor nesta execução.`,
+    );
+  return r.texto;
+}
+
+function taskRequest(
+  row: EnrollmentRow,
+  node: Extract<FlowNode, { type: "internal_task" }>,
+  saidas?: Record<string, unknown>,
+) {
   return {
     organizationId: row.organization_id,
-    titulo: node.config.titulo,
+    titulo: tituloComSaidas(node.config.titulo, saidas),
     venceEmDias: node.config.vence_em_dias,
     atribuirA: node.config.atribuir_a,
     prioridade: node.config.prioridade,
@@ -303,17 +325,46 @@ export class PgExecutionJournal implements ExecutionJournal {
       : null;
     if (row.lead_id && !lead) throw new ExecutionLeadUnavailableError();
     const at = new Date();
-    const prepared = prepararRegistroDaTarefa(taskRequest(row, node), { lead, contact }, at);
+    const saidas = new RegExp(MARCA_DE_BLOCO.source).test(node.config.titulo)
+      ? await this.saidasDaExecucao(client, row)
+      : undefined;
+    let prepared: ReturnType<typeof prepararRegistroDaTarefa> | null = null;
+    try {
+      prepared = prepararRegistroDaTarefa(taskRequest(row, node, saidas), { lead, contact }, at);
+    } catch {
+      // variável sem valor: o `completeTask` relança com a explicação, a partir das saídas congeladas aqui.
+    }
     return {
       requested,
       resolved: {
         at: at.toISOString(),
         lead,
         contact,
-        task: prepared.ok ? prepared.registro : null,
-        preparation_error: prepared.ok ? null : prepared.codigo,
+        ...(saidas ? { saidas } : {}),
+        task: prepared?.ok ? prepared.registro : null,
+        preparation_error: prepared ? (prepared.ok ? null : prepared.codigo) : "variavel_sem_valor",
       },
     };
+  }
+
+  /** As saídas desta execução por bloco — a mesma régua de `loadStepOutputs` (passo concluído, última tentativa). */
+  private async saidasDaExecucao(client: pg.PoolClient, row: LockedExecution): Promise<Record<string, unknown>> {
+    const { rows } = await client.query<{ node_id: string; output_snapshot: unknown }>(
+      `select s.node_id, a.output_snapshot
+         from followup_execution_steps s
+         join lateral (
+           select output_snapshot from followup_execution_attempts
+            where organization_id = s.organization_id and step_id = s.id
+            order by attempt_no desc limit 1
+         ) a on true
+        where s.organization_id = $1 and s.enrollment_id = $2 and s.status = 'succeeded'
+        order by s.entered_at asc
+        limit 200`,
+      [row.organization_id, row.id],
+    );
+    const saidas: Record<string, unknown> = {};
+    for (const r of rows) if (r.output_snapshot !== null && r.output_snapshot !== undefined) saidas[r.node_id] = r.output_snapshot;
+    return saidas;
   }
 
   private async tagInput(
@@ -809,7 +860,7 @@ export class PgExecutionJournal implements ExecutionJournal {
       if (reads.contact?.id !== row.contact_id || (reads.lead?.id ?? null) !== row.lead_id)
         throw new ExecutionLeadUnavailableError();
       const prepared = prepararRegistroDaTarefa(
-        taskRequest(row, node),
+        taskRequest(row, node, reads.saidas),
         { lead: reads.lead, contact: reads.contact },
         new Date(reads.at),
       );

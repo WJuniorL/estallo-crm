@@ -2576,6 +2576,20 @@ export const DICIONARIO: Traducoes = {
   "Execuções deste fluxo": { es: "Ejecuciones de este flujo" },
   "Todas as versões": { es: "Todas las versiones" },
   "Mapear dados": { es: "Mapear datos" },
+  "Exemplo simulado": { es: "Ejemplo simulado" },
+  "Amostra da prévia": { es: "Muestra de la vista previa" },
+  "Usado por:": { es: "Usado por:" },
+  "Excluir este bloco deixa essas variáveis sem valor, e a publicação fica bloqueada até você corrigi-las.": {
+    es: "Eliminar este bloque deja esas variables sin valor, y la publicación queda bloqueada hasta que las corrija.",
+  },
+  "Como vai sair (saídas da execução escolhida; contato de exemplo)": {
+    es: "Cómo va a salir (salidas de la ejecución elegida; contacto de ejemplo)",
+  },
+  "Ficaria sem valor nesta execução:": { es: "Quedaría sin valor en esta ejecución:" },
+  "O que este bloco entrega": { es: "Lo que entrega este bloque" },
+  "Contrato declarado: os blocos seguintes podem usar estes campos.": {
+    es: "Contrato declarado: los bloques siguientes pueden usar estos campos.",
+  },
   "Monta campos a partir das saídas dos blocos anteriores.": {
     es: "Arma campos a partir de las salidas de los bloques anteriores.",
   },

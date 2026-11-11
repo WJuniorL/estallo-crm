@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import type { FlowGraph, FlowNode } from "@/lib/followup/graph-schema";
 import type { FollowupFlowSurface } from "@/lib/followup/api-schemas";
-import type { RFNode, RFNodeData } from "@/lib/followup/graph-mappers";
+import { toFlowNode, type RFNode, type RFNodeData } from "@/lib/followup/graph-mappers";
 import { Trash } from "@/lib/ui/icons";
 import { useT } from "@/hooks/i18n/useT";
 
@@ -27,9 +27,12 @@ import { SkillForm } from "./forms/SkillForm";
 import { WaitForm } from "./forms/WaitForm";
 import type { ConfigOf } from "./forms/shared";
 import { NODE_VISUALS } from "./nodes/nodeVisuals";
+import { SaidaDoBloco } from "./SaidaDoBloco";
 
 interface Props {
   node: RFNode;
+  /** Rótulos dos blocos que usam variáveis deste: excluí-lo os deixa sem valor (e a publicação recusa). */
+  dependentes?: string[];
   onChange: (patch: Partial<RFNodeData>) => void;
   onDelete: () => void;
   /** Ramos deste nó que já têm aresta — quem sabe isso é o canvas, que é dono do grafo. */
@@ -56,6 +59,7 @@ export function NodeConfigPanel({
   node,
   onChange,
   onDelete,
+  dependentes = [],
   ramosLigados,
   surface = "followup",
   flowId,
@@ -182,9 +186,16 @@ export function NodeConfigPanel({
             {...(flowId !== undefined ? { flowId } : {})}
           />
         )}
+        <SaidaDoBloco no={toFlowNode(node)} />
       </div>
 
       <div className="mt-auto border-t border-border pt-4">
+        {dependentes.length > 0 && (
+          <p className="mb-2 text-xs text-warning-fg" data-testid="dependentes-do-no">
+            {t("Usado por:")} {dependentes.join(", ")}.{" "}
+            {t("Excluir este bloco deixa essas variáveis sem valor, e a publicação fica bloqueada até você corrigi-las.")}
+          </p>
+        )}
         <Button
           type="button"
           variant="outline"

@@ -995,3 +995,20 @@ Pedido do dono: atualizar os testes vermelhos do `verify` que vinham da frente d
 **NÃO MEDIDO:** `pnpm test:db` (Docker desligado na máquina local — o invariante novo roda no CI); evento chegando de verdade pelo socket; tela no navegador.
 
 **Ordem de entrega:** aplicar a 0715 no banco de produção ANTES do merge. Se o app subir sem ela, o canal responde SUBSCRIBED sem entregar nada e a lista só atualiza a cada 60 s (degrada, não quebra).
+
+## 2026-11-11 (4) — Fase 4: Mapear dados, contrato × exemplo × real, amostra escolhida, dependentes
+
+**Feito:**
+- Bloco **Mapear dados** (`map_data`, `lib/followup/mapear-dados.ts`): campos com nome, valor (texto com `{{nodes.<bloco>.<caminho>}}`) e tipo (texto, número, sim/não, lista). Referência sozinha preserva o tipo cru; composição monta texto. Ausente ≠ `null` ≠ "" ≠ []; ausente sem valor padrão falha com explicação (`map_data_value_unavailable`, sai pela saída de erro). Sem `eval`; leitura por `ler()` (só chave própria). Saídas anteriores congeladas na entrada da tentativa (`executionDecisionInputSchema.saidas`) — nova tentativa dá o mesmo resultado. Integrado ao contrato 1 (`NODES_INTEGRATED_IN_EXECUTION_CONTRACT`), catálogo (categoria Dados), cartão, formulário e layout.
+- Campos montados viram variáveis `{{nodes.<bloco>.fields.<nome>}}` no seletor, na prévia e na publicação (recusa campo inexistente, mapa vazio, nome repetido, valor vazio).
+- **Criar tarefa** resolve `{{nodes…}}` no título com as saídas congeladas no `begin` (`input_snapshot.resolved.saidas`); variável sem valor falha com explicação, nunca título cortado. Seletor de variáveis no título.
+- Editor mostra **«O que este bloco entrega»**: contrato declarado (marca exata) + exemplo simulado rotulado («Exemplo simulado»); o inspetor da execução segue rotulando «Valor desta execução».
+- **Amostra explícita** na prévia do texto: «Exemplo simulado» ou uma das execuções recentes do fluxo (saídas reais, só de blocos anteriores).
+- **Dependentes**: o painel do bloco lista quem usa as variáveis dele antes do «Excluir nó»; publicar segue bloqueado enquanto houver referência órfã.
+- Adaptador pg (`createPgAdminClient`) ganhou `loadStepOutputs` (só testes o usam; a produção usa o Supabase, que já tinha).
+
+**Deliberadamente NÃO feito:** arrastar variável para o campo — o seletor «Inserir variável» insere no cursor em todo campo que aceita variável; arrastar não acrescenta capacidade. Fazer se o uso pedir.
+
+**Evidência local:** vitest de `lib/followup` + editor; typecheck e eslint dos tocados. Invariantes novos `automacoes-mapear-dados-no-diario` (4 casos, inclusive tarefa com título vindo do mapa) rodam só no CI — Docker desligado na máquina.
+
+**NÃO MEDIDO:** tela no navegador; `pnpm test:db` local.

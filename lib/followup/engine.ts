@@ -1286,7 +1286,8 @@ async function processEnrollment(
       (node.type === "trigger" && !vaiPlanejar) ||
       node.type === "wait" ||
       node.type === "repeat" ||
-      node.type === "match_reply")
+      node.type === "match_reply" ||
+      node.type === "map_data")
   ) {
     if (!db.executionJournal) throw new Error("execution_journal_unavailable");
     const journal = await db.executionJournal();
@@ -1298,6 +1299,9 @@ async function processEnrollment(
         contact_id: enrollment.contact_id,
         lead_id: enrollment.lead_id ?? null,
         conversation_id: enrollment.conversation_id,
+        ...(node.type === "map_data"
+          ? { saidas: db.loadStepOutputs ? await db.loadStepOutputs(enrollment.organization_id, enrollment.id) : {} }
+          : {}),
         ...(node.type === "repeat"
           ? {
               repeat: {
@@ -1378,6 +1382,7 @@ async function processEnrollment(
         lastInboundBody:
           node.type === "match_reply" ? replyBody : (frozenInput.repeat?.reply ?? undefined),
         lastInboundMessageId: replyMessageId,
+        saidasAnteriores: frozenInput.saidas,
         onDecision: (value) => {
           trace = value;
         },
@@ -1393,6 +1398,9 @@ async function processEnrollment(
         await applyResult(deps, enrollment, node, result, summary, smartWaits, events, null, null);
         return;
       }
+      // Mapear dados sem o valor que um campo cita: falha de configuração explicada (sai pela saída de erro).
+      if (node.type === "map_data" && result.kind === "fail")
+        throw new ExecutionConfigurationError("map_data_value_unavailable", result.error);
       if (result.kind !== "advance" && result.kind !== "complete")
         throw new ExecutionConfigurationError("execution_decision_not_integrated");
       // Captação: mesmas condições do legado (`applyResult`) — só com resposta real, e nunca no

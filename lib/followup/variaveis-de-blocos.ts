@@ -32,6 +32,8 @@ export function extrairReferencias(texto: string): ReferenciaDeBloco[] {
 
 /** Os textos de um bloco em que a pessoa pode usar variáveis (corpo do texto fixo, textos e legendas do bloco de mensagens). */
 export function textosDoBloco(no: FlowNode): string[] {
+  // Mapear dados: valor e valor padrão de cada campo citam blocos anteriores pela mesma marca.
+  if (no.type === "map_data") return no.config.fields.flatMap((f) => (f.fallback ? [f.value, f.fallback] : [f.value]));
   if (no.type !== "action") return [];
   if (no.config.mode === "text") return [no.config.body];
   if (no.config.mode === "messages")
@@ -84,6 +86,15 @@ export const CAMPOS_DE_SAIDA: Partial<Record<FlowNode["type"], Array<{ caminho: 
   internal_task: [{ caminho: "task_id", rotulo: "Id da tarefa criada" }],
 };
 
+/**
+ * Os campos que ESTE bloco oferece a quem vem depois. Para quase todo tipo é a lista fixa acima; o Mapear dados
+ * oferece os campos que a pessoa configurou nele (`fields.<nome>`).
+ */
+export function camposDeSaidaDoNo(no: FlowNode): Array<{ caminho: string; rotulo: string }> {
+  if (no.type === "map_data") return no.config.fields.map((f) => ({ caminho: `fields.${f.name}`, rotulo: f.name }));
+  return CAMPOS_DE_SAIDA[no.type] ?? [];
+}
+
 /** Valor → texto. Lista vira "a, b"; objeto não vira texto (retorna `null`, e a marca some). */
 function emTexto(valor: unknown): string | null {
   if (valor === null || valor === undefined) return null;
@@ -97,7 +108,7 @@ function emTexto(valor: unknown): string | null {
 }
 
 /** Lê `a.b.0.c` numa estrutura. Só chave PRÓPRIA: `constructor`/`__proto__` nunca saem do protótipo. */
-function ler(raiz: unknown, caminho: string): unknown {
+export function ler(raiz: unknown, caminho: string): unknown {
   let atual: unknown = raiz;
   for (const parte of caminho.split(".")) {
     if (atual === null || typeof atual !== "object") return undefined;

@@ -88,6 +88,12 @@ export const NODE_OUTPUT_CONTRACTS = {
     added_tags: z.array(z.string().min(1)),
     tags: z.array(z.string().min(1)),
   }),
+  map_data: z.strictObject({
+    fields: z.record(
+      z.string().min(1),
+      z.union([z.string(), z.number(), z.boolean(), z.array(z.string()), z.null()]),
+    ),
+  }),
   end: z.strictObject({
     outcome: z.enum(["converted", "exhausted"]).nullable(),
     note: z.string().nullable(),

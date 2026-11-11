@@ -15,6 +15,7 @@ import type { FlowEdge, FlowNode, ReplySaveTo } from "./graph-schema";
 import { parseReplyCount } from "./parse-count";
 import { clampEspera, esperaPlanejadaDe, type EsperaAdaptativa } from "./timing-plan";
 import { fraseDeConfirmacao } from "./vocabulario";
+import { mapearDados } from "./mapear-dados";
 
 export type EnrollmentStatus =
   | "active"
@@ -703,6 +704,8 @@ export function processNode(input: {
   repeatTotal?: number | null;
   /** Próximo nó pela aresta `always` — a ação olha o `match_reply` seguinte para pular o envio. */
   proximo?: FlowNode | null;
+  /** `map_data`: as saídas dos blocos anteriores desta execução, congeladas na entrada da tentativa. */
+  saidasAnteriores?: Record<string, unknown>;
 }): NodeResult {
   const {
     onDecision,
@@ -1198,6 +1201,17 @@ export function processNode(input: {
       const edge = selectEdge(edges, node.id, { type: "always" });
       if (!edge)
         return { kind: "fail", error: `edit_lead_tag node "${node.id}" has no outbound edge` };
+      return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
+    }
+
+    case "map_data": {
+      // Fase 4 — sem efeito: só monta os campos com as saídas anteriores (congeladas no `begin`, para a nova
+      // tentativa dar o mesmo resultado). Faltou valor sem fallback → falha explicada, que sai pela saída de erro.
+      const edge = selectEdge(edges, node.id, { type: "always" });
+      if (!edge) return { kind: "fail", error: `map_data node "${node.id}" has no outbound edge` };
+      const mapa = mapearDados(node.config.fields, input.saidasAnteriores ?? {});
+      if (!mapa.ok) return { kind: "fail", error: mapa.motivo };
+      onDecision?.({ edge_id: edge.id, branch_id: branchOfSelectedEdge(edge), output: { fields: mapa.fields } });
       return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
     }
 

@@ -64,6 +64,9 @@ export const PUBLISH_ERROR_CODES = [
   'variavel_de_bloco_inexistente',
   'variavel_de_bloco_nao_anterior',
   'variavel_de_bloco_campo_inexistente',
+  'mapa_sem_campos',
+  'mapa_campo_repetido',
+  'mapa_campo_sem_valor',
 ] as const;
 export type PublishErrorCode = (typeof PUBLISH_ERROR_CODES)[number];
 
@@ -587,6 +590,39 @@ function conferirEtapaDestino(
 }
 
 /**
+ * Fase 4 — Mapear dados sem campo, com nome repetido ou com valor vazio não monta nada que se possa citar.
+ */
+function conferirMapa(
+  node: Extract<FlowNode, { type: 'map_data' }>,
+  errors: PublishValidationError[],
+): void {
+  if (node.config.fields.length === 0) {
+    errors.push({
+      node_id: node.id,
+      code: 'mapa_sem_campos',
+      message: `A caixa "${node.label}" não monta nenhum campo. Acrescente ao menos um.`,
+    });
+    return;
+  }
+  const vistos = new Set<string>();
+  for (const f of node.config.fields) {
+    if (vistos.has(f.name))
+      errors.push({
+        node_id: node.id,
+        code: 'mapa_campo_repetido',
+        message: `A caixa "${node.label}" monta o campo "${f.name}" mais de uma vez.`,
+      });
+    vistos.add(f.name);
+    if (f.value.trim() === '')
+      errors.push({
+        node_id: node.id,
+        code: 'mapa_campo_sem_valor',
+        message: `A caixa "${node.label}": o campo "${f.name}" está sem valor.`,
+      });
+  }
+}
+
+/**
  * #2065 — nó `edit_lead_tag` sem tag (lista vazia ou com tag em branco). O
  * schema aceita, porque o rascunho tem de salvar trabalho pela metade; publicado,
  * um nó que não grava nada é mentira de interface.
@@ -748,7 +784,18 @@ function validarVariaveisDeBlocos(graph: FlowGraph, errors: PublishValidationErr
           (declaredNodeOutputSchema(alvo.type)?.properties as Record<string, unknown> | undefined) ?? {},
         );
         const campo = ref.caminho.split('.')[0]!;
-        if (!declarados.includes(campo)) {
+        const nomeDoMapa = alvo.type === 'map_data' && campo === 'fields' ? ref.caminho.split('.')[1] : undefined;
+        if (
+          alvo.type === 'map_data' &&
+          campo === 'fields' &&
+          !alvo.config.fields.some((f) => f.name === nomeDoMapa)
+        ) {
+          errors.push({
+            node_id: no.id,
+            code: 'variavel_de_bloco_campo_inexistente',
+            message: `A caixa "${no.label}" usa a variável ${ref.marca}, mas o bloco "${alvo.label}" não monta o campo "${nomeDoMapa ?? ''}". Campos disponíveis: ${alvo.config.fields.map((f) => f.name).join(', ') || 'nenhum'}.`,
+          });
+        } else if (!declarados.includes(campo)) {
           errors.push({
             node_id: no.id,
             code: 'variavel_de_bloco_campo_inexistente',
@@ -903,6 +950,7 @@ export function validateFlowForPublish(
   for (const node of [...nodes].sort(byId)) {
     if (node.type === 'move_lead') conferirEtapaDestino(node, contexto, errors);
     if (node.type === 'edit_lead_tag') conferirTags(node, errors);
+    if (node.type === 'map_data') conferirMapa(node, errors);
   }
 
   for (const node of [...nodes].sort(byId)) {

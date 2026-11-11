@@ -572,6 +572,14 @@ export const DESTINOS_DA_TAG: Record<"card" | "contato", string> = {
   contato: "No contato",
 };
 
+/** Tipos de campo do bloco Mapear dados — a conversão explícita que cada campo faz. */
+export const TIPOS_DO_CAMPO_DO_MAPA: Record<"text" | "number" | "boolean" | "list", string> = {
+  text: "Texto",
+  number: "Número",
+  boolean: "Sim/não",
+  list: "Lista",
+};
+
 /** Tipos de envio do bloco de mensagens — rótulos do seletor de cada envio. */
 export const TIPOS_DO_ENVIO: Record<"text" | "image" | "video" | "audio" | "document", string> = {
   text: "Texto",

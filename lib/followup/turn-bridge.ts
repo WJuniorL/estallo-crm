@@ -553,6 +553,26 @@ export function createPgAdminClient(pool: pg.Pool): TurnBridgeAdminClient {
     /** #2528 — contexto do render das mensagens de follow-up (o MESMO par de leituras de `loadLeadFacts`, com as linhas inteiras). */
     loadRenderContext: (orgId, contactId, target) =>
       contextoDoContato(pool, orgId, contactId, target),
+    // A mesma régua do adaptador Supabase (`engine.ts`): passos concluídos, última tentativa de cada um, e numa volta
+    // a última visita do bloco vale.
+    async loadStepOutputs(orgId, enrollmentId) {
+      const { rows } = await pool.query<{ node_id: string; output_snapshot: unknown }>(
+        `select s.node_id, a.output_snapshot
+           from followup_execution_steps s
+           join lateral (
+             select output_snapshot from followup_execution_attempts
+              where organization_id = s.organization_id and step_id = s.id
+              order by attempt_no desc limit 1
+           ) a on true
+          where s.organization_id = $1 and s.enrollment_id = $2 and s.status = 'succeeded'
+          order by s.entered_at asc
+          limit 200`,
+        [orgId, enrollmentId],
+      );
+      const saidas: Record<string, unknown> = {};
+      for (const r of rows) if (r.output_snapshot !== null && r.output_snapshot !== undefined) saidas[r.node_id] = r.output_snapshot;
+      return saidas;
+    },
     async loadLastInboundBody(orgId, contactId, conversationId, naoAntesDe) {
       const params: unknown[] = [orgId, contactId, conversationId ?? null];
       const desde = naoAntesDe ? "and sent_at >= $4" : "";

@@ -91,6 +91,13 @@ const NOS: Record<string, FlowGraph["nodes"][number]> = {
     position: pos,
     config: { tags: ["x"] },
   },
+  map_data: {
+    id: "n",
+    type: "map_data",
+    label: "md",
+    position: pos,
+    config: { fields: [{ name: "x", value: "fixo", type: "text" }] },
+  },
   end: { id: "n", type: "end", label: "e", position: pos, config: { outcome: "exhausted" } },
 };
 
@@ -108,6 +115,7 @@ const INTEGRADOS_PELO_ENGINE = new Set([
   "internal_task",
   "edit_lead_tag",
   "move_lead",
+  "map_data",
 ]);
 
 const grafoCom = (node: FlowGraph["nodes"][number], extra: FlowGraph["nodes"] = []): FlowGraph => ({

@@ -12,6 +12,7 @@ import { CollectNode } from "./CollectNode";
 import { InternalTaskNode } from "./InternalTaskNode";
 import { MoveLeadNode } from "./MoveLeadNode";
 import { EditLeadTagNode } from "./EditLeadTagNode";
+import { MapDataNode } from "./MapDataNode";
 import { SkillNode } from "./SkillNode";
 
 /** Os cartões de cada tipo de bloco — o MESMO conjunto no construtor e na inspeção de uma execução. */
@@ -35,6 +36,7 @@ export const nodeTypes: NodeTypes = {
   // cima), sem rótulo e sem formulário.
   move_lead: MoveLeadNode,
   edit_lead_tag: EditLeadTagNode,
+  map_data: MapDataNode,
   end: EndNode,
   collect: CollectNode,
   skill: SkillNode,

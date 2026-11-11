@@ -126,6 +126,14 @@ const NODE_DEFINITIONS = {
     surfaces: CLOCK_SURFACES,
     effect: "crm",
   },
+  map_data: {
+    label: "Mapear dados",
+    description: "Monta campos a partir das saídas dos blocos anteriores.",
+    category: "data",
+    keywords: ["variável", "campo", "transformar", "converter", "set", "renomear"],
+    surfaces: CLOCK_SURFACES,
+    effect: "none",
+  },
   end: {
     label: "Fim",
     description: "Encerra o fluxo e registra seu desfecho.",
@@ -158,6 +166,7 @@ export const NODE_CATALOG = {
   internal_task: withOutputContract("internal_task"),
   move_lead: withOutputContract("move_lead"),
   edit_lead_tag: withOutputContract("edit_lead_tag"),
+  map_data: withOutputContract("map_data"),
   end: withOutputContract("end"),
 } as const;
 

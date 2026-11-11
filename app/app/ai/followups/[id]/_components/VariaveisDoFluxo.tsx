@@ -5,7 +5,7 @@ import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { FlowGraph } from "@/lib/followup/graph-schema";
 import { previaDoTexto } from "@/lib/followup/previa-do-texto";
-import { ancestrais, CAMPOS_DE_SAIDA } from "@/lib/followup/variaveis-de-blocos";
+import { ancestrais, camposDeSaidaDoNo } from "@/lib/followup/variaveis-de-blocos";
 import { useT } from "@/hooks/i18n/useT";
 
 /** O fluxo como está AGORA no construtor e qual bloco está aberto no painel — é o que define as variáveis disponíveis. */
@@ -44,14 +44,18 @@ const DO_CONTATO: VariavelOferecida[] = [
  * As variáveis que o bloco aberto pode usar: os dados do contato e, de cada bloco que vem ANTES dele no caminho, os
  * campos de saída que o bloco declara. O nome mostrado é o que a pessoa deu ao bloco; a marca leva o id (estável).
  */
-export function gruposDeVariaveis(grafo: Estado["grafo"], noId: string | null): GrupoDeVariaveis[] {
-  const grupos: GrupoDeVariaveis[] = [{ rotulo: "Contato e negócio", itens: DO_CONTATO }];
+export function gruposDeVariaveis(
+  grafo: Estado["grafo"],
+  noId: string | null,
+  soBlocos = false,
+): GrupoDeVariaveis[] {
+  const grupos: GrupoDeVariaveis[] = soBlocos ? [] : [{ rotulo: "Contato e negócio", itens: DO_CONTATO }];
   if (!grafo || !noId) return grupos;
   const anteriores = ancestrais(grafo, noId);
   for (const no of grafo.nodes) {
     if (!anteriores.has(no.id)) continue;
-    const campos = CAMPOS_DE_SAIDA[no.type];
-    if (!campos || campos.length === 0) continue;
+    const campos = camposDeSaidaDoNo(no);
+    if (campos.length === 0) continue;
     grupos.push({
       rotulo: no.label,
       itens: campos.map((c) => ({ marca: `{{nodes.${no.id}.${c.caminho}}}`, rotulo: c.rotulo })),
@@ -64,10 +68,17 @@ export function gruposDeVariaveis(grafo: Estado["grafo"], noId: string | null): 
  * "Inserir variável": lista os dados do contato e as saídas dos blocos anteriores, e devolve a marca pronta.
  * Quem usa decide ONDE ela entra no texto (no cursor).
  */
-export function InserirVariavel({ onInserir }: { onInserir: (marca: string) => void }) {
+export function InserirVariavel({
+  onInserir,
+  soBlocos = false,
+}: {
+  onInserir: (marca: string) => void;
+  /** Só as saídas dos blocos anteriores (o Mapear dados não lê os dados do contato pela marca). */
+  soBlocos?: boolean;
+}) {
   const t = useT();
   const { grafo, noId } = useContext(Contexto);
-  const grupos = useMemo(() => gruposDeVariaveis(grafo, noId), [grafo, noId]);
+  const grupos = useMemo(() => gruposDeVariaveis(grafo, noId, soBlocos), [grafo, noId, soBlocos]);
 
   return (
     // `value=""` mantém o seletor sempre em "Inserir variável": ele é um menu de ações, não um campo com valor.

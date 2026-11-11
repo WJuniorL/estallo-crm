@@ -8,6 +8,8 @@ export type ReplyCapture = { value: string };
 import { z } from "zod";
 
 export const executionDecisionInputSchema = z.object({
+  /** `map_data`: as saídas dos blocos anteriores no instante da primeira tentativa (a nova tentativa usa as mesmas). */
+  saidas: z.record(z.string(), z.json()).optional(),
   repeat: z
     .object({
       taken: z.number().int().nonnegative(),

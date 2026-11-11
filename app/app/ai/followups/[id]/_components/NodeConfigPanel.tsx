@@ -21,6 +21,7 @@ import { InternalTaskForm } from "./forms/InternalTaskForm";
 import { MatchReplyForm } from "./forms/MatchReplyForm";
 import { MoveLeadForm } from "./forms/MoveLeadForm";
 import { EditLeadTagForm } from "./forms/EditLeadTagForm";
+import { MapDataForm } from "./forms/MapDataForm";
 import { RepeatForm } from "./forms/RepeatForm";
 import { SkillForm } from "./forms/SkillForm";
 import { WaitForm } from "./forms/WaitForm";
@@ -169,6 +170,9 @@ export function NodeConfigPanel({
             config={node.data.config as ConfigOf<"edit_lead_tag">}
             onChange={(config) => onChange({ config })}
           />
+        )}
+        {type === "map_data" && (
+          <MapDataForm config={node.data.config as ConfigOf<"map_data">} onChange={(config) => onChange({ config })} />
         )}
         {type === "end" && (
           <EndForm

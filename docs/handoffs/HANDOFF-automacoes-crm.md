@@ -963,3 +963,35 @@ Pedido do dono: atualizar os testes vermelhos do `verify` que vinham da frente d
 - **Specs tiradas do CI com motivo escrito (`FORA_DO_CI`):** `logo-moldura-no-tema-escuro`, `marca-logo` (marca própria; identidade fixa), `cobranca-revendedor`, `-suspensao-e-limites`, `-desligada`, `-asaas` (cobrança do revendedor do upstream; a do Estallo é demonstrativa), `filtro-por-marcador-pela-tela` (tag na conversa removida pela 0659). `fixme`: `icone-da-aba`, dois casos de `marca-logo`, `#1206` de `qa-l12-inbox`. Partes 7 (specs em triagem) e 8 (as 11 que a parte 1 não chegava a rodar) criadas; a matriz tem 8 partes.
 - **PENDÊNCIA REAL (minha), não de teste:** apagar uma conversa que é origem de inscrição de follow-up do contrato 1 falha com `followup_execution_origin_immutable` (a trava da 0704 barra o `UPDATE … conversation_id = null` do `on delete set null`). O contrato 1 está desligado em produção, então nada quebra hoje; **antes de habilitá-lo, decidir** se a trava deve aceitar o nulo vindo da chave estrangeira (migration nova; a 0704 já está aplicada e não se edita). O limpador de e2e (`cleanup-e2e-channel-sessions.ts`) apaga as inscrições antes das conversas para contornar.
 - **NÃO MEDIDO:** o e2e verde de ponta a ponta (partes 1, 5, 6 e 7 foram cortadas aos 28 min nas rodadas anteriores); a tela dos fluxos pelo navegador.
+
+## 2026-11-11 — Fase 3: filtros de versão, modo e período no histórico de execuções
+
+**Feito (sem schema, sem deploy):** a aba Execuções do editor ganhou filtro por versão (lista vem de `GET /api/v1/ai/followup-flows/:id`, campo novo `versions: [{id, created_at, numero}]`, mais nova primeiro), por modo (produção/simulação/teste) e por período (`desde`/`ate`, datas nativas). A fila (`/api/v1/ai/followups/queue`) e o hook já aceitavam esses parâmetros; só a tela não os ligava. `FlowBuilder` lê o fluxo pelo mesmo cache do editor, então publicar uma versão atualiza o filtro sem recarregar.
+
+**Evidência:** vitest do painel + rota do fluxo + i18n = 77 passed; `tsc --noEmit` e eslint dos arquivos tocados sem saída; `git diff --check` limpo. Dois casos novos em `ExecucoesDoFluxo.test.tsx` (período vira filtro da consulta; filtro de versão só aparece com versões).
+
+**NÃO MEDIDO:** a tela no navegador (o seletor de versão e os campos de data só foram exercitados em jsdom); o select de modo/versão por clique (Radix não roda em jsdom — só a presença é provada); filtro por lead (a API aceita `lead`, a tela ainda não oferece).
+
+**Ainda pendente na Fase 3:** filtro por lead/contato por identidade, seleção de passagem/iteração, atualização por Realtime, paginação do diário.
+
+## 2026-11-11 (2) — Fase 3: passagem por bloco e aviso de diário cortado
+
+**Feito:** no inspetor da aba Execuções, bloco que rodou mais de uma vez (volta de Repetir, nova tentativa) mostra abas «Passagem 1, 2…» com a hora, uma passagem por vez, a mais recente por padrão; trocar de bloco ou de execução volta à mais recente. O dossiê (`GET /api/v1/ai/followups/enrollments/:id`) lê `TETO+1` passos e devolve `passos_truncados`; a tela avisa quando o desenho mostra só um pedaço. Paginação do diário deliberadamente NÃO feita: o motor mata a execução acima de `MAX_STEPS` (80, `lib/followup/engine.ts`), então o teto de 500 não se alcança — comentário `ponytail:` na rota.
+
+**Evidência:** `ExecucoesDoFluxo.test.tsx` 32 passed (3 casos novos: passagens, passagem única sem seletor, aviso de corte); `app/app/ai/followups` + testes de API de restart/step verdes; `tsc` e eslint dos tocados sem saída. `i18n-a-data-segue-o-idioma` falhou 2 casos só na rodada paralela e passou 5/5 sozinho — não ligado a esta mudança.
+
+**Já atendido antes (conferido):** configuração histórica só a quem edita fluxos (`grafo` do dossiê é omitido para os demais).
+
+**NÃO MEDIDO:** tela no navegador.
+
+**Ainda pendente na Fase 3:** atualização por Realtime — `followup_enrollments` NÃO está na publicação `supabase_realtime`; exige migration nova (+ apêndice no baseline) aplicada à mão antes do merge. Hoje o polling de 10 s cobre. Filtro por lead: a API aceita `lead`, mas nenhuma tela leva a ele ainda.
+
+## 2026-11-11 (3) — Fase 3: execuções ao vivo (Realtime)
+
+**Feito:** migration `0715_execucoes_do_fluxo_no_realtime` (+ bloco idempotente no fim do `baseline.sql`) põe `followup_enrollments` na publicação `supabase_realtime`; diários (`followup_execution_steps/attempts`) ficam fora de propósito. `useExecucoesAoVivo(flowId)` (`hooks/followup/useFollowupQueue.ts`) assina a tabela filtrada por `pointer_id` e só invalida fila e dossiê, agrupando eventos (≤1 releitura/s); a releitura passa pela API e pela RLS. Polling vira recuperação: 10 s sem canal, 60 s com canal. A tela mostra «ao vivo» com o canal assinado. Invariante novo `tests/invariants/automacoes-execucoes-no-realtime.test.ts`. Fragmento `.changes/execucoes-do-fluxo-ao-vivo-e-filtros.md`.
+
+**Evidência:** vitest do painel + `realtime-assinatura-tem-publicacao` + `manifest-x-migrations` + hooks = 52 passed; `tsc` e eslint dos tocados sem saída.
+
+**NÃO MEDIDO:** `pnpm test:db` (Docker desligado na máquina local — o invariante novo roda no CI); evento chegando de verdade pelo socket; tela no navegador.
+
+**Ordem de entrega:** aplicar a 0715 no banco de produção ANTES do merge. Se o app subir sem ela, o canal responde SUBSCRIBED sem entregar nada e a lista só atualiza a cada 60 s (degrada, não quebra).

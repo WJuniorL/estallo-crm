@@ -6,7 +6,7 @@
  * nem string vazia calada), e a prévia diz QUAIS variáveis ficariam sem valor com esta amostra.
  */
 import type { FlowGraph } from "./graph-schema";
-import { ancestrais, CAMPOS_DE_SAIDA, resolverReferencias } from "./variaveis-de-blocos";
+import { ancestrais, camposDeSaidaDoNo, resolverReferencias } from "./variaveis-de-blocos";
 
 const CONTATO_DE_EXEMPLO: Record<string, string> = {
   nome: "Maria Souza",
@@ -42,8 +42,16 @@ export function previaDoTexto(
     const anteriores = ancestrais(grafo, noId);
     for (const no of grafo.nodes) {
       if (!anteriores.has(no.id)) continue;
-      const campos = CAMPOS_DE_SAIDA[no.type];
-      if (campos) saidas[no.id] = Object.fromEntries(campos.map((c) => [c.caminho, valorDeExemplo(c.caminho)]));
+      const campos = camposDeSaidaDoNo(no);
+      if (campos.length === 0) continue;
+      const saida: Record<string, unknown> = {};
+      for (const c of campos) {
+        // `fields.nome` (Mapear dados) vira objeto aninhado, como a saída real.
+        const [primeiro, ...resto] = c.caminho.split(".");
+        if (resto.length === 0) saida[primeiro!] = valorDeExemplo(c.caminho);
+        else ((saida[primeiro!] ??= {}) as Record<string, unknown>)[resto.join(".")] = `${resto.join(".")}-de-exemplo`;
+      }
+      saidas[no.id] = saida;
     }
   }
   const blocos = resolverReferencias(texto, saidas);

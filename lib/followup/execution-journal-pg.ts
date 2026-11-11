@@ -2084,6 +2084,8 @@ export class PgExecutionJournal implements ExecutionJournal {
           lead_id: row.lead_id,
           conversation_id: row.conversation_id,
         });
+      } else if (node.type === "map_data" && result.kind === "advance") {
+        output = NODE_OUTPUT_CONTRACTS.map_data.parse(trace?.output);
       } else if (node.type === "end" && result.kind === "complete") {
         output = NODE_OUTPUT_CONTRACTS.end.parse({
           outcome: result.outcome,

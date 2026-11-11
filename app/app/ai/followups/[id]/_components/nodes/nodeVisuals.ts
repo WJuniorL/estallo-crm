@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 
-import { Bell, Play, Clock, GitBranch, Brain, ChatCircle, ArrowsClockwise, PaperPlaneTilt, Flag, Question, PuzzlePiece, Funnel, Tag } from "@/lib/ui/icons";
+import { Bell, Play, Clock, GitBranch, Brain, ChatCircle, ArrowsClockwise, PaperPlaneTilt, Flag, Question, PuzzlePiece, Funnel, Tag, ArrowsLeftRight } from "@/lib/ui/icons";
 import type { FlowNode, NodeType } from "@/lib/followup/graph-schema";
 import { RESULTADOS_DO_FIM } from "@/lib/followup/vocabulario";
 import { NOS_DA_SUPERFICIE } from "@/lib/followup/validate-publish";
@@ -188,6 +188,15 @@ export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
     defaultLabel: "Gravar tag no lead",
     defaultConfig: () => ({ tags: [] }),
   },
+  map_data: {
+    type: "map_data",
+    paletteLabel: NODE_CATALOG.map_data.label,
+    icon: ArrowsLeftRight,
+    chipClassName: "bg-surface-muted text-text",
+    borderClassName: "border-l-border-strong",
+    defaultLabel: "Mapear dados",
+    defaultConfig: () => ({ fields: [] }),
+  },
   end: {
     type: "end",
     paletteLabel: NODE_CATALOG.end.label,
@@ -312,6 +321,10 @@ export function describeNodeConfig(
       const c = config as ConfigOf<"edit_lead_tag">;
       if (!c.tags.length) return t("sem tag escolhida");
       return c.destino === "contato" ? `${c.tags.join(", ")} (${t("no contato")})` : c.tags.join(", ");
+    }
+    case "map_data": {
+      const c = config as ConfigOf<"map_data">;
+      return c.fields.length ? c.fields.map((f) => f.name).join(", ") : t("sem campos");
     }
     case "end": {
       const c = config as ConfigOf<"end">;

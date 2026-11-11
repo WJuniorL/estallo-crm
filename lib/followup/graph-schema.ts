@@ -28,6 +28,8 @@ export const NODE_TYPES = [
   // fora desta fatia e é o passo seguinte da issue.
   'move_lead',
   'edit_lead_tag',
+  // Fase 4: monta campos novos a partir das saídas dos blocos anteriores (`lib/followup/mapear-dados.ts`). Sem efeito.
+  'map_data',
   'end',
 ] as const;
 export type NodeType = (typeof NODE_TYPES)[number];
@@ -388,6 +390,25 @@ export const editLeadTagConfigSchema = z.strictObject({
 });
 
 /**
+ * Nó `map_data` (Fase 4) — seleciona, renomeia, compõe texto e converte tipos a partir das saídas dos blocos
+ * anteriores. O nome do campo é o que os blocos seguintes citam (`{{nodes.<bloco>.fields.<nome>}}`), por isso é
+ * identificador simples e único no bloco. Sem campos é rascunho; o publish recusa (`mapa_sem_campos`).
+ */
+export const mapDataFieldSchema = z.strictObject({
+  name: z
+    .string()
+    .min(1)
+    .max(40)
+    .regex(/^[a-z_][a-z0-9_]*$/, "Use letras minúsculas, números e _ (começando por letra)."),
+  value: z.string().max(2000),
+  type: z.enum(['text', 'number', 'boolean', 'list']),
+  fallback: z.string().max(500).optional(),
+});
+export const mapDataConfigSchema = z.strictObject({
+  fields: z.array(mapDataFieldSchema).max(30, "No máximo 30 campos por bloco."),
+});
+
+/**
  * One rule of a `condition` node. In `branching: 'per_check'` it IS a branch,
  * so it carries the stable id an edge references and the label the handle shows
  * — identity lives on the rule itself, never in a parallel array that would
@@ -656,6 +677,17 @@ export const flowNodeSchema = z.discriminatedUnion('type', [
     }),
     config: editLeadTagConfigSchema,
   }),
+  // Fase 4: monta campos a partir das saídas anteriores, sem efeito
+  z.strictObject({
+    id: z.string().min(1),
+    type: z.literal('map_data'),
+    label: z.string().min(1).max(60),
+    position: z.strictObject({
+      x: z.number(),
+      y: z.number(),
+    }),
+    config: mapDataConfigSchema,
+  }),
   // End node: terminal state
   z.strictObject({
     id: z.string().min(1),
@@ -893,6 +925,7 @@ export const NODES_WITH_ERROR_BRANCH: ReadonlySet<NodeType> = new Set<NodeType>(
   'edit_lead_tag',
   'ai_classify',
   'match_reply',
+  'map_data',
 ]);
 
 function errorBranch(): FlowBranch {

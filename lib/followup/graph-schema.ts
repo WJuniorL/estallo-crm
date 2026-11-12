@@ -30,6 +30,10 @@ export const NODE_TYPES = [
   'edit_lead_tag',
   // Fase 4: monta campos novos a partir das saídas dos blocos anteriores (`lib/followup/mapear-dados.ts`). Sem efeito.
   'map_data',
+  // Fase 5: troca o responsável do negócio (a mesma régua da ação `assign_owner`). Não transfere o atendimento.
+  'assign_lead_owner',
+  // Fase 5: nota interna no negócio (linha do tempo) ou na conversa (notas internas), no destino escolhido.
+  'add_note',
   'end',
 ] as const;
 export type NodeType = (typeof NODE_TYPES)[number];
@@ -404,6 +408,25 @@ export const mapDataFieldSchema = z.strictObject({
   type: z.enum(['text', 'number', 'boolean', 'list']),
   fallback: z.string().max(500).optional(),
 });
+/**
+ * Nó `assign_lead_owner` (Fase 5) — troca o responsável do NEGÓCIO. Responsável pela conversa é outra coisa e não
+ * muda aqui. Vazio é rascunho; o publish recusa (`responsavel_ausente`). Membro ativo e não-viewer é conferido na
+ * execução, na mesma transação da escrita.
+ */
+export const assignLeadOwnerConfigSchema = z.strictObject({
+  usuario_id: z.union([z.literal(''), z.string().uuid()]),
+});
+
+/**
+ * Nó `add_note` (Fase 5) — nota interna no destino ESCOLHIDO: `negocio` (linha do tempo do negócio) ou `conversa`
+ * (notas internas da conversa, que o cliente nunca vê). Texto aceita `{{nodes.<bloco>.<campo>}}`; vazio é rascunho e
+ * o publish recusa (`nota_sem_texto`).
+ */
+export const addNoteConfigSchema = z.strictObject({
+  destino: z.enum(['negocio', 'conversa']),
+  texto: z.string().max(2000, 'Nota muito longa: máximo de 2000 caracteres.'),
+});
+
 export const mapDataConfigSchema = z.strictObject({
   fields: z.array(mapDataFieldSchema).max(30, "No máximo 30 campos por bloco."),
 });
@@ -677,6 +700,28 @@ export const flowNodeSchema = z.discriminatedUnion('type', [
     }),
     config: editLeadTagConfigSchema,
   }),
+  // Fase 5: nota interna no destino escolhido
+  z.strictObject({
+    id: z.string().min(1),
+    type: z.literal('add_note'),
+    label: z.string().min(1).max(60),
+    position: z.strictObject({
+      x: z.number(),
+      y: z.number(),
+    }),
+    config: addNoteConfigSchema,
+  }),
+  // Fase 5: troca o responsável do negócio
+  z.strictObject({
+    id: z.string().min(1),
+    type: z.literal('assign_lead_owner'),
+    label: z.string().min(1).max(60),
+    position: z.strictObject({
+      x: z.number(),
+      y: z.number(),
+    }),
+    config: assignLeadOwnerConfigSchema,
+  }),
   // Fase 4: monta campos a partir das saídas anteriores, sem efeito
   z.strictObject({
     id: z.string().min(1),
@@ -926,6 +971,8 @@ export const NODES_WITH_ERROR_BRANCH: ReadonlySet<NodeType> = new Set<NodeType>(
   'ai_classify',
   'match_reply',
   'map_data',
+  'assign_lead_owner',
+  'add_note',
 ]);
 
 function errorBranch(): FlowBranch {

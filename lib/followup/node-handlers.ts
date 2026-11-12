@@ -1204,6 +1204,20 @@ export function processNode(input: {
       return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
     }
 
+    case "add_note": {
+      // Fase 5 — passagem: quem grava a nota é o diário (`completeNote`), na transação do avanço.
+      const edge = selectEdge(edges, node.id, { type: "always" });
+      if (!edge) return { kind: "fail", error: `add_note node "${node.id}" has no outbound edge` };
+      return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
+    }
+
+    case "assign_lead_owner": {
+      // Fase 5 — passagem como `edit_lead_tag`: quem troca o dono é o diário (`completeOwner`), na transação.
+      const edge = selectEdge(edges, node.id, { type: "always" });
+      if (!edge) return { kind: "fail", error: `assign_lead_owner node "${node.id}" has no outbound edge` };
+      return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
+    }
+
     case "map_data": {
       // Fase 4 — sem efeito: só monta os campos com as saídas anteriores (congeladas no `begin`, para a nova
       // tentativa dar o mesmo resultado). Faltou valor sem fallback → falha explicada, que sai pela saída de erro.

@@ -11,6 +11,7 @@ import {
 } from "@/lib/atendimento/fronteira-server";
 import { buildLeadActivityRow } from "@/lib/leads/activity-emitter";
 import { prepararAdicaoDeTags } from "@/lib/leads/tags";
+import { resolveOwnerPatch } from "@/lib/leads/owner-patch";
 import type { AuditAction } from "@/lib/audit/actions";
 import { prepararMovimentacaoDeLead } from "@/lib/leads/preparar-movimentacao";
 import { recusaDeMotivoDaPerdaPeloBanco } from "@/lib/leads/motivo-da-perda";
@@ -123,6 +124,19 @@ const tagReadsSchema = z.object({
   previous_tags: z.array(z.string()),
   // Registros anteriores ao destino "contato" não têm a chave: valem como "card".
   destino: z.enum(["card", "contato"]).default("card"),
+});
+
+const noteReadsSchema = z.object({
+  destino: z.enum(["negocio", "conversa"]),
+  /** O texto com as variáveis já resolvidas; `null` quando faltou valor (o complete falha com `erro`). */
+  texto: z.string().nullable(),
+  erro: z.string().nullable(),
+});
+
+const ownerReadsSchema = z.object({
+  lead_id: z.uuid(),
+  previous_owner_user_id: z.uuid().nullable(),
+  previous_owner_agent_id: z.uuid().nullable(),
 });
 
 const moveLeadReadSchema = z.looseObject({
@@ -365,6 +379,47 @@ export class PgExecutionJournal implements ExecutionJournal {
     const saidas: Record<string, unknown> = {};
     for (const r of rows) if (r.output_snapshot !== null && r.output_snapshot !== undefined) saidas[r.node_id] = r.output_snapshot;
     return saidas;
+  }
+
+  /** O texto da nota com as saídas anteriores resolvidas, congelado: a nova tentativa grava o MESMO texto. */
+  private async noteInput(
+    client: pg.PoolClient,
+    row: LockedExecution,
+    node: Extract<FlowNode, { type: "add_note" }>,
+    requested: unknown,
+  ) {
+    const cita = new RegExp(MARCA_DE_BLOCO.source).test(node.config.texto);
+    const r = cita
+      ? resolverReferencias(node.config.texto, await this.saidasDaExecucao(client, row))
+      : { texto: node.config.texto, sem_valor: [] };
+    const erro =
+      r.sem_valor.length > 0
+        ? `A nota cita ${[...new Set(r.sem_valor.map((x) => x.marca))].join(", ")}, mas o bloco citado não produziu esse valor nesta execução.`
+        : null;
+    return {
+      requested,
+      resolved: { destino: node.config.destino, texto: erro ? null : r.texto.trim(), erro },
+    };
+  }
+
+  /** O dono do negócio ANTES do bloco — o `completeOwner` recusa se outra pessoa o trocou no meio. */
+  private async ownerInput(client: pg.PoolClient, row: LockedExecution, requested: unknown) {
+    if (!row.lead_id) throw new ExecutionTaskConfigurationError("execution_lead_required");
+    const lead = (
+      await client.query<{ id: string; owner_user_id: string | null; owner_agent_id: string | null }>(
+        "select id,owner_user_id,owner_agent_id from crm_leads where organization_id=$1 and contact_id=$2 and id=$3 for share",
+        [row.organization_id, row.contact_id, row.lead_id],
+      )
+    ).rows[0];
+    if (!lead) throw new ExecutionLeadUnavailableError();
+    return {
+      requested,
+      resolved: {
+        lead_id: lead.id,
+        previous_owner_user_id: lead.owner_user_id,
+        previous_owner_agent_id: lead.owner_agent_id,
+      },
+    };
   }
 
   private async tagInput(
@@ -807,7 +862,11 @@ export class PgExecutionJournal implements ExecutionJournal {
               ? await this.tagInput(client, row, node, snapshot)
               : node.type === "move_lead"
                 ? await this.moveInput(client, row, node, snapshot)
-                : snapshot;
+                : node.type === "assign_lead_owner"
+                  ? await this.ownerInput(client, row, snapshot)
+                  : node.type === "add_note"
+                    ? await this.noteInput(client, row, node, snapshot)
+                    : snapshot;
       const { rows } = await client.query<{ id: string }>(
         `insert into followup_execution_attempts
           (organization_id,step_id,attempt_no,status,input_snapshot,config_snapshot,lease_revision,lease_until,next_eval_at)
@@ -1089,6 +1148,203 @@ export class PgExecutionJournal implements ExecutionJournal {
         });
       }
       await this.confirmLocalEffect(client, row, handle, "add_tag", output);
+      return { output, reused: false };
+    });
+  }
+
+  async completeNote(scope: EnrollmentRow, handle: ExecutionAttemptHandle) {
+    this.assertHandle(scope, handle);
+    return this.transaction(async (client) => {
+      await this.lockContact(client, scope);
+      const receipt = await this.confirmedEffect(client, scope, handle, "add_note", NODE_OUTPUT_CONTRACTS.add_note);
+      if (receipt) return { output: receipt, reused: true };
+      const { row, node } = await this.current(client, scope);
+      if (node.type !== "add_note") throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
+      const held = await this.holdAttempt(client, row, handle);
+      const reads = z.object({ resolved: noteReadsSchema }).parse(held.input_snapshot).resolved;
+      if (reads.erro) throw new ExecutionTaskConfigurationError("variavel_sem_valor", reads.erro);
+      if (!reads.texto) throw new ExecutionTaskConfigurationError("nota_sem_texto", "A nota ficou sem texto.");
+      const noteId = randomUUID();
+      if (reads.destino === "negocio") {
+        if (!row.lead_id)
+          throw new ExecutionTaskConfigurationError(
+            "execution_lead_required",
+            "Esta execução não tem negócio para receber a nota. Escolha a conversa como destino ou use um gatilho com negócio.",
+          );
+        const lead = (
+          await client.query<{ id: string }>(
+            "select id from crm_leads where organization_id=$1 and contact_id=$2 and id=$3 for share",
+            [row.organization_id, row.contact_id, row.lead_id],
+          )
+        ).rows[0];
+        if (!lead) throw new ExecutionLeadUnavailableError();
+        const activity = buildLeadActivityRow({
+          organizationId: row.organization_id,
+          leadId: lead.id,
+          contactId: row.contact_id,
+          type: "note",
+          sourceModule: "crm",
+          sourceId: lead.id,
+          actor: { type: "webhook_source", id: `followup:${row.id}` },
+          reason: reads.texto,
+          payload: { origem: `followup:${row.id}`, execution_step_id: handle.step_id },
+        });
+        await client.query(
+          `insert into crm_lead_activities
+          (id,organization_id,lead_id,contact_id,type,source_module,source_id,actor_kind,performed_by_user_id,reason,payload)
+          values($1,$2,$3,$4,$5,$6,$7,$8,null,$9,$10)`,
+          [
+            noteId,
+            activity.organization_id,
+            activity.lead_id,
+            activity.contact_id,
+            activity.type,
+            activity.source_module,
+            activity.source_id,
+            activity.actor_kind,
+            activity.reason,
+            activity.payload,
+          ],
+        );
+        await this.auditEffect(client, row.organization_id, "lead.updated", "crm_lead", lead.id, {
+          fields: ["note"],
+          origem: `followup:${row.id}`,
+          execution_step_id: handle.step_id,
+          execution_attempt_id: handle.attempt_id,
+        });
+      } else {
+        if (!row.conversation_id)
+          throw new ExecutionTaskConfigurationError(
+            "execution_conversation_required",
+            "Esta execução não tem conversa para receber a nota. Escolha o negócio como destino.",
+          );
+        const conversa = (
+          await client.query<{ id: string }>(
+            "select id from conversations where organization_id=$1 and id=$2",
+            [row.organization_id, row.conversation_id],
+          )
+        ).rows[0];
+        if (!conversa)
+          throw new ExecutionTaskConfigurationError("execution_conversation_required", "A conversa desta execução não existe mais.");
+        await client.query(
+          `insert into conversation_notes (id,organization_id,conversation_id,body,created_by_user_id,created_by_name)
+           values($1,$2,$3,$4,null,$5)`,
+          [noteId, row.organization_id, conversa.id, reads.texto, "Automação"],
+        );
+        await this.auditEffect(client, row.organization_id, "conversation.note_added", "conversation", conversa.id, {
+          note_id: noteId,
+          origem: `followup:${row.id}`,
+          execution_step_id: handle.step_id,
+          execution_attempt_id: handle.attempt_id,
+        });
+      }
+      const output = NODE_OUTPUT_CONTRACTS.add_note.parse({ destino: reads.destino, note_id: noteId, texto: reads.texto });
+      await this.confirmLocalEffect(client, row, handle, "add_note", output);
+      return { output, reused: false };
+    });
+  }
+
+  async completeOwner(scope: EnrollmentRow, handle: ExecutionAttemptHandle) {
+    this.assertHandle(scope, handle);
+    return this.transaction(async (client) => {
+      await this.lockContact(client, scope);
+      const receipt = await this.confirmedEffect(
+        client,
+        scope,
+        handle,
+        "assign_owner",
+        NODE_OUTPUT_CONTRACTS.assign_lead_owner,
+      );
+      if (receipt) return { output: receipt, reused: true };
+      const { row, node } = await this.current(client, scope);
+      if (node.type !== "assign_lead_owner")
+        throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
+      const held = await this.holdAttempt(client, row, handle);
+      if (!row.lead_id) throw new ExecutionTaskConfigurationError("execution_lead_required");
+      const usuario = node.config.usuario_id;
+      if (!usuario) throw new ExecutionTaskConfigurationError("responsavel_ausente");
+      const reads = z.object({ resolved: ownerReadsSchema }).parse(held.input_snapshot).resolved;
+      if (reads.lead_id !== row.lead_id) throw new ExecutionLeadUnavailableError();
+      const lead = (
+        await client.query<{ id: string; owner_user_id: string | null; owner_agent_id: string | null }>(
+          "select id,owner_user_id,owner_agent_id from crm_leads where organization_id=$1 and contact_id=$2 and id=$3 for update",
+          [row.organization_id, row.contact_id, row.lead_id],
+        )
+      ).rows[0];
+      if (!lead) throw new ExecutionLeadUnavailableError();
+      // Alguém trocou o dono entre o begin e agora: a mudança humana vence; a tentativa relê.
+      if (
+        lead.owner_user_id !== reads.previous_owner_user_id ||
+        lead.owner_agent_id !== reads.previous_owner_agent_id
+      )
+        throw new ExecutionInputChangedError();
+      // Régua G3-04 (a mesma do bulk-assign e da ação assign_owner): vínculo não revogado e papel acima de viewer.
+      const membro = (
+        await client.query<{ role: string }>(
+          "select role from user_organizations where organization_id=$1 and user_id=$2 and revoked_at is null and accepted_at is not null",
+          [row.organization_id, usuario],
+        )
+      ).rows[0];
+      if (!membro || membro.role === "viewer")
+        throw new ExecutionTaskConfigurationError(
+          "responsavel_indisponivel",
+          "A pessoa escolhida não é um atendente ativo desta organização. Escolha outro responsável no bloco.",
+        );
+      const output = NODE_OUTPUT_CONTRACTS.assign_lead_owner.parse({
+        lead_id: lead.id,
+        previous_owner_user_id: lead.owner_user_id,
+        owner_user_id: usuario,
+      });
+      if (lead.owner_user_id !== usuario || lead.owner_agent_id !== null) {
+        const patch = resolveOwnerPatch({ owner_user_id: usuario });
+        if (!patch.ok || !patch.patch) throw new ExecutionTaskConfigurationError("responsavel_indisponivel");
+        await client.query(
+          `update crm_leads set owner_user_id=$4,owner_agent_id=$5,owner_kind=$6,assigned_at=clock_timestamp(),updated_at=clock_timestamp()
+           where organization_id=$1 and contact_id=$2 and id=$3`,
+          [
+            row.organization_id,
+            row.contact_id,
+            lead.id,
+            patch.patch.owner_user_id,
+            patch.patch.owner_agent_id,
+            patch.patch.owner_kind,
+          ],
+        );
+        const activity = buildLeadActivityRow({
+          organizationId: row.organization_id,
+          leadId: lead.id,
+          contactId: row.contact_id,
+          type: "lead_edited",
+          sourceModule: "crm",
+          sourceId: lead.id,
+          actor: { type: "webhook_source", id: `followup:${row.id}` },
+          reason: "Trocou o responsável",
+          payload: { fields: ["owner_user_id"], from: lead.owner_user_id, to: usuario },
+        });
+        await client.query(
+          `insert into crm_lead_activities
+          (organization_id,lead_id,contact_id,type,source_module,source_id,actor_kind,performed_by_user_id,reason,payload)
+          values($1,$2,$3,$4,$5,$6,$7,null,$8,$9)`,
+          [
+            activity.organization_id,
+            activity.lead_id,
+            activity.contact_id,
+            activity.type,
+            activity.source_module,
+            activity.source_id,
+            activity.actor_kind,
+            activity.reason,
+            activity.payload,
+          ],
+        );
+        await this.auditEffect(client, row.organization_id, "lead.updated", "crm_lead", lead.id, {
+          fields: ["owner_user_id"],
+          origem: `followup:${row.id}`,
+          execution_step_id: handle.step_id,
+          execution_attempt_id: handle.attempt_id,
+        });
+      }
+      await this.confirmLocalEffect(client, row, handle, "assign_owner", output);
       return { output, reused: false };
     });
   }

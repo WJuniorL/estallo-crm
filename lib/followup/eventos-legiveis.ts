@@ -140,6 +140,8 @@ const TIPO_DO_NO: Record<FlowNode["type"], string> = {
   move_lead: "Mover no funil",
   edit_lead_tag: "Editar tag",
   map_data: "Mapear dados",
+  assign_lead_owner: "Atribuir responsável",
+  add_note: "Nota interna",
   end: "Fim",
 };
 
@@ -218,6 +220,21 @@ export function resumoDoNo(node: FlowNode): NoDoDossie {
         resumo: node.config.tags.length
           ? `grava a(s) tag(s) ${node.config.tags.join(", ")} no lead — sem mensagem ao cliente`
           : "grava tag no lead, ainda sem destino escolhido — sem mensagem ao cliente",
+      };
+    case "add_note":
+      return {
+        ...base,
+        resumo:
+          node.config.destino === "conversa"
+            ? "registra uma nota interna na conversa — o cliente não vê"
+            : "registra uma nota na linha do tempo do negócio — o cliente não vê",
+      };
+    case "assign_lead_owner":
+      return {
+        ...base,
+        resumo: node.config.usuario_id
+          ? "troca o responsável do negócio — sem mensagem ao cliente"
+          : "troca o responsável do negócio, ainda sem pessoa escolhida — sem mensagem ao cliente",
       };
     case "map_data":
       return {

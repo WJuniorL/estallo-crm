@@ -22,6 +22,8 @@ import { MatchReplyForm } from "./forms/MatchReplyForm";
 import { MoveLeadForm } from "./forms/MoveLeadForm";
 import { EditLeadTagForm } from "./forms/EditLeadTagForm";
 import { MapDataForm } from "./forms/MapDataForm";
+import { AssignLeadOwnerForm } from "./forms/AssignLeadOwnerForm";
+import { AddNoteForm } from "./forms/AddNoteForm";
 import { RepeatForm } from "./forms/RepeatForm";
 import { SkillForm } from "./forms/SkillForm";
 import { WaitForm } from "./forms/WaitForm";
@@ -172,6 +174,15 @@ export function NodeConfigPanel({
         {type === "edit_lead_tag" && (
           <EditLeadTagForm
             config={node.data.config as ConfigOf<"edit_lead_tag">}
+            onChange={(config) => onChange({ config })}
+          />
+        )}
+        {type === "add_note" && (
+          <AddNoteForm config={node.data.config as ConfigOf<"add_note">} onChange={(config) => onChange({ config })} />
+        )}
+        {type === "assign_lead_owner" && (
+          <AssignLeadOwnerForm
+            config={node.data.config as ConfigOf<"assign_lead_owner">}
             onChange={(config) => onChange({ config })}
           />
         )}

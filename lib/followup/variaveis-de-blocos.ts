@@ -36,6 +36,7 @@ export function textosDoBloco(no: FlowNode): string[] {
   if (no.type === "map_data") return no.config.fields.flatMap((f) => (f.fallback ? [f.value, f.fallback] : [f.value]));
   // Criar tarefa: o título pode citar a saída de um bloco anterior (ex.: um campo do Mapear dados).
   if (no.type === "internal_task") return [no.config.titulo];
+  if (no.type === "add_note") return [no.config.texto];
   if (no.type !== "action") return [];
   if (no.config.mode === "text") return [no.config.body];
   if (no.config.mode === "messages")
@@ -91,6 +92,11 @@ export const CAMPOS_DE_SAIDA: Partial<Record<FlowNode["type"], Array<{ caminho: 
     { caminho: "from_stage_id", rotulo: "Id da etapa de origem" },
   ],
   internal_task: [{ caminho: "task_id", rotulo: "Id da tarefa criada" }],
+  add_note: [{ caminho: "note_id", rotulo: "Id da nota" }],
+  assign_lead_owner: [
+    { caminho: "owner_user_id", rotulo: "Id do novo responsável" },
+    { caminho: "previous_owner_user_id", rotulo: "Id do responsável anterior" },
+  ],
 };
 
 /**

@@ -126,6 +126,22 @@ const NODE_DEFINITIONS = {
     surfaces: CLOCK_SURFACES,
     effect: "crm",
   },
+  add_note: {
+    label: "Nota interna",
+    description: "Registra uma nota interna no negócio ou na conversa.",
+    category: "team",
+    keywords: ["anotação", "observação", "comentário", "registro"],
+    surfaces: CLOCK_SURFACES,
+    effect: "crm",
+  },
+  assign_lead_owner: {
+    label: "Atribuir responsável",
+    description: "Troca o responsável pelo negócio (não transfere o atendimento).",
+    category: "leads",
+    keywords: ["dono", "vendedor", "responsável", "atribuir", "owner"],
+    surfaces: CLOCK_SURFACES,
+    effect: "crm",
+  },
   map_data: {
     label: "Mapear dados",
     description: "Monta campos a partir das saídas dos blocos anteriores.",
@@ -167,6 +183,8 @@ export const NODE_CATALOG = {
   move_lead: withOutputContract("move_lead"),
   edit_lead_tag: withOutputContract("edit_lead_tag"),
   map_data: withOutputContract("map_data"),
+  assign_lead_owner: withOutputContract("assign_lead_owner"),
+  add_note: withOutputContract("add_note"),
   end: withOutputContract("end"),
 } as const;
 

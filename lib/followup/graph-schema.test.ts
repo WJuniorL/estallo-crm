@@ -48,6 +48,8 @@ describe('graph-schema', () => {
         'edit_lead_tag',
         // Fase 4 — monta campos a partir das saídas anteriores.
         'map_data',
+        'assign_lead_owner',
+        'add_note',
         'end',
       ]);
     });

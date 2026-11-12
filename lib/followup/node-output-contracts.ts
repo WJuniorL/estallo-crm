@@ -88,6 +88,16 @@ export const NODE_OUTPUT_CONTRACTS = {
     added_tags: z.array(z.string().min(1)),
     tags: z.array(z.string().min(1)),
   }),
+  add_note: z.strictObject({
+    destino: z.enum(["negocio", "conversa"]),
+    note_id: id,
+    texto: z.string().min(1),
+  }),
+  assign_lead_owner: z.strictObject({
+    lead_id: id,
+    previous_owner_user_id: id.nullable(),
+    owner_user_id: id,
+  }),
   map_data: z.strictObject({
     fields: z.record(
       z.string().min(1),

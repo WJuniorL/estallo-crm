@@ -572,6 +572,12 @@ export const DESTINOS_DA_TAG: Record<"card" | "contato", string> = {
   contato: "No contato",
 };
 
+/** Onde o bloco Nota interna grava — rótulos do formulário. */
+export const DESTINOS_DA_NOTA: Record<"negocio" | "conversa", string> = {
+  negocio: "No negócio (linha do tempo)",
+  conversa: "Na conversa (notas internas)",
+};
+
 /** Tipos de campo do bloco Mapear dados — a conversão explícita que cada campo faz. */
 export const TIPOS_DO_CAMPO_DO_MAPA: Record<"text" | "number" | "boolean" | "list", string> = {
   text: "Texto",

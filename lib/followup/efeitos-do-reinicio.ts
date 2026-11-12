@@ -12,6 +12,8 @@ export const TIPOS_COM_EFEITO = new Set([
   "internal_task", // cria tarefa
   "move_lead", // move o negócio de etapa
   "edit_lead_tag", // grava etiqueta
+  "assign_lead_owner", // troca o responsável do negócio
+  "add_note", // registra nota interna
 ]);
 
 export interface BlocoComEfeito {

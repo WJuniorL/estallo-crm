@@ -1012,3 +1012,14 @@ Pedido do dono: atualizar os testes vermelhos do `verify` que vinham da frente d
 **Evidência local:** vitest de `lib/followup` + editor; typecheck e eslint dos tocados. Invariantes novos `automacoes-mapear-dados-no-diario` (4 casos, inclusive tarefa com título vindo do mapa) rodam só no CI — Docker desligado na máquina.
 
 **NÃO MEDIDO:** tela no navegador; `pnpm test:db` local.
+
+## 2026-11-11 (5) — Fase 5 (parcial): Atribuir responsável e Nota interna
+
+**Feito:** dois blocos com efeito no CRM, no diário do contrato 1 (begin congela a leitura; complete trava, confere, grava, registra atividade/auditoria e confirma o efeito — replay não duplica):
+- **Atribuir responsável** (`assign_lead_owner`): troca o dono do NEGÓCIO (não da conversa). Régua G3-04 (membro não revogado, aceito, acima de viewer) conferida na transação; dono trocado por pessoa entre begin e complete → `ExecutionInputChangedError` (a mudança humana vence). Atividade «Trocou o responsável» + auditoria `lead.updated`.
+- **Nota interna** (`add_note`): destino escolhido — `negocio` (atividade `note` na linha do tempo) ou `conversa` (`conversation_notes`, autor «Automação», auditoria `conversation.note_added`). Texto aceita `{{nodes…}}`, resolvido e congelado no begin; variável sem valor falha com explicação.
+- Publicação recusa `responsavel_ausente` e `nota_sem_texto`. Ambos entram no seletor de variáveis, no aviso de reinício e na saída de erro.
+
+**Evidência:** vitest `lib/followup` + editor + `lib/automation` = 111 arquivos / 1389 testes; `tsc` limpo. Invariantes `automacoes-atribuir-responsavel` e `automacoes-nota-interna` só no CI (Docker local desligado).
+
+**Falta na Fase 5:** buscar/criar/atualizar contato; buscar/criar/atualizar lead, mover entre funis, produtos; próxima ação; avisar responsável pela Central; condição ampliada/caminhos por valor; aguardar data/horário; aguardar resposta com prazo; extrair dados por IA; requisição HTTP; paleta com categorias recolhíveis e inserção pelo ponto de conexão.

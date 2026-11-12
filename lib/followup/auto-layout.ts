@@ -54,6 +54,8 @@ const TYPE_ORDER: Record<NodeType, number> = {
   edit_lead_tag: 8.6,
   // Fase 4: preparação de dados — vem antes de quem os usa (mensagem, tarefa).
   map_data: 7.5,
+  assign_lead_owner: 8.7,
+  add_note: 8.8,
   end: 9,
 };
 

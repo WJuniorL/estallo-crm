@@ -65,6 +65,8 @@ export const PUBLISH_ERROR_CODES = [
   'variavel_de_bloco_nao_anterior',
   'variavel_de_bloco_campo_inexistente',
   'mapa_sem_campos',
+  'responsavel_ausente',
+  'nota_sem_texto',
   'mapa_campo_repetido',
   'mapa_campo_sem_valor',
 ] as const;
@@ -951,6 +953,18 @@ export function validateFlowForPublish(
     if (node.type === 'move_lead') conferirEtapaDestino(node, contexto, errors);
     if (node.type === 'edit_lead_tag') conferirTags(node, errors);
     if (node.type === 'map_data') conferirMapa(node, errors);
+    if (node.type === 'add_note' && !node.config.texto.trim())
+      errors.push({
+        node_id: node.id,
+        code: 'nota_sem_texto',
+        message: `A caixa "${node.label}" está sem o texto da nota.`,
+      });
+    if (node.type === 'assign_lead_owner' && !node.config.usuario_id)
+      errors.push({
+        node_id: node.id,
+        code: 'responsavel_ausente',
+        message: `A caixa "${node.label}" não tem responsável escolhido.`,
+      });
   }
 
   for (const node of [...nodes].sort(byId)) {

@@ -143,6 +143,16 @@ export interface ExecutionJournal {
     scope: EnrollmentRow,
     handle: ExecutionAttemptHandle,
   ): Promise<{ output: NodeOutput<"edit_lead_tag">; reused: boolean }>;
+  /** Fase 5 — nota interna no destino escolhido (negócio ou conversa), na transação do avanço. */
+  completeNote(
+    scope: EnrollmentRow,
+    handle: ExecutionAttemptHandle,
+  ): Promise<{ output: NodeOutput<"add_note">; reused: boolean }>;
+  /** Fase 5 — troca o responsável do negócio, com a régua de membro ativo, na transação do avanço. */
+  completeOwner(
+    scope: EnrollmentRow,
+    handle: ExecutionAttemptHandle,
+  ): Promise<{ output: NodeOutput<"assign_lead_owner">; reused: boolean }>;
   completeMove(
     scope: EnrollmentRow,
     handle: ExecutionAttemptHandle,

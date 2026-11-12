@@ -289,6 +289,7 @@ são alcançáveis e foram implementadas por outro mecanismo do Next — ou por 
 
 <!-- inventario:outro-mecanismo:inicio -->
 
+- `/` (#1) — `app/route.ts`: Route Handler que serve a landing estática `public/landing.html` (sem sessão) ou redireciona para `/app` (com sessão)
 - `/logout` (#5) — **não é rota**: sair é Server Action (`app/actions/auth/signOut.ts`) + `redirect`. A linha do plano previa uma tela que não precisou existir
 - `/_not-found` (#91) — `app/not-found.tsx`, convenção do App Router
 - `/_error` (#92) — `app/error.tsx` + `app/global-error.tsx`, convenção do App Router

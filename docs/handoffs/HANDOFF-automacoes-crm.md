@@ -1123,3 +1123,13 @@ Pedido do dono: atualizar os testes vermelhos do `verify` que vinham da frente d
 **Evidência (local, Docker ligado nesta sessão):** `pnpm test:db` dos invariantes novos — `automacoes-requisicao-http` (6), `automacoes-buscar-ou-criar` (3), `automacoes-extrair-dados` (2) e `rls-completude-varredura` — verdes, com baseline em install e update (`ON_ERROR_STOP=1`). `extrair-dados.test.ts` 4/4; `tsc` e lint limpos. Falhas locais restantes são só `Test timed out` de cercas que varrem o repositório (máquina com duas stacks Supabase de pé).
 
 **NÃO MEDIDO:** chamada a um modelo real; telas no navegador.
+
+## 2026-11-12 (15) — Fase 8: e2e dos blocos novos e escala da aba Execuções
+
+**Feito:**
+- **e2e** `tests/e2e/automacoes-blocos-de-integracao.spec.ts` (parte 7 do CI): admin (MFA) cadastra conexão HTTP pela tela — o POST e a lista NÃO devolvem a credencial, a tela mostra só `••••` + 4 últimos, o campo é limpo — e liga a conexão ao bloco; manager monta Buscar ou criar negócio e Extrair dados e vê «Aplicar em» no bloco de tag. Screenshots em `evidence/automacoes-fase5/`.
+- **Escala (10 mil execuções num fluxo + 5 mil de ruído, 200 tentativas num passo)** — `tests/invariants/automacoes-escala-de-execucoes.test.ts`, evidência `evidence/automacoes-fase8/escala-10k-execucoes.json`. Achado: a 1ª página da lista era **Seq Scan + Sort da organização inteira (13,33 ms com 15 mil, crescendo com o total)**. Migration **0717** (`idx_followup_enrollments_lista_do_fluxo` em `(organization_id, pointer_id, next_eval_at, id)`) + apêndice: **0,13 ms, Index Scan, sem Sort**. Página pelo cursor 0,23 ms; diário com 200 tentativas 0,36 ms. O teste agora exige o índice no plano.
+
+**Antes do merge do PR #3:** migrations **0715, 0716 e 0717** aplicadas à mão no banco de produção (o deploy não aplica migration).
+
+**NÃO MEDIDO:** a spec e2e nesta máquina (roda no CI, banco fresco do baseline + build de produção); fila sem filtro de fluxo em escala.

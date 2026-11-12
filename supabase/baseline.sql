@@ -56365,3 +56365,7 @@ drop trigger if exists trg_automation_http_connections_updated_at on public.auto
 create trigger trg_automation_http_connections_updated_at
   before update on public.automation_http_connections
   for each row execute function public.fn_set_updated_at();
+
+-- ---- índice da lista de execuções de um fluxo (migration 0717) ----
+create index if not exists idx_followup_enrollments_lista_do_fluxo
+  on public.followup_enrollments (organization_id, pointer_id, next_eval_at, id);

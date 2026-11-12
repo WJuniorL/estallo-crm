@@ -1,0 +1,25 @@
+{
+  "medido_em": "2026-11-12T14:07:20.775Z",
+  "execucoes_no_fluxo": 10000,
+  "execucoes_de_ruido": 5000,
+  "medicoes": [
+    {
+      "consulta": "lista, página 1",
+      "ms": 0.13,
+      "linhas": 51,
+      "plano": "Limit  (cost=0.41..7.87 rows=51 width=41)\n  ->  Index Scan using idx_followup_enrollments_lista_do_fluxo on followup_enrollments  (cost=0.41..1463.91 rows=10000 width=41)\n        Index Cond: ((organization_id = 'cccccccc-0000-4000-8000-000000000001'::uuid) AND (pointer_id = '24156f0c-7e74-408e-9102-a4ee9d9d1b54'::uuid))"
+    },
+    {
+      "consulta": "lista, página no meio pelo cursor",
+      "ms": 0.227,
+      "linhas": 51,
+      "plano": "Limit  (cost=0.29..11.74 rows=51 width=33)\n  ->  Index Scan using followup_enrollments_org_id_key on followup_enrollments  (cost=0.29..1134.72 rows=5050 width=33)\n        Index Cond: ((organization_id = 'cccccccc-0000-4000-8000-000000000001'::uuid) AND (id > '7f9c93ea-072f-42ee-94e3-d4776931b59f'::uuid))\n        Filter: ((next_eval_at IS NULL) AND (pointer_id = '24156f0c-7e74-408e-9102-a4ee9d9d1b54'::uuid))"
+    },
+    {
+      "consulta": "diário de uma execução com 200 tentativas",
+      "ms": 0.361,
+      "linhas": 200,
+      "plano": "Sort  (cost=19.66..20.16 rows=200 width=27)\n  Sort Key: s.visit, a.attempt_no\n  ->  Nested Loop  (cost=0.00..12.02 rows=200 width=27)\n        Join Filter: (s.id = a.step_id)\n        ->  Seq Scan on followup_execution_steps s  (cost=0.00..1.01 rows=1 width=48)\n              Filter: ((organization_id = 'cccccccc-0000-4000-8000-000000000001'::uuid) AND (enrollment_id = 'bb21f83f-6b5c-4e3a-8f7f-dda14cc6bd7e'::uuid))\n        ->  Seq Scan on followup_execution_attempts a  (cost=0.00..8.50 rows=200 width=43)\n              Filter: (organization_id = 'cccccccc-0000-4000-8000-000000000001'::uuid)"
+    }
+  ]
+}

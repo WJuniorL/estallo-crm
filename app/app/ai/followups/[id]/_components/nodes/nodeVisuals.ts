@@ -353,7 +353,8 @@ export function describeNodeConfig(
     case "update_lead_field": {
       const c = config as ConfigOf<"update_lead_field">;
       if (!c.valor.trim()) return t("sem valor");
-      return c.alvo === "deal_value" ? t("valor do negócio") : c.chave || t("sem campo escolhido");
+      if (c.alvo === "deal_value") return t("valor do negócio");
+      return c.chave ? (c.alvo === "contact_field" ? `${c.chave} (${t("no contato")})` : c.chave) : t("sem campo escolhido");
     }
     case "add_note": {
       const c = config as ConfigOf<"add_note">;

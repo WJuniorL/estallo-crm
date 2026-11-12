@@ -232,6 +232,8 @@ export function resumoDoNo(node: FlowNode): NoDoDossie {
         resumo:
           node.config.alvo === "deal_value"
             ? "atualiza o valor do negócio — sem mensagem ao cliente"
+            : node.config.alvo === "contact_field"
+              ? `atualiza o campo «${node.config.chave || "a escolher"}» do contato — sem mensagem ao cliente`
             : `atualiza o campo «${node.config.chave || "a escolher"}» do negócio — sem mensagem ao cliente`,
       };
     case "add_note":

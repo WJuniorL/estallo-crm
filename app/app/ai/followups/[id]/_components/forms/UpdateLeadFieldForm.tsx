@@ -24,14 +24,22 @@ export function UpdateLeadFieldForm({
 }) {
   const t = useT();
   const campo = useRef<HTMLInputElement>(null);
-  const { data } = useCamposPersonalizados("lead", config.alvo === "custom_field");
+  const doContato = config.alvo === "contact_field";
+  const { data } = useCamposPersonalizados(doContato ? "contact" : "lead", config.alvo !== "deal_value");
   const definicoes = data?.definicoes ?? [];
   return (
     <div className="space-y-2">
       <Label htmlFor="update-field-alvo">{t("O que gravar")}</Label>
       <Select
         value={config.alvo}
-        onValueChange={(v) => onChange({ ...config, alvo: v === "deal_value" ? "deal_value" : "custom_field" })}
+        onValueChange={(v) =>
+          onChange({
+            ...config,
+            alvo: v === "deal_value" ? "deal_value" : v === "contact_field" ? "contact_field" : "custom_field",
+            // a chave é de um catálogo (negócio OU contato): trocar o alvo recomeça a escolha
+            chave: "",
+          })
+        }
       >
         <SelectTrigger id="update-field-alvo">
           <SelectValue />
@@ -39,11 +47,12 @@ export function UpdateLeadFieldForm({
         <SelectContent>
           <SelectItem value="custom_field">{t("Campo personalizado")}</SelectItem>
           <SelectItem value="deal_value">{t("Valor do negócio")}</SelectItem>
+          <SelectItem value="contact_field">{t("Campo do contato")}</SelectItem>
         </SelectContent>
       </Select>
-      {config.alvo === "custom_field" && (
+      {config.alvo !== "deal_value" && (
         <>
-          <Label htmlFor="update-field-chave">{t("Campo do negócio")}</Label>
+          <Label htmlFor="update-field-chave">{doContato ? t("Campo do contato") : t("Campo do negócio")}</Label>
           <Select value={config.chave || undefined} onValueChange={(v) => onChange({ ...config, chave: v })}>
             <SelectTrigger id="update-field-chave" aria-invalid={!config.chave}>
               <SelectValue placeholder={t("Escolha um campo")} />

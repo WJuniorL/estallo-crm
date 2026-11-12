@@ -601,9 +601,10 @@ export const DESTINOS_DA_TAG: Record<"card" | "contato", string> = {
 };
 
 /** O que o bloco Atualizar campo do negócio grava — rótulos do formulário. */
-export const ALVOS_DO_CAMPO_DO_NEGOCIO: Record<"custom_field" | "deal_value", string> = {
+export const ALVOS_DO_CAMPO_DO_NEGOCIO: Record<"custom_field" | "deal_value" | "contact_field", string> = {
   custom_field: "Campo personalizado",
   deal_value: "Valor do negócio",
+  contact_field: "Campo do contato",
 };
 
 /** Onde o bloco Nota interna grava — rótulos do formulário. */

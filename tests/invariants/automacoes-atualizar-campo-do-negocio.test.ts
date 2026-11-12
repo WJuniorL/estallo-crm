@@ -31,7 +31,7 @@ const deps = {
 
 const no = (id: string, type: string, config: object) => ({ id, type, label: id, position: { x: 0, y: 0 }, config });
 
-async function rodar(config: { alvo: "custom_field" | "deal_value"; chave: string; valor: string }) {
+async function rodar(config: { alvo: "custom_field" | "deal_value" | "contact_field"; chave: string; valor: string }) {
   const contact = randomUUID(),
     version = randomUUID(),
     flow = randomUUID(),
@@ -95,7 +95,10 @@ async function rodar(config: { alvo: "custom_field" | "deal_value"; chave: strin
       [GOV_ORG, run],
     )
   ).rows[0] as { status: string; error_snapshot: { message?: string } | null };
-  return { negocio, atividades, passo };
+  const contato = (await pool.query("select custom_fields from contacts where id=$1", [contact])).rows[0] as {
+    custom_fields: Record<string, unknown> | null;
+  };
+  return { negocio, atividades, passo, contato };
 }
 
 describe("Atualizar campo do negócio (motor novo, Postgres real)", () => {
@@ -103,7 +106,8 @@ describe("Atualizar campo do negócio (motor novo, Postgres real)", () => {
     await pool.query(
       `insert into custom_field_definitions(organization_id,entity,key,label,type,options) values
        ($1,'lead','orcamento_inv','Orçamento','number','[]'),
-       ($1,'lead','plano_inv','Plano','select','[{"value":"a","label":"Plano A"}]')
+       ($1,'lead','plano_inv','Plano','select','[{"value":"a","label":"Plano A"}]'),
+       ($1,'contact','aniversario_inv','Aniversário','date','[]')
        on conflict (organization_id,entity,key) do nothing`,
       [GOV_ORG],
     );
@@ -127,5 +131,11 @@ describe("Atualizar campo do negócio (motor novo, Postgres real)", () => {
     expect(passo.error_snapshot?.message).toContain("Plano Z");
     expect(negocio.custom_fields?.plano_inv).toBeUndefined();
     expect(atividades).toBe(0);
+  });
+  it("campo do CONTATO (catálogo de contato): data convertida e gravada no contato, não no negócio", async () => {
+    const { contato, negocio, passo } = await rodar({ alvo: "contact_field", chave: "aniversario_inv", valor: "15/03/1990" });
+    expect(passo.status).toBe("succeeded");
+    expect(contato.custom_fields?.aniversario_inv).toBe("1990-03-15");
+    expect(negocio.custom_fields?.aniversario_inv).toBeUndefined();
   });
 });

@@ -129,7 +129,7 @@ const tagReadsSchema = z.object({
 });
 
 const fieldReadsSchema = z.object({
-  alvo: z.enum(["custom_field", "deal_value"]),
+  alvo: z.enum(["custom_field", "deal_value", "contact_field"]),
   chave: z.string().nullable(),
   /** Valor já convertido pelo tipo do campo (ou centavos do valor do negócio); `null` quando falhou (ver `erro`). */
   valor: z.json().nullable(),
@@ -393,7 +393,7 @@ export class PgExecutionJournal implements ExecutionJournal {
     const r = cita
       ? resolverReferencias(node.config.valor, await this.saidasDaExecucao(client, row))
       : { texto: node.config.valor, sem_valor: [] };
-    const base = { alvo: node.config.alvo, chave: node.config.alvo === "custom_field" ? node.config.chave : null };
+    const base = { alvo: node.config.alvo, chave: node.config.alvo === "deal_value" ? null : node.config.chave };
     if (r.sem_valor.length > 0)
       return {
         requested,
@@ -412,14 +412,18 @@ export class PgExecutionJournal implements ExecutionJournal {
     }
     const def = (
       await client.query<{ key: string; label: string; type: string; options: Array<{ value: string; label: string }> }>(
-        "select key,label,type,options from custom_field_definitions where organization_id=$1 and entity='lead' and key=$2",
-        [row.organization_id, node.config.chave],
+        "select key,label,type,options from custom_field_definitions where organization_id=$1 and entity=$3 and key=$2",
+        [row.organization_id, node.config.chave, node.config.alvo === "contact_field" ? "contact" : "lead"],
       )
     ).rows[0];
     if (!def)
       return {
         requested,
-        resolved: { ...base, valor: null, erro: `O campo «${node.config.chave}» não existe mais no cadastro de campos do negócio.` },
+        resolved: {
+          ...base,
+          valor: null,
+          erro: `O campo «${node.config.chave}» não existe mais no cadastro de campos do ${node.config.alvo === "contact_field" ? "contato" : "negócio"}.`,
+        },
       };
     const c = converterValorDoCampo(def as Parameters<typeof converterValorDoCampo>[0], r.texto);
     return { requested, resolved: { ...base, valor: c.ok ? c.valor : null, erro: c.ok ? null : c.motivo } };
@@ -1213,10 +1217,42 @@ export class PgExecutionJournal implements ExecutionJournal {
       const { row, node } = await this.current(client, scope);
       if (node.type !== "update_lead_field") throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
       const held = await this.holdAttempt(client, row, handle);
-      if (!row.lead_id) throw new ExecutionTaskConfigurationError("execution_lead_required");
       const reads = z.object({ resolved: fieldReadsSchema }).parse(held.input_snapshot).resolved;
       if (reads.erro || reads.valor === null)
         throw new ExecutionTaskConfigurationError("campo_do_negocio_invalido", reads.erro ?? "O valor ficou vazio.");
+      if (reads.alvo === "contact_field") {
+        // Campo do CONTATO: mescla atômica na linha travada do contato; não precisa de negócio.
+        const contato = (
+          await client.query<{ id: string; custom_fields: Record<string, unknown> | null }>(
+            "select id,custom_fields from contacts where organization_id=$1 and id=$2 for update",
+            [row.organization_id, row.contact_id],
+          )
+        ).rows[0];
+        if (!contato) throw new ExecutionLeadUnavailableError();
+        const anteriorDoContato = (contato.custom_fields ?? {})[reads.chave!] ?? null;
+        await client.query(
+          `update contacts set custom_fields=coalesce(custom_fields,'{}'::jsonb) || jsonb_build_object($3::text, $4::jsonb),
+             updated_at=clock_timestamp() where organization_id=$1 and id=$2`,
+          [row.organization_id, contato.id, reads.chave, JSON.stringify(reads.valor)],
+        );
+        await this.auditEffect(client, row.organization_id, "contact.updated", "contact", contato.id, {
+          fields: [`custom_fields.${reads.chave}`],
+          origem: `followup:${row.id}`,
+          execution_step_id: handle.step_id,
+          execution_attempt_id: handle.attempt_id,
+        });
+        const saida = NODE_OUTPUT_CONTRACTS.update_lead_field.parse({
+          lead_id: row.lead_id,
+          contact_id: contato.id,
+          alvo: reads.alvo,
+          chave: reads.chave,
+          valor: reads.valor,
+          valor_anterior: anteriorDoContato as never,
+        });
+        await this.confirmLocalEffect(client, row, handle, "update_lead_field", saida);
+        return { output: saida, reused: false };
+      }
+      if (!row.lead_id) throw new ExecutionTaskConfigurationError("execution_lead_required");
       const lead = (
         await client.query<{ id: string; custom_fields: Record<string, unknown> | null; value_cents: number | null }>(
           "select id,custom_fields,value_cents from crm_leads where organization_id=$1 and contact_id=$2 and id=$3 for update",

@@ -2577,6 +2577,7 @@ export const DICIONARIO: Traducoes = {
   "Todas as versões": { es: "Todas las versiones" },
   "Mapear dados": { es: "Mapear datos" },
   "Atribuir responsável": { es: "Asignar responsable" },
+  "Campo do contato": { es: "Campo del contacto" },
   "Simular caminho": { es: "Simular camino" },
   "Simulação com dados de exemplo: nada é gravado no CRM e nenhuma mensagem é enviada.": { es: "Simulación con datos de ejemplo: nada se graba en el CRM y no se envía ningún mensaje." },
   "Complete o fluxo para simular.": { es: "Complete el flujo para simular." },

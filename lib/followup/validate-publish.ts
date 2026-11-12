@@ -967,7 +967,7 @@ export function validateFlowForPublish(
     if (node.type === 'map_data') conferirMapa(node, errors);
     if (
       node.type === 'update_lead_field' &&
-      (!node.config.valor.trim() || (node.config.alvo === 'custom_field' && !node.config.chave.trim()))
+      (!node.config.valor.trim() || (node.config.alvo !== 'deal_value' && !node.config.chave.trim()))
     )
       errors.push({
         node_id: node.id,

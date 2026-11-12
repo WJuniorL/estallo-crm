@@ -442,7 +442,8 @@ export const addNoteConfigSchema = z.strictObject({
  * Sem chave (campo personalizado) ou sem valor é rascunho; o publish recusa (`campo_do_negocio_incompleto`).
  */
 export const updateLeadFieldConfigSchema = z.strictObject({
-  alvo: z.enum(['custom_field', 'deal_value']),
+  // `contact_field`: campo personalizado do CONTATO (catálogo entity contact) — não precisa de negócio.
+  alvo: z.enum(['custom_field', 'deal_value', 'contact_field']),
   chave: z.string().max(40),
   valor: z.string().max(2000),
 });

@@ -89,8 +89,10 @@ export const NODE_OUTPUT_CONTRACTS = {
     tags: z.array(z.string().min(1)),
   }),
   update_lead_field: z.strictObject({
-    lead_id: id,
-    alvo: z.enum(["custom_field", "deal_value"]),
+    lead_id: id.nullable(),
+    contact_id: id.optional(),
+    alvo: z.enum(["custom_field", "deal_value", "contact_field"]),
+    // `null` quando o alvo é o contato e a execução não tem negócio.
     chave: z.string().nullable(),
     valor: z.json(),
     valor_anterior: z.json(),

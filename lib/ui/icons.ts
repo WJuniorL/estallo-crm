@@ -167,4 +167,8 @@ export {
   FloppyDisk,
   // Chat suspenso: minimizar a janela
   Minus,
+  // Dashboard de vendas: ranking, perdas e negócio parado
+  Trophy,
+  TrendDown,
+  Snowflake,
 } from "@phosphor-icons/react/dist/ssr";

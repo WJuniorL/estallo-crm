@@ -13899,6 +13899,17 @@ export type Database = {
         }
         Returns: Json
       }
+      fn_dashboard_vendas: {
+        Args: {
+          p_from: string
+          p_org: string
+          p_owner?: string
+          p_pipeline: string
+          p_source?: string
+          p_to: string
+        }
+        Returns: Json
+      }
       fn_decrypt_oauth: { Args: { ciphertext: string }; Returns: string }
       fn_definir_aviso_de_caso: {
         Args: {

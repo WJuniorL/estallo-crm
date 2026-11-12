@@ -267,6 +267,30 @@ def pull(sha):
         run(['docker', 'pull', f'{image_namespace()}/{image}:{image_tag(sha)}'])
 
 
+def prune_images(keep):
+    """Remove imagens nossas (qualquer namespace) cuja tag não é de um commit em `keep`.
+
+    Cada deploy deixava ~1 GB de imagens no disco e nada as apagava: em 12/11/2026
+    eram dezenas de versões, inclusive do namespace antigo (estallosolucoes).
+    Sem --force: imagem em uso por contêiner o Docker recusa, e a recusa é ignorada.
+    O commit anterior fica para o rollback; versões mais velhas voltam pelo registro.
+    """
+    # ponytail: entrada de local-images.json de commit podado fica órfã; o pull dela
+    # falha alto (inspect), o que basta para um rollback que ninguém pede para tão longe.
+    tags = {image_tag(sha) for sha in keep if sha}
+    removed = 0
+    for reference in run(['docker', 'image', 'ls', '--format',
+                          '{{.Repository}}:{{.Tag}}']).decode().split():
+        repository, _, tag = reference.rpartition(':')
+        if repository.rsplit('/', 1)[-1] in IMAGES and tag not in tags:
+            try:
+                run(['docker', 'image', 'rm', reference])
+                removed += 1
+            except RuntimeError:
+                pass
+    print(f'{removed} imagem(ns) antiga(s) removida(s).')
+
+
 def available_memory():
     match = re.search(r'^MemAvailable:\s+(\d+)', Path('/proc/meminfo').read_text(), re.M)
     return int(match[1]) // 1024
@@ -537,6 +561,10 @@ def deploy(sha, backup_ready=False):
     save(STATE, json.dumps({'sha': sha, 'previous_sha': previous.get('sha'),
                            'deployed_at': datetime.datetime.now(datetime.timezone.utc).isoformat()}))
     print('Deploy validado: stack saudável, HTTPS e margem de memória conferidos.')
+    try:
+        prune_images((sha, previous.get('sha')))
+    except Exception as error:  # limpeza nunca derruba um deploy validado
+        print(f'Limpeza de imagens antigas não concluída: {error}')
 
 
 def post(payload):

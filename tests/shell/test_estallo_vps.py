@@ -272,23 +272,23 @@ class EstalloVpsTests(unittest.TestCase):
     def test_prune_images_keeps_current_and_previous_and_skips_foreign(self, run):
         old = '3' * 40
         listing = '\n'.join([
-            f'ghcr.io/wjuniorl/estallo-crm:{NEW}', f'ghcr.io/wjuniorl/estallo-crm-worker:{OLD}',
-            f'ghcr.io/wjuniorl/estallo-crm-scheduler:{old}',
-            f'ghcr.io/estallosolucoes/estallo-crm:{old}',
+            f'registry.example/estallo/estallo-crm:{NEW}', f'registry.example/estallo/estallo-crm-worker:{OLD}',
+            f'registry.example/estallo/estallo-crm-scheduler:{old}',
+            f'registry.example/antigo/estallo-crm:{old}',
             'devlikeapro/waha:latest-2026.7.2', 'redis:7-alpine', 'alpine:3.20'])
 
         def fake(args, **_):
             if args[:3] == ['docker', 'image', 'ls']:
                 return listing.encode()
-            if args[-1].endswith(':' + old) and 'estallosolucoes' in args[-1]:
+            if args[-1].endswith(':' + old) and '/antigo/' in args[-1]:
                 raise RuntimeError('em uso')  # recusa do Docker não derruba a limpeza
             return b''
         run.side_effect = fake
         with patch('sys.stdout', io.StringIO()):
             vps.prune_images((NEW, OLD))
         removed = [call.args[0][-1] for call in run.call_args_list if call.args[0][:3] == ['docker', 'image', 'rm']]
-        self.assertEqual(sorted(removed), sorted([f'ghcr.io/wjuniorl/estallo-crm-scheduler:{old}',
-                                                  f'ghcr.io/estallosolucoes/estallo-crm:{old}']))
+        self.assertEqual(sorted(removed), sorted([f'registry.example/estallo/estallo-crm-scheduler:{old}',
+                                                  f'registry.example/antigo/estallo-crm:{old}']))
         self.assertFalse(any('--force' in call.args[0] or '-f' in call.args[0] for call in run.call_args_list))
 
     @patch.object(vps, 'state', return_value={'sha': OLD})

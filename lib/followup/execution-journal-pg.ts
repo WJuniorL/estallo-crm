@@ -528,11 +528,13 @@ export class PgExecutionJournal implements ExecutionJournal {
           )
         ).rows[0] ?? null)
       : null;
-    const pipeline = parsedLead?.pipeline_id
+    // As regras (campos obrigatórios, reabertura) são as do funil de DESTINO — igual ao do negócio quando não troca.
+    const pipelineDasRegras = (stage?.pipeline_id as string | undefined) ?? parsedLead?.pipeline_id ?? null;
+    const pipeline = pipelineDasRegras
       ? (
           await client.query<{ settings: unknown }>(
             "select settings from crm_pipelines where organization_id=$1 and id=$2 for share",
-            [row.organization_id, parsedLead.pipeline_id],
+            [row.organization_id, pipelineDasRegras],
           )
         ).rows[0]
       : null;
@@ -1621,7 +1623,7 @@ export class PgExecutionJournal implements ExecutionJournal {
       const pipeline = (
         await client.query<{ settings: unknown }>(
           "select settings from crm_pipelines where organization_id=$1 and id=$2 for share",
-          [row.organization_id, lead.pipeline_id],
+          [row.organization_id, reads.stage.pipeline_id],
         )
       ).rows[0];
       if (!pipeline) throw new ExecutionTaskConfigurationError("pipeline_unavailable");
@@ -1638,6 +1640,7 @@ export class PgExecutionJournal implements ExecutionJournal {
         settings: reads.settings,
         lost_reason: node.config.lost_reason,
         won_reason: node.config.won_reason,
+        permitirTrocaDeFunil: true,
       });
       if (!prepared.ok)
         throw new ExecutionTaskConfigurationError(
@@ -1660,6 +1663,11 @@ export class PgExecutionJournal implements ExecutionJournal {
         lead.updated_at,
       ];
       const setters = ["stage_id=$4", "position_in_stage=$5", "updated_at=clock_timestamp()"];
+      // Troca de funil: o MESMO negócio passa para o funil da etapa (id, conversa, tarefas e timeline seguem com ele).
+      if (reads.stage.pipeline_id !== lead.pipeline_id) {
+        values.push(reads.stage.pipeline_id);
+        setters.push(`pipeline_id=${values.length}`);
+      }
       for (const field of ["lost_reason", "won_reason"] as const)
         if (prepared.patch[field] !== undefined) {
           values.push(prepared.patch[field]);

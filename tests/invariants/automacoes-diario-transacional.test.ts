@@ -619,7 +619,8 @@ describe("diário transacional do motor existente — Postgres real", () => {
     // `reabertura_cria_novo` saiu desta lista em 30/10/2026: o funil não recusa
     // mais a saída de ganho/perdido (`modoDeReabertura`, lib/leads/reabertura.ts).
     { withoutLead: true, code: "execution_lead_required" },
-    { targetStageId: GOV_STAGE, code: "pipeline_immutable_use_clone" },
+    // `pipeline_immutable_use_clone` saiu desta lista em 12/11/2026 (Fase 5): o bloco Mover troca de funil o MESMO
+    // negócio, como `/move-pipeline` — caso próprio logo abaixo.
   ])("movimentação recusa regra comercial sem efeito: $code", async ({ code, ...options }) => {
     const f = await fixture({ decision: "move_lead", ...options });
     await avancarEnrollmentAtivo(
@@ -638,6 +639,22 @@ describe("diário transacional do motor existente — Postgres real", () => {
       [GOV_ORG, f.lead],
     );
     expect(lead.rows[0].stage_id).toBe(f.sourceStage);
+  });
+
+  it("movimentação para etapa ABERTA de outro funil troca o mesmo negócio de funil (Fase 5)", async () => {
+    const f = await fixture({ decision: "move_lead", targetStageId: GOV_STAGE });
+    await avancarEnrollmentAtivo(
+      { db: adapter, clock: () => new Date(), enqueueJob: async () => {} },
+      await f.scope(),
+    );
+    const destino = (await pool.query("select pipeline_id from crm_stages where id=$1", [GOV_STAGE])).rows[0] as {
+      pipeline_id: string;
+    };
+    const lead = await pool.query("select stage_id,pipeline_id from crm_leads where organization_id=$1 and id=$2", [
+      GOV_ORG,
+      f.lead,
+    ]);
+    expect(lead.rows[0]).toEqual({ stage_id: GOV_STAGE, pipeline_id: destino.pipeline_id });
   });
 
   it("movimentação para perda usa motivo válido e retorna a etapa efetivamente gravada", async () => {

@@ -2577,6 +2577,10 @@ export const DICIONARIO: Traducoes = {
   "Todas as versões": { es: "Todas las versiones" },
   "Mapear dados": { es: "Mapear datos" },
   "Atribuir responsável": { es: "Asignar responsable" },
+  "O negócio vai para esta etapa. Se ela for de outro funil, o mesmo negócio muda de funil — só negócio aberto, e só para etapa aberta.": {
+    es: "El negocio va a esta etapa. Si es de otro embudo, el mismo negocio cambia de embudo — solo un negocio abierto, y solo a una etapa abierta.",
+  },
+  "Para trocar de funil, escolha uma etapa aberta. Ganho e perda se marcam dentro do funil do negócio.": { es: "Para cambiar de embudo, elija una etapa abierta. Ganado y perdido se marcan dentro del embudo del negocio." },
   "Adicionar tags": { es: "Agregar etiquetas" },
   "Remover tags": { es: "Quitar etiquetas" },
   "Separe por vírgula. Só as tags listadas saem; as outras ficam.": { es: "Separe con comas. Solo salen las etiquetas listadas; las demás se quedan." },

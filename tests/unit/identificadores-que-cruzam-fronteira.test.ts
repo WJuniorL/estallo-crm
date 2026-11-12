@@ -192,6 +192,9 @@ const SITES: { arquivo: string; fronteira: string; papel?: "gerador" | "validado
   { arquivo: "lib/api/client.ts", fronteira: "api.idempotency-key", papel: "gerador" },
   { arquivo: "lib/api/idempotency.ts", fronteira: "api.idempotency-key", papel: "validador" },
   { arquivo: "lib/extensions/http.ts", fronteira: "api.idempotency-key", papel: "validador" },
+  // Requisição HTTP das automações: a chave vai a um TERCEIRO; sai como UUID derivado da identidade do efeito
+  // (`chaveExterna`), estável entre tentativas — nem aleatória (deduplicaria nada) nem a chave interna em JSON.
+  { arquivo: "lib/followup/requisicao-http.ts", fronteira: "api.idempotency-key" },
   { arquivo: "app/api/v1/admin/tenants/route.ts", fronteira: "api.idempotency-key", papel: "validador" },
   { arquivo: "app/api/v1/channel-sessions/route.ts", fronteira: "api.idempotency-key", papel: "validador" },
   { arquivo: "app/api/v1/lgpd/requests/[id]/approve/route.ts", fronteira: "api.idempotency-key", papel: "validador" },

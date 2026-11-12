@@ -963,3 +963,173 @@ Pedido do dono: atualizar os testes vermelhos do `verify` que vinham da frente d
 - **Specs tiradas do CI com motivo escrito (`FORA_DO_CI`):** `logo-moldura-no-tema-escuro`, `marca-logo` (marca própria; identidade fixa), `cobranca-revendedor`, `-suspensao-e-limites`, `-desligada`, `-asaas` (cobrança do revendedor do upstream; a do Estallo é demonstrativa), `filtro-por-marcador-pela-tela` (tag na conversa removida pela 0659). `fixme`: `icone-da-aba`, dois casos de `marca-logo`, `#1206` de `qa-l12-inbox`. Partes 7 (specs em triagem) e 8 (as 11 que a parte 1 não chegava a rodar) criadas; a matriz tem 8 partes.
 - **PENDÊNCIA REAL (minha), não de teste:** apagar uma conversa que é origem de inscrição de follow-up do contrato 1 falha com `followup_execution_origin_immutable` (a trava da 0704 barra o `UPDATE … conversation_id = null` do `on delete set null`). O contrato 1 está desligado em produção, então nada quebra hoje; **antes de habilitá-lo, decidir** se a trava deve aceitar o nulo vindo da chave estrangeira (migration nova; a 0704 já está aplicada e não se edita). O limpador de e2e (`cleanup-e2e-channel-sessions.ts`) apaga as inscrições antes das conversas para contornar.
 - **NÃO MEDIDO:** o e2e verde de ponta a ponta (partes 1, 5, 6 e 7 foram cortadas aos 28 min nas rodadas anteriores); a tela dos fluxos pelo navegador.
+
+## 2026-11-11 — Fase 3: filtros de versão, modo e período no histórico de execuções
+
+**Feito (sem schema, sem deploy):** a aba Execuções do editor ganhou filtro por versão (lista vem de `GET /api/v1/ai/followup-flows/:id`, campo novo `versions: [{id, created_at, numero}]`, mais nova primeiro), por modo (produção/simulação/teste) e por período (`desde`/`ate`, datas nativas). A fila (`/api/v1/ai/followups/queue`) e o hook já aceitavam esses parâmetros; só a tela não os ligava. `FlowBuilder` lê o fluxo pelo mesmo cache do editor, então publicar uma versão atualiza o filtro sem recarregar.
+
+**Evidência:** vitest do painel + rota do fluxo + i18n = 77 passed; `tsc --noEmit` e eslint dos arquivos tocados sem saída; `git diff --check` limpo. Dois casos novos em `ExecucoesDoFluxo.test.tsx` (período vira filtro da consulta; filtro de versão só aparece com versões).
+
+**NÃO MEDIDO:** a tela no navegador (o seletor de versão e os campos de data só foram exercitados em jsdom); o select de modo/versão por clique (Radix não roda em jsdom — só a presença é provada); filtro por lead (a API aceita `lead`, a tela ainda não oferece).
+
+**Ainda pendente na Fase 3:** filtro por lead/contato por identidade, seleção de passagem/iteração, atualização por Realtime, paginação do diário.
+
+## 2026-11-11 (2) — Fase 3: passagem por bloco e aviso de diário cortado
+
+**Feito:** no inspetor da aba Execuções, bloco que rodou mais de uma vez (volta de Repetir, nova tentativa) mostra abas «Passagem 1, 2…» com a hora, uma passagem por vez, a mais recente por padrão; trocar de bloco ou de execução volta à mais recente. O dossiê (`GET /api/v1/ai/followups/enrollments/:id`) lê `TETO+1` passos e devolve `passos_truncados`; a tela avisa quando o desenho mostra só um pedaço. Paginação do diário deliberadamente NÃO feita: o motor mata a execução acima de `MAX_STEPS` (80, `lib/followup/engine.ts`), então o teto de 500 não se alcança — comentário `ponytail:` na rota.
+
+**Evidência:** `ExecucoesDoFluxo.test.tsx` 32 passed (3 casos novos: passagens, passagem única sem seletor, aviso de corte); `app/app/ai/followups` + testes de API de restart/step verdes; `tsc` e eslint dos tocados sem saída. `i18n-a-data-segue-o-idioma` falhou 2 casos só na rodada paralela e passou 5/5 sozinho — não ligado a esta mudança.
+
+**Já atendido antes (conferido):** configuração histórica só a quem edita fluxos (`grafo` do dossiê é omitido para os demais).
+
+**NÃO MEDIDO:** tela no navegador.
+
+**Ainda pendente na Fase 3:** atualização por Realtime — `followup_enrollments` NÃO está na publicação `supabase_realtime`; exige migration nova (+ apêndice no baseline) aplicada à mão antes do merge. Hoje o polling de 10 s cobre. Filtro por lead: a API aceita `lead`, mas nenhuma tela leva a ele ainda.
+
+## 2026-11-11 (3) — Fase 3: execuções ao vivo (Realtime)
+
+**Feito:** migration `0715_execucoes_do_fluxo_no_realtime` (+ bloco idempotente no fim do `baseline.sql`) põe `followup_enrollments` na publicação `supabase_realtime`; diários (`followup_execution_steps/attempts`) ficam fora de propósito. `useExecucoesAoVivo(flowId)` (`hooks/followup/useFollowupQueue.ts`) assina a tabela filtrada por `pointer_id` e só invalida fila e dossiê, agrupando eventos (≤1 releitura/s); a releitura passa pela API e pela RLS. Polling vira recuperação: 10 s sem canal, 60 s com canal. A tela mostra «ao vivo» com o canal assinado. Invariante novo `tests/invariants/automacoes-execucoes-no-realtime.test.ts`. Fragmento `.changes/execucoes-do-fluxo-ao-vivo-e-filtros.md`.
+
+**Evidência:** vitest do painel + `realtime-assinatura-tem-publicacao` + `manifest-x-migrations` + hooks = 52 passed; `tsc` e eslint dos tocados sem saída.
+
+**NÃO MEDIDO:** `pnpm test:db` (Docker desligado na máquina local — o invariante novo roda no CI); evento chegando de verdade pelo socket; tela no navegador.
+
+**Ordem de entrega:** aplicar a 0715 no banco de produção ANTES do merge. Se o app subir sem ela, o canal responde SUBSCRIBED sem entregar nada e a lista só atualiza a cada 60 s (degrada, não quebra).
+
+## 2026-11-11 (4) — Fase 4: Mapear dados, contrato × exemplo × real, amostra escolhida, dependentes
+
+**Feito:**
+- Bloco **Mapear dados** (`map_data`, `lib/followup/mapear-dados.ts`): campos com nome, valor (texto com `{{nodes.<bloco>.<caminho>}}`) e tipo (texto, número, sim/não, lista). Referência sozinha preserva o tipo cru; composição monta texto. Ausente ≠ `null` ≠ "" ≠ []; ausente sem valor padrão falha com explicação (`map_data_value_unavailable`, sai pela saída de erro). Sem `eval`; leitura por `ler()` (só chave própria). Saídas anteriores congeladas na entrada da tentativa (`executionDecisionInputSchema.saidas`) — nova tentativa dá o mesmo resultado. Integrado ao contrato 1 (`NODES_INTEGRATED_IN_EXECUTION_CONTRACT`), catálogo (categoria Dados), cartão, formulário e layout.
+- Campos montados viram variáveis `{{nodes.<bloco>.fields.<nome>}}` no seletor, na prévia e na publicação (recusa campo inexistente, mapa vazio, nome repetido, valor vazio).
+- **Criar tarefa** resolve `{{nodes…}}` no título com as saídas congeladas no `begin` (`input_snapshot.resolved.saidas`); variável sem valor falha com explicação, nunca título cortado. Seletor de variáveis no título.
+- Editor mostra **«O que este bloco entrega»**: contrato declarado (marca exata) + exemplo simulado rotulado («Exemplo simulado»); o inspetor da execução segue rotulando «Valor desta execução».
+- **Amostra explícita** na prévia do texto: «Exemplo simulado» ou uma das execuções recentes do fluxo (saídas reais, só de blocos anteriores).
+- **Dependentes**: o painel do bloco lista quem usa as variáveis dele antes do «Excluir nó»; publicar segue bloqueado enquanto houver referência órfã.
+- Adaptador pg (`createPgAdminClient`) ganhou `loadStepOutputs` (só testes o usam; a produção usa o Supabase, que já tinha).
+
+**Deliberadamente NÃO feito:** arrastar variável para o campo — o seletor «Inserir variável» insere no cursor em todo campo que aceita variável; arrastar não acrescenta capacidade. Fazer se o uso pedir.
+
+**Evidência local:** vitest de `lib/followup` + editor; typecheck e eslint dos tocados. Invariantes novos `automacoes-mapear-dados-no-diario` (4 casos, inclusive tarefa com título vindo do mapa) rodam só no CI — Docker desligado na máquina.
+
+**NÃO MEDIDO:** tela no navegador; `pnpm test:db` local.
+
+## 2026-11-11 (5) — Fase 5 (parcial): Atribuir responsável e Nota interna
+
+**Feito:** dois blocos com efeito no CRM, no diário do contrato 1 (begin congela a leitura; complete trava, confere, grava, registra atividade/auditoria e confirma o efeito — replay não duplica):
+- **Atribuir responsável** (`assign_lead_owner`): troca o dono do NEGÓCIO (não da conversa). Régua G3-04 (membro não revogado, aceito, acima de viewer) conferida na transação; dono trocado por pessoa entre begin e complete → `ExecutionInputChangedError` (a mudança humana vence). Atividade «Trocou o responsável» + auditoria `lead.updated`.
+- **Nota interna** (`add_note`): destino escolhido — `negocio` (atividade `note` na linha do tempo) ou `conversa` (`conversation_notes`, autor «Automação», auditoria `conversation.note_added`). Texto aceita `{{nodes…}}`, resolvido e congelado no begin; variável sem valor falha com explicação.
+- Publicação recusa `responsavel_ausente` e `nota_sem_texto`. Ambos entram no seletor de variáveis, no aviso de reinício e na saída de erro.
+
+**Evidência:** vitest `lib/followup` + editor + `lib/automation` = 111 arquivos / 1389 testes; `tsc` limpo. Invariantes `automacoes-atribuir-responsavel` e `automacoes-nota-interna` só no CI (Docker local desligado).
+
+**Falta na Fase 5:** buscar/criar/atualizar contato; buscar/criar/atualizar lead, mover entre funis, produtos; próxima ação; avisar responsável pela Central; condição ampliada/caminhos por valor; aguardar data/horário; aguardar resposta com prazo; extrair dados por IA; requisição HTTP; paleta com categorias recolhíveis e inserção pelo ponto de conexão.
+
+## 2026-11-11 (6) — CI do PR #3 e Fase 5: Aguardar até
+
+**CI do PR #3 (1ª rodada: 20 verdes, 7 vermelhos — os três defeitos eram meus):** `t(r)` sobre variável no formulário da nota (cerca de i18n) → literais por ramo; invariante da tarefa com título do mapa escolhia «qualquer membro» (às vezes viewer, recusado pelo gatilho 0403) → `GOV_AGENT_A`; e2e `followup-linguagem` achava o valor de wire `conversa` na palavra «conversa» → destino da nota passou a `lead_timeline` / `conversation_notes` (rótulos de tela iguais).
+
+**Aguardar até** (`wait` modo `until`, `lib/followup/espera-ate.ts`): hora (e data opcional) no fuso da organização (`organizations.timezone`, lido por `loadOrgTimezone` nos dois adaptadores); relógio de parede de `lib/tempo/inicio-do-dia.ts` (correto sob horário de verão). Só hora → próxima ocorrência. Data passada → segue para o próximo bloco. Data/hora inexistente → falha explicada. Em laço: só a versão sem data conta como espera que quebra ciclo. Invariante `automacoes-aguardar-ate`.
+
+**NÃO MEDIDO:** `i18n-espanhol-cobre-a-tela` estoura 15 s nesta máquina (passa no CI); cobertura das chaves conferida por script — nenhuma faltando.
+
+## 2026-11-12 (7) — Fase 5: condição ampliada, Atualizar campo do negócio, paleta
+
+**Feito:**
+- **Condição ampliada:** regra `field: "variavel"` com `source: {{nodes.<bloco>.<caminho>}}` no MESMO avaliador (`evaluateCheck`); operadores `exists`/`not_exists` (ausente, nulo, "" e [] não têm valor); ausência não prova negação; saídas congeladas no begin quando a condição lê variável. Vocabulário com frase para todo par (presença oferecida só no campo novo). Publicação exige o dado e valida bloco anterior/campo existente.
+- **Atualizar campo do negócio** (`update_lead_field`): campo personalizado do catálogo (`custom_field_definitions`, entity lead) convertido pelo tipo (`lib/followup/valor-do-campo.ts`, 11 tipos) ou valor do negócio em centavos. Valor com `{{nodes…}}` resolvido e convertido no begin; erro → falha explicada sem gravar. Mescla atômica na linha travada; atividade + auditoria uma vez.
+- **Paleta:** busca (mesmo `searchNodeTypes` do catálogo) e categorias em `<details>` nativos; descrição como dica.
+- **Coberto sem bloco novo:** «avisar responsável» = Criar tarefa com «dono do negócio» (já manda push). **Adiado:** «definir próxima ação» (é proposta do agente com aprovação humana — gravar ali atropela a aprovação).
+
+**CI:** PR #3 verde em `01251c948` (27 ok); em `0af96db91` só a fixture de `dependentesDoNo` falhou (corrigida em `043333f91`). Invariantes novos (`atribuir-responsavel`, `nota-interna`, `aguardar-ate`, `mapear-dados-no-diario`) passaram no CI.
+
+**Falta na Fase 5:** contato (buscar/criar/atualizar, remover tag); lead (buscar/criar, mover entre funis, produtos); extrair dados por IA; requisição HTTP (reusar proteções do `call_webhook`); inserção pelo ponto de conexão.
+
+## 2026-11-12 (8) — Fase 7: exportar e importar JSON
+
+**Feito:**
+- `lib/followup/pacote.ts` (puro): formato nativo `estallo.automacao` v1 (origem rascunho/versão + número, fluxo, grafo, gatilho, política, manifesto de dependências). `lerPacote` valida ANTES de escrever (≤1 MB, JSON, formato, versão futura recusada com mensagem útil, schema). `importarPacote` exige destino para cada dependência, gera ids de bloco novos, reescreve `{{nodes.<id>…}}`, remapeia UUIDs externos e revalida grafo e gatilho. `segredosEmbutidos` (Bearer, chaves de API, AWS, Slack, chave privada, senha escrita) faz a exportação recusar.
+- `lib/followup/referencias-do-pacote.ts` (servidor): manifesto classifica cada UUID citado (etapa, funil, usuário, tipo de agenda, agente; o resto `desconhecido`) com o nome na origem; candidatos da organização de destino; `problemaDoMapa` recusa destino fora do tenant, tipo trocado e referência desconhecida.
+- Rotas: `GET /api/v1/ai/followup-flows/:id/export?origem=rascunho|publicado` e `POST /api/v1/ai/followup-flows/import` (`modo: previa|criar`; criar = UMA inserção de rascunho, nunca publica). Auditoria `followup_flow.exported` / `followup_flow.imported`. Sem importação por URL.
+- Tela: «Exportar» (rascunho salvo / versão no ar) na barra do editor; «Importar» na lista de fluxos com prévia e remapeamento por seleção.
+
+**Evidência:** `pacote.test.ts` (segredo, leitura, pendências, ids novos e referências reescritas, reexportação com a mesma semântica, conferência do tenant); suíte do editor verde; `tsc` e eslint limpos.
+
+**NÃO MEDIDO:** rotas contra banco real (A→B ponta a ponta); tela no navegador. O isolamento entre organizações vem de `problemaDoMapa` (candidatos lidos com `organization_id` da sessão) — provado em teste unitário, não em invariante.
+
+## 2026-11-12 (9) — Fase 6: recuperar a partir da falha
+
+**Feito:** `reiniciarExecucao({ modo: "retry" })` (`lib/followup/reiniciar.ts`; rota `POST …/enrollments/:id/restart` com `{ modo: "retry" }`, idempotente pela mesma chave): só de execução **morta**; a nova começa **no bloco que falhou**, na mesma versão, com `recovery_kind = 'retry'` (coluna e CHECK já existiam). Recusa: execução não morta, reexecução viva, opt-out/anonimizado, fluxo inativo, e **passo do bloco que falhou com resultado desconhecido** (refazer poderia repetir mensagem/tarefa — pede conferência humana). Saídas herdadas: `loadStepOutputs` (adaptador Supabase, recursivo) e `SQL_SAIDAS_DA_EXECUCAO` (`lib/followup/sql-saidas-da-execucao.ts`, CTE recursiva sobre a cadeia `retry`, usada pelo diário e pelo adaptador pg) — blocos concluídos não rodam de novo e os seguintes citam `{{nodes…}}` do que já rodou. Auditoria `followup_enrollment.recovered`. Tela: botão «Recuperar da falha» (só em execução morta) com diálogo próprio.
+
+**Evidência:** `reiniciar.test.ts` (+3 casos de retry), rota de restart e painel verdes; invariante `automacoes-recuperar-da-falha` (só no CI).
+
+**Falta na Fase 6:** passos herdados exibidos como «herdados» no dossiê da recuperação (hoje aparecem na execução original, ligada pela reexecução); testar nó/caminho no rascunho com dados simulados (simulação sem efeito).
+
+## 2026-11-12 (10) — Fase 6: passos herdados e simulação no editor
+
+**Feito:**
+- Dossiê de uma recuperação devolve `passos_herdados` (passos concluídos da original, só resumo) e a aba Execuções os mostra como «Herdado da execução original»; o link de origem diz «Recuperação».
+- **Simular caminho** (`lib/followup/simular-caminho.ts`, puro; botão na barra do editor): percorre o rascunho com dados de EXEMPLO — condição pelo avaliador real (`processNode`), Mapear dados pela regra real, ramo de Resposta/Classificar escolhido por quem testa, blocos com efeito descritos como «faria …» com saída de exemplo, esperas consideradas cumpridas, teto de 50 passos (laço não trava). Nada é gravado nem enviado; exemplos não são lidos por execução publicada.
+- Paleta desktop rola por dentro (conteúdo absoluto no aside) — a versão anterior esticava a página e o e2e do editor não alcançava o canvas; e2e do roteiro compara o CONJUNTO de blocos.
+
+**Decisão registrada:** o modo `execution_mode = 'simulation'` (coluna existente) segue sem motor — simular pelo motor exigiria um ramo «não agir» em cada efeito; a simulação pura cobre o aceite «simulação deixa CRM/canais inalterados» sem esse risco.
+
+**Fase 6 no código:** recuperar da falha, herdados, reinício (já existia), simulação. **NÃO MEDIDO:** telas no navegador.
+
+## 2026-11-12 (11) — Fase 5: campo do contato, remover tags, trocar de funil, produtos
+
+**Feito:**
+- **Atualizar campo** ganhou `alvo: "contact_field"` (catálogo de contato, convertido pelo tipo, mescla atômica na linha travada do contato; não exige negócio; auditoria `contact.updated`).
+- **Bloco de tag remove** (`acao: "remove"`, opcional): tira só as tags pedidas no negócio ou no contato; saída `removed_tags`; `tag_added` só sai quando algo foi adicionado (`aplicarTags` em `lib/leads/tags.ts`).
+- **Mover troca de funil:** `prepararMovimentacaoDeLead({ permitirTrocaDeFunil: true })` só no motor — regras do `/move-pipeline` (negócio aberto, etapa aberta, obrigatórios do funil de DESTINO); grava `pipeline_id`. Invariante antigo que exigia a recusa trocado pelo que prova a troca (decisão do Estallo: o mesmo negócio muda de funil).
+- **Produto do negócio** (`lead_product`): `add` copia nome e preço do `catalog_products` da organização (o gatilho recalcula `value_cents`), `remove` tira os itens do produto; produto fora do catálogo do tenant falha explicado.
+
+**Evidência:** suíte local `lib/followup` + editor + `lib/automation` + `lib/leads` = 133 arquivos / 1727 testes; `tsc` limpo. Invariantes novos: `remover-tags`, `produto-do-negocio`, caso do contato em `atualizar-campo-do-negocio`, troca de funil em `diario-transacional`.
+
+**Pendente com decisão do dono (parado aqui):** requisição HTTP (cofre de credenciais não existe); buscar/criar contato ou negócio dentro do fluxo (a execução é presa a um contato/negócio — o que fazer com ela?); extrair dados por IA (custo de modelo); Fase 8 (ambiente local com Docker + canal e IA de teste reais).
+
+## 2026-11-12 (12) — Fase 5: Requisição HTTP com conexão protegida (decisão do dono: «da forma mais segura»)
+
+**Feito:**
+- **Conexão protegida** — tabela `automation_http_connections` (migration **0716** + apêndice no baseline): origem (`https://host[:porta]`, sem caminho/credencial/query), autenticação `none | bearer | header | basic`, segredo cifrado AES-256-GCM no APP com `AI_CRED_AES_KEY` (fora do banco; dump sozinho não abre). **Sem GRANT para `anon`/`authenticated`**: só as rotas (`GET/POST /api/v1/ai/followup-http-connections`, `DELETE …/:id`; listar `manager`, criar/apagar `admin`, suporte, rate limit, auditoria `automation_http_connection.created/deleted`) e o motor leem. A RLS fica ligada com política `admin` da própria organização.
+- **Bloco `http_request`** (`lib/followup/requisicao-http.ts`): caminho resolvido contra a ORIGEM da conexão (sair dela é recusado — o segredo não vai a outro host); variáveis no corpo substituídas dentro dos valores do JSON (sem injeção; marca inteira mantém o tipo); guardas do `call_webhook` (anti-SSRF textual + IP resolvido, sem seguir redirect, 10 s, teto de 64 KB); `Idempotency-Key` = identidade do efeito, estável entre tentativas.
+- **Diário** (`prepareHttp` / `completeHttp` / `failHttp`): a intenção é gravada como efeito `pending` ANTES da rede; 2xx confirma a mesma linha, grava a saída (`status`, `corpo`, `truncado`), audita `automation.http_request_sent` (sem corpo) e avança. «Não saiu» (conexão recusada/DNS) → `failed` e nova tentativa; status não-2xx → falha conhecida (ramo de erro, se houver); timeout ou intenção sem desfecho → `unknown`, execução parada com aviso na Central — **nunca reenvio automático**. O `begin` passou a ignorar efeitos `failed` ao decidir «resultado desconhecido».
+- Exportação: a conexão vira referência `conexao_http` remapeável (o pacote leva só id e nome).
+- Tela: formulário com conexão, método, caminho e corpo com variáveis; diálogo «Gerenciar conexões» (credencial digitada uma vez, depois só `••••1234`).
+
+**Evidência:** `requisicao-http.test.ts` 14/14; suíte `lib/followup` + editor; `tsc` limpo; lint limpo. Invariante `automacoes-requisicao-http` (5 casos: 2xx, incerto, queda depois da intenção não reenvia, não-saiu tenta de novo, 500 e conexão inexistente) — só no CI.
+
+**NÃO MEDIDO:** chamada a um sistema externo real; tela no navegador.
+
+## 2026-11-12 (13) — Fase 5: buscar ou criar contato/negócio + «Aplicar em» (decisão do dono: referenciar por variável, como no n8n)
+
+**Feito:**
+- **`find_or_create_contact`**: procura por telefone (variantes do nono dígito, `phoneLookupVariants`) ou e-mail (`email_normalized`), só contatos vivos e não anonimizados; com `criar`, insere (`source = 'automation'`, telefone canônico) — corrida no índice único (23505) vira «achado», nunca duplicado. Evento `contact.created` com `caused_by_rule`, auditoria. Saída `{contact_id|null, encontrado, criado}`.
+- **`find_or_create_lead`**: contato = o da execução ou `{{nodes.<bloco>.contact_id}}`; procura o negócio ABERTO no funil; com `criar`, cria na etapa escolhida (aberta e do funil; campos obrigatórios do funil conferidos; moeda da organização; posição = máx + 1000; atividade `lead_created`, evento `lead.created`, auditoria). Saída `{lead_id|null, contact_id, encontrado, criado}`.
+- **«Aplicar em»** (`aplicar_em`, opcional) nos 7 blocos de efeito (tarefa, tag, mover, responsável, nota, campo, produto): uma marca `{{nodes.<bloco>.lead_id|contact_id}}` de bloco ANTERIOR (publicação recusa o resto: `aplicar_em_invalido`, ancestral). O diário resolve num ponto só (`aplicarAlvo`, via `currentComAlvo` nos `complete*` e nas leituras do `begin`): id das saídas congeladas, conferido na organização; negócio → ele e o seu contato; contato → só ele; anonimizado/grupo/inexistente falha explicado; a conversa da execução deixa de valer para o alvo. A execução continua presa ao seu contato (lock, fronteira de serviço); as escritas no alvo travam a linha e comparam com a leitura congelada.
+- Tela: formulários dos dois blocos (funil/etapa do seletor do fluxo) e seletor «Aplicar em» que só oferece os Buscar ou criar anteriores no caminho.
+
+**Evidência:** `buscar-ou-criar.test.ts` 4/4; suíte `lib/followup` + editor + `lib/automation` = 123 arquivos / 1477 testes; `tsc` e lint limpos. Invariante `automacoes-buscar-ou-criar` (cria contato → cria negócio → tag no negócio novo com o da execução intacto; achado sem duplicar; «Aplicar em» sem valor falha) — só no CI.
+
+**NÃO MEDIDO:** telas no navegador. Mensagem para o contato novo (o envio continua preso à conversa da execução — fora deste recorte).
+
+## 2026-11-12 (14) — Fase 5: Extrair dados por IA (decisão do dono: «pode fazer») + correções de cerca
+
+**Feito:**
+- **`ai_extract`** (`lib/followup/extrair-dados.ts`): texto a ler = `fonte` com variáveis, ou (vazia) a última mensagem de texto do cliente na conversa da execução — congelado no `begin` (`extractInput`). O motor chama o modelo FORA de transação pela porta única `runModelCall` (ponto novo `followup_extract` no registro de pontos: chave BYOK da org, orçamento conferido antes de gastar, custo em `llm_calls`). A saída é validada campo a campo pelo tipo (`text|number|boolean|list`); o que não confere vira `null`; chave a mais é descartada (`completeExtraction` usa os campos da versão PINADA). Sem texto → falha explicada SEM chamar a IA; orçamento esgotado / IA não configurada → falha de configuração legível; saída sem JSON → nova tentativa. Sem efeito externo: queda no meio só custa outra chamada (decisão registrada — não vai para «incerto»).
+- **Escolha de caminho:** o plano falava em seguir o caminho da classificação (fila + worker). A classificação espera a resposta do cliente; a extração lê um texto que já existe — chamada direta no motor, pela mesma porta de custo/orçamento, sem fila nova.
+- **Cercas do CI que o push anterior reprovou:** `branding` (host `api.exemplo.com` no código que embarca → `api.example.com`, domínio reservado) e `rls-completude-varredura` (tabela nova `automation_http_connections` em `PROVA_PROPRIA`, com prova nova: sem GRANT a anon/authenticated no catálogo e SELECT com JWT do admin da própria organização recusado com 42501).
+- **Remoto errado:** a branch rastreava `antigo` (`estallosolucoes/estallo-crm`); os pushes das entradas (12) e (13) foram para lá e o PR #3 não os recebeu. Corrigido: upstream = `origin` (`WJuniorL/estallo-crm`).
+
+**Evidência (local, Docker ligado nesta sessão):** `pnpm test:db` dos invariantes novos — `automacoes-requisicao-http` (6), `automacoes-buscar-ou-criar` (3), `automacoes-extrair-dados` (2) e `rls-completude-varredura` — verdes, com baseline em install e update (`ON_ERROR_STOP=1`). `extrair-dados.test.ts` 4/4; `tsc` e lint limpos. Falhas locais restantes são só `Test timed out` de cercas que varrem o repositório (máquina com duas stacks Supabase de pé).
+
+**NÃO MEDIDO:** chamada a um modelo real; telas no navegador.
+
+## 2026-11-12 (15) — Fase 8: e2e dos blocos novos e escala da aba Execuções
+
+**Feito:**
+- **e2e** `tests/e2e/automacoes-blocos-de-integracao.spec.ts` (parte 7 do CI): admin (MFA) cadastra conexão HTTP pela tela — o POST e a lista NÃO devolvem a credencial, a tela mostra só `••••` + 4 últimos, o campo é limpo — e liga a conexão ao bloco; manager monta Buscar ou criar negócio e Extrair dados e vê «Aplicar em» no bloco de tag. Screenshots em `evidence/automacoes-fase5/`.
+- **Escala (10 mil execuções num fluxo + 5 mil de ruído, 200 tentativas num passo)** — `tests/invariants/automacoes-escala-de-execucoes.test.ts`, evidência `evidence/automacoes-fase8/escala-10k-execucoes.json`. Achado: a 1ª página da lista era **Seq Scan + Sort da organização inteira (13,33 ms com 15 mil, crescendo com o total)**. Migration **0717** (`idx_followup_enrollments_lista_do_fluxo` em `(organization_id, pointer_id, next_eval_at, id)`) + apêndice: **0,13 ms, Index Scan, sem Sort**. Página pelo cursor 0,23 ms; diário com 200 tentativas 0,36 ms. O teste agora exige o índice no plano.
+
+**Antes do merge do PR #3:** migrations **0715, 0716 e 0717** aplicadas à mão no banco de produção (o deploy não aplica migration).
+
+**NÃO MEDIDO:** a spec e2e nesta máquina (roda no CI, banco fresco do baseline + build de produção); fila sem filtro de fluxo em escala.

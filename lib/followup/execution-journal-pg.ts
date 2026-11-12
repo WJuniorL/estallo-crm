@@ -10,7 +10,8 @@ import {
   guardServiceEffect,
 } from "@/lib/atendimento/fronteira-server";
 import { buildLeadActivityRow } from "@/lib/leads/activity-emitter";
-import { prepararAdicaoDeTags } from "@/lib/leads/tags";
+import { aplicarTags } from "@/lib/leads/tags";
+import { resolveOwnerPatch } from "@/lib/leads/owner-patch";
 import type { AuditAction } from "@/lib/audit/actions";
 import { prepararMovimentacaoDeLead } from "@/lib/leads/preparar-movimentacao";
 import { recusaDeMotivoDaPerdaPeloBanco } from "@/lib/leads/motivo-da-perda";
@@ -47,7 +48,14 @@ import {
   type NodeResult,
   type NodeDecisionTrace,
 } from "./node-handlers";
-import { NODE_OUTPUT_CONTRACTS } from "./node-output-contracts";
+import { NODE_OUTPUT_CONTRACTS, type NodeOutput } from "./node-output-contracts";
+import { MARCA_DE_BLOCO, resolverReferencias } from "./variaveis-de-blocos";
+import { SQL_SAIDAS_DA_EXECUCAO } from "./sql-saidas-da-execucao";
+import { centavosDoValor, converterValorDoCampo } from "./valor-do-campo";
+import { corpoDaRequisicao, urlDaRequisicao, type PedidoHttp } from "./requisicao-http";
+import { canonicalPhoneBR, phoneLookupVariants } from "@/lib/channels/phone-variants";
+import { nomeDoContato } from "@/lib/contacts/rotulo-do-contato";
+import { validaCamposExigidos } from "@/lib/leads/campos-exigidos";
 import {
   avisoDeRecuperacaoEsgotada,
   SQL_AVISO_RECUPERACAO_ESGOTADA,
@@ -81,12 +89,33 @@ const taskReadsSchema = z.object({
       display_name: z.string().nullable().optional(),
     })
     .nullable(),
+  /** Saídas dos blocos anteriores, congeladas no `begin` quando o título cita `{{nodes.…}}`. */
+  saidas: z.record(z.string(), z.json()).optional(),
 });
 
-function taskRequest(row: EnrollmentRow, node: Extract<FlowNode, { type: "internal_task" }>) {
+/**
+ * O título com as `{{nodes.<bloco>.<campo>}}` resolvidas pelas saídas congeladas. Variável sem valor NÃO vira título
+ * cortado: a tarefa falha com a explicação (a mesma régua do envio de mensagem).
+ */
+function tituloComSaidas(titulo: string, saidas: Record<string, unknown> | undefined): string {
+  if (!new RegExp(MARCA_DE_BLOCO.source).test(titulo)) return titulo;
+  const r = resolverReferencias(titulo, saidas ?? {});
+  if (r.sem_valor.length > 0)
+    throw new ExecutionTaskConfigurationError(
+      "variavel_sem_valor",
+      `O título da tarefa cita ${[...new Set(r.sem_valor.map((x) => x.marca))].join(", ")}, mas o bloco citado não produziu esse valor nesta execução.`,
+    );
+  return r.texto;
+}
+
+function taskRequest(
+  row: EnrollmentRow,
+  node: Extract<FlowNode, { type: "internal_task" }>,
+  saidas?: Record<string, unknown>,
+) {
   return {
     organizationId: row.organization_id,
-    titulo: node.config.titulo,
+    titulo: tituloComSaidas(node.config.titulo, saidas),
     venceEmDias: node.config.vence_em_dias,
     atribuirA: node.config.atribuir_a,
     prioridade: node.config.prioridade,
@@ -96,11 +125,57 @@ function taskRequest(row: EnrollmentRow, node: Extract<FlowNode, { type: "intern
   };
 }
 
+const contactLookupReadsSchema = z.object({
+  busca: z.enum(["phone", "email"]),
+  valor: z.string().nullable(),
+  nome: z.string().nullable(),
+  criar: z.boolean(),
+  erro: z.string().nullable(),
+});
+
+const leadLookupReadsSchema = z.object({
+  contact_id: z.string().nullable(),
+  pipeline_id: z.string(),
+  stage_id: z.string(),
+  titulo: z.string().nullable(),
+  criar: z.boolean(),
+  erro: z.string().nullable(),
+});
+
+const httpReadsSchema = z.object({
+  connection_id: z.string(),
+  metodo: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]),
+  url: z.string().nullable(),
+  corpo: z.json().nullable(),
+  erro: z.string().nullable(),
+});
+
 const tagReadsSchema = z.object({
   lead_id: z.uuid().nullable(),
   previous_tags: z.array(z.string()),
   // Registros anteriores ao destino "contato" não têm a chave: valem como "card".
   destino: z.enum(["card", "contato"]).default("card"),
+});
+
+const fieldReadsSchema = z.object({
+  alvo: z.enum(["custom_field", "deal_value", "contact_field"]),
+  chave: z.string().nullable(),
+  /** Valor já convertido pelo tipo do campo (ou centavos do valor do negócio); `null` quando falhou (ver `erro`). */
+  valor: z.json().nullable(),
+  erro: z.string().nullable(),
+});
+
+const noteReadsSchema = z.object({
+  destino: z.enum(["lead_timeline", "conversation_notes"]),
+  /** O texto com as variáveis já resolvidas; `null` quando faltou valor (o complete falha com `erro`). */
+  texto: z.string().nullable(),
+  erro: z.string().nullable(),
+});
+
+const ownerReadsSchema = z.object({
+  lead_id: z.uuid(),
+  previous_owner_user_id: z.uuid().nullable(),
+  previous_owner_agent_id: z.uuid().nullable(),
 });
 
 const moveLeadReadSchema = z.looseObject({
@@ -174,7 +249,7 @@ function reuseWindowMs(node: FlowNode): number {
 }
 
 export class PgExecutionJournal implements ExecutionJournal {
-  constructor(private readonly pool: pg.Pool) {}
+  constructor(readonly pool: pg.Pool) {}
 
   private async transaction<T>(work: (client: pg.PoolClient) => Promise<T>): Promise<T> {
     const client = await this.pool.connect();
@@ -280,6 +355,131 @@ export class PgExecutionJournal implements ExecutionJournal {
     return { row, node };
   }
 
+  /** `current` com «Aplicar em» resolvido — só nos blocos de efeito que o aceitam; o `fail` usa o `current` puro. */
+  private async currentComAlvo(client: pg.PoolClient, scope: EnrollmentRow): Promise<{ row: LockedExecution; node: FlowNode }> {
+    const { row, node } = await this.current(client, scope);
+    return { row: await this.aplicarAlvo(client, row, node), node };
+  }
+
+  /**
+   * «Aplicar em» (Fase 5): o bloco mira o negócio ou o contato que um Buscar ou criar ANTERIOR entregou, em vez do da
+   * execução. O id vem das saídas congeladas desta execução e é conferido na organização — nunca do corpo de pedido.
+   * Negócio → ele e o seu contato; contato → só o contato (blocos de negócio falham explicados). A conversa da execução
+   * não é a do alvo: deixa de valer (nota na conversa falha explicada em vez de cair na conversa errada).
+   */
+  private async aplicarAlvo(client: pg.PoolClient, row: LockedExecution, node: FlowNode): Promise<LockedExecution> {
+    const marca = "aplicar_em" in node.config && typeof node.config.aplicar_em === "string" ? node.config.aplicar_em.trim() : "";
+    if (!marca) return row;
+    const r = resolverReferencias(marca, await this.saidasDaExecucao(client, row));
+    const id = r.texto.trim();
+    if (r.sem_valor.length > 0 || !z.uuid().safeParse(id).success)
+      throw new ExecutionTaskConfigurationError(
+        "aplicar_em_sem_valor",
+        `«Aplicar em» cita ${marca}, mas o bloco citado não entregou um negócio ou contato nesta execução.`,
+      );
+    const lead = (
+      await client.query<{ id: string; contact_id: string | null }>(
+        "select id,contact_id from crm_leads where organization_id=$1 and id=$2",
+        [row.organization_id, id],
+      )
+    ).rows[0];
+    if (lead && !lead.contact_id)
+      throw new ExecutionTaskConfigurationError("aplicar_em_sem_contato", "O negócio de «Aplicar em» não tem contato vinculado.");
+    const contactId = lead ? lead.contact_id! : id;
+    const contato = (
+      await client.query<{ is_anonymized: boolean; kind: string | null }>(
+        "select is_anonymized,kind from contacts where organization_id=$1 and id=$2 and is_merged_into is null",
+        [row.organization_id, contactId],
+      )
+    ).rows[0];
+    if (!contato)
+      throw new ExecutionTaskConfigurationError("aplicar_em_inexistente", "O negócio ou contato de «Aplicar em» não existe nesta organização.");
+    if (contato.is_anonymized || contato.kind === "whatsapp_group")
+      throw new ExecutionTaskConfigurationError("aplicar_em_indisponivel", "O contato de «Aplicar em» foi anonimizado ou é um grupo.");
+    return { ...row, contact_id: contactId, lead_id: lead ? lead.id : null, conversation_id: null };
+  }
+
+  /**
+   * Extrair dados por IA: o texto a ler, congelado (a nova tentativa lê o MESMO texto). Fonte vazia = a última mensagem
+   * de texto do cliente na conversa da execução.
+   */
+  private async extractInput(
+    client: pg.PoolClient,
+    row: LockedExecution,
+    node: Extract<FlowNode, { type: "ai_extract" }>,
+    requested: unknown,
+  ) {
+    let texto: string | null = null;
+    let erro: string | null = null;
+    if (node.config.fonte.trim()) {
+      const r = resolverReferencias(node.config.fonte, await this.saidasDaExecucao(client, row));
+      if (r.sem_valor.length)
+        erro = `O texto a ler cita ${[...new Set(r.sem_valor.map((x) => x.marca))].join(", ")}, mas o bloco citado não produziu esse valor nesta execução.`;
+      texto = r.texto.trim() || null;
+    } else if (row.conversation_id) {
+      texto =
+        (
+          await client.query<{ body: string | null }>(
+            `select body from messages where organization_id=$1 and conversation_id=$2 and direction='inbound'
+             and body is not null and btrim(body) <> '' order by created_at desc limit 1`,
+            [row.organization_id, row.conversation_id],
+          )
+        ).rows[0]?.body ?? null;
+    }
+    if (!erro && !texto)
+      erro = node.config.fonte.trim()
+        ? "O texto a ler ficou vazio nesta execução."
+        : "O cliente ainda não mandou mensagem de texto nesta conversa.";
+    return {
+      requested,
+      resolved: { texto: erro ? null : texto!.slice(0, 8000), campos: node.config.fields, dica: node.config.dica, erro },
+    };
+  }
+
+  /** Buscar ou criar contato: o valor procurado e o nome, resolvidos e congelados. */
+  private async contactLookupInput(
+    client: pg.PoolClient,
+    row: LockedExecution,
+    node: Extract<FlowNode, { type: "find_or_create_contact" }>,
+    requested: unknown,
+  ) {
+    const saidas = await this.saidasDaExecucao(client, row);
+    const valor = resolverReferencias(node.config.valor, saidas);
+    const nome = resolverReferencias(node.config.nome, saidas);
+    return {
+      requested,
+      resolved: {
+        busca: node.config.busca,
+        valor: valor.sem_valor.length ? null : valor.texto.trim(),
+        nome: nome.texto.trim() || null,
+        criar: node.config.criar,
+        erro: valor.sem_valor.length
+          ? `A busca cita ${[...new Set(valor.sem_valor.map((x) => x.marca))].join(", ")}, mas o bloco citado não produziu esse valor nesta execução.`
+          : null,
+      },
+    };
+  }
+
+  /** Buscar ou criar negócio: o contato (o da execução ou o de um bloco anterior) e o título, resolvidos e congelados. */
+  private async leadLookupInput(
+    client: pg.PoolClient,
+    row: LockedExecution,
+    node: Extract<FlowNode, { type: "find_or_create_lead" }>,
+    requested: unknown,
+  ) {
+    const saidas = await this.saidasDaExecucao(client, row);
+    const base = { pipeline_id: node.config.pipeline_id, stage_id: node.config.stage_id, criar: node.config.criar };
+    let contactId: string | null = row.contact_id;
+    let erro: string | null = null;
+    if (node.config.contato.trim()) {
+      const r = resolverReferencias(node.config.contato, saidas);
+      contactId = z.uuid().safeParse(r.texto.trim()).success ? r.texto.trim() : null;
+      if (!contactId) erro = `O contato cita ${node.config.contato.trim()}, mas o bloco citado não entregou um contato nesta execução.`;
+    }
+    const titulo = resolverReferencias(node.config.titulo, saidas).texto.trim();
+    return { requested, resolved: { ...base, contact_id: contactId, titulo: titulo || null, erro } };
+  }
+
   private async taskInput(
     client: pg.PoolClient,
     row: LockedExecution,
@@ -303,15 +503,162 @@ export class PgExecutionJournal implements ExecutionJournal {
       : null;
     if (row.lead_id && !lead) throw new ExecutionLeadUnavailableError();
     const at = new Date();
-    const prepared = prepararRegistroDaTarefa(taskRequest(row, node), { lead, contact }, at);
+    const saidas = new RegExp(MARCA_DE_BLOCO.source).test(node.config.titulo)
+      ? await this.saidasDaExecucao(client, row)
+      : undefined;
+    let prepared: ReturnType<typeof prepararRegistroDaTarefa> | null = null;
+    try {
+      prepared = prepararRegistroDaTarefa(taskRequest(row, node, saidas), { lead, contact }, at);
+    } catch {
+      // variável sem valor: o `completeTask` relança com a explicação, a partir das saídas congeladas aqui.
+    }
     return {
       requested,
       resolved: {
         at: at.toISOString(),
         lead,
         contact,
-        task: prepared.ok ? prepared.registro : null,
-        preparation_error: prepared.ok ? null : prepared.codigo,
+        ...(saidas ? { saidas } : {}),
+        task: prepared?.ok ? prepared.registro : null,
+        preparation_error: prepared ? (prepared.ok ? null : prepared.codigo) : "variavel_sem_valor",
+      },
+    };
+  }
+
+  /** As saídas desta execução por bloco — a mesma régua de `loadStepOutputs` (passo concluído, última tentativa). */
+  private async saidasDaExecucao(client: pg.PoolClient, row: LockedExecution): Promise<Record<string, unknown>> {
+    const { rows } = await client.query<{ node_id: string; output_snapshot: unknown }>(SQL_SAIDAS_DA_EXECUCAO, [
+      row.organization_id,
+      row.id,
+    ]);
+    const saidas: Record<string, unknown> = {};
+    for (const r of rows) if (r.output_snapshot !== null && r.output_snapshot !== undefined) saidas[r.node_id] = r.output_snapshot;
+    return saidas;
+  }
+
+  /** O valor do campo resolvido e CONVERTIDO pelo tipo do catálogo, congelado: a nova tentativa grava o mesmo. */
+  private async fieldInput(
+    client: pg.PoolClient,
+    row: LockedExecution,
+    node: Extract<FlowNode, { type: "update_lead_field" }>,
+    requested: unknown,
+  ) {
+    const cita = new RegExp(MARCA_DE_BLOCO.source).test(node.config.valor);
+    const r = cita
+      ? resolverReferencias(node.config.valor, await this.saidasDaExecucao(client, row))
+      : { texto: node.config.valor, sem_valor: [] };
+    const base = { alvo: node.config.alvo, chave: node.config.alvo === "deal_value" ? null : node.config.chave };
+    if (r.sem_valor.length > 0)
+      return {
+        requested,
+        resolved: {
+          ...base,
+          valor: null,
+          erro: `O valor cita ${[...new Set(r.sem_valor.map((x) => x.marca))].join(", ")}, mas o bloco citado não produziu esse valor nesta execução.`,
+        },
+      };
+    if (node.config.alvo === "deal_value") {
+      const centavos = centavosDoValor(r.texto);
+      return {
+        requested,
+        resolved: { ...base, valor: centavos, erro: centavos === null ? `«${r.texto}» não é um valor em reais.` : null },
+      };
+    }
+    const def = (
+      await client.query<{ key: string; label: string; type: string; options: Array<{ value: string; label: string }> }>(
+        "select key,label,type,options from custom_field_definitions where organization_id=$1 and entity=$3 and key=$2",
+        [row.organization_id, node.config.chave, node.config.alvo === "contact_field" ? "contact" : "lead"],
+      )
+    ).rows[0];
+    if (!def)
+      return {
+        requested,
+        resolved: {
+          ...base,
+          valor: null,
+          erro: `O campo «${node.config.chave}» não existe mais no cadastro de campos do ${node.config.alvo === "contact_field" ? "contato" : "negócio"}.`,
+        },
+      };
+    const c = converterValorDoCampo(def as Parameters<typeof converterValorDoCampo>[0], r.texto);
+    return { requested, resolved: { ...base, valor: c.ok ? c.valor : null, erro: c.ok ? null : c.motivo } };
+  }
+
+  /**
+   * A requisição HTTP resolvida e CONGELADA: URL (caminho contra a origem da conexão) e corpo com as saídas anteriores.
+   * A nova tentativa manda exatamente o mesmo pedido. A credencial NÃO entra aqui: é lida no `prepareHttp`.
+   */
+  private async httpInput(
+    client: pg.PoolClient,
+    row: LockedExecution,
+    node: Extract<FlowNode, { type: "http_request" }>,
+    requested: unknown,
+  ) {
+    const base = { connection_id: node.config.connection_id, metodo: node.config.metodo };
+    const conexao = node.config.connection_id
+      ? (
+          await client.query<{ base_url: string }>(
+            "select base_url from automation_http_connections where organization_id=$1 and id=$2",
+            [row.organization_id, node.config.connection_id],
+          )
+        ).rows[0]
+      : undefined;
+    if (!conexao)
+      return { requested, resolved: { ...base, url: null, corpo: null, erro: "A conexão escolhida não existe mais nesta organização." } };
+    const saidas = await this.saidasDaExecucao(client, row);
+    const alvo = urlDaRequisicao(conexao.base_url, node.config.caminho, saidas);
+    const corpo = corpoDaRequisicao(node.config.corpo, saidas);
+    const semValor = [...alvo.sem_valor, ...(corpo.ok ? corpo.sem_valor : [])];
+    const erro =
+      semValor.length > 0
+        ? `A requisição cita ${[...new Set(semValor.map((x) => x.marca))].join(", ")}, mas o bloco citado não produziu esse valor nesta execução.`
+        : !corpo.ok
+          ? corpo.motivo
+          : alvo.url === null
+            ? "O caminho precisa começar com / e não pode sair do endereço da conexão."
+            : null;
+    return {
+      requested,
+      resolved: { ...base, url: erro ? null : alvo.url, corpo: erro || !corpo.ok ? null : (corpo.corpo ?? null), erro },
+    };
+  }
+
+  /** O texto da nota com as saídas anteriores resolvidas, congelado: a nova tentativa grava o MESMO texto. */
+  private async noteInput(
+    client: pg.PoolClient,
+    row: LockedExecution,
+    node: Extract<FlowNode, { type: "add_note" }>,
+    requested: unknown,
+  ) {
+    const cita = new RegExp(MARCA_DE_BLOCO.source).test(node.config.texto);
+    const r = cita
+      ? resolverReferencias(node.config.texto, await this.saidasDaExecucao(client, row))
+      : { texto: node.config.texto, sem_valor: [] };
+    const erro =
+      r.sem_valor.length > 0
+        ? `A nota cita ${[...new Set(r.sem_valor.map((x) => x.marca))].join(", ")}, mas o bloco citado não produziu esse valor nesta execução.`
+        : null;
+    return {
+      requested,
+      resolved: { destino: node.config.destino, texto: erro ? null : r.texto.trim(), erro },
+    };
+  }
+
+  /** O dono do negócio ANTES do bloco — o `completeOwner` recusa se outra pessoa o trocou no meio. */
+  private async ownerInput(client: pg.PoolClient, row: LockedExecution, requested: unknown) {
+    if (!row.lead_id) throw new ExecutionTaskConfigurationError("execution_lead_required");
+    const lead = (
+      await client.query<{ id: string; owner_user_id: string | null; owner_agent_id: string | null }>(
+        "select id,owner_user_id,owner_agent_id from crm_leads where organization_id=$1 and contact_id=$2 and id=$3 for share",
+        [row.organization_id, row.contact_id, row.lead_id],
+      )
+    ).rows[0];
+    if (!lead) throw new ExecutionLeadUnavailableError();
+    return {
+      requested,
+      resolved: {
+        lead_id: lead.id,
+        previous_owner_user_id: lead.owner_user_id,
+        previous_owner_agent_id: lead.owner_agent_id,
       },
     };
   }
@@ -374,11 +721,13 @@ export class PgExecutionJournal implements ExecutionJournal {
           )
         ).rows[0] ?? null)
       : null;
-    const pipeline = parsedLead?.pipeline_id
+    // As regras (campos obrigatórios, reabertura) são as do funil de DESTINO — igual ao do negócio quando não troca.
+    const pipelineDasRegras = (stage?.pipeline_id as string | undefined) ?? parsedLead?.pipeline_id ?? null;
+    const pipeline = pipelineDasRegras
       ? (
           await client.query<{ settings: unknown }>(
             "select settings from crm_pipelines where organization_id=$1 and id=$2 for share",
-            [row.organization_id, parsedLead.pipeline_id],
+            [row.organization_id, pipelineDasRegras],
           )
         ).rows[0]
       : null;
@@ -449,20 +798,30 @@ export class PgExecutionJournal implements ExecutionJournal {
     handle: ExecutionAttemptHandle,
     operation: string,
     output: unknown,
+    /** O efeito já existe como intenção `pending` (efeito externo, como a Requisição HTTP): confirma a MESMA linha. */
+    intencaoGravada = false,
   ): Promise<void> {
-    await client.query(
-      `insert into followup_execution_effects
-      (organization_id,enrollment_id,step_id,effect_key,operation,status,result_snapshot)
-      values($1,$2,$3,$4,$5,'confirmed',$6)`,
-      [
-        row.organization_id,
-        row.id,
-        handle.step_id,
-        this.localEffectKey(row, handle, operation),
-        operation,
-        output,
-      ],
-    );
+    if (intencaoGravada) {
+      const confirmado = await client.query(
+        `update followup_execution_effects set status='confirmed',result_snapshot=$4,updated_at=clock_timestamp()
+         where organization_id=$1 and step_id=$2 and effect_key=$3 and status='pending'`,
+        [row.organization_id, handle.step_id, this.localEffectKey(row, handle, operation), output],
+      );
+      if (confirmado.rowCount !== 1) throw new StaleServiceBoundaryError();
+    } else
+      await client.query(
+        `insert into followup_execution_effects
+        (organization_id,enrollment_id,step_id,effect_key,operation,status,result_snapshot)
+        values($1,$2,$3,$4,$5,'confirmed',$6)`,
+        [
+          row.organization_id,
+          row.id,
+          handle.step_id,
+          this.localEffectKey(row, handle, operation),
+          operation,
+          output,
+        ],
+      );
     await client.query(
       `update followup_execution_attempts set status='succeeded',completed_at=clock_timestamp(),
       output_snapshot=$3,output_recorded=true where organization_id=$1 and id=$2`,
@@ -699,7 +1058,7 @@ export class PgExecutionJournal implements ExecutionJournal {
       }
       if (prior?.status === "running") {
         const { rows: effects } = await client.query(
-          "select id from followup_execution_effects where organization_id=$1 and step_id=$2 limit 1",
+          "select id from followup_execution_effects where organization_id=$1 and step_id=$2 and status<>'failed' limit 1",
           [org, step.id],
         );
         const unknown = effects.length > 0;
@@ -747,16 +1106,40 @@ export class PgExecutionJournal implements ExecutionJournal {
         return { kind: "stopped", step_id: step.id, attempt_id: prior.id };
       }
       const attemptNo = (prior?.attempt_no ?? 0) + 1;
+      // «Aplicar em» vale para as leituras congeladas. Alvo inválido congela leitura vazia: o complete* relê o alvo e falha explicado.
+      let alvoRow: LockedExecution | null = row;
+      try {
+        alvoRow = await this.aplicarAlvo(client, row, node);
+      } catch (e) {
+        if (!(e instanceof ExecutionTaskConfigurationError)) throw e;
+        alvoRow = null;
+      }
       const resolvedInput =
-        node.type === "wait" && prior?.next_eval_at
+        alvoRow === null
+          ? { requested: snapshot, resolved: null }
+          : node.type === "wait" && prior?.next_eval_at
           ? prior.input_snapshot
           : node.type === "internal_task"
-            ? await this.taskInput(client, row, node, snapshot)
+            ? await this.taskInput(client, alvoRow, node, snapshot)
             : node.type === "edit_lead_tag"
-              ? await this.tagInput(client, row, node, snapshot)
+              ? await this.tagInput(client, alvoRow, node, snapshot)
               : node.type === "move_lead"
-                ? await this.moveInput(client, row, node, snapshot)
-                : snapshot;
+                ? await this.moveInput(client, alvoRow, node, snapshot)
+                : node.type === "assign_lead_owner"
+                  ? await this.ownerInput(client, alvoRow, snapshot)
+                  : node.type === "add_note"
+                    ? await this.noteInput(client, alvoRow, node, snapshot)
+                    : node.type === "update_lead_field"
+                      ? await this.fieldInput(client, alvoRow, node, snapshot)
+                      : node.type === "http_request"
+                        ? await this.httpInput(client, alvoRow, node, snapshot)
+                        : node.type === "find_or_create_contact"
+                          ? await this.contactLookupInput(client, alvoRow, node, snapshot)
+                          : node.type === "find_or_create_lead"
+                            ? await this.leadLookupInput(client, alvoRow, node, snapshot)
+                            : node.type === "ai_extract"
+                              ? await this.extractInput(client, alvoRow, node, snapshot)
+                              : snapshot;
       const { rows } = await client.query<{ id: string }>(
         `insert into followup_execution_attempts
           (organization_id,step_id,attempt_no,status,input_snapshot,config_snapshot,lease_revision,lease_until,next_eval_at)
@@ -802,14 +1185,14 @@ export class PgExecutionJournal implements ExecutionJournal {
         NODE_OUTPUT_CONTRACTS.internal_task,
       );
       if (receipt) return { output: receipt, reused: true };
-      const { row, node } = await this.current(client, scope);
+      const { row, node } = await this.currentComAlvo(client, scope);
       if (node.type !== "internal_task") throw new Error("execution_node_type_mismatch");
       const held = await this.holdAttempt(client, row, handle);
       const reads = z.object({ resolved: taskReadsSchema }).parse(held.input_snapshot).resolved;
       if (reads.contact?.id !== row.contact_id || (reads.lead?.id ?? null) !== row.lead_id)
         throw new ExecutionLeadUnavailableError();
       const prepared = prepararRegistroDaTarefa(
-        taskRequest(row, node),
+        taskRequest(row, node, reads.saidas),
         { lead: reads.lead, contact: reads.contact },
         new Date(reads.at),
       );
@@ -958,7 +1341,7 @@ export class PgExecutionJournal implements ExecutionJournal {
         NODE_OUTPUT_CONTRACTS.edit_lead_tag,
       );
       if (receipt) return { output: receipt, reused: true };
-      const { row, node } = await this.current(client, scope);
+      const { row, node } = await this.currentComAlvo(client, scope);
       if (node.type !== "edit_lead_tag")
         throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
       const held = await this.holdAttempt(client, row, handle);
@@ -976,18 +1359,19 @@ export class PgExecutionJournal implements ExecutionJournal {
       if (!lead) throw new ExecutionLeadUnavailableError();
       if (JSON.stringify(lead.tags ?? []) !== JSON.stringify(reads.previous_tags))
         throw new ExecutionInputChangedError();
-      const merged = prepararAdicaoDeTags(reads.previous_tags, node.config.tags);
+      const merged = aplicarTags(reads.previous_tags, node.config.tags, node.config.acao);
       const output = NODE_OUTPUT_CONTRACTS.edit_lead_tag.parse({
         lead_id: lead.id,
         added_tags: merged.added,
+        ...(merged.removed.length ? { removed_tags: merged.removed } : {}),
         tags: merged.tags,
       });
-      if (merged.added.length) {
+      if (merged.added.length || merged.removed.length) {
         await client.query(
           "update crm_leads set tags=$4,updated_at=clock_timestamp() where organization_id=$1 and contact_id=$2 and id=$3",
           [row.organization_id, row.contact_id, lead.id, merged.tags],
         );
-        await client.query("select emit_event($1,$2,$3,$4,$5,$6)", [
+        if (merged.added.length) await client.query("select emit_event($1,$2,$3,$4,$5,$6)", [
           "lead.tag_added",
           "crm_lead",
           lead.id,
@@ -1042,6 +1426,723 @@ export class PgExecutionJournal implements ExecutionJournal {
     });
   }
 
+  async completeProduct(scope: EnrollmentRow, handle: ExecutionAttemptHandle) {
+    this.assertHandle(scope, handle);
+    return this.transaction(async (client) => {
+      await this.lockContact(client, scope);
+      const receipt = await this.confirmedEffect(client, scope, handle, "lead_product", NODE_OUTPUT_CONTRACTS.lead_product);
+      if (receipt) return { output: receipt, reused: true };
+      const { row, node } = await this.currentComAlvo(client, scope);
+      if (node.type !== "lead_product") throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
+      await this.holdAttempt(client, row, handle);
+      if (!row.lead_id) throw new ExecutionTaskConfigurationError("execution_lead_required");
+      if (!node.config.product_id) throw new ExecutionTaskConfigurationError("produto_ausente");
+      const lead = (
+        await client.query<{ id: string }>(
+          "select id from crm_leads where organization_id=$1 and contact_id=$2 and id=$3 for update",
+          [row.organization_id, row.contact_id, row.lead_id],
+        )
+      ).rows[0];
+      if (!lead) throw new ExecutionLeadUnavailableError();
+      // O produto precisa ser do catálogo DESTA organização — nome e preço vêm dele, nunca da configuração.
+      const produto = (
+        await client.query<{ id: string; nome: string; preco_cents: string | number }>(
+          "select id,nome,preco_cents from catalog_products where organization_id=$1 and id=$2",
+          [row.organization_id, node.config.product_id],
+        )
+      ).rows[0];
+      if (!produto)
+        throw new ExecutionTaskConfigurationError(
+          "produto_indisponivel",
+          "O produto escolhido não existe mais no catálogo. Escolha outro no bloco.",
+        );
+      let itemId: string | null = null;
+      let removidos = 0;
+      if (node.config.acao === "remove") {
+        const r = await client.query(
+          "delete from crm_lead_products where organization_id=$1 and lead_id=$2 and product_id=$3",
+          [row.organization_id, lead.id, produto.id],
+        );
+        removidos = r.rowCount ?? 0;
+      } else {
+        itemId = randomUUID();
+        await client.query(
+          `insert into crm_lead_products (id,organization_id,lead_id,product_id,nome,preco_unitario_cents,quantidade)
+           values($1,$2,$3,$4,$5,$6,$7)`,
+          [itemId, row.organization_id, lead.id, produto.id, produto.nome, Number(produto.preco_cents), node.config.quantidade],
+        );
+      }
+      if (itemId || removidos > 0) {
+        await this.auditEffect(
+          client,
+          row.organization_id,
+          itemId ? "lead_product.added" : "lead_product.removed",
+          "crm_lead_products",
+          itemId ?? lead.id,
+          {
+            lead_id: lead.id,
+            product_id: produto.id,
+            origem: `followup:${row.id}`,
+            execution_step_id: handle.step_id,
+            execution_attempt_id: handle.attempt_id,
+          },
+        );
+        const activity = buildLeadActivityRow({
+          organizationId: row.organization_id,
+          leadId: lead.id,
+          contactId: row.contact_id,
+          type: "lead_edited",
+          sourceModule: "crm",
+          sourceId: lead.id,
+          actor: { type: "webhook_source", id: `followup:${row.id}` },
+          reason: itemId ? `Acrescentou o produto ${produto.nome}` : `Tirou o produto ${produto.nome}`,
+          payload: { fields: ["produtos"], product_id: produto.id },
+        });
+        await client.query(
+          `insert into crm_lead_activities
+          (organization_id,lead_id,contact_id,type,source_module,source_id,actor_kind,performed_by_user_id,reason,payload)
+          values($1,$2,$3,$4,$5,$6,$7,null,$8,$9)`,
+          [
+            activity.organization_id,
+            activity.lead_id,
+            activity.contact_id,
+            activity.type,
+            activity.source_module,
+            activity.source_id,
+            activity.actor_kind,
+            activity.reason,
+            activity.payload,
+          ],
+        );
+      }
+      const output = NODE_OUTPUT_CONTRACTS.lead_product.parse({
+        lead_id: lead.id,
+        product_id: produto.id,
+        acao: node.config.acao,
+        item_id: itemId,
+        removidos,
+      });
+      await this.confirmLocalEffect(client, row, handle, "lead_product", output);
+      return { output, reused: false };
+    });
+  }
+
+  async completeField(scope: EnrollmentRow, handle: ExecutionAttemptHandle) {
+    this.assertHandle(scope, handle);
+    return this.transaction(async (client) => {
+      await this.lockContact(client, scope);
+      const receipt = await this.confirmedEffect(
+        client,
+        scope,
+        handle,
+        "update_lead_field",
+        NODE_OUTPUT_CONTRACTS.update_lead_field,
+      );
+      if (receipt) return { output: receipt, reused: true };
+      const { row, node } = await this.currentComAlvo(client, scope);
+      if (node.type !== "update_lead_field") throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
+      const held = await this.holdAttempt(client, row, handle);
+      const reads = z.object({ resolved: fieldReadsSchema }).parse(held.input_snapshot).resolved;
+      if (reads.erro || reads.valor === null)
+        throw new ExecutionTaskConfigurationError("campo_do_negocio_invalido", reads.erro ?? "O valor ficou vazio.");
+      if (reads.alvo === "contact_field") {
+        // Campo do CONTATO: mescla atômica na linha travada do contato; não precisa de negócio.
+        const contato = (
+          await client.query<{ id: string; custom_fields: Record<string, unknown> | null }>(
+            "select id,custom_fields from contacts where organization_id=$1 and id=$2 for update",
+            [row.organization_id, row.contact_id],
+          )
+        ).rows[0];
+        if (!contato) throw new ExecutionLeadUnavailableError();
+        const anteriorDoContato = (contato.custom_fields ?? {})[reads.chave!] ?? null;
+        await client.query(
+          `update contacts set custom_fields=coalesce(custom_fields,'{}'::jsonb) || jsonb_build_object($3::text, $4::jsonb),
+             updated_at=clock_timestamp() where organization_id=$1 and id=$2`,
+          [row.organization_id, contato.id, reads.chave, JSON.stringify(reads.valor)],
+        );
+        await this.auditEffect(client, row.organization_id, "contact.updated", "contact", contato.id, {
+          fields: [`custom_fields.${reads.chave}`],
+          origem: `followup:${row.id}`,
+          execution_step_id: handle.step_id,
+          execution_attempt_id: handle.attempt_id,
+        });
+        const saida = NODE_OUTPUT_CONTRACTS.update_lead_field.parse({
+          lead_id: row.lead_id,
+          contact_id: contato.id,
+          alvo: reads.alvo,
+          chave: reads.chave,
+          valor: reads.valor,
+          valor_anterior: anteriorDoContato as never,
+        });
+        await this.confirmLocalEffect(client, row, handle, "update_lead_field", saida);
+        return { output: saida, reused: false };
+      }
+      if (!row.lead_id) throw new ExecutionTaskConfigurationError("execution_lead_required");
+      const lead = (
+        await client.query<{ id: string; custom_fields: Record<string, unknown> | null; value_cents: number | null }>(
+          "select id,custom_fields,value_cents from crm_leads where organization_id=$1 and contact_id=$2 and id=$3 for update",
+          [row.organization_id, row.contact_id, row.lead_id],
+        )
+      ).rows[0];
+      if (!lead) throw new ExecutionLeadUnavailableError();
+      const anterior =
+        reads.alvo === "deal_value"
+          ? // bigint chega do driver como texto: a saída do bloco guarda número.
+            lead.value_cents === null
+            ? null
+            : Number(lead.value_cents)
+          : ((lead.custom_fields ?? {})[reads.chave!] ?? null);
+      if (reads.alvo === "deal_value") {
+        await client.query(
+          "update crm_leads set value_cents=$4,updated_at=clock_timestamp() where organization_id=$1 and contact_id=$2 and id=$3",
+          [row.organization_id, row.contact_id, lead.id, reads.valor],
+        );
+      } else {
+        // Mescla atômica na linha travada: só a chave do bloco muda; as outras ficam como estão.
+        await client.query(
+          `update crm_leads set custom_fields=coalesce(custom_fields,'{}'::jsonb) || jsonb_build_object($4::text, $5::jsonb),
+             updated_at=clock_timestamp() where organization_id=$1 and contact_id=$2 and id=$3`,
+          [row.organization_id, row.contact_id, lead.id, reads.chave, JSON.stringify(reads.valor)],
+        );
+      }
+      const campo = reads.alvo === "deal_value" ? "value_cents" : `custom_fields.${reads.chave}`;
+      const activity = buildLeadActivityRow({
+        organizationId: row.organization_id,
+        leadId: lead.id,
+        contactId: row.contact_id,
+        type: "lead_edited",
+        sourceModule: "crm",
+        sourceId: lead.id,
+        actor: { type: "webhook_source", id: `followup:${row.id}` },
+        reason: reads.alvo === "deal_value" ? "Atualizou o valor do negócio" : "Atualizou um campo do negócio",
+        payload: { fields: [campo] },
+      });
+      await client.query(
+        `insert into crm_lead_activities
+        (organization_id,lead_id,contact_id,type,source_module,source_id,actor_kind,performed_by_user_id,reason,payload)
+        values($1,$2,$3,$4,$5,$6,$7,null,$8,$9)`,
+        [
+          activity.organization_id,
+          activity.lead_id,
+          activity.contact_id,
+          activity.type,
+          activity.source_module,
+          activity.source_id,
+          activity.actor_kind,
+          activity.reason,
+          activity.payload,
+        ],
+      );
+      await this.auditEffect(client, row.organization_id, "lead.updated", "crm_lead", lead.id, {
+        fields: [campo],
+        origem: `followup:${row.id}`,
+        execution_step_id: handle.step_id,
+        execution_attempt_id: handle.attempt_id,
+      });
+      const output = NODE_OUTPUT_CONTRACTS.update_lead_field.parse({
+        lead_id: lead.id,
+        alvo: reads.alvo,
+        chave: reads.chave,
+        valor: reads.valor,
+        valor_anterior: anterior as never,
+      });
+      await this.confirmLocalEffect(client, row, handle, "update_lead_field", output);
+      return { output, reused: false };
+    });
+  }
+
+  async completeNote(scope: EnrollmentRow, handle: ExecutionAttemptHandle) {
+    this.assertHandle(scope, handle);
+    return this.transaction(async (client) => {
+      await this.lockContact(client, scope);
+      const receipt = await this.confirmedEffect(client, scope, handle, "add_note", NODE_OUTPUT_CONTRACTS.add_note);
+      if (receipt) return { output: receipt, reused: true };
+      const { row, node } = await this.currentComAlvo(client, scope);
+      if (node.type !== "add_note") throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
+      const held = await this.holdAttempt(client, row, handle);
+      const reads = z.object({ resolved: noteReadsSchema }).parse(held.input_snapshot).resolved;
+      if (reads.erro) throw new ExecutionTaskConfigurationError("variavel_sem_valor", reads.erro);
+      if (!reads.texto) throw new ExecutionTaskConfigurationError("nota_sem_texto", "A nota ficou sem texto.");
+      const noteId = randomUUID();
+      if (reads.destino === "lead_timeline") {
+        if (!row.lead_id)
+          throw new ExecutionTaskConfigurationError(
+            "execution_lead_required",
+            "Esta execução não tem negócio para receber a nota. Escolha a conversa como destino ou use um gatilho com negócio.",
+          );
+        const lead = (
+          await client.query<{ id: string }>(
+            "select id from crm_leads where organization_id=$1 and contact_id=$2 and id=$3 for share",
+            [row.organization_id, row.contact_id, row.lead_id],
+          )
+        ).rows[0];
+        if (!lead) throw new ExecutionLeadUnavailableError();
+        const activity = buildLeadActivityRow({
+          organizationId: row.organization_id,
+          leadId: lead.id,
+          contactId: row.contact_id,
+          type: "note",
+          sourceModule: "crm",
+          sourceId: lead.id,
+          actor: { type: "webhook_source", id: `followup:${row.id}` },
+          reason: reads.texto,
+          payload: { origem: `followup:${row.id}`, execution_step_id: handle.step_id },
+        });
+        await client.query(
+          `insert into crm_lead_activities
+          (id,organization_id,lead_id,contact_id,type,source_module,source_id,actor_kind,performed_by_user_id,reason,payload)
+          values($1,$2,$3,$4,$5,$6,$7,$8,null,$9,$10)`,
+          [
+            noteId,
+            activity.organization_id,
+            activity.lead_id,
+            activity.contact_id,
+            activity.type,
+            activity.source_module,
+            activity.source_id,
+            activity.actor_kind,
+            activity.reason,
+            activity.payload,
+          ],
+        );
+        await this.auditEffect(client, row.organization_id, "lead.updated", "crm_lead", lead.id, {
+          fields: ["note"],
+          origem: `followup:${row.id}`,
+          execution_step_id: handle.step_id,
+          execution_attempt_id: handle.attempt_id,
+        });
+      } else {
+        if (!row.conversation_id)
+          throw new ExecutionTaskConfigurationError(
+            "execution_conversation_required",
+            "Esta execução não tem conversa para receber a nota. Escolha o negócio como destino.",
+          );
+        const conversa = (
+          await client.query<{ id: string }>(
+            "select id from conversations where organization_id=$1 and id=$2",
+            [row.organization_id, row.conversation_id],
+          )
+        ).rows[0];
+        if (!conversa)
+          throw new ExecutionTaskConfigurationError("execution_conversation_required", "A conversa desta execução não existe mais.");
+        await client.query(
+          `insert into conversation_notes (id,organization_id,conversation_id,body,created_by_user_id,created_by_name)
+           values($1,$2,$3,$4,null,$5)`,
+          [noteId, row.organization_id, conversa.id, reads.texto, "Automação"],
+        );
+        await this.auditEffect(client, row.organization_id, "conversation.note_added", "conversation", conversa.id, {
+          note_id: noteId,
+          origem: `followup:${row.id}`,
+          execution_step_id: handle.step_id,
+          execution_attempt_id: handle.attempt_id,
+        });
+      }
+      const output = NODE_OUTPUT_CONTRACTS.add_note.parse({ destino: reads.destino, note_id: noteId, texto: reads.texto });
+      await this.confirmLocalEffect(client, row, handle, "add_note", output);
+      return { output, reused: false };
+    });
+  }
+
+  async completeExtraction(scope: EnrollmentRow, handle: ExecutionAttemptHandle, fields: Record<string, unknown>) {
+    this.assertHandle(scope, handle);
+    return this.transaction(async (client) => {
+      await this.lockContact(client, scope);
+      const receipt = await this.confirmedEffect(client, scope, handle, "ai_extract", NODE_OUTPUT_CONTRACTS.ai_extract);
+      if (receipt) return { output: receipt, reused: true };
+      const { row, node } = await this.current(client, scope);
+      if (node.type !== "ai_extract") throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
+      await this.holdAttempt(client, row, handle);
+      // Só as chaves configuradas na versão PINADA — o que mais vier é descartado.
+      const output = NODE_OUTPUT_CONTRACTS.ai_extract.parse({
+        fields: Object.fromEntries(node.config.fields.map((f) => [f.name, fields[f.name] ?? null])),
+      });
+      await this.confirmLocalEffect(client, row, handle, "ai_extract", output);
+      return { output, reused: false };
+    });
+  }
+
+  async completeContactLookup(scope: EnrollmentRow, handle: ExecutionAttemptHandle) {
+    this.assertHandle(scope, handle);
+    return this.transaction(async (client) => {
+      await this.lockContact(client, scope);
+      const op = "find_or_create_contact";
+      const receipt = await this.confirmedEffect(client, scope, handle, op, NODE_OUTPUT_CONTRACTS.find_or_create_contact);
+      if (receipt) return { output: receipt, reused: true };
+      const { row, node } = await this.current(client, scope);
+      if (node.type !== "find_or_create_contact") throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
+      const held = await this.holdAttempt(client, row, handle);
+      const reads = z.object({ resolved: contactLookupReadsSchema }).parse(held.input_snapshot).resolved;
+      if (reads.erro) throw new ExecutionTaskConfigurationError("variavel_sem_valor", reads.erro);
+      if (!reads.valor) throw new ExecutionTaskConfigurationError("busca_de_contato_sem_valor", "A busca ficou sem valor.");
+      let telefone: string | null = null;
+      let email: string | null = null;
+      if (reads.busca === "phone") {
+        if (phoneLookupVariants(reads.valor).length === 0)
+          throw new ExecutionTaskConfigurationError("telefone_invalido", `«${reads.valor}» não é um telefone.`);
+        telefone = canonicalPhoneBR(reads.valor);
+      } else {
+        email = reads.valor.toLowerCase();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+          throw new ExecutionTaskConfigurationError("email_invalido", `«${reads.valor}» não é um e-mail.`);
+      }
+      const procurar = async () =>
+        (
+          await client.query<{ id: string }>(
+            reads.busca === "phone"
+              ? `select id from contacts where organization_id=$1 and phone_number = any($2::text[])
+                 and is_merged_into is null and is_anonymized = false order by created_at asc limit 1`
+              : `select id from contacts where organization_id=$1 and email_normalized = $2
+                 and is_merged_into is null and is_anonymized = false order by created_at asc limit 1`,
+            [row.organization_id, reads.busca === "phone" ? phoneLookupVariants(reads.valor!) : email],
+          )
+        ).rows[0]?.id ?? null;
+      let contactId = await procurar();
+      let criado = false;
+      if (!contactId && reads.criar) {
+        const novo = randomUUID();
+        await client.query("savepoint criar_contato");
+        try {
+          await client.query(
+            `insert into contacts (id,organization_id,name,display_name,phone_number,email,source,source_metadata)
+             values($1,$2,$3,$3,$4,$5,'automation',$6)`,
+            [novo, row.organization_id, reads.nome, telefone, email, { origem: `followup:${row.id}` }],
+          );
+          await client.query("release savepoint criar_contato");
+          contactId = novo;
+          criado = true;
+        } catch (e) {
+          await client.query("rollback to savepoint criar_contato");
+          // Outro caminho criou o mesmo telefone/e-mail no meio: é o mesmo contato, não um erro.
+          if ((e as { code?: string }).code !== "23505") throw e;
+          contactId = await procurar();
+          if (!contactId) throw e;
+        }
+        if (criado) {
+          await client.query("select emit_event($1,$2,$3,$4,$5,$6)", [
+            "contact.created",
+            "contact",
+            contactId,
+            { source: "automation", has_email: !!email, has_phone: !!telefone },
+            { caused_by_rule: `followup:${row.id}`, execution_step_id: handle.step_id, execution_attempt_id: handle.attempt_id },
+            row.organization_id,
+          ]);
+          await this.auditEffect(client, row.organization_id, "contact.created", "contact", contactId, {
+            origem: `followup:${row.id}`,
+            execution_step_id: handle.step_id,
+            execution_attempt_id: handle.attempt_id,
+          });
+        }
+      }
+      const output = NODE_OUTPUT_CONTRACTS.find_or_create_contact.parse({
+        contact_id: contactId,
+        encontrado: !!contactId && !criado,
+        criado,
+      });
+      await this.confirmLocalEffect(client, row, handle, op, output);
+      return { output, reused: false };
+    });
+  }
+
+  async completeLeadLookup(scope: EnrollmentRow, handle: ExecutionAttemptHandle) {
+    this.assertHandle(scope, handle);
+    return this.transaction(async (client) => {
+      await this.lockContact(client, scope);
+      const op = "find_or_create_lead";
+      const receipt = await this.confirmedEffect(client, scope, handle, op, NODE_OUTPUT_CONTRACTS.find_or_create_lead);
+      if (receipt) return { output: receipt, reused: true };
+      const { row, node } = await this.current(client, scope);
+      if (node.type !== "find_or_create_lead") throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
+      const held = await this.holdAttempt(client, row, handle);
+      const reads = z.object({ resolved: leadLookupReadsSchema }).parse(held.input_snapshot).resolved;
+      if (reads.erro || !reads.contact_id) throw new ExecutionTaskConfigurationError("variavel_sem_valor", reads.erro ?? "Sem contato.");
+      const contato = (
+        await client.query<{ id: string; name: string | null; display_name: string | null; is_anonymized: boolean; kind: string | null }>(
+          "select id,name,display_name,is_anonymized,kind from contacts where organization_id=$1 and id=$2 and is_merged_into is null for share",
+          [row.organization_id, reads.contact_id],
+        )
+      ).rows[0];
+      if (!contato || contato.is_anonymized || contato.kind === "whatsapp_group")
+        throw new ExecutionTaskConfigurationError("contato_indisponivel", "O contato do negócio não existe nesta organização, foi anonimizado ou é um grupo.");
+      const funil = (
+        await client.query<{ id: string; settings: unknown }>(
+          "select id,settings from crm_pipelines where organization_id=$1 and id=$2",
+          [row.organization_id, reads.pipeline_id],
+        )
+      ).rows[0];
+      if (!funil) throw new ExecutionTaskConfigurationError("negocio_sem_funil", "O funil escolhido não existe mais nesta organização.");
+      let leadId =
+        (
+          await client.query<{ id: string }>(
+            `select id from crm_leads where organization_id=$1 and contact_id=$2 and pipeline_id=$3 and status='open'
+             order by created_at desc limit 1 for share`,
+            [row.organization_id, contato.id, funil.id],
+          )
+        ).rows[0]?.id ?? null;
+      let criado = false;
+      if (!leadId && reads.criar) {
+        const etapa = (
+          await client.query<{ id: string; pipeline_id: string; is_won: boolean | null; is_lost: boolean | null }>(
+            "select id,pipeline_id,is_won,is_lost from crm_stages where organization_id=$1 and id=$2 for share",
+            [row.organization_id, reads.stage_id],
+          )
+        ).rows[0];
+        if (!etapa || etapa.pipeline_id !== funil.id || etapa.is_won || etapa.is_lost)
+          throw new ExecutionTaskConfigurationError("negocio_sem_etapa", "A etapa de entrada não é uma etapa aberta do funil escolhido.");
+        const faltando = validaCamposExigidos({
+          lead: { custom_fields: {} },
+          settingsDoFunil: funil.settings,
+          destino: { stageId: etapa.id, desfecho: null },
+          motivoDeGanho: null,
+        } as Parameters<typeof validaCamposExigidos>[0]).faltando;
+        if (faltando.length)
+          throw new ExecutionTaskConfigurationError(
+            "campos_obrigatorios",
+            `O funil exige ${faltando.map((f) => f.rotulo).join(", ")} para criar o negócio nesta etapa.`,
+          );
+        const titulo = (reads.titulo || nomeDoContato(contato) || "Negócio").slice(0, 200);
+        leadId = randomUUID();
+        await client.query(
+          `insert into crm_leads (id,organization_id,pipeline_id,stage_id,title,contact_id,currency,status,source,source_metadata,position_in_stage)
+           values($1,$2,$3,$4,$5,$6,coalesce((select currency from organizations where id=$2),'BRL'),'open','automation',$7,
+             coalesce((select max(position_in_stage) from crm_leads where organization_id=$2 and stage_id=$4),0)+1000)`,
+          [leadId, row.organization_id, funil.id, etapa.id, titulo, contato.id, { origem: `followup:${row.id}` }],
+        );
+        criado = true;
+        const activity = buildLeadActivityRow({
+          organizationId: row.organization_id,
+          leadId,
+          contactId: contato.id,
+          type: "lead_created",
+          sourceModule: "crm",
+          sourceId: leadId,
+          actor: { type: "webhook_source", id: `followup:${row.id}` },
+          reason: "Criado por automação",
+          payload: { origem: `followup:${row.id}`, execution_step_id: handle.step_id, stage_id: etapa.id },
+        });
+        await client.query(
+          `insert into crm_lead_activities
+          (organization_id,lead_id,contact_id,type,source_module,source_id,actor_kind,performed_by_user_id,reason,payload)
+          values($1,$2,$3,$4,$5,$6,$7,null,$8,$9)`,
+          [
+            activity.organization_id,
+            activity.lead_id,
+            activity.contact_id,
+            activity.type,
+            activity.source_module,
+            activity.source_id,
+            activity.actor_kind,
+            activity.reason,
+            activity.payload,
+          ],
+        );
+        await client.query("select emit_event($1,$2,$3,$4,$5,$6)", [
+          "lead.created",
+          "crm_lead",
+          leadId,
+          { pipeline_id: funil.id, stage_id: etapa.id, title: titulo, service_origin: { kind: "continuation", boundary: row.service_boundary } },
+          { caused_by_rule: `followup:${row.id}`, execution_step_id: handle.step_id, execution_attempt_id: handle.attempt_id },
+          row.organization_id,
+        ]);
+        await this.auditEffect(client, row.organization_id, "lead.created", "crm_lead", leadId, {
+          pipeline_id: funil.id,
+          stage_id: etapa.id,
+          origem: `followup:${row.id}`,
+          execution_step_id: handle.step_id,
+          execution_attempt_id: handle.attempt_id,
+        });
+      }
+      const output = NODE_OUTPUT_CONTRACTS.find_or_create_lead.parse({
+        lead_id: leadId,
+        contact_id: contato.id,
+        encontrado: !!leadId && !criado,
+        criado,
+      });
+      await this.confirmLocalEffect(client, row, handle, op, output);
+      return { output, reused: false };
+    });
+  }
+
+  async prepareHttp(scope: EnrollmentRow, handle: ExecutionAttemptHandle) {
+    this.assertHandle(scope, handle);
+    return this.transaction(async (client) => {
+      await this.lockContact(client, scope);
+      const receipt = await this.confirmedEffect(client, scope, handle, "http_request", NODE_OUTPUT_CONTRACTS.http_request);
+      if (receipt) return { kind: "reused" as const, output: receipt };
+      const { row, node } = await this.current(client, scope);
+      if (node.type !== "http_request") throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
+      const held = await this.holdAttempt(client, row, handle);
+      const reads = z.object({ resolved: httpReadsSchema }).parse(held.input_snapshot).resolved;
+      if (reads.erro || !reads.url) throw new ExecutionTaskConfigurationError("requisicao_http_invalida", reads.erro ?? "A requisição ficou sem endereço.");
+      const conexao = (
+        await client.query<PedidoHttp["conexao"]>(
+          `select base_url,auth_kind,header_name,secret_encrypted,secret_iv,secret_tag
+           from automation_http_connections where organization_id=$1 and id=$2`,
+          [row.organization_id, reads.connection_id],
+        )
+      ).rows[0];
+      if (!conexao)
+        throw new ExecutionTaskConfigurationError("conexao_http_ausente", "A conexão escolhida não existe mais nesta organização.");
+      // O pedido foi congelado contra a origem de ANTES: se a conexão mudou de endereço, o segredo novo não vai para o antigo.
+      if (new URL(reads.url).origin !== new URL(conexao.base_url).origin)
+        throw new ExecutionTaskConfigurationError("conexao_http_mudou", "A conexão mudou de endereço depois que esta execução começou.");
+      const chave = this.localEffectKey(row, handle, "http_request");
+      const intencao = await client.query(
+        `insert into followup_execution_effects (organization_id,enrollment_id,step_id,effect_key,operation,status)
+         values($1,$2,$3,$4,'http_request','pending')
+         on conflict (organization_id,effect_key) do update set status='pending',updated_at=clock_timestamp()
+         where followup_execution_effects.status='failed' and followup_execution_effects.step_id=excluded.step_id
+         returning id`,
+        [row.organization_id, row.id, handle.step_id, chave],
+      );
+      if (intencao.rowCount !== 1) return { kind: "incerto" as const };
+      return {
+        kind: "pedido" as const,
+        pedido: { conexao, metodo: reads.metodo, url: reads.url, corpo: reads.corpo ?? undefined, chave },
+      };
+    });
+  }
+
+  async completeHttp(scope: EnrollmentRow, handle: ExecutionAttemptHandle, resposta: NodeOutput<"http_request">) {
+    this.assertHandle(scope, handle);
+    return this.transaction(async (client) => {
+      await this.lockContact(client, scope);
+      const receipt = await this.confirmedEffect(client, scope, handle, "http_request", NODE_OUTPUT_CONTRACTS.http_request);
+      if (receipt) return { output: receipt, reused: true };
+      const { row, node } = await this.current(client, scope);
+      if (node.type !== "http_request") throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
+      const held = await this.holdAttempt(client, row, handle);
+      const reads = z.object({ resolved: httpReadsSchema }).parse(held.input_snapshot).resolved;
+      const output = NODE_OUTPUT_CONTRACTS.http_request.parse(resposta);
+      await this.auditEffect(client, row.organization_id, "automation.http_request_sent", "automation_http_connection", reads.connection_id, {
+        metodo: reads.metodo,
+        status: output.status,
+        origem: `followup:${row.id}`,
+        execution_step_id: handle.step_id,
+        execution_attempt_id: handle.attempt_id,
+      });
+      await this.confirmLocalEffect(client, row, handle, "http_request", output, true);
+      return { output, reused: false };
+    });
+  }
+
+  async failHttp(scope: EnrollmentRow, handle: ExecutionAttemptHandle, efeito: "failed" | "unknown", error: ExecutionError) {
+    this.assertHandle(scope, handle);
+    await this.transaction(async (client) => {
+      await this.lockContact(client, scope);
+      await client.query(
+        `update followup_execution_effects set status=$4,updated_at=clock_timestamp()
+         where organization_id=$1 and step_id=$2 and effect_key=$3 and status='pending'`,
+        [scope.organization_id, handle.step_id, this.localEffectKey(scope, handle, "http_request"), efeito],
+      );
+    });
+    await this.fail(scope, handle, error);
+  }
+
+  async completeOwner(scope: EnrollmentRow, handle: ExecutionAttemptHandle) {
+    this.assertHandle(scope, handle);
+    return this.transaction(async (client) => {
+      await this.lockContact(client, scope);
+      const receipt = await this.confirmedEffect(
+        client,
+        scope,
+        handle,
+        "assign_owner",
+        NODE_OUTPUT_CONTRACTS.assign_lead_owner,
+      );
+      if (receipt) return { output: receipt, reused: true };
+      const { row, node } = await this.currentComAlvo(client, scope);
+      if (node.type !== "assign_lead_owner")
+        throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
+      const held = await this.holdAttempt(client, row, handle);
+      if (!row.lead_id) throw new ExecutionTaskConfigurationError("execution_lead_required");
+      const usuario = node.config.usuario_id;
+      if (!usuario) throw new ExecutionTaskConfigurationError("responsavel_ausente");
+      const reads = z.object({ resolved: ownerReadsSchema }).parse(held.input_snapshot).resolved;
+      if (reads.lead_id !== row.lead_id) throw new ExecutionLeadUnavailableError();
+      const lead = (
+        await client.query<{ id: string; owner_user_id: string | null; owner_agent_id: string | null }>(
+          "select id,owner_user_id,owner_agent_id from crm_leads where organization_id=$1 and contact_id=$2 and id=$3 for update",
+          [row.organization_id, row.contact_id, row.lead_id],
+        )
+      ).rows[0];
+      if (!lead) throw new ExecutionLeadUnavailableError();
+      // Alguém trocou o dono entre o begin e agora: a mudança humana vence; a tentativa relê.
+      if (
+        lead.owner_user_id !== reads.previous_owner_user_id ||
+        lead.owner_agent_id !== reads.previous_owner_agent_id
+      )
+        throw new ExecutionInputChangedError();
+      // Régua G3-04 (a mesma do bulk-assign e da ação assign_owner): vínculo não revogado e papel acima de viewer.
+      const membro = (
+        await client.query<{ role: string }>(
+          "select role from user_organizations where organization_id=$1 and user_id=$2 and revoked_at is null and accepted_at is not null",
+          [row.organization_id, usuario],
+        )
+      ).rows[0];
+      if (!membro || membro.role === "viewer")
+        throw new ExecutionTaskConfigurationError(
+          "responsavel_indisponivel",
+          "A pessoa escolhida não é um atendente ativo desta organização. Escolha outro responsável no bloco.",
+        );
+      const output = NODE_OUTPUT_CONTRACTS.assign_lead_owner.parse({
+        lead_id: lead.id,
+        previous_owner_user_id: lead.owner_user_id,
+        owner_user_id: usuario,
+      });
+      if (lead.owner_user_id !== usuario || lead.owner_agent_id !== null) {
+        const patch = resolveOwnerPatch({ owner_user_id: usuario });
+        if (!patch.ok || !patch.patch) throw new ExecutionTaskConfigurationError("responsavel_indisponivel");
+        await client.query(
+          `update crm_leads set owner_user_id=$4,owner_agent_id=$5,owner_kind=$6,assigned_at=clock_timestamp(),updated_at=clock_timestamp()
+           where organization_id=$1 and contact_id=$2 and id=$3`,
+          [
+            row.organization_id,
+            row.contact_id,
+            lead.id,
+            patch.patch.owner_user_id,
+            patch.patch.owner_agent_id,
+            patch.patch.owner_kind,
+          ],
+        );
+        const activity = buildLeadActivityRow({
+          organizationId: row.organization_id,
+          leadId: lead.id,
+          contactId: row.contact_id,
+          type: "lead_edited",
+          sourceModule: "crm",
+          sourceId: lead.id,
+          actor: { type: "webhook_source", id: `followup:${row.id}` },
+          reason: "Trocou o responsável",
+          payload: { fields: ["owner_user_id"], from: lead.owner_user_id, to: usuario },
+        });
+        await client.query(
+          `insert into crm_lead_activities
+          (organization_id,lead_id,contact_id,type,source_module,source_id,actor_kind,performed_by_user_id,reason,payload)
+          values($1,$2,$3,$4,$5,$6,$7,null,$8,$9)`,
+          [
+            activity.organization_id,
+            activity.lead_id,
+            activity.contact_id,
+            activity.type,
+            activity.source_module,
+            activity.source_id,
+            activity.actor_kind,
+            activity.reason,
+            activity.payload,
+          ],
+        );
+        await this.auditEffect(client, row.organization_id, "lead.updated", "crm_lead", lead.id, {
+          fields: ["owner_user_id"],
+          origem: `followup:${row.id}`,
+          execution_step_id: handle.step_id,
+          execution_attempt_id: handle.attempt_id,
+        });
+      }
+      await this.confirmLocalEffect(client, row, handle, "assign_owner", output);
+      return { output, reused: false };
+    });
+  }
+
   /** `destino: "contato"` do bloco de tag: mesma regra do negócio, gravada no contato da inscrição. */
   private async completeContactTags(
     client: pg.PoolClient,
@@ -1061,19 +2162,20 @@ export class PgExecutionJournal implements ExecutionJournal {
     if (!contact) throw new ExecutionLeadUnavailableError();
     if (JSON.stringify(contact.tags ?? []) !== JSON.stringify(reads.previous_tags))
       throw new ExecutionInputChangedError();
-    const merged = prepararAdicaoDeTags(reads.previous_tags, node.config.tags);
+    const merged = aplicarTags(reads.previous_tags, node.config.tags, node.config.acao);
     const output = NODE_OUTPUT_CONTRACTS.edit_lead_tag.parse({
       lead_id: row.lead_id,
       contact_id: row.contact_id,
       added_tags: merged.added,
+      ...(merged.removed.length ? { removed_tags: merged.removed } : {}),
       tags: merged.tags,
     });
-    if (merged.added.length) {
+    if (merged.added.length || merged.removed.length) {
       await client.query(
         "update contacts set tags=$3,updated_at=clock_timestamp() where organization_id=$1 and id=$2",
         [row.organization_id, row.contact_id, merged.tags],
       );
-      await client.query("select emit_event($1,$2,$3,$4,$5,$6)", [
+      if (merged.added.length) await client.query("select emit_event($1,$2,$3,$4,$5,$6)", [
         "contact.tag_added",
         "contact",
         row.contact_id,
@@ -1112,7 +2214,7 @@ export class PgExecutionJournal implements ExecutionJournal {
         NODE_OUTPUT_CONTRACTS.move_lead,
       );
       if (receipt) return { output: receipt, reused: true };
-      const { row, node } = await this.current(client, scope);
+      const { row, node } = await this.currentComAlvo(client, scope);
       if (node.type !== "move_lead")
         throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
       const held = await this.holdAttempt(client, row, handle);
@@ -1138,7 +2240,7 @@ export class PgExecutionJournal implements ExecutionJournal {
       const pipeline = (
         await client.query<{ settings: unknown }>(
           "select settings from crm_pipelines where organization_id=$1 and id=$2 for share",
-          [row.organization_id, lead.pipeline_id],
+          [row.organization_id, reads.stage.pipeline_id],
         )
       ).rows[0];
       if (!pipeline) throw new ExecutionTaskConfigurationError("pipeline_unavailable");
@@ -1155,6 +2257,7 @@ export class PgExecutionJournal implements ExecutionJournal {
         settings: reads.settings,
         lost_reason: node.config.lost_reason,
         won_reason: node.config.won_reason,
+        permitirTrocaDeFunil: true,
       });
       if (!prepared.ok)
         throw new ExecutionTaskConfigurationError(
@@ -1177,6 +2280,11 @@ export class PgExecutionJournal implements ExecutionJournal {
         lead.updated_at,
       ];
       const setters = ["stage_id=$4", "position_in_stage=$5", "updated_at=clock_timestamp()"];
+      // Troca de funil: o MESMO negócio passa para o funil da etapa (id, conversa, tarefas e timeline seguem com ele).
+      if (reads.stage.pipeline_id !== lead.pipeline_id) {
+        values.push(reads.stage.pipeline_id);
+        setters.push(`pipeline_id=$${values.length}`);
+      }
       for (const field of ["lost_reason", "won_reason"] as const)
         if (prepared.patch[field] !== undefined) {
           values.push(prepared.patch[field]);
@@ -1210,6 +2318,8 @@ export class PgExecutionJournal implements ExecutionJournal {
         lead.id,
         {
           pipeline_id: lead.pipeline_id,
+          // Troca de funil (Fase 5): o funil de destino, para quem escuta o evento não ler o de origem como atual.
+          ...(reads.stage.pipeline_id !== lead.pipeline_id ? { to_pipeline_id: reads.stage.pipeline_id } : {}),
           from_stage_id: lead.stage_id,
           to_stage_id: updated.stage_id,
           position_in_stage: position,
@@ -2084,6 +3194,8 @@ export class PgExecutionJournal implements ExecutionJournal {
           lead_id: row.lead_id,
           conversation_id: row.conversation_id,
         });
+      } else if (node.type === "map_data" && result.kind === "advance") {
+        output = NODE_OUTPUT_CONTRACTS.map_data.parse(trace?.output);
       } else if (node.type === "end" && result.kind === "complete") {
         output = NODE_OUTPUT_CONTRACTS.end.parse({
           outcome: result.outcome,

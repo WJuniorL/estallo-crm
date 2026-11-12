@@ -85,6 +85,24 @@ export function toFlowNode(n: RFNode): FlowNode {
       return { ...shared, type, config: n.data.config as ConfigOf<"move_lead"> };
     case "edit_lead_tag":
       return { ...shared, type, config: n.data.config as ConfigOf<"edit_lead_tag"> };
+    case "ai_extract":
+      return { ...shared, type, config: n.data.config as ConfigOf<"ai_extract"> };
+    case "find_or_create_contact":
+      return { ...shared, type, config: n.data.config as ConfigOf<"find_or_create_contact"> };
+    case "find_or_create_lead":
+      return { ...shared, type, config: n.data.config as ConfigOf<"find_or_create_lead"> };
+    case "http_request":
+      return { ...shared, type, config: n.data.config as ConfigOf<"http_request"> };
+    case "lead_product":
+      return { ...shared, type, config: n.data.config as ConfigOf<"lead_product"> };
+    case "update_lead_field":
+      return { ...shared, type, config: n.data.config as ConfigOf<"update_lead_field"> };
+    case "add_note":
+      return { ...shared, type, config: n.data.config as ConfigOf<"add_note"> };
+    case "assign_lead_owner":
+      return { ...shared, type, config: n.data.config as ConfigOf<"assign_lead_owner"> };
+    case "map_data":
+      return { ...shared, type, config: n.data.config as ConfigOf<"map_data"> };
     case "end":
       return { ...shared, type, config: n.data.config as ConfigOf<"end"> };
     case "collect":

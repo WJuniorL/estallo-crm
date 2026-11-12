@@ -23,6 +23,15 @@ export const NODES_INTEGRATED_IN_EXECUTION_CONTRACT: ReadonlySet<string> = new S
   "internal_task",
   "edit_lead_tag",
   "move_lead",
+  "map_data",
+  "assign_lead_owner",
+  "add_note",
+  "update_lead_field",
+  "lead_product",
+  "http_request",
+  "find_or_create_contact",
+  "find_or_create_lead",
+  "ai_extract",
 ]);
 
 export function executionContractProblem(

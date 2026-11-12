@@ -108,6 +108,10 @@ export interface DossieDoEnrollment {
   saidas: Array<{ edge_id: string; target_id: string; target_rotulo: string; quando: string }>;
   eventos: EventoDeEnrollment[];
   eventos_truncados: boolean;
+  /** O diário passou do teto de leitura: `passos` são os primeiros, não todos. */
+  passos_truncados: boolean;
+  /** Recuperação: os passos concluídos pela execução original (checkpoint herdado). Vazio fora de recuperação. */
+  passos_herdados: PassoDaExecucao[];
   plano_de_tempo: TimingPlan | null;
   /** id → nome de quem interveio. "Uma pessoa da equipe" não responde "quem?". */
   autores: Record<string, string>;
@@ -239,9 +243,13 @@ export async function GET(_req: NextRequest, ctx: RouteCtx): Promise<Response> {
     .eq("organization_id", org.orgId)
     .eq("enrollment_id", id)
     .order("entered_at", { ascending: true })
-    .limit(TETO_DE_EVENTOS);
+    // ponytail: sem paginação — o motor mata a execução acima de MAX_STEPS (80), então 500 não se alcança; se alcançar,
+    // `passos_truncados` faz a tela dizer que mostra um pedaço. Paginar quando execuções longas existirem de verdade.
+    .limit(TETO_DE_EVENTOS + 1);
   if (passosErr) return fail("internal_error", passosErr.message, 500, { requestId });
-  const idsDosPassos = (passosBrutos ?? []).map((p) => p.id);
+  const passosTruncados = (passosBrutos ?? []).length > TETO_DE_EVENTOS;
+  const passosLidos = (passosBrutos ?? []).slice(0, TETO_DE_EVENTOS);
+  const idsDosPassos = passosLidos.map((p) => p.id);
   const { data: tentativasBrutas, error: tentativasErr } =
     idsDosPassos.length === 0
       ? { data: [], error: null }
@@ -251,7 +259,23 @@ export async function GET(_req: NextRequest, ctx: RouteCtx): Promise<Response> {
           .eq("organization_id", org.orgId)
           .in("step_id", idsDosPassos);
   if (tentativasErr) return fail("internal_error", tentativasErr.message, 500, { requestId });
-  const passos = montarPassos(passosBrutos ?? [], tentativasBrutas ?? [], porId, podeVerDados);
+  const passos = montarPassos(passosLidos, tentativasBrutas ?? [], porId, podeVerDados);
+
+  // Recuperação (Fase 6): os passos que a ORIGINAL concluiu são o checkpoint — aparecem como herdados, sem simular
+  // execução nova. Só o resumo (bloco, ramo, quando): os dados ficam na execução original, a um clique.
+  let passosHerdados: PassoDaExecucao[] = [];
+  if (row.recovery_kind === "retry" && row.source_enrollment_id) {
+    const { data: herdados, error: herdadosErr } = await supabase
+      .from("followup_execution_steps")
+      .select("id, node_id, visit, status, branch_id, entered_at, completed_at")
+      .eq("organization_id", org.orgId)
+      .eq("enrollment_id", row.source_enrollment_id as string)
+      .eq("status", "succeeded")
+      .order("entered_at", { ascending: true })
+      .limit(TETO_DE_EVENTOS);
+    if (herdadosErr) return fail("internal_error", herdadosErr.message, 500, { requestId });
+    passosHerdados = montarPassos(herdados ?? [], [], porId, false);
+  }
 
   const contato = embedded(
     row.contacts as
@@ -312,6 +336,8 @@ export async function GET(_req: NextRequest, ctx: RouteCtx): Promise<Response> {
     saidas,
     eventos: lidos.slice(0, TETO_DE_EVENTOS) as EventoDeEnrollment[],
     eventos_truncados: truncado,
+    passos_truncados: passosTruncados,
+    passos_herdados: passosHerdados,
     plano_de_tempo: leituraDoPlano(row.timing_plan),
     autores: await resolveAutores(lidos),
   };

@@ -19,7 +19,7 @@ export const NODE_OUTPUT_CONTRACTS = {
     conversation_id: id.nullable(),
   }),
   wait: z.strictObject({
-    mode: z.enum(["fixed", "smart"]),
+    mode: z.enum(["fixed", "smart", "until"]),
     scheduled_for: utc.nullable(),
     resumed_at: utc,
   }),
@@ -86,7 +86,65 @@ export const NODE_OUTPUT_CONTRACTS = {
     lead_id: id.nullable(),
     contact_id: id.optional(),
     added_tags: z.array(z.string().min(1)),
+    removed_tags: z.array(z.string().min(1)).optional(),
     tags: z.array(z.string().min(1)),
+  }),
+  ai_extract: z.strictObject({
+    /** Um valor por campo configurado, no tipo do campo; `null` quando o texto não dizia. */
+    fields: z.record(z.string(), z.json()),
+  }),
+  find_or_create_contact: z.strictObject({
+    /** O contato achado ou criado; `null` quando não achou e não era para criar. */
+    contact_id: id.nullable(),
+    encontrado: z.boolean(),
+    criado: z.boolean(),
+  }),
+  find_or_create_lead: z.strictObject({
+    lead_id: id.nullable(),
+    contact_id: id,
+    encontrado: z.boolean(),
+    criado: z.boolean(),
+  }),
+  http_request: z.strictObject({
+    /** Status HTTP da resposta (só 2xx chega aqui: o resto é falha do bloco). */
+    status: z.number().int(),
+    /** O corpo: JSON lido, ou o texto; `null` se passou do teto. */
+    corpo: z.json().nullable(),
+    truncado: z.boolean(),
+  }),
+  lead_product: z.strictObject({
+    lead_id: id,
+    product_id: id,
+    acao: z.enum(["add", "remove"]),
+    /** O item criado (`add`); `null` em `remove`. */
+    item_id: id.nullable(),
+    /** Quantos itens desse produto saíram (`remove`); 0 em `add`. */
+    removidos: z.number().int().nonnegative(),
+  }),
+  update_lead_field: z.strictObject({
+    lead_id: id.nullable(),
+    contact_id: id.optional(),
+    alvo: z.enum(["custom_field", "deal_value", "contact_field"]),
+    // `null` quando o alvo é o contato e a execução não tem negócio.
+    chave: z.string().nullable(),
+    valor: z.json(),
+    valor_anterior: z.json(),
+  }),
+  add_note: z.strictObject({
+    destino: z.enum(["lead_timeline", "conversation_notes"]),
+    note_id: id,
+    texto: z.string().min(1),
+  }),
+  assign_lead_owner: z.strictObject({
+    lead_id: id,
+    previous_owner_user_id: id.nullable(),
+    owner_user_id: id,
+  }),
+  map_data: z.strictObject({
+    fields: z.record(
+      z.string().min(1),
+      z.union([z.string(), z.number(), z.boolean(), z.array(z.string()), z.null()]),
+    ),
   }),
   end: z.strictObject({
     outcome: z.enum(["converted", "exhausted"]).nullable(),

@@ -12,6 +12,15 @@ import { CollectNode } from "./CollectNode";
 import { InternalTaskNode } from "./InternalTaskNode";
 import { MoveLeadNode } from "./MoveLeadNode";
 import { EditLeadTagNode } from "./EditLeadTagNode";
+import { MapDataNode } from "./MapDataNode";
+import { AssignLeadOwnerNode } from "./AssignLeadOwnerNode";
+import { AddNoteNode } from "./AddNoteNode";
+import { UpdateLeadFieldNode } from "./UpdateLeadFieldNode";
+import { LeadProductNode } from "./LeadProductNode";
+import { HttpRequestNode } from "./HttpRequestNode";
+import { AiExtractNode } from "./AiExtractNode";
+import { FindOrCreateContactNode } from "./FindOrCreateContactNode";
+import { FindOrCreateLeadNode } from "./FindOrCreateLeadNode";
 import { SkillNode } from "./SkillNode";
 
 /** Os cartões de cada tipo de bloco — o MESMO conjunto no construtor e na inspeção de uma execução. */
@@ -35,6 +44,15 @@ export const nodeTypes: NodeTypes = {
   // cima), sem rótulo e sem formulário.
   move_lead: MoveLeadNode,
   edit_lead_tag: EditLeadTagNode,
+  map_data: MapDataNode,
+  assign_lead_owner: AssignLeadOwnerNode,
+  add_note: AddNoteNode,
+  update_lead_field: UpdateLeadFieldNode,
+  lead_product: LeadProductNode,
+  http_request: HttpRequestNode,
+  ai_extract: AiExtractNode,
+  find_or_create_contact: FindOrCreateContactNode,
+  find_or_create_lead: FindOrCreateLeadNode,
   end: EndNode,
   collect: CollectNode,
   skill: SkillNode,

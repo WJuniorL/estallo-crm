@@ -1,5 +1,20 @@
 import type { JobClaim } from "@/lib/agent-engine/queue/claim";
 import { pausaDepoisDoBloco } from "./passo-a-passo";
+import { executarRequisicaoHttp, falhaDaRequisicao, type ResultadoHttp } from "./requisicao-http";
+import { extrairDadosComIa } from "./extrair-dados";
+import { aiExtractFieldSchema } from "./graph-schema";
+import { LlmBudgetExceededError, llmEdgeConfigFromEnv, LlmNotConfiguredError } from "@/lib/agent-engine/edge/llm/run-model-call";
+
+/** O que o `begin` congelou para o Extrair dados (ver `extractInput` no diário). */
+const leituraDaExtracao = z.object({
+  resolved: z.object({
+    texto: z.string().nullable(),
+    campos: z.array(aiExtractFieldSchema),
+    dica: z.string(),
+    erro: z.string().nullable(),
+  }),
+});
+import type { NodeOutput } from "./node-output-contracts";
 import { assertAgendaEffectSupabase } from "@/lib/agenda/efeito";
 import { AgendaDeferredError } from "@/lib/agenda/protecao-followup";
 import type { ServiceBoundary } from "@/lib/atendimento/fronteira";
@@ -17,7 +32,7 @@ import { assertServiceBoundarySupabase } from "@/lib/atendimento/origem";
  * `createSupabaseAdminClient` below adapts the real service-role client.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { ZodError } from "zod";
+import { z, ZodError } from "zod";
 
 import { idsDoContatoEGemeos } from "@/lib/channels/contato-por-telefone";
 import { logger } from "@/lib/logger";
@@ -78,6 +93,7 @@ import type { EventRow } from "@/lib/event-log/dispatcher";
 import { quandoDoRetornoVivo, reavaliarDepoisDoRetorno } from "./retorno-segura-o-fluxo";
 import { triggerConfigSchema } from "./api-schemas";
 import { executionContractProblem } from "./execution-contract";
+import { fusoDaOrganizacao } from "@/lib/tempo/fuso-da-organizacao";
 import {
   executionLeadTarget,
   ExecutionLeadUnavailableError,
@@ -205,6 +221,8 @@ export interface AdminClient {
    * `{{nodes.<bloco>.<campo>}}` lê. Só existe para inscrição de contrato 1; sem o diário, nenhuma saída.
    */
   loadStepOutputs?(orgId: string, enrollmentId: string): Promise<Record<string, unknown>>;
+  /** O fuso da organização (`organizations.timezone`, com o padrão do produto) — «aguardar até» uma hora. */
+  loadOrgTimezone?(orgId: string): Promise<string>;
   /** Latest inbound `messages.body` for the contact (optionally scoped to the enrollment conversation). */
   loadLastInboundBody(
     orgId: string,
@@ -340,7 +358,7 @@ async function recordJournalFailure(
   handle: ExecutionAttemptHandle | undefined,
   error: unknown,
   summary: TickSummary,
-  operation: "task" | "decision" | "tags" | "move" | "send" | "classify",
+  operation: "task" | "decision" | "tags" | "move" | "send" | "classify" | "http" | "extract",
 ): Promise<void> {
   if (error instanceof StaleServiceBoundaryError) return;
   if (error instanceof AgendaDeferredError) {
@@ -1093,9 +1111,112 @@ async function processEnrollment(
     return;
   }
 
+  // Extrair dados por IA (Fase 5): o texto é congelado no `begin`, o modelo é chamado FORA de transação pela porta
+  // única (`runModelCall`: chave da org, orçamento antes de gastar, custo em `llm_calls`) e o diário grava só o que a
+  // validação por tipo aceitou. Sem efeito externo: uma queda no meio só custa outra chamada na nova tentativa.
+  if (enrollment.execution_contract === 1 && node.type === "ai_extract") {
+    if (!db.executionJournal) throw new Error("execution_journal_unavailable");
+    const journal = await db.executionJournal();
+    let handle: ExecutionAttemptHandle | undefined;
+    try {
+      const begun = await journal.begin(enrollment, {
+        contact_id: enrollment.contact_id,
+        lead_id: enrollment.lead_id ?? null,
+        conversation_id: enrollment.conversation_id,
+      });
+      if (begun.kind !== "ready") {
+        summary.dead++;
+        return;
+      }
+      handle = begun.handle;
+      const reads = leituraDaExtracao.parse(begun.input).resolved;
+      if (reads.erro || !reads.texto) throw new ExecutionConfigurationError("extracao_sem_texto", reads.erro ?? "Sem texto a ler.");
+      let fields: Record<string, unknown>;
+      try {
+        fields = await extrairDadosComIa(
+          journal.pool,
+          // Só as chaves de IA: importar `@/lib/env` aqui validaria o ambiente inteiro em todo caminho do motor.
+          llmEdgeConfigFromEnv({
+            ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+            OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+            OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+            LLM_CACHE_TTL: process.env.LLM_CACHE_TTL,
+            AI_BUDGET_ENFORCEMENT: process.env.AI_BUDGET_ENFORCEMENT,
+            DEEPSEEK_THINKING: process.env.DEEPSEEK_THINKING,
+          }),
+          { tenantId: enrollment.organization_id, contactId: enrollment.contact_id },
+          { campos: reads.campos, texto: reads.texto, dica: reads.dica },
+          { log: logger },
+        );
+      } catch (erro) {
+        if (erro instanceof LlmBudgetExceededError)
+          throw new ExecutionConfigurationError("ia_sem_orcamento", "O orçamento de IA da organização acabou neste mês.");
+        if (erro instanceof LlmNotConfiguredError)
+          throw new ExecutionConfigurationError("ia_nao_configurada", "A IA não está configurada nesta instalação.");
+        throw erro;
+      }
+      const result = await journal.completeExtraction(enrollment, handle, fields);
+      if (!result.reused) summary.advanced++;
+    } catch (error) {
+      await recordJournalFailure(db, journal, enrollment, handle, error, summary, "extract");
+    }
+    return;
+  }
+
+  // Requisição HTTP (Fase 5): a rede fica FORA de transação. A intenção é gravada antes (efeito `pending`), a chamada
+  // sai, e só então o diário confirma. Morrer no meio deixa a intenção sem desfecho: a próxima tentativa vê isso e
+  // para em "resultado incerto" (Central) — nunca reenvia sozinha algo que pode ter chegado.
+  if (enrollment.execution_contract === 1 && node.type === "http_request") {
+    if (!db.executionJournal) throw new Error("execution_journal_unavailable");
+    const journal = await db.executionJournal();
+    let handle: ExecutionAttemptHandle | undefined;
+    try {
+      const begun = await journal.begin(enrollment, {
+        contact_id: enrollment.contact_id,
+        lead_id: enrollment.lead_id ?? null,
+        conversation_id: enrollment.conversation_id,
+      });
+      if (begun.kind !== "ready") {
+        summary.dead++;
+        return;
+      }
+      handle = begun.handle;
+      const preparo = await journal.prepareHttp(enrollment, handle);
+      if (preparo.kind === "reused") return;
+      const resultado: ResultadoHttp =
+        preparo.kind === "incerto"
+          ? { kind: "incerto", motivo: "tentativa anterior sem desfecho" }
+          : await executarRequisicaoHttp(preparo.pedido);
+      if (resultado.kind === "resposta" && resultado.status >= 200 && resultado.status < 300) {
+        const result = await journal.completeHttp(enrollment, handle, {
+          status: resultado.status,
+          corpo: resultado.corpo as NodeOutput<"http_request">["corpo"],
+          truncado: resultado.truncado,
+        });
+        if (!result.reused) summary.advanced++;
+        return;
+      }
+      const falha = falhaDaRequisicao(resultado);
+      await journal.failHttp(enrollment, handle, falha.efeito, falha.erro);
+      summary.failed++;
+      if (!falha.erro.retryable) summary.dead++;
+    } catch (error) {
+      await recordJournalFailure(db, journal, enrollment, handle, error, summary, "http");
+    }
+    return;
+  }
+
   if (
     enrollment.execution_contract === 1 &&
-    (node.type === "internal_task" || node.type === "edit_lead_tag" || node.type === "move_lead")
+    (node.type === "internal_task" ||
+      node.type === "edit_lead_tag" ||
+      node.type === "move_lead" ||
+      node.type === "assign_lead_owner" ||
+      node.type === "add_note" ||
+      node.type === "update_lead_field" ||
+      node.type === "lead_product" ||
+      node.type === "find_or_create_contact" ||
+      node.type === "find_or_create_lead")
   ) {
     if (!db.executionJournal) throw new Error("execution_journal_unavailable");
     const journal = await db.executionJournal();
@@ -1120,6 +1241,24 @@ async function processEnrollment(
       } else if (node.type === "edit_lead_tag") {
         const result = await journal.completeTags(enrollment, handle);
         if (!result.reused) summary.advanced++;
+      } else if (node.type === "assign_lead_owner") {
+        const result = await journal.completeOwner(enrollment, handle);
+        if (!result.reused) summary.advanced++;
+      } else if (node.type === "add_note") {
+        const result = await journal.completeNote(enrollment, handle);
+        if (!result.reused) summary.advanced++;
+      } else if (node.type === "update_lead_field") {
+        const result = await journal.completeField(enrollment, handle);
+        if (!result.reused) summary.advanced++;
+      } else if (node.type === "lead_product") {
+        const result = await journal.completeProduct(enrollment, handle);
+        if (!result.reused) summary.advanced++;
+      } else if (node.type === "find_or_create_contact") {
+        const result = await journal.completeContactLookup(enrollment, handle);
+        if (!result.reused) summary.advanced++;
+      } else if (node.type === "find_or_create_lead") {
+        const result = await journal.completeLeadLookup(enrollment, handle);
+        if (!result.reused) summary.advanced++;
       } else {
         const result = await journal.completeMove(enrollment, handle);
         if (!result.reused) summary.advanced++;
@@ -1132,7 +1271,16 @@ async function processEnrollment(
         handle,
         error,
         summary,
-        node.type === "internal_task" ? "task" : node.type === "edit_lead_tag" ? "tags" : "move",
+        node.type === "internal_task"
+          ? "task"
+          : node.type === "edit_lead_tag" || node.type === "assign_lead_owner" ||
+            node.type === "add_note" ||
+            node.type === "update_lead_field" ||
+            node.type === "lead_product" ||
+            node.type === "find_or_create_contact" ||
+            node.type === "find_or_create_lead"
+            ? "tags"
+            : "move",
       );
     }
     return;
@@ -1286,7 +1434,8 @@ async function processEnrollment(
       (node.type === "trigger" && !vaiPlanejar) ||
       node.type === "wait" ||
       node.type === "repeat" ||
-      node.type === "match_reply")
+      node.type === "match_reply" ||
+      node.type === "map_data")
   ) {
     if (!db.executionJournal) throw new Error("execution_journal_unavailable");
     const journal = await db.executionJournal();
@@ -1298,6 +1447,10 @@ async function processEnrollment(
         contact_id: enrollment.contact_id,
         lead_id: enrollment.lead_id ?? null,
         conversation_id: enrollment.conversation_id,
+        ...(node.type === "map_data" ||
+        (node.type === "condition" && node.config.checks.some((c) => c.field === "variavel"))
+          ? { saidas: db.loadStepOutputs ? await db.loadStepOutputs(enrollment.organization_id, enrollment.id) : {} }
+          : {}),
         ...(node.type === "repeat"
           ? {
               repeat: {
@@ -1378,6 +1531,10 @@ async function processEnrollment(
         lastInboundBody:
           node.type === "match_reply" ? replyBody : (frozenInput.repeat?.reply ?? undefined),
         lastInboundMessageId: replyMessageId,
+        saidasAnteriores: frozenInput.saidas,
+        ...(node.type === "wait" && node.config.mode === "until" && db.loadOrgTimezone
+          ? { fuso: await db.loadOrgTimezone(enrollment.organization_id) }
+          : {}),
         onDecision: (value) => {
           trace = value;
         },
@@ -1393,6 +1550,9 @@ async function processEnrollment(
         await applyResult(deps, enrollment, node, result, summary, smartWaits, events, null, null);
         return;
       }
+      // Mapear dados sem o valor que um campo cita: falha de configuração explicada (sai pela saída de erro).
+      if (node.type === "map_data" && result.kind === "fail")
+        throw new ExecutionConfigurationError("map_data_value_unavailable", result.error);
       if (result.kind !== "advance" && result.kind !== "complete")
         throw new ExecutionConfigurationError("execution_decision_not_integrated");
       // Captação: mesmas condições do legado (`applyResult`) — só com resposta real, e nunca no
@@ -1745,7 +1905,23 @@ export function createSupabaseAdminClient(admin: SupabaseClient): AdminClient {
       if (lead) contexto.lead = lead;
       return contexto;
     },
+    async loadOrgTimezone(orgId) {
+      return fusoDaOrganizacao(admin, orgId);
+    },
     async loadStepOutputs(orgId, enrollmentId) {
+      // Recuperação (`recovery_kind = 'retry'`): as saídas da execução de origem valem como checkpoint — as dela
+      // primeiro (a cadeia inteira, recursivo), depois as desta, que sobrescrevem o bloco que rodou de novo.
+      const { data: eu, error: euErr } = await admin
+        .from("followup_enrollments")
+        .select("source_enrollment_id, recovery_kind")
+        .eq("organization_id", orgId)
+        .eq("id", enrollmentId)
+        .maybeSingle();
+      if (euErr) throw new Error(euErr.message);
+      const herdadas: Record<string, unknown> =
+        eu?.recovery_kind === "retry" && eu.source_enrollment_id
+          ? await this.loadStepOutputs!(orgId, eu.source_enrollment_id as string)
+          : {};
       const { data: passos, error } = await admin
         .from("followup_execution_steps")
         .select("id, node_id, entered_at")
@@ -1756,7 +1932,7 @@ export function createSupabaseAdminClient(admin: SupabaseClient): AdminClient {
         .limit(200);
       if (error) throw new Error(error.message);
       const lista = passos ?? [];
-      if (lista.length === 0) return {};
+      if (lista.length === 0) return herdadas;
       const { data: tentativas, error: tentativasErr } = await admin
         .from("followup_execution_attempts")
         .select("step_id, attempt_no, output_snapshot")
@@ -1775,7 +1951,7 @@ export function createSupabaseAdminClient(admin: SupabaseClient): AdminClient {
         const u = ultimaPorPasso.get(p.id as string);
         if (u && u.saida !== null && u.saida !== undefined) saidas[p.node_id as string] = u.saida;
       }
-      return saidas;
+      return { ...herdadas, ...saidas };
     },
     async loadLastInboundBody(orgId, contactId, conversationId, naoAntesDe) {
       const ids = await idsDoContatoEGemeos(admin, orgId, contactId);

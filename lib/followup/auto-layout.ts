@@ -52,6 +52,16 @@ const TYPE_ORDER: Record<NodeType, number> = {
   // porque são o MEIO do caminho (mover o card, etiquetar) e não o epílogo.
   move_lead: 8.5,
   edit_lead_tag: 8.6,
+  // Fase 4: preparação de dados — vem antes de quem os usa (mensagem, tarefa).
+  map_data: 7.5,
+  assign_lead_owner: 8.7,
+  add_note: 8.8,
+  update_lead_field: 8.65,
+  lead_product: 8.66,
+  http_request: 8.67,
+  find_or_create_contact: 8.61,
+  ai_extract: 8.6,
+  find_or_create_lead: 8.62,
   end: 9,
 };
 

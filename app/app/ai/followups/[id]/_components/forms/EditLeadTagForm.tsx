@@ -45,6 +45,7 @@ export function EditLeadTagForm({
     const parsed = editLeadTagConfigSchema.safeParse({
       tags,
       ...(config.destino ? { destino: config.destino } : {}),
+      ...(config.acao ? { acao: config.acao } : {}),
     });
     if (!parsed.success) {
       setErro(parsed.error.issues[0]?.message ?? t("Configuração inválida."));
@@ -56,6 +57,19 @@ export function EditLeadTagForm({
 
   return (
     <div className="space-y-2">
+      <Label htmlFor="edit-lead-tag-acao">{t("O que fazer")}</Label>
+      <Select
+        value={config.acao ?? "add"}
+        onValueChange={(v) => onChange({ ...config, acao: v === "remove" ? "remove" : undefined })}
+      >
+        <SelectTrigger id="edit-lead-tag-acao">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="add">{t("Adicionar tags")}</SelectItem>
+          <SelectItem value="remove">{t("Remover tags")}</SelectItem>
+        </SelectContent>
+      </Select>
       <Label htmlFor="edit-lead-tag-destino">{t("Onde gravar")}</Label>
       <Select
         value={config.destino ?? "card"}
@@ -82,7 +96,9 @@ export function EditLeadTagForm({
       />
       {erro && <p className="text-xs text-error-fg">{erro}</p>}
       <p className="text-xs text-text-muted">
-        {t("Separe por vírgula. Tags que já existem são mantidas e nada é apagado.")}
+        {config.acao === "remove"
+          ? t("Separe por vírgula. Só as tags listadas saem; as outras ficam.")
+          : t("Separe por vírgula. Tags que já existem são mantidas e nada é apagado.")}
       </p>
     </div>
   );

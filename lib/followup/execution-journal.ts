@@ -2,12 +2,16 @@ import type { ExecutionError } from "./execution-contract";
 import type { EnrollmentRow, NodeResult, NodeDecisionTrace } from "./node-handlers";
 import type { NodeOutput } from "./node-output-contracts";
 import type { TimingPlan } from "./timing-plan";
+import type { Pool } from "pg";
+import type { PedidoHttp } from "./requisicao-http";
 
 /** Captação do `match_reply`: o texto que decidiu; o destino o diário tira do nó. */
 export type ReplyCapture = { value: string };
 import { z } from "zod";
 
 export const executionDecisionInputSchema = z.object({
+  /** `map_data`: as saídas dos blocos anteriores no instante da primeira tentativa (a nova tentativa usa as mesmas). */
+  saidas: z.record(z.string(), z.json()).optional(),
   repeat: z
     .object({
       taken: z.number().int().nonnegative(),
@@ -141,6 +145,70 @@ export interface ExecutionJournal {
     scope: EnrollmentRow,
     handle: ExecutionAttemptHandle,
   ): Promise<{ output: NodeOutput<"edit_lead_tag">; reused: boolean }>;
+  /** Fase 5 — acrescenta (do catálogo) ou tira um produto do negócio, na transação do avanço. */
+  completeProduct(
+    scope: EnrollmentRow,
+    handle: ExecutionAttemptHandle,
+  ): Promise<{ output: NodeOutput<"lead_product">; reused: boolean }>;
+  /**
+   * Fase 5 — Requisição HTTP, passo 1 (antes da rede): grava a INTENÇÃO como efeito `pending` e devolve o pedido
+   * congelado. Uma tentativa que morrer depois disto vira resultado incerto (Central), nunca reenvio automático.
+   * `reused`: o passo já tinha recibo. `incerto`: a intenção já estava gravada sem desfecho.
+   */
+  prepareHttp(
+    scope: EnrollmentRow,
+    handle: ExecutionAttemptHandle,
+  ): Promise<
+    | { kind: "pedido"; pedido: PedidoHttp }
+    | { kind: "reused"; output: NodeOutput<"http_request"> }
+    | { kind: "incerto" }
+  >;
+  /** Passo 2: resposta 2xx — confirma o efeito, grava a saída e avança, na mesma transação. */
+  completeHttp(
+    scope: EnrollmentRow,
+    handle: ExecutionAttemptHandle,
+    output: NodeOutput<"http_request">,
+  ): Promise<{ output: NodeOutput<"http_request">; reused: boolean }>;
+  /** Passo 2 (falha): marca a intenção (`failed` = não saiu ou foi recusada; `unknown` = pode ter saído) e falha a tentativa. */
+  failHttp(
+    scope: EnrollmentRow,
+    handle: ExecutionAttemptHandle,
+    efeito: "failed" | "unknown",
+    error: ExecutionError,
+  ): Promise<void>;
+  /** O pool do diário — o motor o empresta à chamada de modelo do Extrair dados (custo e orçamento em `llm_calls`). */
+  readonly pool: Pool;
+  /** Fase 5 — Extrair dados por IA: grava os campos que a validação aceitou e avança. */
+  completeExtraction(
+    scope: EnrollmentRow,
+    handle: ExecutionAttemptHandle,
+    fields: Record<string, unknown>,
+  ): Promise<{ output: NodeOutput<"ai_extract">; reused: boolean }>;
+  /** Fase 5 — acha (e, se pedido, cria) um contato pelo telefone ou e-mail, na transação do avanço. */
+  completeContactLookup(
+    scope: EnrollmentRow,
+    handle: ExecutionAttemptHandle,
+  ): Promise<{ output: NodeOutput<"find_or_create_contact">; reused: boolean }>;
+  /** Fase 5 — acha (e, se pedido, cria) o negócio aberto do contato no funil, na transação do avanço. */
+  completeLeadLookup(
+    scope: EnrollmentRow,
+    handle: ExecutionAttemptHandle,
+  ): Promise<{ output: NodeOutput<"find_or_create_lead">; reused: boolean }>;
+  /** Fase 5 — grava campo personalizado (do catálogo) ou valor do negócio, na transação do avanço. */
+  completeField(
+    scope: EnrollmentRow,
+    handle: ExecutionAttemptHandle,
+  ): Promise<{ output: NodeOutput<"update_lead_field">; reused: boolean }>;
+  /** Fase 5 — nota interna no destino escolhido (negócio ou conversa), na transação do avanço. */
+  completeNote(
+    scope: EnrollmentRow,
+    handle: ExecutionAttemptHandle,
+  ): Promise<{ output: NodeOutput<"add_note">; reused: boolean }>;
+  /** Fase 5 — troca o responsável do negócio, com a régua de membro ativo, na transação do avanço. */
+  completeOwner(
+    scope: EnrollmentRow,
+    handle: ExecutionAttemptHandle,
+  ): Promise<{ output: NodeOutput<"assign_lead_owner">; reused: boolean }>;
   completeMove(
     scope: EnrollmentRow,
     handle: ExecutionAttemptHandle,

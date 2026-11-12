@@ -2357,6 +2357,55 @@ export type Database = {
           },
         ]
       }
+      automation_http_connections: {
+        Row: {
+          auth_kind: string
+          base_url: string
+          created_at: string
+          created_by: string | null
+          header_name: string | null
+          id: string
+          label: string
+          organization_id: string
+          secret_encrypted: string | null
+          secret_iv: string | null
+          secret_last4: string | null
+          secret_tag: string | null
+          updated_at: string
+        }
+        ComputedFields: never
+        Insert: {
+          auth_kind: string
+          base_url: string
+          created_at?: string
+          created_by?: string | null
+          header_name?: string | null
+          id?: string
+          label: string
+          organization_id: string
+          secret_encrypted?: string | null
+          secret_iv?: string | null
+          secret_last4?: string | null
+          secret_tag?: string | null
+          updated_at?: string
+        }
+        Update: {
+          auth_kind?: string
+          base_url?: string
+          created_at?: string
+          created_by?: string | null
+          header_name?: string | null
+          id?: string
+          label?: string
+          organization_id?: string
+          secret_encrypted?: string | null
+          secret_iv?: string | null
+          secret_last4?: string | null
+          secret_tag?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       automation_rule_runs: {
         Row: {
           actions_result: NonNullable<Json>

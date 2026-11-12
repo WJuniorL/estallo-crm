@@ -619,7 +619,8 @@ describe("diário transacional do motor existente — Postgres real", () => {
     // `reabertura_cria_novo` saiu desta lista em 30/10/2026: o funil não recusa
     // mais a saída de ganho/perdido (`modoDeReabertura`, lib/leads/reabertura.ts).
     { withoutLead: true, code: "execution_lead_required" },
-    { targetStageId: GOV_STAGE, code: "pipeline_immutable_use_clone" },
+    // `pipeline_immutable_use_clone` saiu desta lista em 12/11/2026 (Fase 5): o bloco Mover troca de funil o MESMO
+    // negócio, como `/move-pipeline` — caso próprio logo abaixo.
   ])("movimentação recusa regra comercial sem efeito: $code", async ({ code, ...options }) => {
     const f = await fixture({ decision: "move_lead", ...options });
     await avancarEnrollmentAtivo(
@@ -638,6 +639,33 @@ describe("diário transacional do motor existente — Postgres real", () => {
       [GOV_ORG, f.lead],
     );
     expect(lead.rows[0].stage_id).toBe(f.sourceStage);
+  });
+
+  it("movimentação para etapa ABERTA de outro funil troca o mesmo negócio de funil (Fase 5)", async () => {
+    // Funil de destino PRÓPRIO, sem regras: o funil compartilhado do seed pode ganhar obrigatórios de outros testes.
+    const outroFunil = randomUUID(),
+      etapaAberta = randomUUID();
+    await pool.query("insert into crm_pipelines(id,organization_id,name,slug,settings) values($1,$2,$3,$3,'{}')", [
+      outroFunil,
+      GOV_ORG,
+      `destino-${outroFunil.slice(0, 8)}`,
+    ]);
+    await pool.query(
+      "insert into crm_stages(id,organization_id,pipeline_id,name,slug,position) values($1,$2,$3,'Aberta','aberta',1000)",
+      [etapaAberta, GOV_ORG, outroFunil],
+    );
+    const f = await fixture({ decision: "move_lead", targetStageId: etapaAberta });
+    await avancarEnrollmentAtivo(
+      { db: adapter, clock: () => new Date(), enqueueJob: async () => {} },
+      await f.scope(),
+    );
+    // Se a troca for recusada, o motivo aparece aqui (e não só "o negócio não andou").
+    expect(await f.scope()).toMatchObject({ last_error: null });
+    const lead = await pool.query("select stage_id,pipeline_id from crm_leads where organization_id=$1 and id=$2", [
+      GOV_ORG,
+      f.lead,
+    ]);
+    expect(lead.rows[0]).toEqual({ stage_id: etapaAberta, pipeline_id: outroFunil });
   });
 
   it("movimentação para perda usa motivo válido e retorna a etapa efetivamente gravada", async () => {

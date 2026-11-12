@@ -8,7 +8,7 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { FlowArrow, Plus, Sparkle } from "@/lib/ui/icons";
+import { FlowArrow, Plus, Sparkle, UploadSimple } from "@/lib/ui/icons";
 import { useFollowupFlows, type FollowupFlowPointerRow } from "@/hooks/followup/useFollowupFlows";
 import type { FollowupFlowSurface } from "@/lib/followup/api-schemas";
 import { DeleteFollowupFlowButton } from "./DeleteFollowupFlowButton";
@@ -18,6 +18,7 @@ import { ModelosDialog } from "./ModelosDialog";
 import { NewFlowDialog } from "./NewFlowDialog";
 import { RenameFollowupFlowButton } from "./RenameFollowupFlowButton";
 import { ExecutionRetentionButton } from "./ExecutionRetentionButton";
+import { ImportFollowupFlowDialog } from "./ImportFollowupFlowDialog";
 
 interface Props {
   initialData: FollowupFlowPointerRow[];
@@ -40,6 +41,7 @@ export function FlowsList({ initialData, canWrite, surface }: Props) {
   const { data } = useFollowupFlows({ initialData, ...(surface ? { surface } : {}) });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [modelosOpen, setModelosOpen] = useState(false);
+  const [importarOpen, setImportarOpen] = useState(false);
   const deAtendimento = surface === "atendimento";
 
   const flows = data ?? [];
@@ -69,8 +71,17 @@ export function FlowsList({ initialData, canWrite, surface }: Props) {
     </Button>
   );
 
+  // Fase 7: importar um arquivo exportado pelo Estallo vira um rascunho novo.
+  const importarButton = (
+    <Button onClick={() => setImportarOpen(true)} variant="outline" className="w-full sm:w-auto" data-testid="importar-fluxo">
+      <UploadSimple size={14} aria-hidden className="mr-2" />
+      {t("Importar")}
+    </Button>
+  );
+
   const dialogos = canWrite && (
     <>
+      {!deAtendimento && <ImportFollowupFlowDialog open={importarOpen} onOpenChange={setImportarOpen} />}
       <NewFlowDialog open={dialogOpen} onOpenChange={setDialogOpen} surface={surface} />
       {!deAtendimento && (
         <ModelosDialog
@@ -103,6 +114,7 @@ export function FlowsList({ initialData, canWrite, surface }: Props) {
             <div className="mt-1 flex flex-col items-center gap-2 sm:flex-row">
               {!deAtendimento && modelosButton}
               {newFlowButton}
+              {!deAtendimento && importarButton}
               {!deAtendimento && <ExecutionRetentionButton />}
             </div>
           )}
@@ -118,6 +130,7 @@ export function FlowsList({ initialData, canWrite, surface }: Props) {
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
           {!deAtendimento && modelosButton}
           {newFlowButton}
+          {!deAtendimento && importarButton}
           {!deAtendimento && <ExecutionRetentionButton />}
         </div>
       )}

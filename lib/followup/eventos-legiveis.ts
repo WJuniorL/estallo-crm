@@ -139,6 +139,15 @@ const TIPO_DO_NO: Record<FlowNode["type"], string> = {
   // #2065 — as duas ações que também não falam com o cliente.
   move_lead: "Mover no funil",
   edit_lead_tag: "Editar tag",
+  map_data: "Mapear dados",
+  assign_lead_owner: "Atribuir responsável",
+  add_note: "Nota interna",
+  update_lead_field: "Atualizar campo do negócio",
+  lead_product: "Produto do negócio",
+  http_request: "Requisição HTTP",
+  ai_extract: "Extrair dados por IA",
+  find_or_create_contact: "Buscar ou criar contato",
+  find_or_create_lead: "Buscar ou criar negócio",
   end: "Fim",
 };
 
@@ -165,7 +174,11 @@ export function resumoDoNo(node: FlowNode): NoDoDossie {
       return {
         ...base,
         resumo:
-          node.config.mode === "fixed"
+          node.config.mode === "until"
+            ? node.config.data
+              ? `espera até ${node.config.data} às ${node.config.hora} (fuso da organização)`
+              : `espera até as ${node.config.hora} (fuso da organização)`
+            : node.config.mode === "fixed"
             ? `espera ${duracaoLegivel(node.config.duration_ms)}`
             : `espera adaptativa, entre ${duracaoLegivel(node.config.min_ms)} e ${duracaoLegivel(node.config.max_ms)}`,
       };
@@ -215,8 +228,70 @@ export function resumoDoNo(node: FlowNode): NoDoDossie {
       return {
         ...base,
         resumo: node.config.tags.length
-          ? `grava a(s) tag(s) ${node.config.tags.join(", ")} no lead — sem mensagem ao cliente`
+          ? node.config.acao === "remove"
+            ? `remove a(s) tag(s) ${node.config.tags.join(", ")} — sem mensagem ao cliente`
+            : `grava a(s) tag(s) ${node.config.tags.join(", ")} no lead — sem mensagem ao cliente`
           : "grava tag no lead, ainda sem destino escolhido — sem mensagem ao cliente",
+      };
+    case "ai_extract":
+      return {
+        ...base,
+        resumo: `a IA lê ${node.config.fonte.trim() ? "o texto escolhido" : "a última mensagem do cliente"} e extrai ${node.config.fields.map((f) => f.name).join(", ") || "os campos"} — sem mensagem ao cliente`,
+      };
+    case "find_or_create_contact":
+      return {
+        ...base,
+        resumo: `procura um contato pelo ${node.config.busca === "email" ? "e-mail" : "telefone"}${node.config.criar ? " e cria se não achar" : ""} — sem mensagem ao cliente`,
+      };
+    case "find_or_create_lead":
+      return {
+        ...base,
+        resumo: `procura o negócio aberto do contato no funil escolhido${node.config.criar ? " e cria se não achar" : ""} — sem mensagem ao cliente`,
+      };
+    case "http_request":
+      return {
+        ...base,
+        resumo: `chama ${node.config.metodo} ${node.config.caminho || "/"} num sistema externo, pela conexão escolhida — sem mensagem ao cliente`,
+      };
+    case "lead_product":
+      return {
+        ...base,
+        resumo:
+          node.config.acao === "remove"
+            ? "tira um produto do negócio — sem mensagem ao cliente"
+            : `acrescenta ${node.config.quantidade} unidade(s) de um produto do catálogo ao negócio — sem mensagem ao cliente`,
+      };
+    case "update_lead_field":
+      return {
+        ...base,
+        resumo:
+          node.config.alvo === "deal_value"
+            ? "atualiza o valor do negócio — sem mensagem ao cliente"
+            : node.config.alvo === "contact_field"
+              ? `atualiza o campo «${node.config.chave || "a escolher"}» do contato — sem mensagem ao cliente`
+            : `atualiza o campo «${node.config.chave || "a escolher"}» do negócio — sem mensagem ao cliente`,
+      };
+    case "add_note":
+      return {
+        ...base,
+        resumo:
+          node.config.destino === "conversation_notes"
+            ? "registra uma nota interna na conversa — o cliente não vê"
+            : "registra uma nota na linha do tempo do negócio — o cliente não vê",
+      };
+    case "assign_lead_owner":
+      return {
+        ...base,
+        resumo: node.config.usuario_id
+          ? "troca o responsável do negócio — sem mensagem ao cliente"
+          : "troca o responsável do negócio, ainda sem pessoa escolhida — sem mensagem ao cliente",
+      };
+    case "map_data":
+      return {
+        ...base,
+        resumo: node.config.fields.length
+          ? `monta ${node.config.fields.length} ${node.config.fields.length === 1 ? "campo" : "campos"}: ${node.config.fields.map((f) => f.name).join(", ")} — sem mensagem ao cliente`
+          : "monta campos a partir dos blocos anteriores, ainda sem campos — sem mensagem ao cliente",
       };
     case "end":
       return { ...base, resumo: `encerra — ${DESFECHO[node.config.outcome] ?? node.config.outcome}` };

@@ -3,7 +3,7 @@
  *
  * Intl puro, sem dependência. `instantFromWall` usa a técnica de duas passadas pelo offset, correta inclusive sob DST.
  */
-interface RelogioDeParede {
+export interface RelogioDeParede {
   y: number;
   mo: number;
   d: number;
@@ -12,7 +12,7 @@ interface RelogioDeParede {
   s: number;
 }
 
-function relogioDeParede(instante: Date, fuso: string): RelogioDeParede {
+export function relogioDeParede(instante: Date, fuso: string): RelogioDeParede {
   const partes = new Intl.DateTimeFormat("en-US", {
     timeZone: fuso,
     hour12: false,
@@ -34,8 +34,9 @@ function relogioDeParede(instante: Date, fuso: string): RelogioDeParede {
   };
 }
 
-function instanteDaParede(y: number, mo: number, d: number, h: number, fuso: string): Date {
-  const alvoComoUtc = Date.UTC(y, mo - 1, d, h);
+/** O instante em que o relógio de parede do fuso marca y-mo-d h:mi (correto sob horário de verão). */
+export function instanteDaParede(y: number, mo: number, d: number, h: number, fuso: string, mi = 0): Date {
+  const alvoComoUtc = Date.UTC(y, mo - 1, d, h, mi);
   let palpite = alvoComoUtc;
   for (let i = 0; i < 2; i += 1) {
     const w = relogioDeParede(new Date(palpite), fuso);

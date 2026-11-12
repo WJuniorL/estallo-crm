@@ -12,10 +12,11 @@ export const NODE_CATEGORIES = {
   flow: "Fluxo e tempo",
   ai: "Inteligência artificial",
   data: "Dados e perguntas",
+  integracoes: "Integrações",
 } as const;
 
 export type NodeCategory = keyof typeof NODE_CATEGORIES;
-export type NodeEffect = "none" | "crm" | "message" | "agent";
+export type NodeEffect = "none" | "crm" | "message" | "agent" | "external";
 
 interface NodeDefinition {
   label: string;
@@ -126,6 +127,78 @@ const NODE_DEFINITIONS = {
     surfaces: CLOCK_SURFACES,
     effect: "crm",
   },
+  lead_product: {
+    label: "Produto do negócio",
+    description: "Acrescenta ou tira um produto do catálogo no negócio.",
+    category: "leads",
+    keywords: ["produto", "item", "catálogo", "pedido", "valor"],
+    surfaces: CLOCK_SURFACES,
+    effect: "crm",
+  },
+  ai_extract: {
+    label: "Extrair dados por IA",
+    description: "A IA lê um texto e devolve os campos que você definir, conferidos pelo tipo.",
+    category: "ai",
+    keywords: ["extrair", "ia", "dados", "campos", "ler", "entender", "estruturar", "inteligência"],
+    surfaces: CLOCK_SURFACES,
+    effect: "agent",
+  },
+  find_or_create_contact: {
+    label: "Buscar ou criar contato",
+    description: "Acha um contato pelo telefone ou e-mail e, se pedido, cria quando não existe.",
+    category: "leads",
+    keywords: ["contato", "buscar", "procurar", "criar", "cadastro", "telefone", "e-mail", "cliente"],
+    surfaces: CLOCK_SURFACES,
+    effect: "crm",
+  },
+  find_or_create_lead: {
+    label: "Buscar ou criar negócio",
+    description: "Acha o negócio aberto de um contato num funil e, se pedido, cria quando não existe.",
+    category: "leads",
+    keywords: ["negócio", "lead", "card", "oportunidade", "buscar", "criar", "funil"],
+    surfaces: CLOCK_SURFACES,
+    effect: "crm",
+  },
+  http_request: {
+    label: "Requisição HTTP",
+    description: "Chama um sistema externo por uma conexão protegida e entrega a resposta.",
+    category: "integracoes",
+    keywords: ["http", "api", "webhook", "integração", "requisição", "sistema externo", "erp"],
+    surfaces: CLOCK_SURFACES,
+    effect: "external",
+  },
+  update_lead_field: {
+    label: "Atualizar campo do negócio",
+    description: "Grava um campo personalizado ou o valor do negócio.",
+    category: "leads",
+    keywords: ["campo personalizado", "valor", "atualizar", "editar negócio", "preço"],
+    surfaces: CLOCK_SURFACES,
+    effect: "crm",
+  },
+  add_note: {
+    label: "Nota interna",
+    description: "Registra uma nota interna no negócio ou na conversa.",
+    category: "team",
+    keywords: ["anotação", "observação", "comentário", "registro"],
+    surfaces: CLOCK_SURFACES,
+    effect: "crm",
+  },
+  assign_lead_owner: {
+    label: "Atribuir responsável",
+    description: "Troca o responsável pelo negócio (não transfere o atendimento).",
+    category: "leads",
+    keywords: ["dono", "vendedor", "responsável", "atribuir", "owner"],
+    surfaces: CLOCK_SURFACES,
+    effect: "crm",
+  },
+  map_data: {
+    label: "Mapear dados",
+    description: "Monta campos a partir das saídas dos blocos anteriores.",
+    category: "data",
+    keywords: ["variável", "campo", "transformar", "converter", "set", "renomear"],
+    surfaces: CLOCK_SURFACES,
+    effect: "none",
+  },
   end: {
     label: "Fim",
     description: "Encerra o fluxo e registra seu desfecho.",
@@ -158,6 +231,15 @@ export const NODE_CATALOG = {
   internal_task: withOutputContract("internal_task"),
   move_lead: withOutputContract("move_lead"),
   edit_lead_tag: withOutputContract("edit_lead_tag"),
+  map_data: withOutputContract("map_data"),
+  assign_lead_owner: withOutputContract("assign_lead_owner"),
+  add_note: withOutputContract("add_note"),
+  update_lead_field: withOutputContract("update_lead_field"),
+  lead_product: withOutputContract("lead_product"),
+  http_request: withOutputContract("http_request"),
+  find_or_create_contact: withOutputContract("find_or_create_contact"),
+  find_or_create_lead: withOutputContract("find_or_create_lead"),
+  ai_extract: withOutputContract("ai_extract"),
   end: withOutputContract("end"),
 } as const;
 

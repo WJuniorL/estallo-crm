@@ -9,6 +9,7 @@ const deps = vi.hoisted(() => ({
   cancelar: vi.fn(),
   reiniciar: vi.fn(),
   conduzir: vi.fn(),
+  aoVivo: vi.fn(),
 }));
 
 vi.mock("@/hooks/i18n/useT", async () => {
@@ -18,6 +19,7 @@ vi.mock("@/hooks/i18n/useT", async () => {
 vi.mock("@/hooks/followup/useFollowupQueue", () => ({
   useFollowupQueue: deps.fila,
   useCancelFollowupEnrollment: () => ({ mutate: deps.cancelar }),
+  useExecucoesAoVivo: deps.aoVivo,
 }));
 vi.mock("@/hooks/followup/useFollowupEnrollment", () => ({
   useFollowupEnrollment: deps.dossie,
@@ -127,6 +129,7 @@ beforeEach(() => {
     fetchNextPage: vi.fn(),
   });
   deps.dossie.mockReturnValue({ data: undefined, isLoading: false });
+  deps.aoVivo.mockReturnValue("connecting");
 });
 
 describe("ExecucoesDoFluxo — o histórico dentro do editor", () => {
@@ -137,6 +140,35 @@ describe("ExecucoesDoFluxo — o histórico dentro do editor", () => {
     expect(itens).toHaveLength(1);
     expect(itens[0]).toHaveTextContent("Ana");
     expect(itens[0]).toHaveTextContent("12 min");
+  });
+
+  it("o período vira filtro da consulta (desde/ate), e o filtro de versão só existe quando há versões publicadas", () => {
+    montar();
+    expect(screen.queryByLabelText("Filtrar por versão")).toBeNull();
+    fireEvent.change(screen.getByLabelText("Execuções a partir de"), { target: { value: "2026-11-01" } });
+    fireEvent.change(screen.getByLabelText("Execuções até"), { target: { value: "2026-11-07" } });
+    expect(deps.fila.mock.calls.at(-1)![0]).toMatchObject({ pointer_id: "f1", desde: "2026-11-01", ate: "2026-11-07" });
+  });
+
+  it("com versões publicadas, oferece o filtro por versão e o por modo", () => {
+    montar({ versoes: [{ id: "v2", created_at: "2026-11-05T10:00:00Z", numero: 2 }, { id: "v1", created_at: "2026-11-01T10:00:00Z", numero: 1 }] });
+    expect(screen.getByLabelText("Filtrar por versão")).toBeInTheDocument();
+    expect(screen.getByLabelText("Filtrar por modo")).toBeInTheDocument();
+    expect(deps.fila.mock.calls.at(-1)![0]).not.toHaveProperty("versao", "all");
+  });
+
+  it("canal ainda não assinado: sem «ao vivo», polling curto de 10 s", () => {
+    montar();
+    expect(deps.aoVivo).toHaveBeenLastCalledWith("f1", true);
+    expect(deps.fila.mock.calls.at(-1)![1]).toEqual({ refetchMs: 10_000 });
+    expect(screen.queryByTestId("execucoes-ao-vivo")).toBeNull();
+  });
+
+  it("canal assinado mostra «ao vivo» e alonga o polling", () => {
+    deps.aoVivo.mockReturnValue("subscribed");
+    montar();
+    expect(screen.getByTestId("execucoes-ao-vivo")).toBeInTheDocument();
+    expect(deps.fila.mock.calls.at(-1)![1]).toEqual({ refetchMs: 60_000 });
   });
 
   it("clicar numa execução a seleciona (a URL é de quem chama)", async () => {
@@ -174,6 +206,46 @@ describe("ExecucoesDoFluxo — o histórico dentro do editor", () => {
     expect(within(inspetor).getByText("Envia o texto")).toBeInTheDocument(); // resumo do bloco escolhido
     expect(within(inspetor).getByTestId("caminho-erro")).toHaveTextContent("canal fora");
     expect(within(inspetor).getByText(/valor-da-entrada/)).toBeInTheDocument();
+  });
+
+  it("bloco que rodou mais de uma vez mostra uma passagem por vez, a mais recente primeiro", async () => {
+    const segunda = { ...PASSO, step_id: "s2", visit: 1, erro: null, status: "completed", entrada: { variavel: "segunda-volta" } };
+    deps.dossie.mockReturnValue({ data: DOSSIE({ passos: [PASSO, segunda] }), isLoading: false });
+    montar({ execucaoId: "e1", noId: "msg" });
+    const abas = screen.getAllByTestId("inspetor-passagem");
+    expect(abas).toHaveLength(2);
+    expect(abas[1]).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByText(/segunda-volta/)).toBeInTheDocument();
+    expect(screen.queryByText(/valor-da-entrada/)).toBeNull();
+    await userEvent.click(abas[0]!);
+    expect(screen.getByText(/valor-da-entrada/)).toBeInTheDocument();
+    expect(screen.queryByText(/segunda-volta/)).toBeNull();
+  });
+
+  it("recuperação mostra os passos herdados da original e diz que é recuperação", () => {
+    deps.dossie.mockReturnValue({
+      data: DOSSIE({
+        status: "active",
+        origem: { id: "e0", tipo: "retry" },
+        passos_herdados: [{ ...PASSO, step_id: "h1", rotulo: "Mapear dados", status: "succeeded", erro: null }],
+      }),
+      isLoading: false,
+    });
+    montar({ execucaoId: "e1" });
+    expect(screen.getByTestId("passos-herdados")).toHaveTextContent("Mapear dados");
+    expect(screen.getByTestId("execucao-origem")).toHaveTextContent("Recuperação");
+  });
+
+  it("diário cortado no teto de leitura avisa", () => {
+    deps.dossie.mockReturnValue({ data: DOSSIE({ passos_truncados: true }), isLoading: false });
+    montar({ execucaoId: "e1" });
+    expect(screen.getByTestId("execucao-diario-truncado")).toBeInTheDocument();
+  });
+
+  it("bloco com uma passagem só não mostra o seletor", () => {
+    deps.dossie.mockReturnValue({ data: DOSSIE(), isLoading: false });
+    montar({ execucaoId: "e1", noId: "msg" });
+    expect(screen.queryByTestId("inspetor-passagem")).toBeNull();
   });
 
   it("bloco que a execução não percorreu diz isso, sem inventar dado", () => {

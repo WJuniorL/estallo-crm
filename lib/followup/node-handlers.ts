@@ -15,6 +15,10 @@ import type { FlowEdge, FlowNode, ReplySaveTo } from "./graph-schema";
 import { parseReplyCount } from "./parse-count";
 import { clampEspera, esperaPlanejadaDe, type EsperaAdaptativa } from "./timing-plan";
 import { fraseDeConfirmacao } from "./vocabulario";
+import type { ConditionCheck } from "./graph-schema";
+import { mapearDados } from "./mapear-dados";
+import { extrairReferencias, ler } from "./variaveis-de-blocos";
+import { alvoDaEsperaAte } from "./espera-ate";
 
 export type EnrollmentStatus =
   | "active"
@@ -567,14 +571,56 @@ export function ultimoDesfechoDe(events: EnrollmentEventRef[]): string | null {
   return null;
 }
 
-function evaluateCheck(
-  check: {
-    field: "lead_stage" | "tag" | "steps_taken" | "last_outcome" | "product";
-    op: "eq" | "neq" | "gte" | "lte" | "contains";
-    value: string | number;
-  },
-  lead: LeadFacts,
-): boolean {
+/** «Tem valor»: ausente, nulo, texto vazio e lista vazia não têm. */
+function temValor(v: unknown): boolean {
+  if (v === undefined || v === null) return false;
+  if (typeof v === "string") return v.trim() !== "";
+  if (Array.isArray(v)) return v.length > 0;
+  return true;
+}
+
+/** A regra sobre a saída de um bloco anterior (Fase 5) — o MESMO avaliador, sem motor paralelo. */
+function evaluateVariavel(check: ConditionCheck, saidas: Record<string, unknown>): boolean {
+  const ref = check.source ? extrairReferencias(check.source)[0] : undefined;
+  const v = ref && Object.prototype.hasOwnProperty.call(saidas, ref.no_id) ? ler(saidas[ref.no_id], ref.caminho) : undefined;
+  if (check.op === "exists") return temValor(v);
+  if (check.op === "not_exists") return !temValor(v);
+  // Ausência não prova nada — nem a negação (a mesma régua do campo «Desfecho do passo anterior»).
+  if (!temValor(v)) return false;
+  const esperado = String(check.value).trim().toLowerCase();
+  if (Array.isArray(v)) {
+    const itens = v.map((i) => String(i).trim().toLowerCase());
+    if (check.op === "eq" || check.op === "contains") return itens.includes(esperado);
+    if (check.op === "neq") return !itens.includes(esperado);
+    return false;
+  }
+  if (check.op === "gte" || check.op === "lte") {
+    const a = typeof v === "number" ? v : Number(String(v).replace(",", "."));
+    const b = Number(String(check.value).replace(",", "."));
+    if (!Number.isFinite(a) || !Number.isFinite(b)) return false;
+    return check.op === "gte" ? a >= b : a <= b;
+  }
+  const atual = String(v).trim().toLowerCase();
+  if (check.op === "eq") return atual === esperado;
+  if (check.op === "neq") return atual !== esperado;
+  return atual.includes(esperado);
+}
+
+function evaluateCheck(check: ConditionCheck, lead: LeadFacts, saidas: Record<string, unknown> = {}): boolean {
+  if (check.field === "variavel") return evaluateVariavel(check, saidas);
+  if (check.op === "exists" || check.op === "not_exists") {
+    const atual =
+      check.field === "lead_stage"
+        ? lead.lead_stage
+        : check.field === "tag"
+          ? lead.tags
+          : check.field === "product"
+            ? (lead.products ?? [])
+            : check.field === "steps_taken"
+              ? lead.steps_taken
+              : lead.last_outcome;
+    return check.op === "exists" ? temValor(atual) : !temValor(atual);
+  }
   if (check.field === "product") {
     // Lista de nomes, sem diferença de caixa. `neq` = nenhum produto com esse nome; sem produto algum
     // o lead não "tem o produto" (eq/contains falsos) e "não tem" é verdadeiro — é afirmação sobre lista.
@@ -637,9 +683,10 @@ function evaluateCondition(
   config: Extract<FlowNode, { type: "condition" }>["config"],
   lead: LeadFacts,
   onCheck?: (index: number, matched: boolean) => void,
+  saidas: Record<string, unknown> = {},
 ): boolean {
   const results = config.checks.map((check, index) => {
-    const matched = evaluateCheck(check, lead);
+    const matched = evaluateCheck(check, lead, saidas);
     onCheck?.(index, matched);
     return matched;
   });
@@ -703,6 +750,10 @@ export function processNode(input: {
   repeatTotal?: number | null;
   /** Próximo nó pela aresta `always` — a ação olha o `match_reply` seguinte para pular o envio. */
   proximo?: FlowNode | null;
+  /** `wait` no modo `until`: o fuso da organização (a hora configurada é a do relógio dela). */
+  fuso?: string;
+  /** `map_data`: as saídas dos blocos anteriores desta execução, congeladas na entrada da tentativa. */
+  saidasAnteriores?: Record<string, unknown>;
 }): NodeResult {
   const {
     onDecision,
@@ -791,7 +842,19 @@ export function processNode(input: {
         onDecision?.({ edge_id: edge.id, branch_id: branchOfSelectedEdge(edge) });
         return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
       }
-      if (!waitElapsed) {
+      if (!waitElapsed && node.config.mode === "until") {
+        // «Aguardar até»: alvo no fuso da organização. Data/hora inexistente falha explicada; data já passada segue.
+        const alvo = alvoDaEsperaAte(node.config, input.fuso ?? "America/Sao_Paulo", clock());
+        if (!alvo.ok) return { kind: "fail", error: alvo.motivo };
+        if (alvo.ja_passou) {
+          const edge = selectEdge(edges, node.id, { type: "always" });
+          if (!edge) return { kind: "fail", error: `wait node "${node.id}" has no outbound edge` };
+          onDecision?.({ edge_id: edge.id, branch_id: branchOfSelectedEdge(edge) });
+          return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
+        }
+        return { kind: "wait", next_eval_at: alvo.alvo };
+      }
+      if (!waitElapsed && node.config.mode !== "until") {
         // Adaptativo: o instante vem do plano decidido no acionamento. Sem plano
         // legível para ESTE nó (enrollment anterior à feature, fluxo v1, jsonb
         // corrompido), cai no máximo — que era o comportamento único até aqui.
@@ -841,7 +904,7 @@ export function processNode(input: {
         // é consultado aqui, porque nesse modo a regra não vota, ela roteia.
         const hitId = node.config.checks.find((c, index) => {
           if (c.id === undefined) return false;
-          const matched = evaluateCheck(c, lead);
+          const matched = evaluateCheck(c, lead, input.saidasAnteriores ?? {});
           if (onDecision) checks.push({ index, matched });
           return matched;
         })?.id;
@@ -873,6 +936,7 @@ export function processNode(input: {
         node.config,
         lead,
         onDecision ? (index, matched) => checks.push({ index, matched }) : undefined,
+        input.saidasAnteriores ?? {},
       );
       const edge = selectEdge(edges, node.id, { type: "cond_result", value: result });
       if (!edge)
@@ -1198,6 +1262,61 @@ export function processNode(input: {
       const edge = selectEdge(edges, node.id, { type: "always" });
       if (!edge)
         return { kind: "fail", error: `edit_lead_tag node "${node.id}" has no outbound edge` };
+      return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
+    }
+
+    case "ai_extract":
+    case "find_or_create_contact":
+    case "find_or_create_lead": {
+      // Fase 5 — passagem: quem acha ou cria é o diário, na transação do avanço.
+      const edge = selectEdge(edges, node.id, { type: "always" });
+      if (!edge) return { kind: "fail", error: `${node.type} node "${node.id}" has no outbound edge` };
+      return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
+    }
+
+    case "http_request": {
+      // Fase 5 — passagem: quem chama o sistema externo é o motor (fora da transação) e quem grava é o diário.
+      const edge = selectEdge(edges, node.id, { type: "always" });
+      if (!edge) return { kind: "fail", error: `http_request node "${node.id}" has no outbound edge` };
+      return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
+    }
+
+    case "lead_product": {
+      // Fase 5 — passagem: quem grava o produto é o diário (`completeProduct`), na transação do avanço.
+      const edge = selectEdge(edges, node.id, { type: "always" });
+      if (!edge) return { kind: "fail", error: `lead_product node "${node.id}" has no outbound edge` };
+      return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
+    }
+
+    case "update_lead_field": {
+      // Fase 5 — passagem: quem grava o campo é o diário (`completeField`), na transação do avanço.
+      const edge = selectEdge(edges, node.id, { type: "always" });
+      if (!edge) return { kind: "fail", error: `update_lead_field node "${node.id}" has no outbound edge` };
+      return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
+    }
+
+    case "add_note": {
+      // Fase 5 — passagem: quem grava a nota é o diário (`completeNote`), na transação do avanço.
+      const edge = selectEdge(edges, node.id, { type: "always" });
+      if (!edge) return { kind: "fail", error: `add_note node "${node.id}" has no outbound edge` };
+      return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
+    }
+
+    case "assign_lead_owner": {
+      // Fase 5 — passagem como `edit_lead_tag`: quem troca o dono é o diário (`completeOwner`), na transação.
+      const edge = selectEdge(edges, node.id, { type: "always" });
+      if (!edge) return { kind: "fail", error: `assign_lead_owner node "${node.id}" has no outbound edge` };
+      return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
+    }
+
+    case "map_data": {
+      // Fase 4 — sem efeito: só monta os campos com as saídas anteriores (congeladas no `begin`, para a nova
+      // tentativa dar o mesmo resultado). Faltou valor sem fallback → falha explicada, que sai pela saída de erro.
+      const edge = selectEdge(edges, node.id, { type: "always" });
+      if (!edge) return { kind: "fail", error: `map_data node "${node.id}" has no outbound edge` };
+      const mapa = mapearDados(node.config.fields, input.saidasAnteriores ?? {});
+      if (!mapa.ok) return { kind: "fail", error: mapa.motivo };
+      onDecision?.({ edge_id: edge.id, branch_id: branchOfSelectedEdge(edge), output: { fields: mapa.fields } });
       return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
     }
 

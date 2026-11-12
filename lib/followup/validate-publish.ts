@@ -64,6 +64,21 @@ export const PUBLISH_ERROR_CODES = [
   'variavel_de_bloco_inexistente',
   'variavel_de_bloco_nao_anterior',
   'variavel_de_bloco_campo_inexistente',
+  'mapa_sem_campos',
+  'responsavel_ausente',
+  'nota_sem_texto',
+  'campo_do_negocio_incompleto',
+  'produto_ausente',
+  'conexao_http_ausente',
+  'busca_de_contato_sem_valor',
+  'extracao_sem_campos',
+  'extracao_campo_repetido',
+  'negocio_sem_funil',
+  'negocio_sem_etapa',
+  'aplicar_em_invalido',
+  'corpo_http_invalido',
+  'mapa_campo_repetido',
+  'mapa_campo_sem_valor',
 ] as const;
 export type PublishErrorCode = (typeof PUBLISH_ERROR_CODES)[number];
 
@@ -288,6 +303,8 @@ const MIN_CYCLE_WAIT_MS = 300_000; // 5min
 const MAX_PATH_STEPS = 30;
 
 function waitMs(config: Extract<FlowNode, { type: 'wait' }>['config']): number {
+  // «Aguardar até» a hora espera no máximo um dia; com data, o prazo é a data (contado como um dia aqui).
+  if (config.mode === 'until') return 86_400_000;
   return config.mode === 'fixed' ? config.duration_ms : config.max_ms;
 }
 
@@ -295,6 +312,9 @@ function waitMs(config: Extract<FlowNode, { type: 'wait' }>['config']): number {
 function isSufficientWaitNode(node: FlowNode): boolean {
   if (node.type === 'match_reply') return node.config.grace_timeout_ms >= MIN_CYCLE_WAIT_MS;
   if (node.type !== 'wait') return false;
+  // «Até» só a hora: a próxima ocorrência fica no dia seguinte — trava o ciclo. Com data, data passada segue na hora:
+  // num laço isso giraria sem parar, então NÃO conta como espera que quebra ciclo.
+  if (node.config.mode === 'until') return node.config.data === undefined;
   return node.config.mode === 'fixed'
     ? node.config.duration_ms >= MIN_CYCLE_WAIT_MS
     : node.config.min_ms >= MIN_CYCLE_WAIT_MS;
@@ -587,6 +607,39 @@ function conferirEtapaDestino(
 }
 
 /**
+ * Fase 4 — Mapear dados sem campo, com nome repetido ou com valor vazio não monta nada que se possa citar.
+ */
+function conferirMapa(
+  node: Extract<FlowNode, { type: 'map_data' }>,
+  errors: PublishValidationError[],
+): void {
+  if (node.config.fields.length === 0) {
+    errors.push({
+      node_id: node.id,
+      code: 'mapa_sem_campos',
+      message: `A caixa "${node.label}" não monta nenhum campo. Acrescente ao menos um.`,
+    });
+    return;
+  }
+  const vistos = new Set<string>();
+  for (const f of node.config.fields) {
+    if (vistos.has(f.name))
+      errors.push({
+        node_id: node.id,
+        code: 'mapa_campo_repetido',
+        message: `A caixa "${node.label}" monta o campo "${f.name}" mais de uma vez.`,
+      });
+    vistos.add(f.name);
+    if (f.value.trim() === '')
+      errors.push({
+        node_id: node.id,
+        code: 'mapa_campo_sem_valor',
+        message: `A caixa "${node.label}": o campo "${f.name}" está sem valor.`,
+      });
+  }
+}
+
+/**
  * #2065 — nó `edit_lead_tag` sem tag (lista vazia ou com tag em branco). O
  * schema aceita, porque o rascunho tem de salvar trabalho pela metade; publicado,
  * um nó que não grava nada é mentira de interface.
@@ -630,6 +683,12 @@ function conferirRegras(
     };
     const valor = String(check.value).trim();
 
+    if (check.field === 'variavel' && !(check.source && /^\s*\{\{\s*nodes\.[A-Za-z0-9_-]+\.[A-Za-z0-9_.]+\s*\}\}\s*$/.test(check.source))) {
+      errors.push({ ...ancora, code: 'empty_check_value', message: `${regra}: escolha o dado de um bloco anterior.` });
+      return;
+    }
+    // «Tem valor»/«não tem valor» não comparam com nada.
+    if (check.op === 'exists' || check.op === 'not_exists') return;
     if (valor === '') {
       errors.push({ ...ancora, code: 'empty_check_value', message: `${regra} sem valor: preencha ou remova a regra.` });
       return;
@@ -748,7 +807,18 @@ function validarVariaveisDeBlocos(graph: FlowGraph, errors: PublishValidationErr
           (declaredNodeOutputSchema(alvo.type)?.properties as Record<string, unknown> | undefined) ?? {},
         );
         const campo = ref.caminho.split('.')[0]!;
-        if (!declarados.includes(campo)) {
+        const nomeDoMapa = alvo.type === 'map_data' && campo === 'fields' ? ref.caminho.split('.')[1] : undefined;
+        if (
+          alvo.type === 'map_data' &&
+          campo === 'fields' &&
+          !alvo.config.fields.some((f) => f.name === nomeDoMapa)
+        ) {
+          errors.push({
+            node_id: no.id,
+            code: 'variavel_de_bloco_campo_inexistente',
+            message: `A caixa "${no.label}" usa a variável ${ref.marca}, mas o bloco "${alvo.label}" não monta o campo "${nomeDoMapa ?? ''}". Campos disponíveis: ${alvo.config.fields.map((f) => f.name).join(', ') || 'nenhum'}.`,
+          });
+        } else if (!declarados.includes(campo)) {
           errors.push({
             node_id: no.id,
             code: 'variavel_de_bloco_campo_inexistente',
@@ -903,6 +973,95 @@ export function validateFlowForPublish(
   for (const node of [...nodes].sort(byId)) {
     if (node.type === 'move_lead') conferirEtapaDestino(node, contexto, errors);
     if (node.type === 'edit_lead_tag') conferirTags(node, errors);
+    if (node.type === 'map_data') conferirMapa(node, errors);
+    if (
+      node.type === 'update_lead_field' &&
+      (!node.config.valor.trim() || (node.config.alvo !== 'deal_value' && !node.config.chave.trim()))
+    )
+      errors.push({
+        node_id: node.id,
+        code: 'campo_do_negocio_incompleto',
+        message: `A caixa "${node.label}" precisa do campo e do valor a gravar.`,
+      });
+    if (node.type === 'ai_extract' && node.config.fields.length === 0)
+      errors.push({
+        node_id: node.id,
+        code: 'extracao_sem_campos',
+        message: `A caixa "${node.label}" não tem campos a extrair.`,
+      });
+    if (node.type === 'ai_extract' && new Set(node.config.fields.map((f) => f.name)).size !== node.config.fields.length)
+      errors.push({
+        node_id: node.id,
+        code: 'extracao_campo_repetido',
+        message: `A caixa "${node.label}" tem dois campos com o mesmo nome.`,
+      });
+    if (node.type === 'find_or_create_contact' && !node.config.valor.trim())
+      errors.push({
+        node_id: node.id,
+        code: 'busca_de_contato_sem_valor',
+        message: `A caixa "${node.label}" precisa do telefone ou e-mail a procurar.`,
+      });
+    if (node.type === 'find_or_create_lead' && !node.config.pipeline_id)
+      errors.push({
+        node_id: node.id,
+        code: 'negocio_sem_funil',
+        message: `A caixa "${node.label}" precisa do funil onde procurar o negócio.`,
+      });
+    if (node.type === 'find_or_create_lead' && node.config.criar && !node.config.stage_id)
+      errors.push({
+        node_id: node.id,
+        code: 'negocio_sem_etapa',
+        message: `A caixa "${node.label}" cria negócio e precisa da etapa de entrada.`,
+      });
+    {
+      const alvo =
+        'aplicar_em' in node.config && typeof node.config.aplicar_em === 'string'
+          ? node.config.aplicar_em
+          : node.type === 'find_or_create_lead'
+            ? node.config.contato
+            : '';
+      if (alvo.trim() && !/^\s*\{\{\s*nodes\.[A-Za-z0-9_-]+\.(lead_id|contact_id)\s*\}\}\s*$/.test(alvo))
+        errors.push({
+          node_id: node.id,
+          code: 'aplicar_em_invalido',
+          message: `Em "${node.label}", «Aplicar em» precisa ser o negócio ou o contato entregue por um bloco anterior.`,
+        });
+    }
+    if (node.type === 'http_request' && !node.config.connection_id)
+      errors.push({
+        node_id: node.id,
+        code: 'conexao_http_ausente',
+        message: `A caixa "${node.label}" não tem conexão escolhida.`,
+      });
+    if (node.type === 'http_request' && node.config.corpo.trim()) {
+      try {
+        JSON.parse(node.config.corpo);
+      } catch {
+        errors.push({
+          node_id: node.id,
+          code: 'corpo_http_invalido',
+          message: `O corpo da caixa "${node.label}" não é um JSON válido.`,
+        });
+      }
+    }
+    if (node.type === 'lead_product' && !node.config.product_id)
+      errors.push({
+        node_id: node.id,
+        code: 'produto_ausente',
+        message: `A caixa "${node.label}" não tem produto escolhido.`,
+      });
+    if (node.type === 'add_note' && !node.config.texto.trim())
+      errors.push({
+        node_id: node.id,
+        code: 'nota_sem_texto',
+        message: `A caixa "${node.label}" está sem o texto da nota.`,
+      });
+    if (node.type === 'assign_lead_owner' && !node.config.usuario_id)
+      errors.push({
+        node_id: node.id,
+        code: 'responsavel_ausente',
+        message: `A caixa "${node.label}" não tem responsável escolhido.`,
+      });
   }
 
   for (const node of [...nodes].sort(byId)) {

@@ -41,9 +41,28 @@ export function prepararMovimentacaoDeLead(input: {
   lost_reason?: string | null;
   won_reason?: string | null;
   idioma?: Idioma | null;
+  /**
+   * Fase 5 — o bloco Mover do follow-up também troca de FUNIL (o mesmo negócio, como `/move-pipeline`). As regras de lá
+   * valem aqui: só negócio ABERTO muda de funil, e só para etapa ABERTA (ganho e perda fecham por outro caminho). Os
+   * campos obrigatórios conferidos são os do funil de DESTINO (`settings` vem dele). Sem a opção, recusa como sempre.
+   */
+  permitirTrocaDeFunil?: boolean;
 }): PreparacaoDaMovimentacao {
   const { lead, etapa, settings, idioma } = input;
-  if (etapa.pipeline_id !== lead.pipeline_id)
+  if (etapa.pipeline_id !== lead.pipeline_id && input.permitirTrocaDeFunil) {
+    if ((lead.status ?? "open") !== "open")
+      return { ok: false, status: 422, codigo: "lead_not_open", mensagem: traduzir("Só um negócio aberto muda de funil.", idioma ?? "pt-BR") };
+    if (etapa.is_won || etapa.is_lost)
+      return {
+        ok: false,
+        status: 422,
+        codigo: "destino_fechado",
+        mensagem: traduzir(
+          "Para trocar de funil, escolha uma etapa aberta. Ganho e perda se marcam dentro do funil do negócio.",
+          idioma ?? "pt-BR",
+        ),
+      };
+  } else if (etapa.pipeline_id !== lead.pipeline_id)
     return {
       ok: false,
       status: 422,

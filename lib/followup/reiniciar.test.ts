@@ -27,6 +27,8 @@ interface Cenario {
   contato: Resp;
   versao: Resp;
   insert: Resp;
+  /** Passos do bloco que falhou (recuperação confere resultado desconhecido). */
+  passos?: Resp;
 }
 
 const ORIGINAL = {
@@ -39,6 +41,7 @@ const ORIGINAL = {
   status: "dead",
   execution_mode: "production",
   conversation_id: null,
+  current_node_id: "f",
 };
 
 function cenarioBase(): Cenario {
@@ -65,6 +68,7 @@ function banco(c: Cenario) {
         if (tabela === "followup_enrollments") return ehListaDeFilhas ? c.filhas : c.original;
         if (tabela === "followup_flow_pointers") return c.pointer;
         if (tabela === "contacts") return c.contato;
+        if (tabela === "followup_execution_steps") return c.passos ?? { data: [] };
         return c.versao;
       };
       b.select = () => b;
@@ -215,5 +219,31 @@ describe("reiniciarExecucao", () => {
     expect(inserts[0]).toMatchObject({ status: "active" });
     expect(inserts[0]).not.toHaveProperty("next_eval_at");
     expect(inserts[0]).not.toHaveProperty("passo_a_passo"); // a coluna nem é citada: o padrão do banco vale
+  });
+});
+
+describe("reiniciarExecucao modo retry — recuperar a partir da falha (Fase 6)", () => {
+  it("começa NO BLOCO QUE FALHOU, na mesma versão, ligada como retry, e audita como recuperação", async () => {
+    const { cliente, inserts } = banco(cenarioBase());
+    const r = await reiniciarExecucao(cliente, { ...entrada, modo: "retry" });
+    expect(r.ok).toBe(true);
+    expect(inserts[0]).toMatchObject({ current_node_id: "f", version_id: "v1", recovery_kind: "retry", source_enrollment_id: "e1" });
+    expect(mocks.audit).toHaveBeenCalledWith(expect.objectContaining({ action: "followup_enrollment.recovered" }));
+  });
+
+  it.each(["completed", "cancelled"])("execução que não falhou (%s) não se recupera: 409, nada gravado", async (status) => {
+    const c = cenarioBase();
+    c.original = { data: { ...ORIGINAL, status } };
+    const { cliente, inserts } = banco(c);
+    expect(await reiniciarExecucao(cliente, { ...entrada, modo: "retry" })).toMatchObject({ ok: false, code: "execucao_nao_falhou" });
+    expect(inserts).toHaveLength(0);
+  });
+
+  it("resultado desconhecido no bloco que falhou recusa (refazer poderia repetir o efeito)", async () => {
+    const c = cenarioBase();
+    c.passos = { data: [{ id: "s1" }] };
+    const { cliente, inserts } = banco(c);
+    expect(await reiniciarExecucao(cliente, { ...entrada, modo: "retry" })).toMatchObject({ ok: false, code: "resultado_desconhecido" });
+    expect(inserts).toHaveLength(0);
   });
 });

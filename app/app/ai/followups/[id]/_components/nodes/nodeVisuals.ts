@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 
-import { Bell, Play, Clock, GitBranch, Brain, ChatCircle, ArrowsClockwise, PaperPlaneTilt, Flag, Question, PuzzlePiece, Funnel, Tag } from "@/lib/ui/icons";
+import { Bell, Play, Clock, GitBranch, Brain, ChatCircle, ArrowsClockwise, PaperPlaneTilt, Flag, Question, PuzzlePiece, Funnel, Tag, ArrowsLeftRight, UserCircle, Note, PencilSimple, Package, Globe, IdentificationCard, Target, Sparkle } from "@/lib/ui/icons";
 import type { FlowNode, NodeType } from "@/lib/followup/graph-schema";
 import { RESULTADOS_DO_FIM } from "@/lib/followup/vocabulario";
 import { NOS_DA_SUPERFICIE } from "@/lib/followup/validate-publish";
@@ -188,6 +188,87 @@ export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
     defaultLabel: "Gravar tag no lead",
     defaultConfig: () => ({ tags: [] }),
   },
+  lead_product: {
+    type: "lead_product",
+    paletteLabel: NODE_CATALOG.lead_product.label,
+    icon: Package,
+    chipClassName: "bg-accent-soft text-accent",
+    borderClassName: "border-l-accent-500",
+    defaultLabel: "Produto do negócio",
+    defaultConfig: () => ({ acao: "add", product_id: "", quantidade: 1 }),
+  },
+  ai_extract: {
+    type: "ai_extract",
+    paletteLabel: NODE_CATALOG.ai_extract.label,
+    icon: Sparkle,
+    chipClassName: "bg-accent-soft text-accent",
+    borderClassName: "border-l-accent-500",
+    defaultLabel: "Extrair dados por IA",
+    defaultConfig: () => ({ fonte: "", fields: [{ name: "campo_1", type: "text", descricao: "" }], dica: "" }),
+  },
+  find_or_create_contact: {
+    type: "find_or_create_contact",
+    paletteLabel: NODE_CATALOG.find_or_create_contact.label,
+    icon: IdentificationCard,
+    chipClassName: "bg-accent-soft text-accent",
+    borderClassName: "border-l-accent-500",
+    defaultLabel: "Buscar ou criar contato",
+    defaultConfig: () => ({ busca: "phone", valor: "", criar: true, nome: "" }),
+  },
+  find_or_create_lead: {
+    type: "find_or_create_lead",
+    paletteLabel: NODE_CATALOG.find_or_create_lead.label,
+    icon: Target,
+    chipClassName: "bg-accent-soft text-accent",
+    borderClassName: "border-l-accent-500",
+    defaultLabel: "Buscar ou criar negócio",
+    defaultConfig: () => ({ contato: "", pipeline_id: "", stage_id: "", titulo: "", criar: true }),
+  },
+  http_request: {
+    type: "http_request",
+    paletteLabel: NODE_CATALOG.http_request.label,
+    icon: Globe,
+    chipClassName: "bg-accent-soft text-accent",
+    borderClassName: "border-l-accent-500",
+    defaultLabel: "Requisição HTTP",
+    defaultConfig: () => ({ connection_id: "", metodo: "GET", caminho: "/", corpo: "" }),
+  },
+  update_lead_field: {
+    type: "update_lead_field",
+    paletteLabel: NODE_CATALOG.update_lead_field.label,
+    icon: PencilSimple,
+    chipClassName: "bg-accent-soft text-accent",
+    borderClassName: "border-l-accent-500",
+    defaultLabel: "Atualizar campo do negócio",
+    defaultConfig: () => ({ alvo: "custom_field", chave: "", valor: "" }),
+  },
+  add_note: {
+    type: "add_note",
+    paletteLabel: NODE_CATALOG.add_note.label,
+    icon: Note,
+    chipClassName: "bg-accent-soft text-accent",
+    borderClassName: "border-l-accent-500",
+    defaultLabel: "Nota interna",
+    defaultConfig: () => ({ destino: "lead_timeline", texto: "" }),
+  },
+  assign_lead_owner: {
+    type: "assign_lead_owner",
+    paletteLabel: NODE_CATALOG.assign_lead_owner.label,
+    icon: UserCircle,
+    chipClassName: "bg-accent-soft text-accent",
+    borderClassName: "border-l-accent-500",
+    defaultLabel: "Atribuir responsável",
+    defaultConfig: () => ({ usuario_id: "" }),
+  },
+  map_data: {
+    type: "map_data",
+    paletteLabel: NODE_CATALOG.map_data.label,
+    icon: ArrowsLeftRight,
+    chipClassName: "bg-surface-muted text-text",
+    borderClassName: "border-l-border-strong",
+    defaultLabel: "Mapear dados",
+    defaultConfig: () => ({ fields: [] }),
+  },
   end: {
     type: "end",
     paletteLabel: NODE_CATALOG.end.label,
@@ -241,6 +322,7 @@ export function describeNodeConfig(
       return t("Início do fluxo");
     case "wait": {
       const c = config as ConfigOf<"wait">;
+      if (c.mode === "until") return c.data ? `${t("até")} ${c.data} ${c.hora}` : `${t("até as")} ${c.hora}`;
       return c.mode === "fixed"
         ? tempoCurto(c.duration_ms)
         : `${Math.round(c.min_ms / 60_000)}–${minutos(c.max_ms)} ${t("(adaptativo)")}`;
@@ -311,7 +393,51 @@ export function describeNodeConfig(
     case "edit_lead_tag": {
       const c = config as ConfigOf<"edit_lead_tag">;
       if (!c.tags.length) return t("sem tag escolhida");
-      return c.destino === "contato" ? `${c.tags.join(", ")} (${t("no contato")})` : c.tags.join(", ");
+      const lista = c.acao === "remove" ? `− ${c.tags.join(", ")}` : c.tags.join(", ");
+      return c.destino === "contato" ? `${lista} (${t("no contato")})` : lista;
+    }
+    case "ai_extract": {
+      const c = config as ConfigOf<"ai_extract">;
+      return c.fields.length ? c.fields.map((f) => f.name).join(", ") : t("sem campos");
+    }
+    case "find_or_create_contact": {
+      const c = config as ConfigOf<"find_or_create_contact">;
+      if (!c.valor.trim()) return t("sem valor para procurar");
+      return c.criar ? t("procura e cria se não achar") : t("só procura");
+    }
+    case "find_or_create_lead": {
+      const c = config as ConfigOf<"find_or_create_lead">;
+      if (!c.pipeline_id) return t("sem funil escolhido");
+      return c.criar ? t("procura e cria se não achar") : t("só procura");
+    }
+    case "http_request": {
+      const c = config as ConfigOf<"http_request">;
+      if (!c.connection_id) return t("sem conexão escolhida");
+      return `${c.metodo} ${c.caminho || "/"}`;
+    }
+    case "lead_product": {
+      const c = config as ConfigOf<"lead_product">;
+      if (!c.product_id) return t("sem produto escolhido");
+      return c.acao === "remove" ? t("tira o produto do negócio") : `+${c.quantidade} · ${t("produto do catálogo")}`;
+    }
+    case "update_lead_field": {
+      const c = config as ConfigOf<"update_lead_field">;
+      if (!c.valor.trim()) return t("sem valor");
+      if (c.alvo === "deal_value") return t("valor do negócio");
+      return c.chave ? (c.alvo === "contact_field" ? `${c.chave} (${t("no contato")})` : c.chave) : t("sem campo escolhido");
+    }
+    case "add_note": {
+      const c = config as ConfigOf<"add_note">;
+      if (!c.texto.trim()) return t("sem texto");
+      return c.destino === "conversation_notes" ? t("nota na conversa") : t("nota no negócio");
+    }
+    case "assign_lead_owner": {
+      const c = config as ConfigOf<"assign_lead_owner">;
+      return c.usuario_id ? t("troca o responsável do negócio") : t("sem responsável escolhido");
+    }
+    case "map_data": {
+      const c = config as ConfigOf<"map_data">;
+      return c.fields.length ? c.fields.map((f) => f.name).join(", ") : t("sem campos");
     }
     case "end": {
       const c = config as ConfigOf<"end">;

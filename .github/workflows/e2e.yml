@@ -1230,6 +1230,7 @@ jobs:
       # relatório sai inteiro. Quando uma delas passar a verde de forma estável, volte-a para a parte de origem.
       SPECS_PARTE_7: >-
         agenda-presenca-recuperacao.spec.ts
+        automacoes-blocos-de-integracao.spec.ts
         followup-builder.spec.ts
         followup-dossie.spec.ts
         followup-journey.spec.ts

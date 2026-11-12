@@ -46,6 +46,16 @@ describe('graph-schema', () => {
         // #2065 — dois tipos de ação que não falam com o cliente.
         'move_lead',
         'edit_lead_tag',
+        // Fase 4 — monta campos a partir das saídas anteriores.
+        'map_data',
+        'assign_lead_owner',
+        'add_note',
+        'update_lead_field',
+        'lead_product',
+        'http_request',
+        'find_or_create_contact',
+        'find_or_create_lead',
+        'ai_extract',
         'end',
       ]);
     });

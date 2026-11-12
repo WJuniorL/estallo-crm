@@ -26,7 +26,8 @@ export function DadosInspecionados({
   origem,
 }: {
   valor: unknown;
-  origem: "execucao" | "configuracao";
+  /** `exemplo`: amostra simulada do editor, nunca de execução. */
+  origem: "execucao" | "configuracao" | "exemplo";
 }) {
   const t = useT();
   const [visao, setVisao] = useState<Visao>("arvore");
@@ -47,8 +48,12 @@ export function DadosInspecionados({
   return (
     <div className="flex flex-col gap-1" data-testid="dados-inspecionados" data-origem={origem}>
       <div className="flex flex-wrap items-center gap-1.5">
-        <Badge variant={origem === "execucao" ? "success" : "neutral"}>
-          {origem === "execucao" ? t("Valor desta execução") : t("Configuração do bloco")}
+        <Badge variant={origem === "execucao" ? "success" : origem === "exemplo" ? "warning" : "neutral"}>
+          {origem === "execucao"
+            ? t("Valor desta execução")
+            : origem === "exemplo"
+              ? t("Exemplo simulado")
+              : t("Configuração do bloco")}
         </Badge>
         {tipoRaiz === "ausente" || tipoRaiz === "nulo" ? (
           <span className="text-[11px] text-text-muted" data-testid="dados-tipo-raiz">

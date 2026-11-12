@@ -142,3 +142,93 @@ describe("o motor entrega as saídas dos blocos ao texto (comSaidasDosBlocos)", 
     expect(await comSaidasDosBlocos({} as never, inscricao(1), null)).toBeNull();
   });
 });
+
+describe("Mapear dados — campos montados viram variáveis dos blocos seguintes (Fase 4)", () => {
+  const grafo = (campos: unknown[], texto: string) =>
+    flowGraphSchema.parse({
+      nodes: [
+        no("t", "trigger", {}),
+        no("tarefa", "internal_task", { titulo: "Ligar", vence_em_dias: 0, atribuir_a: "dono_do_lead", prioridade: "medium" }),
+        no("mapa", "map_data", { fields: campos }),
+        no("m1", "action", { mode: "text", body: texto }),
+        no("f", "end", { outcome: "converted" }),
+      ],
+      edges: [aresta("e1", "t", "tarefa"), aresta("e2", "tarefa", "mapa"), aresta("e3", "mapa", "m1"), aresta("e4", "m1", "f")],
+    });
+  const CAMPO = { name: "tarefa_id", value: "{{nodes.tarefa.task_id}}", type: "text" };
+
+  it("campo montado publica quando citado pelo nome; o valor dele cita bloco anterior", () => {
+    expect(validateFlowForPublish(grafo([CAMPO], "Tarefa {{nodes.mapa.fields.tarefa_id}}"), {})).toEqual({ ok: true });
+  });
+
+  it("citar um campo que o mapa não monta é recusado, listando os que existem", () => {
+    const r = validateFlowForPublish(grafo([CAMPO], "Tarefa {{nodes.mapa.fields.outro}}"), {});
+    expect(r).toMatchObject({ ok: false, errors: [{ code: "variavel_de_bloco_campo_inexistente", node_id: "m1" }] });
+    expect((r as { errors: Array<{ message: string }> }).errors[0]!.message).toContain("tarefa_id");
+  });
+
+  it("valor do mapa citando bloco que vem depois é recusado", () => {
+    const r = validateFlowForPublish(grafo([{ ...CAMPO, value: "{{nodes.m1.messages}}" }], "x"), {});
+    expect(r).toMatchObject({ ok: false, errors: [{ code: "variavel_de_bloco_nao_anterior", node_id: "mapa" }] });
+  });
+
+  it("mapa vazio, campo repetido ou sem valor não publicam", () => {
+    expect(validateFlowForPublish(grafo([], "x"), {})).toMatchObject({ ok: false, errors: [{ code: "mapa_sem_campos" }] });
+    expect(validateFlowForPublish(grafo([CAMPO, CAMPO], "x"), {})).toMatchObject({
+      ok: false,
+      errors: [{ code: "mapa_campo_repetido" }],
+    });
+    expect(validateFlowForPublish(grafo([{ ...CAMPO, value: " " }], "x"), {})).toMatchObject({
+      ok: false,
+      errors: [{ code: "mapa_campo_sem_valor" }],
+    });
+  });
+
+  it("renomear o BLOCO não quebra a referência (ela usa o id)", () => {
+    const g = grafo([CAMPO], "Tarefa {{nodes.mapa.fields.tarefa_id}}");
+    const renomeado = { ...g, nodes: g.nodes.map((n) => (n.id === "mapa" ? { ...n, label: "Outro nome" } : n)) };
+    expect(validateFlowForPublish(renomeado, {})).toEqual({ ok: true });
+  });
+});
+
+describe("prévia com amostra explícita (Fase 4)", () => {
+  it("execução real escolhida: usa as saídas dela, só dos blocos anteriores; passo falho não entra", async () => {
+    const { previaDoTexto, saidasDosPassos } = await import("./previa-do-texto");
+    const grafo = flowGraphSchema.parse({
+      nodes: [
+        no("t", "trigger", {}),
+        no("c", "condition", { combinator: "and", branching: "per_check", checks: [{ id: "a", field: "tag", op: "eq", value: "x" }] }),
+        no("m1", "action", { mode: "text", body: "x" }),
+        no("f", "end", { outcome: "converted" }),
+      ],
+      edges: [aresta("e1", "t", "c"), aresta("e2", "c", "m1"), aresta("e3", "m1", "f")],
+    });
+    const saidas = saidasDosPassos([
+      { node_id: "c", status: "succeeded", saida: { branch_id: "a" } },
+      { node_id: "m1", status: "failed", saida: { messages: [] } },
+      { node_id: "f", status: "succeeded", saida: { outcome: "converted" } },
+    ]);
+    expect(saidas).toEqual({ c: { branch_id: "a" }, f: { outcome: "converted" } });
+    expect(previaDoTexto("Ramo {{nodes.c.branch_id}}", grafo, "m1", saidas).texto).toBe("Ramo a");
+    // bloco FUTURO (f) nunca entra na prévia, mesmo presente na execução
+    expect(previaDoTexto("Fim {{nodes.f.outcome}}", grafo, "m1", saidas).sem_valor).toEqual(["{{nodes.f.outcome}}"]);
+    // sem amostra real, o exemplo simulado
+    expect(previaDoTexto("Ramo {{nodes.c.branch_id}}", grafo, "m1").texto).toBe("Ramo sim");
+  });
+});
+
+describe("dependentesDoNo — excluir mostra quem usa o bloco", () => {
+  it("lista os blocos cujos textos citam o bloco; ignora quem não cita", async () => {
+    const { dependentesDoNo } = await import("./variaveis-de-blocos");
+    const g = {
+      nodes: [
+        no("c", "condition", { combinator: "and", checks: [{ field: "tag", op: "eq", value: "x" }] }),
+        no("m1", "action", { mode: "text", body: "Ramo {{nodes.c.branch_id}}" }),
+        no("mapa", "map_data", { fields: [{ name: "x", value: "fixo", type: "text", fallback: "{{nodes.c.branch_id}}" }] }),
+        no("m2", "action", { mode: "text", body: "sem variável" }),
+      ],
+    } as never;
+    expect(dependentesDoNo(g, "c").map((n) => n.id)).toEqual(["m1", "mapa"]);
+    expect(dependentesDoNo(g, "m2")).toEqual([]);
+  });
+});

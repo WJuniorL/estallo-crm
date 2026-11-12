@@ -1031,3 +1031,15 @@ Pedido do dono: atualizar os testes vermelhos do `verify` que vinham da frente d
 **Aguardar até** (`wait` modo `until`, `lib/followup/espera-ate.ts`): hora (e data opcional) no fuso da organização (`organizations.timezone`, lido por `loadOrgTimezone` nos dois adaptadores); relógio de parede de `lib/tempo/inicio-do-dia.ts` (correto sob horário de verão). Só hora → próxima ocorrência. Data passada → segue para o próximo bloco. Data/hora inexistente → falha explicada. Em laço: só a versão sem data conta como espera que quebra ciclo. Invariante `automacoes-aguardar-ate`.
 
 **NÃO MEDIDO:** `i18n-espanhol-cobre-a-tela` estoura 15 s nesta máquina (passa no CI); cobertura das chaves conferida por script — nenhuma faltando.
+
+## 2026-11-12 (7) — Fase 5: condição ampliada, Atualizar campo do negócio, paleta
+
+**Feito:**
+- **Condição ampliada:** regra `field: "variavel"` com `source: {{nodes.<bloco>.<caminho>}}` no MESMO avaliador (`evaluateCheck`); operadores `exists`/`not_exists` (ausente, nulo, "" e [] não têm valor); ausência não prova negação; saídas congeladas no begin quando a condição lê variável. Vocabulário com frase para todo par (presença oferecida só no campo novo). Publicação exige o dado e valida bloco anterior/campo existente.
+- **Atualizar campo do negócio** (`update_lead_field`): campo personalizado do catálogo (`custom_field_definitions`, entity lead) convertido pelo tipo (`lib/followup/valor-do-campo.ts`, 11 tipos) ou valor do negócio em centavos. Valor com `{{nodes…}}` resolvido e convertido no begin; erro → falha explicada sem gravar. Mescla atômica na linha travada; atividade + auditoria uma vez.
+- **Paleta:** busca (mesmo `searchNodeTypes` do catálogo) e categorias em `<details>` nativos; descrição como dica.
+- **Coberto sem bloco novo:** «avisar responsável» = Criar tarefa com «dono do negócio» (já manda push). **Adiado:** «definir próxima ação» (é proposta do agente com aprovação humana — gravar ali atropela a aprovação).
+
+**CI:** PR #3 verde em `01251c948` (27 ok); em `0af96db91` só a fixture de `dependentesDoNo` falhou (corrigida em `043333f91`). Invariantes novos (`atribuir-responsavel`, `nota-interna`, `aguardar-ate`, `mapear-dados-no-diario`) passaram no CI.
+
+**Falta na Fase 5:** contato (buscar/criar/atualizar, remover tag); lead (buscar/criar, mover entre funis, produtos); extrair dados por IA; requisição HTTP (reusar proteções do `call_webhook`); inserção pelo ponto de conexão.

@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 
-import { Bell, Play, Clock, GitBranch, Brain, ChatCircle, ArrowsClockwise, PaperPlaneTilt, Flag, Question, PuzzlePiece, Funnel, Tag, ArrowsLeftRight, UserCircle, Note } from "@/lib/ui/icons";
+import { Bell, Play, Clock, GitBranch, Brain, ChatCircle, ArrowsClockwise, PaperPlaneTilt, Flag, Question, PuzzlePiece, Funnel, Tag, ArrowsLeftRight, UserCircle, Note, PencilSimple } from "@/lib/ui/icons";
 import type { FlowNode, NodeType } from "@/lib/followup/graph-schema";
 import { RESULTADOS_DO_FIM } from "@/lib/followup/vocabulario";
 import { NOS_DA_SUPERFICIE } from "@/lib/followup/validate-publish";
@@ -188,6 +188,15 @@ export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
     defaultLabel: "Gravar tag no lead",
     defaultConfig: () => ({ tags: [] }),
   },
+  update_lead_field: {
+    type: "update_lead_field",
+    paletteLabel: NODE_CATALOG.update_lead_field.label,
+    icon: PencilSimple,
+    chipClassName: "bg-accent-soft text-accent",
+    borderClassName: "border-l-accent-500",
+    defaultLabel: "Atualizar campo do negócio",
+    defaultConfig: () => ({ alvo: "custom_field", chave: "", valor: "" }),
+  },
   add_note: {
     type: "add_note",
     paletteLabel: NODE_CATALOG.add_note.label,
@@ -340,6 +349,11 @@ export function describeNodeConfig(
       const c = config as ConfigOf<"edit_lead_tag">;
       if (!c.tags.length) return t("sem tag escolhida");
       return c.destino === "contato" ? `${c.tags.join(", ")} (${t("no contato")})` : c.tags.join(", ");
+    }
+    case "update_lead_field": {
+      const c = config as ConfigOf<"update_lead_field">;
+      if (!c.valor.trim()) return t("sem valor");
+      return c.alvo === "deal_value" ? t("valor do negócio") : c.chave || t("sem campo escolhido");
     }
     case "add_note": {
       const c = config as ConfigOf<"add_note">;

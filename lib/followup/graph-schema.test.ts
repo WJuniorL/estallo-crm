@@ -50,6 +50,7 @@ describe('graph-schema', () => {
         'map_data',
         'assign_lead_owner',
         'add_note',
+        'update_lead_field',
         'end',
       ]);
     });

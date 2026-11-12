@@ -15,6 +15,7 @@ import { EditLeadTagNode } from "./EditLeadTagNode";
 import { MapDataNode } from "./MapDataNode";
 import { AssignLeadOwnerNode } from "./AssignLeadOwnerNode";
 import { AddNoteNode } from "./AddNoteNode";
+import { UpdateLeadFieldNode } from "./UpdateLeadFieldNode";
 import { SkillNode } from "./SkillNode";
 
 /** Os cartões de cada tipo de bloco — o MESMO conjunto no construtor e na inspeção de uma execução. */
@@ -41,6 +42,7 @@ export const nodeTypes: NodeTypes = {
   map_data: MapDataNode,
   assign_lead_owner: AssignLeadOwnerNode,
   add_note: AddNoteNode,
+  update_lead_field: UpdateLeadFieldNode,
   end: EndNode,
   collect: CollectNode,
   skill: SkillNode,

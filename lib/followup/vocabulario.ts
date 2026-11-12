@@ -600,6 +600,12 @@ export const DESTINOS_DA_TAG: Record<"card" | "contato", string> = {
   contato: "No contato",
 };
 
+/** O que o bloco Atualizar campo do negócio grava — rótulos do formulário. */
+export const ALVOS_DO_CAMPO_DO_NEGOCIO: Record<"custom_field" | "deal_value", string> = {
+  custom_field: "Campo personalizado",
+  deal_value: "Valor do negócio",
+};
+
 /** Onde o bloco Nota interna grava — rótulos do formulário. */
 export const DESTINOS_DA_NOTA: Record<"lead_timeline" | "conversation_notes", string> = {
   lead_timeline: "No negócio (linha do tempo)",

@@ -222,7 +222,7 @@ describe("dependentesDoNo — excluir mostra quem usa o bloco", () => {
     const { dependentesDoNo } = await import("./variaveis-de-blocos");
     const g = {
       nodes: [
-        no("c", "condition", {}),
+        no("c", "condition", { combinator: "and", checks: [{ field: "tag", op: "eq", value: "x" }] }),
         no("m1", "action", { mode: "text", body: "Ramo {{nodes.c.branch_id}}" }),
         no("mapa", "map_data", { fields: [{ name: "x", value: "fixo", type: "text", fallback: "{{nodes.c.branch_id}}" }] }),
         no("m2", "action", { mode: "text", body: "sem variável" }),

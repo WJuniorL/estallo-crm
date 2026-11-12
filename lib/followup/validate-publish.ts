@@ -67,6 +67,7 @@ export const PUBLISH_ERROR_CODES = [
   'mapa_sem_campos',
   'responsavel_ausente',
   'nota_sem_texto',
+  'campo_do_negocio_incompleto',
   'mapa_campo_repetido',
   'mapa_campo_sem_valor',
 ] as const;
@@ -964,6 +965,15 @@ export function validateFlowForPublish(
     if (node.type === 'move_lead') conferirEtapaDestino(node, contexto, errors);
     if (node.type === 'edit_lead_tag') conferirTags(node, errors);
     if (node.type === 'map_data') conferirMapa(node, errors);
+    if (
+      node.type === 'update_lead_field' &&
+      (!node.config.valor.trim() || (node.config.alvo === 'custom_field' && !node.config.chave.trim()))
+    )
+      errors.push({
+        node_id: node.id,
+        code: 'campo_do_negocio_incompleto',
+        message: `A caixa "${node.label}" precisa do campo e do valor a gravar.`,
+      });
     if (node.type === 'add_note' && !node.config.texto.trim())
       errors.push({
         node_id: node.id,

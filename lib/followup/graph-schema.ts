@@ -34,6 +34,8 @@ export const NODE_TYPES = [
   'assign_lead_owner',
   // Fase 5: nota interna no negócio (linha do tempo) ou na conversa (notas internas), no destino escolhido.
   'add_note',
+  // Fase 5: grava um campo personalizado do negócio (do catálogo) ou o valor do negócio.
+  'update_lead_field',
   'end',
 ] as const;
 export type NodeType = (typeof NODE_TYPES)[number];
@@ -434,6 +436,17 @@ export const addNoteConfigSchema = z.strictObject({
   texto: z.string().max(2000, 'Nota muito longa: máximo de 2000 caracteres.'),
 });
 
+/**
+ * Nó `update_lead_field` (Fase 5) — grava um campo personalizado do NEGÓCIO (chave do catálogo da organização,
+ * convertido pelo tipo da definição) ou o valor do negócio. O texto aceita `{{nodes.<bloco>.<campo>}}`.
+ * Sem chave (campo personalizado) ou sem valor é rascunho; o publish recusa (`campo_do_negocio_incompleto`).
+ */
+export const updateLeadFieldConfigSchema = z.strictObject({
+  alvo: z.enum(['custom_field', 'deal_value']),
+  chave: z.string().max(40),
+  valor: z.string().max(2000),
+});
+
 export const mapDataConfigSchema = z.strictObject({
   fields: z.array(mapDataFieldSchema).max(30, "No máximo 30 campos por bloco."),
 });
@@ -712,6 +725,17 @@ export const flowNodeSchema = z.discriminatedUnion('type', [
     }),
     config: editLeadTagConfigSchema,
   }),
+  // Fase 5: grava campo do negócio
+  z.strictObject({
+    id: z.string().min(1),
+    type: z.literal('update_lead_field'),
+    label: z.string().min(1).max(60),
+    position: z.strictObject({
+      x: z.number(),
+      y: z.number(),
+    }),
+    config: updateLeadFieldConfigSchema,
+  }),
   // Fase 5: nota interna no destino escolhido
   z.strictObject({
     id: z.string().min(1),
@@ -985,6 +1009,7 @@ export const NODES_WITH_ERROR_BRANCH: ReadonlySet<NodeType> = new Set<NodeType>(
   'map_data',
   'assign_lead_owner',
   'add_note',
+  'update_lead_field',
 ]);
 
 function errorBranch(): FlowBranch {

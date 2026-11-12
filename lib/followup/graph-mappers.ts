@@ -85,6 +85,8 @@ export function toFlowNode(n: RFNode): FlowNode {
       return { ...shared, type, config: n.data.config as ConfigOf<"move_lead"> };
     case "edit_lead_tag":
       return { ...shared, type, config: n.data.config as ConfigOf<"edit_lead_tag"> };
+    case "update_lead_field":
+      return { ...shared, type, config: n.data.config as ConfigOf<"update_lead_field"> };
     case "add_note":
       return { ...shared, type, config: n.data.config as ConfigOf<"add_note"> };
     case "assign_lead_owner":

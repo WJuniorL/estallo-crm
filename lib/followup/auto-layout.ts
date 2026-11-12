@@ -56,6 +56,7 @@ const TYPE_ORDER: Record<NodeType, number> = {
   map_data: 7.5,
   assign_lead_owner: 8.7,
   add_note: 8.8,
+  update_lead_field: 8.65,
   end: 9,
 };
 

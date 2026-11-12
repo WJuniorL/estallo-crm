@@ -143,6 +143,11 @@ export interface ExecutionJournal {
     scope: EnrollmentRow,
     handle: ExecutionAttemptHandle,
   ): Promise<{ output: NodeOutput<"edit_lead_tag">; reused: boolean }>;
+  /** Fase 5 — grava campo personalizado (do catálogo) ou valor do negócio, na transação do avanço. */
+  completeField(
+    scope: EnrollmentRow,
+    handle: ExecutionAttemptHandle,
+  ): Promise<{ output: NodeOutput<"update_lead_field">; reused: boolean }>;
   /** Fase 5 — nota interna no destino escolhido (negócio ou conversa), na transação do avanço. */
   completeNote(
     scope: EnrollmentRow,

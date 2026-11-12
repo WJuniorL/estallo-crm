@@ -26,6 +26,7 @@ export const NODES_INTEGRATED_IN_EXECUTION_CONTRACT: ReadonlySet<string> = new S
   "map_data",
   "assign_lead_owner",
   "add_note",
+  "update_lead_field",
 ]);
 
 export function executionContractProblem(

@@ -88,6 +88,13 @@ export const NODE_OUTPUT_CONTRACTS = {
     added_tags: z.array(z.string().min(1)),
     tags: z.array(z.string().min(1)),
   }),
+  update_lead_field: z.strictObject({
+    lead_id: id,
+    alvo: z.enum(["custom_field", "deal_value"]),
+    chave: z.string().nullable(),
+    valor: z.json(),
+    valor_anterior: z.json(),
+  }),
   add_note: z.strictObject({
     destino: z.enum(["lead_timeline", "conversation_notes"]),
     note_id: id,

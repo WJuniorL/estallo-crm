@@ -1265,6 +1265,13 @@ export function processNode(input: {
       return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
     }
 
+    case "update_lead_field": {
+      // Fase 5 — passagem: quem grava o campo é o diário (`completeField`), na transação do avanço.
+      const edge = selectEdge(edges, node.id, { type: "always" });
+      if (!edge) return { kind: "fail", error: `update_lead_field node "${node.id}" has no outbound edge` };
+      return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
+    }
+
     case "add_note": {
       // Fase 5 — passagem: quem grava a nota é o diário (`completeNote`), na transação do avanço.
       const edge = selectEdge(edges, node.id, { type: "always" });

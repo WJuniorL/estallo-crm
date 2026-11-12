@@ -1102,7 +1102,8 @@ async function processEnrollment(
       node.type === "edit_lead_tag" ||
       node.type === "move_lead" ||
       node.type === "assign_lead_owner" ||
-      node.type === "add_note")
+      node.type === "add_note" ||
+      node.type === "update_lead_field")
   ) {
     if (!db.executionJournal) throw new Error("execution_journal_unavailable");
     const journal = await db.executionJournal();
@@ -1133,6 +1134,9 @@ async function processEnrollment(
       } else if (node.type === "add_note") {
         const result = await journal.completeNote(enrollment, handle);
         if (!result.reused) summary.advanced++;
+      } else if (node.type === "update_lead_field") {
+        const result = await journal.completeField(enrollment, handle);
+        if (!result.reused) summary.advanced++;
       } else {
         const result = await journal.completeMove(enrollment, handle);
         if (!result.reused) summary.advanced++;
@@ -1147,7 +1151,9 @@ async function processEnrollment(
         summary,
         node.type === "internal_task"
           ? "task"
-          : node.type === "edit_lead_tag" || node.type === "assign_lead_owner" || node.type === "add_note"
+          : node.type === "edit_lead_tag" || node.type === "assign_lead_owner" ||
+            node.type === "add_note" ||
+            node.type === "update_lead_field"
             ? "tags"
             : "move",
       );

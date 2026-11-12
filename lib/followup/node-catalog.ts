@@ -126,6 +126,14 @@ const NODE_DEFINITIONS = {
     surfaces: CLOCK_SURFACES,
     effect: "crm",
   },
+  update_lead_field: {
+    label: "Atualizar campo do negócio",
+    description: "Grava um campo personalizado ou o valor do negócio.",
+    category: "leads",
+    keywords: ["campo personalizado", "valor", "atualizar", "editar negócio", "preço"],
+    surfaces: CLOCK_SURFACES,
+    effect: "crm",
+  },
   add_note: {
     label: "Nota interna",
     description: "Registra uma nota interna no negócio ou na conversa.",
@@ -185,6 +193,7 @@ export const NODE_CATALOG = {
   map_data: withOutputContract("map_data"),
   assign_lead_owner: withOutputContract("assign_lead_owner"),
   add_note: withOutputContract("add_note"),
+  update_lead_field: withOutputContract("update_lead_field"),
   end: withOutputContract("end"),
 } as const;
 

@@ -50,6 +50,7 @@ import {
 } from "./node-handlers";
 import { NODE_OUTPUT_CONTRACTS } from "./node-output-contracts";
 import { MARCA_DE_BLOCO, resolverReferencias } from "./variaveis-de-blocos";
+import { centavosDoValor, converterValorDoCampo } from "./valor-do-campo";
 import {
   avisoDeRecuperacaoEsgotada,
   SQL_AVISO_RECUPERACAO_ESGOTADA,
@@ -124,6 +125,14 @@ const tagReadsSchema = z.object({
   previous_tags: z.array(z.string()),
   // Registros anteriores ao destino "contato" não têm a chave: valem como "card".
   destino: z.enum(["card", "contato"]).default("card"),
+});
+
+const fieldReadsSchema = z.object({
+  alvo: z.enum(["custom_field", "deal_value"]),
+  chave: z.string().nullable(),
+  /** Valor já convertido pelo tipo do campo (ou centavos do valor do negócio); `null` quando falhou (ver `erro`). */
+  valor: z.json().nullable(),
+  erro: z.string().nullable(),
 });
 
 const noteReadsSchema = z.object({
@@ -379,6 +388,49 @@ export class PgExecutionJournal implements ExecutionJournal {
     const saidas: Record<string, unknown> = {};
     for (const r of rows) if (r.output_snapshot !== null && r.output_snapshot !== undefined) saidas[r.node_id] = r.output_snapshot;
     return saidas;
+  }
+
+  /** O valor do campo resolvido e CONVERTIDO pelo tipo do catálogo, congelado: a nova tentativa grava o mesmo. */
+  private async fieldInput(
+    client: pg.PoolClient,
+    row: LockedExecution,
+    node: Extract<FlowNode, { type: "update_lead_field" }>,
+    requested: unknown,
+  ) {
+    const cita = new RegExp(MARCA_DE_BLOCO.source).test(node.config.valor);
+    const r = cita
+      ? resolverReferencias(node.config.valor, await this.saidasDaExecucao(client, row))
+      : { texto: node.config.valor, sem_valor: [] };
+    const base = { alvo: node.config.alvo, chave: node.config.alvo === "custom_field" ? node.config.chave : null };
+    if (r.sem_valor.length > 0)
+      return {
+        requested,
+        resolved: {
+          ...base,
+          valor: null,
+          erro: `O valor cita ${[...new Set(r.sem_valor.map((x) => x.marca))].join(", ")}, mas o bloco citado não produziu esse valor nesta execução.`,
+        },
+      };
+    if (node.config.alvo === "deal_value") {
+      const centavos = centavosDoValor(r.texto);
+      return {
+        requested,
+        resolved: { ...base, valor: centavos, erro: centavos === null ? `«${r.texto}» não é um valor em reais.` : null },
+      };
+    }
+    const def = (
+      await client.query<{ key: string; label: string; type: string; options: Array<{ value: string; label: string }> }>(
+        "select key,label,type,options from custom_field_definitions where organization_id=$1 and entity='lead' and key=$2",
+        [row.organization_id, node.config.chave],
+      )
+    ).rows[0];
+    if (!def)
+      return {
+        requested,
+        resolved: { ...base, valor: null, erro: `O campo «${node.config.chave}» não existe mais no cadastro de campos do negócio.` },
+      };
+    const c = converterValorDoCampo(def as Parameters<typeof converterValorDoCampo>[0], r.texto);
+    return { requested, resolved: { ...base, valor: c.ok ? c.valor : null, erro: c.ok ? null : c.motivo } };
   }
 
   /** O texto da nota com as saídas anteriores resolvidas, congelado: a nova tentativa grava o MESMO texto. */
@@ -866,7 +918,9 @@ export class PgExecutionJournal implements ExecutionJournal {
                   ? await this.ownerInput(client, row, snapshot)
                   : node.type === "add_note"
                     ? await this.noteInput(client, row, node, snapshot)
-                    : snapshot;
+                    : node.type === "update_lead_field"
+                      ? await this.fieldInput(client, row, node, snapshot)
+                      : snapshot;
       const { rows } = await client.query<{ id: string }>(
         `insert into followup_execution_attempts
           (organization_id,step_id,attempt_no,status,input_snapshot,config_snapshot,lease_revision,lease_until,next_eval_at)
@@ -1148,6 +1202,93 @@ export class PgExecutionJournal implements ExecutionJournal {
         });
       }
       await this.confirmLocalEffect(client, row, handle, "add_tag", output);
+      return { output, reused: false };
+    });
+  }
+
+  async completeField(scope: EnrollmentRow, handle: ExecutionAttemptHandle) {
+    this.assertHandle(scope, handle);
+    return this.transaction(async (client) => {
+      await this.lockContact(client, scope);
+      const receipt = await this.confirmedEffect(
+        client,
+        scope,
+        handle,
+        "update_lead_field",
+        NODE_OUTPUT_CONTRACTS.update_lead_field,
+      );
+      if (receipt) return { output: receipt, reused: true };
+      const { row, node } = await this.current(client, scope);
+      if (node.type !== "update_lead_field") throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
+      const held = await this.holdAttempt(client, row, handle);
+      if (!row.lead_id) throw new ExecutionTaskConfigurationError("execution_lead_required");
+      const reads = z.object({ resolved: fieldReadsSchema }).parse(held.input_snapshot).resolved;
+      if (reads.erro || reads.valor === null)
+        throw new ExecutionTaskConfigurationError("campo_do_negocio_invalido", reads.erro ?? "O valor ficou vazio.");
+      const lead = (
+        await client.query<{ id: string; custom_fields: Record<string, unknown> | null; value_cents: number | null }>(
+          "select id,custom_fields,value_cents from crm_leads where organization_id=$1 and contact_id=$2 and id=$3 for update",
+          [row.organization_id, row.contact_id, row.lead_id],
+        )
+      ).rows[0];
+      if (!lead) throw new ExecutionLeadUnavailableError();
+      const anterior =
+        reads.alvo === "deal_value" ? (lead.value_cents ?? null) : ((lead.custom_fields ?? {})[reads.chave!] ?? null);
+      if (reads.alvo === "deal_value") {
+        await client.query(
+          "update crm_leads set value_cents=$4,updated_at=clock_timestamp() where organization_id=$1 and contact_id=$2 and id=$3",
+          [row.organization_id, row.contact_id, lead.id, reads.valor],
+        );
+      } else {
+        // Mescla atômica na linha travada: só a chave do bloco muda; as outras ficam como estão.
+        await client.query(
+          `update crm_leads set custom_fields=coalesce(custom_fields,'{}'::jsonb) || jsonb_build_object($4::text, $5::jsonb),
+             updated_at=clock_timestamp() where organization_id=$1 and contact_id=$2 and id=$3`,
+          [row.organization_id, row.contact_id, lead.id, reads.chave, JSON.stringify(reads.valor)],
+        );
+      }
+      const campo = reads.alvo === "deal_value" ? "value_cents" : `custom_fields.${reads.chave}`;
+      const activity = buildLeadActivityRow({
+        organizationId: row.organization_id,
+        leadId: lead.id,
+        contactId: row.contact_id,
+        type: "lead_edited",
+        sourceModule: "crm",
+        sourceId: lead.id,
+        actor: { type: "webhook_source", id: `followup:${row.id}` },
+        reason: reads.alvo === "deal_value" ? "Atualizou o valor do negócio" : "Atualizou um campo do negócio",
+        payload: { fields: [campo] },
+      });
+      await client.query(
+        `insert into crm_lead_activities
+        (organization_id,lead_id,contact_id,type,source_module,source_id,actor_kind,performed_by_user_id,reason,payload)
+        values($1,$2,$3,$4,$5,$6,$7,null,$8,$9)`,
+        [
+          activity.organization_id,
+          activity.lead_id,
+          activity.contact_id,
+          activity.type,
+          activity.source_module,
+          activity.source_id,
+          activity.actor_kind,
+          activity.reason,
+          activity.payload,
+        ],
+      );
+      await this.auditEffect(client, row.organization_id, "lead.updated", "crm_lead", lead.id, {
+        fields: [campo],
+        origem: `followup:${row.id}`,
+        execution_step_id: handle.step_id,
+        execution_attempt_id: handle.attempt_id,
+      });
+      const output = NODE_OUTPUT_CONTRACTS.update_lead_field.parse({
+        lead_id: lead.id,
+        alvo: reads.alvo,
+        chave: reads.chave,
+        valor: reads.valor,
+        valor_anterior: anterior as never,
+      });
+      await this.confirmLocalEffect(client, row, handle, "update_lead_field", output);
       return { output, reused: false };
     });
   }

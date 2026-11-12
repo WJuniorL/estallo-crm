@@ -32,6 +32,12 @@ export function extrairReferencias(texto: string): ReferenciaDeBloco[] {
 
 /** Os textos de um bloco em que a pessoa pode usar variáveis (corpo do texto fixo, textos e legendas do bloco de mensagens). */
 export function textosDoBloco(no: FlowNode): string[] {
+  // «Aplicar em» cita um bloco anterior como qualquer texto: entra na conferência de ancestral e de dependentes.
+  const alvo = "aplicar_em" in no.config && typeof no.config.aplicar_em === "string" && no.config.aplicar_em ? [no.config.aplicar_em] : [];
+  return [...alvo, ...textosProprios(no)];
+}
+
+function textosProprios(no: FlowNode): string[] {
   // Mapear dados: valor e valor padrão de cada campo citam blocos anteriores pela mesma marca.
   if (no.type === "map_data") return no.config.fields.flatMap((f) => (f.fallback ? [f.value, f.fallback] : [f.value]));
   // Criar tarefa: o título pode citar a saída de um bloco anterior (ex.: um campo do Mapear dados).
@@ -39,6 +45,8 @@ export function textosDoBloco(no: FlowNode): string[] {
   if (no.type === "add_note") return [no.config.texto];
   if (no.type === "update_lead_field") return [no.config.valor];
   if (no.type === "http_request") return [no.config.caminho, no.config.corpo];
+  if (no.type === "find_or_create_contact") return [no.config.valor, no.config.nome];
+  if (no.type === "find_or_create_lead") return [no.config.contato, no.config.titulo];
   if (no.type === "condition") return no.config.checks.flatMap((c) => (c.field === "variavel" && c.source ? [c.source] : []));
   if (no.type !== "action") return [];
   if (no.config.mode === "text") return [no.config.body];
@@ -98,6 +106,17 @@ export const CAMPOS_DE_SAIDA: Partial<Record<FlowNode["type"], Array<{ caminho: 
   add_note: [{ caminho: "note_id", rotulo: "Id da nota" }],
   update_lead_field: [{ caminho: "valor", rotulo: "Valor gravado" }],
   lead_product: [{ caminho: "item_id", rotulo: "Id do item criado" }],
+  find_or_create_contact: [
+    { caminho: "contact_id", rotulo: "Id do contato" },
+    { caminho: "encontrado", rotulo: "Contato já existia" },
+    { caminho: "criado", rotulo: "Contato foi criado" },
+  ],
+  find_or_create_lead: [
+    { caminho: "lead_id", rotulo: "Id do negócio" },
+    { caminho: "contact_id", rotulo: "Id do contato do negócio" },
+    { caminho: "encontrado", rotulo: "Negócio já existia" },
+    { caminho: "criado", rotulo: "Negócio foi criado" },
+  ],
   http_request: [
     { caminho: "status", rotulo: "Status da resposta" },
     { caminho: "corpo", rotulo: "Corpo da resposta" },

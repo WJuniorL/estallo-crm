@@ -594,6 +594,12 @@ export const PRIORIDADES_DA_TAREFA: Record<PrioridadeDaTarefa, string> = {
 
 // ─── destino da tag (nó edit_lead_tag) ───────────────────────────────────
 
+/** Por onde o bloco Buscar ou criar contato procura. */
+export const BUSCAS_DO_CONTATO: Record<"phone" | "email", string> = {
+  phone: "Telefone",
+  email: "E-mail",
+};
+
 /** Métodos do bloco Requisição HTTP — o nome do método é o que o sistema externo documenta; o rótulo diz o uso. */
 export const METODOS_HTTP_ROTULOS: Record<"GET" | "POST" | "PUT" | "PATCH" | "DELETE", string> = {
   GET: "GET — consultar",

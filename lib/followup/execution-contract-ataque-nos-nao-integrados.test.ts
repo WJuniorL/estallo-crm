@@ -98,6 +98,20 @@ const NOS: Record<string, FlowGraph["nodes"][number]> = {
     position: pos,
     config: { acao: "add", product_id: "00000000-0000-4000-8000-000000000003", quantidade: 1 },
   },
+  find_or_create_contact: {
+    id: "n",
+    type: "find_or_create_contact",
+    label: "fc",
+    position: pos,
+    config: { busca: "phone", valor: "+5511999990000", criar: true, nome: "" },
+  },
+  find_or_create_lead: {
+    id: "n",
+    type: "find_or_create_lead",
+    label: "fl",
+    position: pos,
+    config: { contato: "", pipeline_id: "00000000-0000-4000-8000-000000000005", stage_id: "00000000-0000-4000-8000-000000000006", titulo: "Novo", criar: true },
+  },
   http_request: {
     id: "n",
     type: "http_request",
@@ -156,6 +170,8 @@ const INTEGRADOS_PELO_ENGINE = new Set([
   "update_lead_field",
   "lead_product",
   "http_request",
+  "find_or_create_contact",
+  "find_or_create_lead",
 ]);
 
 const grafoCom = (node: FlowGraph["nodes"][number], extra: FlowGraph["nodes"] = []): FlowGraph => ({

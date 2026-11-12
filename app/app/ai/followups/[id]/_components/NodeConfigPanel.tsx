@@ -27,6 +27,10 @@ import { AddNoteForm } from "./forms/AddNoteForm";
 import { UpdateLeadFieldForm } from "./forms/UpdateLeadFieldForm";
 import { LeadProductForm } from "./forms/LeadProductForm";
 import { HttpRequestForm } from "./forms/HttpRequestForm";
+import { FindOrCreateContactForm } from "./forms/FindOrCreateContactForm";
+import { FindOrCreateLeadForm } from "./forms/FindOrCreateLeadForm";
+import { AlvoDoBloco } from "./VariaveisDoFluxo";
+import { NODES_COM_APLICAR_EM } from "@/lib/followup/graph-schema";
 import { RepeatForm } from "./forms/RepeatForm";
 import { SkillForm } from "./forms/SkillForm";
 import { WaitForm } from "./forms/WaitForm";
@@ -180,6 +184,15 @@ export function NodeConfigPanel({
             onChange={(config) => onChange({ config })}
           />
         )}
+        {type === "find_or_create_contact" && (
+          <FindOrCreateContactForm
+            config={node.data.config as ConfigOf<"find_or_create_contact">}
+            onChange={(config) => onChange({ config })}
+          />
+        )}
+        {type === "find_or_create_lead" && (
+          <FindOrCreateLeadForm config={node.data.config as ConfigOf<"find_or_create_lead">} onChange={(config) => onChange({ config })} />
+        )}
         {type === "http_request" && (
           <HttpRequestForm config={node.data.config as ConfigOf<"http_request">} onChange={(config) => onChange({ config })} />
         )}
@@ -211,6 +224,19 @@ export function NodeConfigPanel({
             surface={surface}
             {...(flowId !== undefined ? { flowId } : {})}
           />
+        )}
+        {NODES_COM_APLICAR_EM.has(type) && (
+          <div className="space-y-1">
+            <Label htmlFor="aplicar-em">{t("Aplicar em")}</Label>
+            <AlvoDoBloco
+              id="aplicar-em"
+              valor={(node.data.config as { aplicar_em?: string }).aplicar_em ?? ""}
+              onChange={(aplicar_em) => {
+                const { aplicar_em: _antigo, ...resto } = node.data.config as { aplicar_em?: string };
+                onChange({ config: (aplicar_em ? { ...resto, aplicar_em } : resto) as typeof node.data.config });
+              }}
+            />
+          </div>
         )}
         <SaidaDoBloco no={toFlowNode(node)} />
       </div>

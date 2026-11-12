@@ -18,6 +18,8 @@ import { AddNoteNode } from "./AddNoteNode";
 import { UpdateLeadFieldNode } from "./UpdateLeadFieldNode";
 import { LeadProductNode } from "./LeadProductNode";
 import { HttpRequestNode } from "./HttpRequestNode";
+import { FindOrCreateContactNode } from "./FindOrCreateContactNode";
+import { FindOrCreateLeadNode } from "./FindOrCreateLeadNode";
 import { SkillNode } from "./SkillNode";
 
 /** Os cartões de cada tipo de bloco — o MESMO conjunto no construtor e na inspeção de uma execução. */
@@ -47,6 +49,8 @@ export const nodeTypes: NodeTypes = {
   update_lead_field: UpdateLeadFieldNode,
   lead_product: LeadProductNode,
   http_request: HttpRequestNode,
+  find_or_create_contact: FindOrCreateContactNode,
+  find_or_create_lead: FindOrCreateLeadNode,
   end: EndNode,
   collect: CollectNode,
   skill: SkillNode,

@@ -145,6 +145,8 @@ const TIPO_DO_NO: Record<FlowNode["type"], string> = {
   update_lead_field: "Atualizar campo do negócio",
   lead_product: "Produto do negócio",
   http_request: "Requisição HTTP",
+  find_or_create_contact: "Buscar ou criar contato",
+  find_or_create_lead: "Buscar ou criar negócio",
   end: "Fim",
 };
 
@@ -229,6 +231,16 @@ export function resumoDoNo(node: FlowNode): NoDoDossie {
             ? `remove a(s) tag(s) ${node.config.tags.join(", ")} — sem mensagem ao cliente`
             : `grava a(s) tag(s) ${node.config.tags.join(", ")} no lead — sem mensagem ao cliente`
           : "grava tag no lead, ainda sem destino escolhido — sem mensagem ao cliente",
+      };
+    case "find_or_create_contact":
+      return {
+        ...base,
+        resumo: `procura um contato pelo ${node.config.busca === "email" ? "e-mail" : "telefone"}${node.config.criar ? " e cria se não achar" : ""} — sem mensagem ao cliente`,
+      };
+    case "find_or_create_lead":
+      return {
+        ...base,
+        resumo: `procura o negócio aberto do contato no funil escolhido${node.config.criar ? " e cria se não achar" : ""} — sem mensagem ao cliente`,
       };
     case "http_request":
       return {

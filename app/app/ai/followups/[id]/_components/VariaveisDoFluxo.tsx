@@ -194,3 +194,51 @@ function CorpoDaPrevia({ texto, saidasReais }: { texto: string; saidasReais?: Re
     </div>
   );
 }
+
+/**
+ * «Aplicar em» (Fase 5): o negócio ou o contato que um Buscar ou criar ANTERIOR entregou. Só oferece blocos que vêm
+ * antes no caminho (a publicação recusa o resto). `so="contato"` para quem precisa de um contato.
+ */
+export function AlvoDoBloco({
+  valor,
+  onChange,
+  so,
+  id,
+}: {
+  valor: string;
+  onChange: (marca: string) => void;
+  so?: "contato";
+  id: string;
+}) {
+  const t = useT();
+  const { grafo, noId } = useContext(Contexto);
+  const opcoes = useMemo(() => {
+    if (!grafo || !noId) return [];
+    const antes = ancestrais(grafo, noId);
+    return grafo.nodes
+      .filter((n) => antes.has(n.id) && (n.type === "find_or_create_lead" || n.type === "find_or_create_contact"))
+      .flatMap((n) => [
+        ...(n.type === "find_or_create_lead" && so !== "contato"
+          ? [{ marca: `{{nodes.${n.id}.lead_id}}`, rotulo: n.label, negocio: true }]
+          : []),
+        { marca: `{{nodes.${n.id}.contact_id}}`, rotulo: n.label, negocio: false },
+      ]);
+  }, [grafo, noId, so]);
+  return (
+    <Select value={valor || "__execucao"} onValueChange={(v) => onChange(v === "__execucao" ? "" : v)}>
+      <SelectTrigger id={id}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="__execucao">
+          {so === "contato" ? t("O contato desta execução") : t("O negócio e o contato desta execução")}
+        </SelectItem>
+        {opcoes.map((o) => (
+          <SelectItem key={o.marca} value={o.marca}>
+            {o.negocio ? t("Negócio de") : t("Contato de")} «{o.rotulo}»
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}

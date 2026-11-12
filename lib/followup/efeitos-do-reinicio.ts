@@ -17,6 +17,8 @@ export const TIPOS_COM_EFEITO = new Set([
   "update_lead_field", // grava campo do negócio
   "lead_product", // acrescenta ou tira produto do negócio
   "http_request", // chama um sistema externo
+  "find_or_create_contact", // pode criar contato
+  "find_or_create_lead", // pode criar negócio
 ]);
 
 export interface BlocoComEfeito {

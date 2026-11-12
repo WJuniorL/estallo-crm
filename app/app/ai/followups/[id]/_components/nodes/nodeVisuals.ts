@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 
-import { Bell, Play, Clock, GitBranch, Brain, ChatCircle, ArrowsClockwise, PaperPlaneTilt, Flag, Question, PuzzlePiece, Funnel, Tag, ArrowsLeftRight, UserCircle, Note, PencilSimple, Package, Globe } from "@/lib/ui/icons";
+import { Bell, Play, Clock, GitBranch, Brain, ChatCircle, ArrowsClockwise, PaperPlaneTilt, Flag, Question, PuzzlePiece, Funnel, Tag, ArrowsLeftRight, UserCircle, Note, PencilSimple, Package, Globe, IdentificationCard, Target } from "@/lib/ui/icons";
 import type { FlowNode, NodeType } from "@/lib/followup/graph-schema";
 import { RESULTADOS_DO_FIM } from "@/lib/followup/vocabulario";
 import { NOS_DA_SUPERFICIE } from "@/lib/followup/validate-publish";
@@ -197,6 +197,24 @@ export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
     defaultLabel: "Produto do negócio",
     defaultConfig: () => ({ acao: "add", product_id: "", quantidade: 1 }),
   },
+  find_or_create_contact: {
+    type: "find_or_create_contact",
+    paletteLabel: NODE_CATALOG.find_or_create_contact.label,
+    icon: IdentificationCard,
+    chipClassName: "bg-accent-soft text-accent",
+    borderClassName: "border-l-accent-500",
+    defaultLabel: "Buscar ou criar contato",
+    defaultConfig: () => ({ busca: "phone", valor: "", criar: true, nome: "" }),
+  },
+  find_or_create_lead: {
+    type: "find_or_create_lead",
+    paletteLabel: NODE_CATALOG.find_or_create_lead.label,
+    icon: Target,
+    chipClassName: "bg-accent-soft text-accent",
+    borderClassName: "border-l-accent-500",
+    defaultLabel: "Buscar ou criar negócio",
+    defaultConfig: () => ({ contato: "", pipeline_id: "", stage_id: "", titulo: "", criar: true }),
+  },
   http_request: {
     type: "http_request",
     paletteLabel: NODE_CATALOG.http_request.label,
@@ -368,6 +386,16 @@ export function describeNodeConfig(
       if (!c.tags.length) return t("sem tag escolhida");
       const lista = c.acao === "remove" ? `− ${c.tags.join(", ")}` : c.tags.join(", ");
       return c.destino === "contato" ? `${lista} (${t("no contato")})` : lista;
+    }
+    case "find_or_create_contact": {
+      const c = config as ConfigOf<"find_or_create_contact">;
+      if (!c.valor.trim()) return t("sem valor para procurar");
+      return c.criar ? t("procura e cria se não achar") : t("só procura");
+    }
+    case "find_or_create_lead": {
+      const c = config as ConfigOf<"find_or_create_lead">;
+      if (!c.pipeline_id) return t("sem funil escolhido");
+      return c.criar ? t("procura e cria se não achar") : t("só procura");
     }
     case "http_request": {
       const c = config as ConfigOf<"http_request">;

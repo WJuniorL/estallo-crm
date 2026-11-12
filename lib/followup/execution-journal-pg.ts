@@ -53,6 +53,8 @@ import { MARCA_DE_BLOCO, resolverReferencias } from "./variaveis-de-blocos";
 import { SQL_SAIDAS_DA_EXECUCAO } from "./sql-saidas-da-execucao";
 import { centavosDoValor, converterValorDoCampo } from "./valor-do-campo";
 import { corpoDaRequisicao, urlDaRequisicao, type PedidoHttp } from "./requisicao-http";
+import { canonicalPhoneBR, phoneLookupVariants } from "@/lib/channels/phone-variants";
+import { validaCamposExigidos } from "@/lib/leads/campos-exigidos";
 import {
   avisoDeRecuperacaoEsgotada,
   SQL_AVISO_RECUPERACAO_ESGOTADA,
@@ -121,6 +123,23 @@ function taskRequest(
     origem: `followup:${row.id}`,
   };
 }
+
+const contactLookupReadsSchema = z.object({
+  busca: z.enum(["phone", "email"]),
+  valor: z.string().nullable(),
+  nome: z.string().nullable(),
+  criar: z.boolean(),
+  erro: z.string().nullable(),
+});
+
+const leadLookupReadsSchema = z.object({
+  contact_id: z.string().nullable(),
+  pipeline_id: z.string(),
+  stage_id: z.string(),
+  titulo: z.string().nullable(),
+  criar: z.boolean(),
+  erro: z.string().nullable(),
+});
 
 const httpReadsSchema = z.object({
   connection_id: z.string(),
@@ -333,6 +352,94 @@ export class PgExecutionJournal implements ExecutionJournal {
     const node = graph.nodes.find((candidate) => candidate.id === row.current_node_id);
     if (!node) throw new Error("node_not_found");
     return { row, node };
+  }
+
+  /** `current` com «Aplicar em» resolvido — só nos blocos de efeito que o aceitam; o `fail` usa o `current` puro. */
+  private async currentComAlvo(client: pg.PoolClient, scope: EnrollmentRow): Promise<{ row: LockedExecution; node: FlowNode }> {
+    const { row, node } = await this.current(client, scope);
+    return { row: await this.aplicarAlvo(client, row, node), node };
+  }
+
+  /**
+   * «Aplicar em» (Fase 5): o bloco mira o negócio ou o contato que um Buscar ou criar ANTERIOR entregou, em vez do da
+   * execução. O id vem das saídas congeladas desta execução e é conferido na organização — nunca do corpo de pedido.
+   * Negócio → ele e o seu contato; contato → só o contato (blocos de negócio falham explicados). A conversa da execução
+   * não é a do alvo: deixa de valer (nota na conversa falha explicada em vez de cair na conversa errada).
+   */
+  private async aplicarAlvo(client: pg.PoolClient, row: LockedExecution, node: FlowNode): Promise<LockedExecution> {
+    const marca = "aplicar_em" in node.config && typeof node.config.aplicar_em === "string" ? node.config.aplicar_em.trim() : "";
+    if (!marca) return row;
+    const r = resolverReferencias(marca, await this.saidasDaExecucao(client, row));
+    const id = r.texto.trim();
+    if (r.sem_valor.length > 0 || !z.uuid().safeParse(id).success)
+      throw new ExecutionTaskConfigurationError(
+        "aplicar_em_sem_valor",
+        `«Aplicar em» cita ${marca}, mas o bloco citado não entregou um negócio ou contato nesta execução.`,
+      );
+    const lead = (
+      await client.query<{ id: string; contact_id: string | null }>(
+        "select id,contact_id from crm_leads where organization_id=$1 and id=$2",
+        [row.organization_id, id],
+      )
+    ).rows[0];
+    if (lead && !lead.contact_id)
+      throw new ExecutionTaskConfigurationError("aplicar_em_sem_contato", "O negócio de «Aplicar em» não tem contato vinculado.");
+    const contactId = lead ? lead.contact_id! : id;
+    const contato = (
+      await client.query<{ is_anonymized: boolean; kind: string | null }>(
+        "select is_anonymized,kind from contacts where organization_id=$1 and id=$2 and is_merged_into is null",
+        [row.organization_id, contactId],
+      )
+    ).rows[0];
+    if (!contato)
+      throw new ExecutionTaskConfigurationError("aplicar_em_inexistente", "O negócio ou contato de «Aplicar em» não existe nesta organização.");
+    if (contato.is_anonymized || contato.kind === "whatsapp_group")
+      throw new ExecutionTaskConfigurationError("aplicar_em_indisponivel", "O contato de «Aplicar em» foi anonimizado ou é um grupo.");
+    return { ...row, contact_id: contactId, lead_id: lead ? lead.id : null, conversation_id: null };
+  }
+
+  /** Buscar ou criar contato: o valor procurado e o nome, resolvidos e congelados. */
+  private async contactLookupInput(
+    client: pg.PoolClient,
+    row: LockedExecution,
+    node: Extract<FlowNode, { type: "find_or_create_contact" }>,
+    requested: unknown,
+  ) {
+    const saidas = await this.saidasDaExecucao(client, row);
+    const valor = resolverReferencias(node.config.valor, saidas);
+    const nome = resolverReferencias(node.config.nome, saidas);
+    return {
+      requested,
+      resolved: {
+        busca: node.config.busca,
+        valor: valor.sem_valor.length ? null : valor.texto.trim(),
+        nome: nome.texto.trim() || null,
+        criar: node.config.criar,
+        erro: valor.sem_valor.length
+          ? `A busca cita ${[...new Set(valor.sem_valor.map((x) => x.marca))].join(", ")}, mas o bloco citado não produziu esse valor nesta execução.`
+          : null,
+      },
+    };
+  }
+
+  /** Buscar ou criar negócio: o contato (o da execução ou o de um bloco anterior) e o título, resolvidos e congelados. */
+  private async leadLookupInput(
+    client: pg.PoolClient,
+    row: LockedExecution,
+    node: Extract<FlowNode, { type: "find_or_create_lead" }>,
+    requested: unknown,
+  ) {
+    const saidas = await this.saidasDaExecucao(client, row);
+    const base = { pipeline_id: node.config.pipeline_id, stage_id: node.config.stage_id, criar: node.config.criar };
+    let contactId: string | null = row.contact_id;
+    let erro: string | null = null;
+    if (node.config.contato.trim()) {
+      const r = resolverReferencias(node.config.contato, saidas);
+      contactId = z.uuid().safeParse(r.texto.trim()).success ? r.texto.trim() : null;
+      if (!contactId) erro = `O contato cita ${node.config.contato.trim()}, mas o bloco citado não entregou um contato nesta execução.`;
+    }
+    const titulo = resolverReferencias(node.config.titulo, saidas).texto.trim();
+    return { requested, resolved: { ...base, contact_id: contactId, titulo: titulo || null, erro } };
   }
 
   private async taskInput(
@@ -961,24 +1068,38 @@ export class PgExecutionJournal implements ExecutionJournal {
         return { kind: "stopped", step_id: step.id, attempt_id: prior.id };
       }
       const attemptNo = (prior?.attempt_no ?? 0) + 1;
+      // «Aplicar em» vale para as leituras congeladas. Alvo inválido congela leitura vazia: o complete* relê o alvo e falha explicado.
+      let alvoRow: LockedExecution | null = row;
+      try {
+        alvoRow = await this.aplicarAlvo(client, row, node);
+      } catch (e) {
+        if (!(e instanceof ExecutionTaskConfigurationError)) throw e;
+        alvoRow = null;
+      }
       const resolvedInput =
-        node.type === "wait" && prior?.next_eval_at
+        alvoRow === null
+          ? { requested: snapshot, resolved: null }
+          : node.type === "wait" && prior?.next_eval_at
           ? prior.input_snapshot
           : node.type === "internal_task"
-            ? await this.taskInput(client, row, node, snapshot)
+            ? await this.taskInput(client, alvoRow, node, snapshot)
             : node.type === "edit_lead_tag"
-              ? await this.tagInput(client, row, node, snapshot)
+              ? await this.tagInput(client, alvoRow, node, snapshot)
               : node.type === "move_lead"
-                ? await this.moveInput(client, row, node, snapshot)
+                ? await this.moveInput(client, alvoRow, node, snapshot)
                 : node.type === "assign_lead_owner"
-                  ? await this.ownerInput(client, row, snapshot)
+                  ? await this.ownerInput(client, alvoRow, snapshot)
                   : node.type === "add_note"
-                    ? await this.noteInput(client, row, node, snapshot)
+                    ? await this.noteInput(client, alvoRow, node, snapshot)
                     : node.type === "update_lead_field"
-                      ? await this.fieldInput(client, row, node, snapshot)
+                      ? await this.fieldInput(client, alvoRow, node, snapshot)
                       : node.type === "http_request"
-                        ? await this.httpInput(client, row, node, snapshot)
-                        : snapshot;
+                        ? await this.httpInput(client, alvoRow, node, snapshot)
+                        : node.type === "find_or_create_contact"
+                          ? await this.contactLookupInput(client, alvoRow, node, snapshot)
+                          : node.type === "find_or_create_lead"
+                            ? await this.leadLookupInput(client, alvoRow, node, snapshot)
+                            : snapshot;
       const { rows } = await client.query<{ id: string }>(
         `insert into followup_execution_attempts
           (organization_id,step_id,attempt_no,status,input_snapshot,config_snapshot,lease_revision,lease_until,next_eval_at)
@@ -1024,7 +1145,7 @@ export class PgExecutionJournal implements ExecutionJournal {
         NODE_OUTPUT_CONTRACTS.internal_task,
       );
       if (receipt) return { output: receipt, reused: true };
-      const { row, node } = await this.current(client, scope);
+      const { row, node } = await this.currentComAlvo(client, scope);
       if (node.type !== "internal_task") throw new Error("execution_node_type_mismatch");
       const held = await this.holdAttempt(client, row, handle);
       const reads = z.object({ resolved: taskReadsSchema }).parse(held.input_snapshot).resolved;
@@ -1180,7 +1301,7 @@ export class PgExecutionJournal implements ExecutionJournal {
         NODE_OUTPUT_CONTRACTS.edit_lead_tag,
       );
       if (receipt) return { output: receipt, reused: true };
-      const { row, node } = await this.current(client, scope);
+      const { row, node } = await this.currentComAlvo(client, scope);
       if (node.type !== "edit_lead_tag")
         throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
       const held = await this.holdAttempt(client, row, handle);
@@ -1271,7 +1392,7 @@ export class PgExecutionJournal implements ExecutionJournal {
       await this.lockContact(client, scope);
       const receipt = await this.confirmedEffect(client, scope, handle, "lead_product", NODE_OUTPUT_CONTRACTS.lead_product);
       if (receipt) return { output: receipt, reused: true };
-      const { row, node } = await this.current(client, scope);
+      const { row, node } = await this.currentComAlvo(client, scope);
       if (node.type !== "lead_product") throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
       await this.holdAttempt(client, row, handle);
       if (!row.lead_id) throw new ExecutionTaskConfigurationError("execution_lead_required");
@@ -1378,7 +1499,7 @@ export class PgExecutionJournal implements ExecutionJournal {
         NODE_OUTPUT_CONTRACTS.update_lead_field,
       );
       if (receipt) return { output: receipt, reused: true };
-      const { row, node } = await this.current(client, scope);
+      const { row, node } = await this.currentComAlvo(client, scope);
       if (node.type !== "update_lead_field") throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
       const held = await this.holdAttempt(client, row, handle);
       const reads = z.object({ resolved: fieldReadsSchema }).parse(held.input_snapshot).resolved;
@@ -1496,7 +1617,7 @@ export class PgExecutionJournal implements ExecutionJournal {
       await this.lockContact(client, scope);
       const receipt = await this.confirmedEffect(client, scope, handle, "add_note", NODE_OUTPUT_CONTRACTS.add_note);
       if (receipt) return { output: receipt, reused: true };
-      const { row, node } = await this.current(client, scope);
+      const { row, node } = await this.currentComAlvo(client, scope);
       if (node.type !== "add_note") throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
       const held = await this.holdAttempt(client, row, handle);
       const reads = z.object({ resolved: noteReadsSchema }).parse(held.input_snapshot).resolved;
@@ -1578,6 +1699,207 @@ export class PgExecutionJournal implements ExecutionJournal {
       }
       const output = NODE_OUTPUT_CONTRACTS.add_note.parse({ destino: reads.destino, note_id: noteId, texto: reads.texto });
       await this.confirmLocalEffect(client, row, handle, "add_note", output);
+      return { output, reused: false };
+    });
+  }
+
+  async completeContactLookup(scope: EnrollmentRow, handle: ExecutionAttemptHandle) {
+    this.assertHandle(scope, handle);
+    return this.transaction(async (client) => {
+      await this.lockContact(client, scope);
+      const op = "find_or_create_contact";
+      const receipt = await this.confirmedEffect(client, scope, handle, op, NODE_OUTPUT_CONTRACTS.find_or_create_contact);
+      if (receipt) return { output: receipt, reused: true };
+      const { row, node } = await this.current(client, scope);
+      if (node.type !== "find_or_create_contact") throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
+      const held = await this.holdAttempt(client, row, handle);
+      const reads = z.object({ resolved: contactLookupReadsSchema }).parse(held.input_snapshot).resolved;
+      if (reads.erro) throw new ExecutionTaskConfigurationError("variavel_sem_valor", reads.erro);
+      if (!reads.valor) throw new ExecutionTaskConfigurationError("busca_de_contato_sem_valor", "A busca ficou sem valor.");
+      let telefone: string | null = null;
+      let email: string | null = null;
+      if (reads.busca === "phone") {
+        if (phoneLookupVariants(reads.valor).length === 0)
+          throw new ExecutionTaskConfigurationError("telefone_invalido", `«${reads.valor}» não é um telefone.`);
+        telefone = canonicalPhoneBR(reads.valor);
+      } else {
+        email = reads.valor.toLowerCase();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+          throw new ExecutionTaskConfigurationError("email_invalido", `«${reads.valor}» não é um e-mail.`);
+      }
+      const procurar = async () =>
+        (
+          await client.query<{ id: string }>(
+            reads.busca === "phone"
+              ? `select id from contacts where organization_id=$1 and phone_number = any($2::text[])
+                 and is_merged_into is null and is_anonymized = false order by created_at asc limit 1`
+              : `select id from contacts where organization_id=$1 and email_normalized = $2
+                 and is_merged_into is null and is_anonymized = false order by created_at asc limit 1`,
+            [row.organization_id, reads.busca === "phone" ? phoneLookupVariants(reads.valor!) : email],
+          )
+        ).rows[0]?.id ?? null;
+      let contactId = await procurar();
+      let criado = false;
+      if (!contactId && reads.criar) {
+        const novo = randomUUID();
+        await client.query("savepoint criar_contato");
+        try {
+          await client.query(
+            `insert into contacts (id,organization_id,name,display_name,phone_number,email,source,source_metadata)
+             values($1,$2,$3,$3,$4,$5,'automation',$6)`,
+            [novo, row.organization_id, reads.nome, telefone, email, { origem: `followup:${row.id}` }],
+          );
+          await client.query("release savepoint criar_contato");
+          contactId = novo;
+          criado = true;
+        } catch (e) {
+          await client.query("rollback to savepoint criar_contato");
+          // Outro caminho criou o mesmo telefone/e-mail no meio: é o mesmo contato, não um erro.
+          if ((e as { code?: string }).code !== "23505") throw e;
+          contactId = await procurar();
+          if (!contactId) throw e;
+        }
+        if (criado) {
+          await client.query("select emit_event($1,$2,$3,$4,$5,$6)", [
+            "contact.created",
+            "contact",
+            contactId,
+            { source: "automation", has_email: !!email, has_phone: !!telefone },
+            { caused_by_rule: `followup:${row.id}`, execution_step_id: handle.step_id, execution_attempt_id: handle.attempt_id },
+            row.organization_id,
+          ]);
+          await this.auditEffect(client, row.organization_id, "contact.created", "contact", contactId, {
+            origem: `followup:${row.id}`,
+            execution_step_id: handle.step_id,
+            execution_attempt_id: handle.attempt_id,
+          });
+        }
+      }
+      const output = NODE_OUTPUT_CONTRACTS.find_or_create_contact.parse({
+        contact_id: contactId,
+        encontrado: !!contactId && !criado,
+        criado,
+      });
+      await this.confirmLocalEffect(client, row, handle, op, output);
+      return { output, reused: false };
+    });
+  }
+
+  async completeLeadLookup(scope: EnrollmentRow, handle: ExecutionAttemptHandle) {
+    this.assertHandle(scope, handle);
+    return this.transaction(async (client) => {
+      await this.lockContact(client, scope);
+      const op = "find_or_create_lead";
+      const receipt = await this.confirmedEffect(client, scope, handle, op, NODE_OUTPUT_CONTRACTS.find_or_create_lead);
+      if (receipt) return { output: receipt, reused: true };
+      const { row, node } = await this.current(client, scope);
+      if (node.type !== "find_or_create_lead") throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
+      const held = await this.holdAttempt(client, row, handle);
+      const reads = z.object({ resolved: leadLookupReadsSchema }).parse(held.input_snapshot).resolved;
+      if (reads.erro || !reads.contact_id) throw new ExecutionTaskConfigurationError("variavel_sem_valor", reads.erro ?? "Sem contato.");
+      const contato = (
+        await client.query<{ id: string; name: string | null; display_name: string | null; is_anonymized: boolean; kind: string | null }>(
+          "select id,name,display_name,is_anonymized,kind from contacts where organization_id=$1 and id=$2 and is_merged_into is null for share",
+          [row.organization_id, reads.contact_id],
+        )
+      ).rows[0];
+      if (!contato || contato.is_anonymized || contato.kind === "whatsapp_group")
+        throw new ExecutionTaskConfigurationError("contato_indisponivel", "O contato do negócio não existe nesta organização, foi anonimizado ou é um grupo.");
+      const funil = (
+        await client.query<{ id: string; settings: unknown }>(
+          "select id,settings from crm_pipelines where organization_id=$1 and id=$2",
+          [row.organization_id, reads.pipeline_id],
+        )
+      ).rows[0];
+      if (!funil) throw new ExecutionTaskConfigurationError("negocio_sem_funil", "O funil escolhido não existe mais nesta organização.");
+      let leadId =
+        (
+          await client.query<{ id: string }>(
+            `select id from crm_leads where organization_id=$1 and contact_id=$2 and pipeline_id=$3 and status='open'
+             order by created_at desc limit 1 for share`,
+            [row.organization_id, contato.id, funil.id],
+          )
+        ).rows[0]?.id ?? null;
+      let criado = false;
+      if (!leadId && reads.criar) {
+        const etapa = (
+          await client.query<{ id: string; pipeline_id: string; is_won: boolean | null; is_lost: boolean | null }>(
+            "select id,pipeline_id,is_won,is_lost from crm_stages where organization_id=$1 and id=$2 for share",
+            [row.organization_id, reads.stage_id],
+          )
+        ).rows[0];
+        if (!etapa || etapa.pipeline_id !== funil.id || etapa.is_won || etapa.is_lost)
+          throw new ExecutionTaskConfigurationError("negocio_sem_etapa", "A etapa de entrada não é uma etapa aberta do funil escolhido.");
+        const faltando = validaCamposExigidos({
+          lead: { custom_fields: {} },
+          settingsDoFunil: funil.settings,
+          destino: { stageId: etapa.id, desfecho: null },
+          motivoDeGanho: null,
+        } as Parameters<typeof validaCamposExigidos>[0]).faltando;
+        if (faltando.length)
+          throw new ExecutionTaskConfigurationError(
+            "campos_obrigatorios",
+            `O funil exige ${faltando.map((f) => f.rotulo).join(", ")} para criar o negócio nesta etapa.`,
+          );
+        const titulo = (reads.titulo || contato.display_name || contato.name || "Negócio").slice(0, 200);
+        leadId = randomUUID();
+        await client.query(
+          `insert into crm_leads (id,organization_id,pipeline_id,stage_id,title,contact_id,currency,status,source,source_metadata,position_in_stage)
+           values($1,$2,$3,$4,$5,$6,coalesce((select currency from organizations where id=$2),'BRL'),'open','automation',$7,
+             coalesce((select max(position_in_stage) from crm_leads where organization_id=$2 and stage_id=$4),0)+1000)`,
+          [leadId, row.organization_id, funil.id, etapa.id, titulo, contato.id, { origem: `followup:${row.id}` }],
+        );
+        criado = true;
+        const activity = buildLeadActivityRow({
+          organizationId: row.organization_id,
+          leadId,
+          contactId: contato.id,
+          type: "lead_created",
+          sourceModule: "crm",
+          sourceId: leadId,
+          actor: { type: "webhook_source", id: `followup:${row.id}` },
+          reason: "Criado por automação",
+          payload: { origem: `followup:${row.id}`, execution_step_id: handle.step_id, stage_id: etapa.id },
+        });
+        await client.query(
+          `insert into crm_lead_activities
+          (organization_id,lead_id,contact_id,type,source_module,source_id,actor_kind,performed_by_user_id,reason,payload)
+          values($1,$2,$3,$4,$5,$6,$7,null,$8,$9)`,
+          [
+            activity.organization_id,
+            activity.lead_id,
+            activity.contact_id,
+            activity.type,
+            activity.source_module,
+            activity.source_id,
+            activity.actor_kind,
+            activity.reason,
+            activity.payload,
+          ],
+        );
+        await client.query("select emit_event($1,$2,$3,$4,$5,$6)", [
+          "lead.created",
+          "crm_lead",
+          leadId,
+          { pipeline_id: funil.id, stage_id: etapa.id, title: titulo, service_origin: { kind: "continuation", boundary: row.service_boundary } },
+          { caused_by_rule: `followup:${row.id}`, execution_step_id: handle.step_id, execution_attempt_id: handle.attempt_id },
+          row.organization_id,
+        ]);
+        await this.auditEffect(client, row.organization_id, "lead.created", "crm_lead", leadId, {
+          pipeline_id: funil.id,
+          stage_id: etapa.id,
+          origem: `followup:${row.id}`,
+          execution_step_id: handle.step_id,
+          execution_attempt_id: handle.attempt_id,
+        });
+      }
+      const output = NODE_OUTPUT_CONTRACTS.find_or_create_lead.parse({
+        lead_id: leadId,
+        contact_id: contato.id,
+        encontrado: !!leadId && !criado,
+        criado,
+      });
+      await this.confirmLocalEffect(client, row, handle, op, output);
       return { output, reused: false };
     });
   }
@@ -1670,7 +1992,7 @@ export class PgExecutionJournal implements ExecutionJournal {
         NODE_OUTPUT_CONTRACTS.assign_lead_owner,
       );
       if (receipt) return { output: receipt, reused: true };
-      const { row, node } = await this.current(client, scope);
+      const { row, node } = await this.currentComAlvo(client, scope);
       if (node.type !== "assign_lead_owner")
         throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
       const held = await this.holdAttempt(client, row, handle);
@@ -1834,7 +2156,7 @@ export class PgExecutionJournal implements ExecutionJournal {
         NODE_OUTPUT_CONTRACTS.move_lead,
       );
       if (receipt) return { output: receipt, reused: true };
-      const { row, node } = await this.current(client, scope);
+      const { row, node } = await this.currentComAlvo(client, scope);
       if (node.type !== "move_lead")
         throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
       const held = await this.holdAttempt(client, row, handle);

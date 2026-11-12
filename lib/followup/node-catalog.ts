@@ -135,6 +135,22 @@ const NODE_DEFINITIONS = {
     surfaces: CLOCK_SURFACES,
     effect: "crm",
   },
+  find_or_create_contact: {
+    label: "Buscar ou criar contato",
+    description: "Acha um contato pelo telefone ou e-mail e, se pedido, cria quando não existe.",
+    category: "leads",
+    keywords: ["contato", "buscar", "procurar", "criar", "cadastro", "telefone", "e-mail", "cliente"],
+    surfaces: CLOCK_SURFACES,
+    effect: "crm",
+  },
+  find_or_create_lead: {
+    label: "Buscar ou criar negócio",
+    description: "Acha o negócio aberto de um contato num funil e, se pedido, cria quando não existe.",
+    category: "leads",
+    keywords: ["negócio", "lead", "card", "oportunidade", "buscar", "criar", "funil"],
+    surfaces: CLOCK_SURFACES,
+    effect: "crm",
+  },
   http_request: {
     label: "Requisição HTTP",
     description: "Chama um sistema externo por uma conexão protegida e entrega a resposta.",
@@ -213,6 +229,8 @@ export const NODE_CATALOG = {
   update_lead_field: withOutputContract("update_lead_field"),
   lead_product: withOutputContract("lead_product"),
   http_request: withOutputContract("http_request"),
+  find_or_create_contact: withOutputContract("find_or_create_contact"),
+  find_or_create_lead: withOutputContract("find_or_create_lead"),
   end: withOutputContract("end"),
 } as const;
 

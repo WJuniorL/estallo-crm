@@ -70,6 +70,10 @@ export const PUBLISH_ERROR_CODES = [
   'campo_do_negocio_incompleto',
   'produto_ausente',
   'conexao_http_ausente',
+  'busca_de_contato_sem_valor',
+  'negocio_sem_funil',
+  'negocio_sem_etapa',
+  'aplicar_em_invalido',
   'corpo_http_invalido',
   'mapa_campo_repetido',
   'mapa_campo_sem_valor',
@@ -977,6 +981,38 @@ export function validateFlowForPublish(
         code: 'campo_do_negocio_incompleto',
         message: `A caixa "${node.label}" precisa do campo e do valor a gravar.`,
       });
+    if (node.type === 'find_or_create_contact' && !node.config.valor.trim())
+      errors.push({
+        node_id: node.id,
+        code: 'busca_de_contato_sem_valor',
+        message: `A caixa "${node.label}" precisa do telefone ou e-mail a procurar.`,
+      });
+    if (node.type === 'find_or_create_lead' && !node.config.pipeline_id)
+      errors.push({
+        node_id: node.id,
+        code: 'negocio_sem_funil',
+        message: `A caixa "${node.label}" precisa do funil onde procurar o negócio.`,
+      });
+    if (node.type === 'find_or_create_lead' && node.config.criar && !node.config.stage_id)
+      errors.push({
+        node_id: node.id,
+        code: 'negocio_sem_etapa',
+        message: `A caixa "${node.label}" cria negócio e precisa da etapa de entrada.`,
+      });
+    {
+      const alvo =
+        'aplicar_em' in node.config && typeof node.config.aplicar_em === 'string'
+          ? node.config.aplicar_em
+          : node.type === 'find_or_create_lead'
+            ? node.config.contato
+            : '';
+      if (alvo.trim() && !/^\s*\{\{\s*nodes\.[A-Za-z0-9_-]+\.(lead_id|contact_id)\s*\}\}\s*$/.test(alvo))
+        errors.push({
+          node_id: node.id,
+          code: 'aplicar_em_invalido',
+          message: `Em "${node.label}", «Aplicar em» precisa ser o negócio ou o contato entregue por um bloco anterior.`,
+        });
+    }
     if (node.type === 'http_request' && !node.config.connection_id)
       errors.push({
         node_id: node.id,

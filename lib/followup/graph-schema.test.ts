@@ -53,6 +53,8 @@ describe('graph-schema', () => {
         'update_lead_field',
         'lead_product',
         'http_request',
+        'find_or_create_contact',
+        'find_or_create_lead',
         'end',
       ]);
     });

@@ -175,6 +175,16 @@ export interface ExecutionJournal {
     efeito: "failed" | "unknown",
     error: ExecutionError,
   ): Promise<void>;
+  /** Fase 5 — acha (e, se pedido, cria) um contato pelo telefone ou e-mail, na transação do avanço. */
+  completeContactLookup(
+    scope: EnrollmentRow,
+    handle: ExecutionAttemptHandle,
+  ): Promise<{ output: NodeOutput<"find_or_create_contact">; reused: boolean }>;
+  /** Fase 5 — acha (e, se pedido, cria) o negócio aberto do contato no funil, na transação do avanço. */
+  completeLeadLookup(
+    scope: EnrollmentRow,
+    handle: ExecutionAttemptHandle,
+  ): Promise<{ output: NodeOutput<"find_or_create_lead">; reused: boolean }>;
   /** Fase 5 — grava campo personalizado (do catálogo) ou valor do negócio, na transação do avanço. */
   completeField(
     scope: EnrollmentRow,

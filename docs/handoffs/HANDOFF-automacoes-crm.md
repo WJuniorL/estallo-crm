@@ -1099,3 +1099,15 @@ Pedido do dono: atualizar os testes vermelhos do `verify` que vinham da frente d
 **Evidência:** `requisicao-http.test.ts` 14/14; suíte `lib/followup` + editor; `tsc` limpo; lint limpo. Invariante `automacoes-requisicao-http` (5 casos: 2xx, incerto, queda depois da intenção não reenvia, não-saiu tenta de novo, 500 e conexão inexistente) — só no CI.
 
 **NÃO MEDIDO:** chamada a um sistema externo real; tela no navegador.
+
+## 2026-11-12 (13) — Fase 5: buscar ou criar contato/negócio + «Aplicar em» (decisão do dono: referenciar por variável, como no n8n)
+
+**Feito:**
+- **`find_or_create_contact`**: procura por telefone (variantes do nono dígito, `phoneLookupVariants`) ou e-mail (`email_normalized`), só contatos vivos e não anonimizados; com `criar`, insere (`source = 'automation'`, telefone canônico) — corrida no índice único (23505) vira «achado», nunca duplicado. Evento `contact.created` com `caused_by_rule`, auditoria. Saída `{contact_id|null, encontrado, criado}`.
+- **`find_or_create_lead`**: contato = o da execução ou `{{nodes.<bloco>.contact_id}}`; procura o negócio ABERTO no funil; com `criar`, cria na etapa escolhida (aberta e do funil; campos obrigatórios do funil conferidos; moeda da organização; posição = máx + 1000; atividade `lead_created`, evento `lead.created`, auditoria). Saída `{lead_id|null, contact_id, encontrado, criado}`.
+- **«Aplicar em»** (`aplicar_em`, opcional) nos 7 blocos de efeito (tarefa, tag, mover, responsável, nota, campo, produto): uma marca `{{nodes.<bloco>.lead_id|contact_id}}` de bloco ANTERIOR (publicação recusa o resto: `aplicar_em_invalido`, ancestral). O diário resolve num ponto só (`aplicarAlvo`, via `currentComAlvo` nos `complete*` e nas leituras do `begin`): id das saídas congeladas, conferido na organização; negócio → ele e o seu contato; contato → só ele; anonimizado/grupo/inexistente falha explicado; a conversa da execução deixa de valer para o alvo. A execução continua presa ao seu contato (lock, fronteira de serviço); as escritas no alvo travam a linha e comparam com a leitura congelada.
+- Tela: formulários dos dois blocos (funil/etapa do seletor do fluxo) e seletor «Aplicar em» que só oferece os Buscar ou criar anteriores no caminho.
+
+**Evidência:** `buscar-ou-criar.test.ts` 4/4; suíte `lib/followup` + editor + `lib/automation` = 123 arquivos / 1477 testes; `tsc` e lint limpos. Invariante `automacoes-buscar-ou-criar` (cria contato → cria negócio → tag no negócio novo com o da execução intacto; achado sem duplicar; «Aplicar em» sem valor falha) — só no CI.
+
+**NÃO MEDIDO:** telas no navegador. Mensagem para o contato novo (o envio continua preso à conversa da execução — fora deste recorte).

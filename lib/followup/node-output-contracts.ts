@@ -89,6 +89,18 @@ export const NODE_OUTPUT_CONTRACTS = {
     removed_tags: z.array(z.string().min(1)).optional(),
     tags: z.array(z.string().min(1)),
   }),
+  find_or_create_contact: z.strictObject({
+    /** O contato achado ou criado; `null` quando não achou e não era para criar. */
+    contact_id: id.nullable(),
+    encontrado: z.boolean(),
+    criado: z.boolean(),
+  }),
+  find_or_create_lead: z.strictObject({
+    lead_id: id.nullable(),
+    contact_id: id,
+    encontrado: z.boolean(),
+    criado: z.boolean(),
+  }),
   http_request: z.strictObject({
     /** Status HTTP da resposta (só 2xx chega aqui: o resto é falha do bloco). */
     status: z.number().int(),

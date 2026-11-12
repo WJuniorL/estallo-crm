@@ -59,6 +59,8 @@ const TYPE_ORDER: Record<NodeType, number> = {
   update_lead_field: 8.65,
   lead_product: 8.66,
   http_request: 8.67,
+  find_or_create_contact: 8.61,
+  find_or_create_lead: 8.62,
   end: 9,
 };
 

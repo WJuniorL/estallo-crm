@@ -40,6 +40,9 @@ export const NODE_TYPES = [
   'lead_product',
   // Fase 5: chama um sistema externo por uma conexão protegida (o segredo nunca está no fluxo).
   'http_request',
+  // Fase 5: acham (e, se pedido, criam) contato e negócio; os blocos seguintes miram o resultado por «Aplicar em».
+  'find_or_create_contact',
+  'find_or_create_lead',
   'end',
 ] as const;
 export type NodeType = (typeof NODE_TYPES)[number];
@@ -348,6 +351,20 @@ export const actionConfigSchema = z.discriminatedUnion('mode', [
  * `atribuir_a` é nominal (`dono_do_lead`) porque o fluxo é publicado sem saber
  * quem vai atender amanhã — o dono muda, o fluxo não.
  */
+/** «Aplicar em» (Fase 5): uma única marca `{{nodes.<bloco>.<lead_id|contact_id>}}`; ausente = negócio/contato da execução. */
+export const aplicarEmSchema = z.string().max(200).optional();
+
+/** Os blocos de efeito que aceitam «Aplicar em» (a tela mostra o seletor; o diário resolve o alvo). */
+export const NODES_COM_APLICAR_EM: ReadonlySet<string> = new Set([
+  "internal_task",
+  "edit_lead_tag",
+  "move_lead",
+  "assign_lead_owner",
+  "add_note",
+  "update_lead_field",
+  "lead_product",
+]);
+
 export const internalTaskConfigSchema = z.strictObject({
   /** Título com `{{lead.title}}` e `{{contact.name}}`. */
   titulo: z.string().min(1).max(200),
@@ -358,6 +375,8 @@ export const internalTaskConfigSchema = z.strictObject({
     z.strictObject({ usuario_id: z.string().uuid() }),
   ]),
   prioridade: z.enum(PRIORIDADES_DA_TAREFA),
+  /** Fase 5 — «Aplicar em»: `{{nodes.<bloco>.lead_id|contact_id}}` de um Buscar ou criar anterior. Vazio = o da execução. */
+  aplicar_em: aplicarEmSchema,
 });
 
 /**
@@ -383,6 +402,8 @@ export const moveLeadConfigSchema = z.strictObject({
   stage_id: z.string().max(64),
   lost_reason: z.string().max(500).optional(),
   won_reason: z.string().max(500).optional(),
+  /** Fase 5 — «Aplicar em»: `{{nodes.<bloco>.lead_id|contact_id}}` de um Buscar ou criar anterior. Vazio = o da execução. */
+  aplicar_em: aplicarEmSchema,
 });
 
 /**
@@ -406,6 +427,8 @@ export const editLeadTagConfigSchema = z.strictObject({
   destino: z.enum(["card", "contato"]).optional(),
   /** Fase 5 — `remove` tira as tags listadas (as outras ficam). Sem a chave: adicionar, como sempre. */
   acao: z.enum(["add", "remove"]).optional(),
+  /** Fase 5 — «Aplicar em»: `{{nodes.<bloco>.lead_id|contact_id}}` de um Buscar ou criar anterior. Vazio = o da execução. */
+  aplicar_em: aplicarEmSchema,
 });
 
 /**
@@ -430,6 +453,8 @@ export const mapDataFieldSchema = z.strictObject({
  */
 export const assignLeadOwnerConfigSchema = z.strictObject({
   usuario_id: z.union([z.literal(''), z.string().uuid()]),
+  /** Fase 5 — «Aplicar em»: `{{nodes.<bloco>.lead_id|contact_id}}` de um Buscar ou criar anterior. Vazio = o da execução. */
+  aplicar_em: aplicarEmSchema,
 });
 
 /**
@@ -440,6 +465,8 @@ export const assignLeadOwnerConfigSchema = z.strictObject({
 export const addNoteConfigSchema = z.strictObject({
   destino: z.enum(['lead_timeline', 'conversation_notes']),
   texto: z.string().max(2000, 'Nota muito longa: máximo de 2000 caracteres.'),
+  /** Fase 5 — «Aplicar em»: `{{nodes.<bloco>.lead_id|contact_id}}` de um Buscar ou criar anterior. Vazio = o da execução. */
+  aplicar_em: aplicarEmSchema,
 });
 
 /**
@@ -452,6 +479,8 @@ export const updateLeadFieldConfigSchema = z.strictObject({
   alvo: z.enum(['custom_field', 'deal_value', 'contact_field']),
   chave: z.string().max(40),
   valor: z.string().max(2000),
+  /** Fase 5 — «Aplicar em»: `{{nodes.<bloco>.lead_id|contact_id}}` de um Buscar ou criar anterior. Vazio = o da execução. */
+  aplicar_em: aplicarEmSchema,
 });
 
 /**
@@ -462,6 +491,31 @@ export const leadProductConfigSchema = z.strictObject({
   acao: z.enum(['add', 'remove']),
   product_id: z.union([z.literal(''), z.string().uuid()]),
   quantidade: z.number().int().min(1).max(10_000),
+  /** Fase 5 — «Aplicar em»: `{{nodes.<bloco>.lead_id|contact_id}}` de um Buscar ou criar anterior. Vazio = o da execução. */
+  aplicar_em: aplicarEmSchema,
+});
+
+/**
+ * Nó `find_or_create_contact` (Fase 5) — procura um contato da organização pelo telefone (variantes do nono dígito)
+ * ou e-mail; com `criar`, cria quando não acha (nome opcional). Valor e nome aceitam `{{nodes.<bloco>.<campo>}}`.
+ */
+export const findOrCreateContactConfigSchema = z.strictObject({
+  busca: z.enum(['phone', 'email']),
+  valor: z.string().max(500),
+  criar: z.boolean(),
+  nome: z.string().max(200),
+});
+
+/**
+ * Nó `find_or_create_lead` (Fase 5) — procura o negócio ABERTO do contato no funil escolhido; com `criar`, cria na
+ * etapa escolhida. `contato` vazio = o contato da execução; senão uma marca `{{nodes.<bloco>.contact_id}}`.
+ */
+export const findOrCreateLeadConfigSchema = z.strictObject({
+  contato: z.string().max(200),
+  pipeline_id: z.union([z.literal(''), z.string().uuid()]),
+  stage_id: z.union([z.literal(''), z.string().uuid()]),
+  titulo: z.string().max(200),
+  criar: z.boolean(),
 });
 
 /** Métodos do bloco Requisição HTTP — aqui (e não em requisicao-http.ts) porque o construtor roda no navegador. */
@@ -767,6 +821,21 @@ export const flowNodeSchema = z.discriminatedUnion('type', [
     }),
     config: leadProductConfigSchema,
   }),
+  // Fase 5: buscar ou criar contato / negócio
+  z.strictObject({
+    id: z.string().min(1),
+    type: z.literal('find_or_create_contact'),
+    label: z.string().min(1).max(60),
+    position: z.strictObject({ x: z.number(), y: z.number() }),
+    config: findOrCreateContactConfigSchema,
+  }),
+  z.strictObject({
+    id: z.string().min(1),
+    type: z.literal('find_or_create_lead'),
+    label: z.string().min(1).max(60),
+    position: z.strictObject({ x: z.number(), y: z.number() }),
+    config: findOrCreateLeadConfigSchema,
+  }),
   // Fase 5: requisição HTTP por conexão protegida
   z.strictObject({
     id: z.string().min(1),
@@ -1065,6 +1134,8 @@ export const NODES_WITH_ERROR_BRANCH: ReadonlySet<NodeType> = new Set<NodeType>(
   'update_lead_field',
   'lead_product',
   'http_request',
+  'find_or_create_contact',
+  'find_or_create_lead',
 ]);
 
 function errorBranch(): FlowBranch {

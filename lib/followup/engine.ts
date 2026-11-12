@@ -1149,7 +1149,9 @@ async function processEnrollment(
       node.type === "assign_lead_owner" ||
       node.type === "add_note" ||
       node.type === "update_lead_field" ||
-      node.type === "lead_product")
+      node.type === "lead_product" ||
+      node.type === "find_or_create_contact" ||
+      node.type === "find_or_create_lead")
   ) {
     if (!db.executionJournal) throw new Error("execution_journal_unavailable");
     const journal = await db.executionJournal();
@@ -1186,6 +1188,12 @@ async function processEnrollment(
       } else if (node.type === "lead_product") {
         const result = await journal.completeProduct(enrollment, handle);
         if (!result.reused) summary.advanced++;
+      } else if (node.type === "find_or_create_contact") {
+        const result = await journal.completeContactLookup(enrollment, handle);
+        if (!result.reused) summary.advanced++;
+      } else if (node.type === "find_or_create_lead") {
+        const result = await journal.completeLeadLookup(enrollment, handle);
+        if (!result.reused) summary.advanced++;
       } else {
         const result = await journal.completeMove(enrollment, handle);
         if (!result.reused) summary.advanced++;
@@ -1203,7 +1211,9 @@ async function processEnrollment(
           : node.type === "edit_lead_tag" || node.type === "assign_lead_owner" ||
             node.type === "add_note" ||
             node.type === "update_lead_field" ||
-            node.type === "lead_product"
+            node.type === "lead_product" ||
+            node.type === "find_or_create_contact" ||
+            node.type === "find_or_create_lead"
             ? "tags"
             : "move",
       );

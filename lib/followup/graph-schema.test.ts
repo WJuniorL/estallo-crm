@@ -51,6 +51,7 @@ describe('graph-schema', () => {
         'assign_lead_owner',
         'add_note',
         'update_lead_field',
+        'lead_product',
         'end',
       ]);
     });

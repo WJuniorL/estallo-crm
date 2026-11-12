@@ -27,6 +27,7 @@ export const NODES_INTEGRATED_IN_EXECUTION_CONTRACT: ReadonlySet<string> = new S
   "assign_lead_owner",
   "add_note",
   "update_lead_field",
+  "lead_product",
 ]);
 
 export function executionContractProblem(

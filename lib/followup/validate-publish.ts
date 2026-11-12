@@ -68,6 +68,7 @@ export const PUBLISH_ERROR_CODES = [
   'responsavel_ausente',
   'nota_sem_texto',
   'campo_do_negocio_incompleto',
+  'produto_ausente',
   'mapa_campo_repetido',
   'mapa_campo_sem_valor',
 ] as const;
@@ -973,6 +974,12 @@ export function validateFlowForPublish(
         node_id: node.id,
         code: 'campo_do_negocio_incompleto',
         message: `A caixa "${node.label}" precisa do campo e do valor a gravar.`,
+      });
+    if (node.type === 'lead_product' && !node.config.product_id)
+      errors.push({
+        node_id: node.id,
+        code: 'produto_ausente',
+        message: `A caixa "${node.label}" não tem produto escolhido.`,
       });
     if (node.type === 'add_note' && !node.config.texto.trim())
       errors.push({

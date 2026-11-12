@@ -96,6 +96,7 @@ export const CAMPOS_DE_SAIDA: Partial<Record<FlowNode["type"], Array<{ caminho: 
   internal_task: [{ caminho: "task_id", rotulo: "Id da tarefa criada" }],
   add_note: [{ caminho: "note_id", rotulo: "Id da nota" }],
   update_lead_field: [{ caminho: "valor", rotulo: "Valor gravado" }],
+  lead_product: [{ caminho: "item_id", rotulo: "Id do item criado" }],
   assign_lead_owner: [
     { caminho: "owner_user_id", rotulo: "Id do novo responsável" },
     { caminho: "previous_owner_user_id", rotulo: "Id do responsável anterior" },

@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 
-import { Bell, Play, Clock, GitBranch, Brain, ChatCircle, ArrowsClockwise, PaperPlaneTilt, Flag, Question, PuzzlePiece, Funnel, Tag, ArrowsLeftRight, UserCircle, Note, PencilSimple } from "@/lib/ui/icons";
+import { Bell, Play, Clock, GitBranch, Brain, ChatCircle, ArrowsClockwise, PaperPlaneTilt, Flag, Question, PuzzlePiece, Funnel, Tag, ArrowsLeftRight, UserCircle, Note, PencilSimple, Package } from "@/lib/ui/icons";
 import type { FlowNode, NodeType } from "@/lib/followup/graph-schema";
 import { RESULTADOS_DO_FIM } from "@/lib/followup/vocabulario";
 import { NOS_DA_SUPERFICIE } from "@/lib/followup/validate-publish";
@@ -188,6 +188,15 @@ export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
     defaultLabel: "Gravar tag no lead",
     defaultConfig: () => ({ tags: [] }),
   },
+  lead_product: {
+    type: "lead_product",
+    paletteLabel: NODE_CATALOG.lead_product.label,
+    icon: Package,
+    chipClassName: "bg-accent-soft text-accent",
+    borderClassName: "border-l-accent-500",
+    defaultLabel: "Produto do negócio",
+    defaultConfig: () => ({ acao: "add", product_id: "", quantidade: 1 }),
+  },
   update_lead_field: {
     type: "update_lead_field",
     paletteLabel: NODE_CATALOG.update_lead_field.label,
@@ -350,6 +359,11 @@ export function describeNodeConfig(
       if (!c.tags.length) return t("sem tag escolhida");
       const lista = c.acao === "remove" ? `− ${c.tags.join(", ")}` : c.tags.join(", ");
       return c.destino === "contato" ? `${lista} (${t("no contato")})` : lista;
+    }
+    case "lead_product": {
+      const c = config as ConfigOf<"lead_product">;
+      if (!c.product_id) return t("sem produto escolhido");
+      return c.acao === "remove" ? t("tira o produto do negócio") : `+${c.quantidade} · ${t("produto do catálogo")}`;
     }
     case "update_lead_field": {
       const c = config as ConfigOf<"update_lead_field">;

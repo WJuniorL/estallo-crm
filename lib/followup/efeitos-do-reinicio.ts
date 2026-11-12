@@ -15,6 +15,7 @@ export const TIPOS_COM_EFEITO = new Set([
   "assign_lead_owner", // troca o responsável do negócio
   "add_note", // registra nota interna
   "update_lead_field", // grava campo do negócio
+  "lead_product", // acrescenta ou tira produto do negócio
 ]);
 
 export interface BlocoComEfeito {

@@ -91,6 +91,13 @@ const NOS: Record<string, FlowGraph["nodes"][number]> = {
     position: pos,
     config: { tags: ["x"] },
   },
+  lead_product: {
+    id: "n",
+    type: "lead_product",
+    label: "lp",
+    position: pos,
+    config: { acao: "add", product_id: "00000000-0000-4000-8000-000000000003", quantidade: 1 },
+  },
   update_lead_field: {
     id: "n",
     type: "update_lead_field",
@@ -140,6 +147,7 @@ const INTEGRADOS_PELO_ENGINE = new Set([
   "assign_lead_owner",
   "add_note",
   "update_lead_field",
+  "lead_product",
 ]);
 
 const grafoCom = (node: FlowGraph["nodes"][number], extra: FlowGraph["nodes"] = []): FlowGraph => ({

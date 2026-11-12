@@ -1205,6 +1205,107 @@ export class PgExecutionJournal implements ExecutionJournal {
     });
   }
 
+  async completeProduct(scope: EnrollmentRow, handle: ExecutionAttemptHandle) {
+    this.assertHandle(scope, handle);
+    return this.transaction(async (client) => {
+      await this.lockContact(client, scope);
+      const receipt = await this.confirmedEffect(client, scope, handle, "lead_product", NODE_OUTPUT_CONTRACTS.lead_product);
+      if (receipt) return { output: receipt, reused: true };
+      const { row, node } = await this.current(client, scope);
+      if (node.type !== "lead_product") throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
+      await this.holdAttempt(client, row, handle);
+      if (!row.lead_id) throw new ExecutionTaskConfigurationError("execution_lead_required");
+      if (!node.config.product_id) throw new ExecutionTaskConfigurationError("produto_ausente");
+      const lead = (
+        await client.query<{ id: string }>(
+          "select id from crm_leads where organization_id=$1 and contact_id=$2 and id=$3 for update",
+          [row.organization_id, row.contact_id, row.lead_id],
+        )
+      ).rows[0];
+      if (!lead) throw new ExecutionLeadUnavailableError();
+      // O produto precisa ser do catálogo DESTA organização — nome e preço vêm dele, nunca da configuração.
+      const produto = (
+        await client.query<{ id: string; nome: string; preco_cents: string | number }>(
+          "select id,nome,preco_cents from catalog_products where organization_id=$1 and id=$2",
+          [row.organization_id, node.config.product_id],
+        )
+      ).rows[0];
+      if (!produto)
+        throw new ExecutionTaskConfigurationError(
+          "produto_indisponivel",
+          "O produto escolhido não existe mais no catálogo. Escolha outro no bloco.",
+        );
+      let itemId: string | null = null;
+      let removidos = 0;
+      if (node.config.acao === "remove") {
+        const r = await client.query(
+          "delete from crm_lead_products where organization_id=$1 and lead_id=$2 and product_id=$3",
+          [row.organization_id, lead.id, produto.id],
+        );
+        removidos = r.rowCount ?? 0;
+      } else {
+        itemId = randomUUID();
+        await client.query(
+          `insert into crm_lead_products (id,organization_id,lead_id,product_id,nome,preco_unitario_cents,quantidade)
+           values($1,$2,$3,$4,$5,$6,$7)`,
+          [itemId, row.organization_id, lead.id, produto.id, produto.nome, Number(produto.preco_cents), node.config.quantidade],
+        );
+      }
+      if (itemId || removidos > 0) {
+        await this.auditEffect(
+          client,
+          row.organization_id,
+          itemId ? "lead_product.added" : "lead_product.removed",
+          "crm_lead_products",
+          itemId ?? lead.id,
+          {
+            lead_id: lead.id,
+            product_id: produto.id,
+            origem: `followup:${row.id}`,
+            execution_step_id: handle.step_id,
+            execution_attempt_id: handle.attempt_id,
+          },
+        );
+        const activity = buildLeadActivityRow({
+          organizationId: row.organization_id,
+          leadId: lead.id,
+          contactId: row.contact_id,
+          type: "lead_edited",
+          sourceModule: "crm",
+          sourceId: lead.id,
+          actor: { type: "webhook_source", id: `followup:${row.id}` },
+          reason: itemId ? `Acrescentou o produto ${produto.nome}` : `Tirou o produto ${produto.nome}`,
+          payload: { fields: ["produtos"], product_id: produto.id },
+        });
+        await client.query(
+          `insert into crm_lead_activities
+          (organization_id,lead_id,contact_id,type,source_module,source_id,actor_kind,performed_by_user_id,reason,payload)
+          values($1,$2,$3,$4,$5,$6,$7,null,$8,$9)`,
+          [
+            activity.organization_id,
+            activity.lead_id,
+            activity.contact_id,
+            activity.type,
+            activity.source_module,
+            activity.source_id,
+            activity.actor_kind,
+            activity.reason,
+            activity.payload,
+          ],
+        );
+      }
+      const output = NODE_OUTPUT_CONTRACTS.lead_product.parse({
+        lead_id: lead.id,
+        product_id: produto.id,
+        acao: node.config.acao,
+        item_id: itemId,
+        removidos,
+      });
+      await this.confirmLocalEffect(client, row, handle, "lead_product", output);
+      return { output, reused: false };
+    });
+  }
+
   async completeField(scope: EnrollmentRow, handle: ExecutionAttemptHandle) {
     this.assertHandle(scope, handle);
     return this.transaction(async (client) => {

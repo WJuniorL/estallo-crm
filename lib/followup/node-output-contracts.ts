@@ -89,6 +89,15 @@ export const NODE_OUTPUT_CONTRACTS = {
     removed_tags: z.array(z.string().min(1)).optional(),
     tags: z.array(z.string().min(1)),
   }),
+  lead_product: z.strictObject({
+    lead_id: id,
+    product_id: id,
+    acao: z.enum(["add", "remove"]),
+    /** O item criado (`add`); `null` em `remove`. */
+    item_id: id.nullable(),
+    /** Quantos itens desse produto saíram (`remove`); 0 em `add`. */
+    removidos: z.number().int().nonnegative(),
+  }),
   update_lead_field: z.strictObject({
     lead_id: id.nullable(),
     contact_id: id.optional(),

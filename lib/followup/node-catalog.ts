@@ -126,6 +126,14 @@ const NODE_DEFINITIONS = {
     surfaces: CLOCK_SURFACES,
     effect: "crm",
   },
+  lead_product: {
+    label: "Produto do negócio",
+    description: "Acrescenta ou tira um produto do catálogo no negócio.",
+    category: "leads",
+    keywords: ["produto", "item", "catálogo", "pedido", "valor"],
+    surfaces: CLOCK_SURFACES,
+    effect: "crm",
+  },
   update_lead_field: {
     label: "Atualizar campo do negócio",
     description: "Grava um campo personalizado ou o valor do negócio.",
@@ -194,6 +202,7 @@ export const NODE_CATALOG = {
   assign_lead_owner: withOutputContract("assign_lead_owner"),
   add_note: withOutputContract("add_note"),
   update_lead_field: withOutputContract("update_lead_field"),
+  lead_product: withOutputContract("lead_product"),
   end: withOutputContract("end"),
 } as const;
 

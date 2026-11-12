@@ -1074,3 +1074,15 @@ Pedido do dono: atualizar os testes vermelhos do `verify` que vinham da frente d
 **Decisão registrada:** o modo `execution_mode = 'simulation'` (coluna existente) segue sem motor — simular pelo motor exigiria um ramo «não agir» em cada efeito; a simulação pura cobre o aceite «simulação deixa CRM/canais inalterados» sem esse risco.
 
 **Fase 6 no código:** recuperar da falha, herdados, reinício (já existia), simulação. **NÃO MEDIDO:** telas no navegador.
+
+## 2026-11-12 (11) — Fase 5: campo do contato, remover tags, trocar de funil, produtos
+
+**Feito:**
+- **Atualizar campo** ganhou `alvo: "contact_field"` (catálogo de contato, convertido pelo tipo, mescla atômica na linha travada do contato; não exige negócio; auditoria `contact.updated`).
+- **Bloco de tag remove** (`acao: "remove"`, opcional): tira só as tags pedidas no negócio ou no contato; saída `removed_tags`; `tag_added` só sai quando algo foi adicionado (`aplicarTags` em `lib/leads/tags.ts`).
+- **Mover troca de funil:** `prepararMovimentacaoDeLead({ permitirTrocaDeFunil: true })` só no motor — regras do `/move-pipeline` (negócio aberto, etapa aberta, obrigatórios do funil de DESTINO); grava `pipeline_id`. Invariante antigo que exigia a recusa trocado pelo que prova a troca (decisão do Estallo: o mesmo negócio muda de funil).
+- **Produto do negócio** (`lead_product`): `add` copia nome e preço do `catalog_products` da organização (o gatilho recalcula `value_cents`), `remove` tira os itens do produto; produto fora do catálogo do tenant falha explicado.
+
+**Evidência:** suíte local `lib/followup` + editor + `lib/automation` + `lib/leads` = 133 arquivos / 1727 testes; `tsc` limpo. Invariantes novos: `remover-tags`, `produto-do-negocio`, caso do contato em `atualizar-campo-do-negocio`, troca de funil em `diario-transacional`.
+
+**Pendente com decisão do dono (parado aqui):** requisição HTTP (cofre de credenciais não existe); buscar/criar contato ou negócio dentro do fluxo (a execução é presa a um contato/negócio — o que fazer com ela?); extrair dados por IA (custo de modelo); Fase 8 (ambiente local com Docker + canal e IA de teste reais).

@@ -36,6 +36,8 @@ export const NODE_TYPES = [
   'add_note',
   // Fase 5: grava um campo personalizado do negócio (do catálogo) ou o valor do negócio.
   'update_lead_field',
+  // Fase 5: adiciona ou remove um produto do catálogo no negócio (o valor é recalculado pelo banco).
+  'lead_product',
   'end',
 ] as const;
 export type NodeType = (typeof NODE_TYPES)[number];
@@ -450,6 +452,16 @@ export const updateLeadFieldConfigSchema = z.strictObject({
   valor: z.string().max(2000),
 });
 
+/**
+ * Nó `lead_product` (Fase 5) — produto do CATÁLOGO no negócio: `add` vincula (nome e preço copiados do catálogo,
+ * como a rota do CRM), `remove` tira todos os itens desse produto. Sem produto é rascunho (`produto_ausente`).
+ */
+export const leadProductConfigSchema = z.strictObject({
+  acao: z.enum(['add', 'remove']),
+  product_id: z.union([z.literal(''), z.string().uuid()]),
+  quantidade: z.number().int().min(1).max(10_000),
+});
+
 export const mapDataConfigSchema = z.strictObject({
   fields: z.array(mapDataFieldSchema).max(30, "No máximo 30 campos por bloco."),
 });
@@ -727,6 +739,17 @@ export const flowNodeSchema = z.discriminatedUnion('type', [
       y: z.number(),
     }),
     config: editLeadTagConfigSchema,
+  }),
+  // Fase 5: produto do catálogo no negócio
+  z.strictObject({
+    id: z.string().min(1),
+    type: z.literal('lead_product'),
+    label: z.string().min(1).max(60),
+    position: z.strictObject({
+      x: z.number(),
+      y: z.number(),
+    }),
+    config: leadProductConfigSchema,
   }),
   // Fase 5: grava campo do negócio
   z.strictObject({
@@ -1013,6 +1036,7 @@ export const NODES_WITH_ERROR_BRANCH: ReadonlySet<NodeType> = new Set<NodeType>(
   'assign_lead_owner',
   'add_note',
   'update_lead_field',
+  'lead_product',
 ]);
 
 function errorBranch(): FlowBranch {

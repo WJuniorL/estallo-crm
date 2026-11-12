@@ -42,6 +42,7 @@ import { DeleteFollowupFlowButton } from "../../_components/DeleteFollowupFlowBu
 import { RenameFollowupFlowButton } from "../../_components/RenameFollowupFlowButton";
 import { ExportFollowupFlowButton } from "../../_components/ExportFollowupFlowButton";
 import { TriggerConfigControl } from "./TriggerConfigControl";
+import { SimularCaminho } from "./SimularCaminho";
 
 interface Props {
   flowId: string;
@@ -194,6 +195,7 @@ export function PublishBar({
         >
           {t("Rollback")}
         </Button>
+        <SimularCaminho graph={graph} />
         <ExportFollowupFlowButton flowId={flowId} nome={flow.name} temPublicada={flow.active_version_id !== null} />
         {onAutoFit && (
           <Button

@@ -1063,3 +1063,14 @@ Pedido do dono: atualizar os testes vermelhos do `verify` que vinham da frente d
 **Evidência:** `reiniciar.test.ts` (+3 casos de retry), rota de restart e painel verdes; invariante `automacoes-recuperar-da-falha` (só no CI).
 
 **Falta na Fase 6:** passos herdados exibidos como «herdados» no dossiê da recuperação (hoje aparecem na execução original, ligada pela reexecução); testar nó/caminho no rascunho com dados simulados (simulação sem efeito).
+
+## 2026-11-12 (10) — Fase 6: passos herdados e simulação no editor
+
+**Feito:**
+- Dossiê de uma recuperação devolve `passos_herdados` (passos concluídos da original, só resumo) e a aba Execuções os mostra como «Herdado da execução original»; o link de origem diz «Recuperação».
+- **Simular caminho** (`lib/followup/simular-caminho.ts`, puro; botão na barra do editor): percorre o rascunho com dados de EXEMPLO — condição pelo avaliador real (`processNode`), Mapear dados pela regra real, ramo de Resposta/Classificar escolhido por quem testa, blocos com efeito descritos como «faria …» com saída de exemplo, esperas consideradas cumpridas, teto de 50 passos (laço não trava). Nada é gravado nem enviado; exemplos não são lidos por execução publicada.
+- Paleta desktop rola por dentro (conteúdo absoluto no aside) — a versão anterior esticava a página e o e2e do editor não alcançava o canvas; e2e do roteiro compara o CONJUNTO de blocos.
+
+**Decisão registrada:** o modo `execution_mode = 'simulation'` (coluna existente) segue sem motor — simular pelo motor exigiria um ramo «não agir» em cada efeito; a simulação pura cobre o aceite «simulação deixa CRM/canais inalterados» sem esse risco.
+
+**Fase 6 no código:** recuperar da falha, herdados, reinício (já existia), simulação. **NÃO MEDIDO:** telas no navegador.

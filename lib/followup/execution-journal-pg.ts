@@ -1767,7 +1767,7 @@ export class PgExecutionJournal implements ExecutionJournal {
       // Troca de funil: o MESMO negócio passa para o funil da etapa (id, conversa, tarefas e timeline seguem com ele).
       if (reads.stage.pipeline_id !== lead.pipeline_id) {
         values.push(reads.stage.pipeline_id);
-        setters.push(`pipeline_id=${values.length}`);
+        setters.push(`pipeline_id=$${values.length}`);
       }
       for (const field of ["lost_reason", "won_reason"] as const)
         if (prepared.patch[field] !== undefined) {
@@ -1802,6 +1802,8 @@ export class PgExecutionJournal implements ExecutionJournal {
         lead.id,
         {
           pipeline_id: lead.pipeline_id,
+          // Troca de funil (Fase 5): o funil de destino, para quem escuta o evento não ler o de origem como atual.
+          ...(reads.stage.pipeline_id !== lead.pipeline_id ? { to_pipeline_id: reads.stage.pipeline_id } : {}),
           from_stage_id: lead.stage_id,
           to_stage_id: updated.stage_id,
           position_in_stage: position,

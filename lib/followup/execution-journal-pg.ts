@@ -1233,7 +1233,12 @@ export class PgExecutionJournal implements ExecutionJournal {
       ).rows[0];
       if (!lead) throw new ExecutionLeadUnavailableError();
       const anterior =
-        reads.alvo === "deal_value" ? (lead.value_cents ?? null) : ((lead.custom_fields ?? {})[reads.chave!] ?? null);
+        reads.alvo === "deal_value"
+          ? // bigint chega do driver como texto: a saída do bloco guarda número.
+            lead.value_cents === null
+            ? null
+            : Number(lead.value_cents)
+          : ((lead.custom_fields ?? {})[reads.chave!] ?? null);
       if (reads.alvo === "deal_value") {
         await client.query(
           "update crm_leads set value_cents=$4,updated_at=clock_timestamp() where organization_id=$1 and contact_id=$2 and id=$3",

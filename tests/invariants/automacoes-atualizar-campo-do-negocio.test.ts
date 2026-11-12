@@ -112,7 +112,7 @@ describe("Atualizar campo do negócio (motor novo, Postgres real)", () => {
   it("valor do negócio, vindo do Mapear dados, vira centavos; uma atividade só", async () => {
     const { negocio, atividades, passo } = await rodar({ alvo: "deal_value", chave: "", valor: "{{nodes.mapa.fields.total}}" });
     expect(passo.status).toBe("succeeded");
-    expect(negocio.value_cents).toBe(150000);
+    expect(Number(negocio.value_cents)).toBe(150000); // bigint chega como texto pelo driver pg
     expect(atividades).toBe(1);
   });
 

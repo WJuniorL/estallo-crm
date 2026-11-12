@@ -69,6 +69,8 @@ export const PUBLISH_ERROR_CODES = [
   'nota_sem_texto',
   'campo_do_negocio_incompleto',
   'produto_ausente',
+  'conexao_http_ausente',
+  'corpo_http_invalido',
   'mapa_campo_repetido',
   'mapa_campo_sem_valor',
 ] as const;
@@ -975,6 +977,23 @@ export function validateFlowForPublish(
         code: 'campo_do_negocio_incompleto',
         message: `A caixa "${node.label}" precisa do campo e do valor a gravar.`,
       });
+    if (node.type === 'http_request' && !node.config.connection_id)
+      errors.push({
+        node_id: node.id,
+        code: 'conexao_http_ausente',
+        message: `A caixa "${node.label}" não tem conexão escolhida.`,
+      });
+    if (node.type === 'http_request' && node.config.corpo.trim()) {
+      try {
+        JSON.parse(node.config.corpo);
+      } catch {
+        errors.push({
+          node_id: node.id,
+          code: 'corpo_http_invalido',
+          message: `O corpo da caixa "${node.label}" não é um JSON válido.`,
+        });
+      }
+    }
     if (node.type === 'lead_product' && !node.config.product_id)
       errors.push({
         node_id: node.id,

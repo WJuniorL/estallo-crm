@@ -28,6 +28,7 @@ export const NODES_INTEGRATED_IN_EXECUTION_CONTRACT: ReadonlySet<string> = new S
   "add_note",
   "update_lead_field",
   "lead_product",
+  "http_request",
 ]);
 
 export function executionContractProblem(

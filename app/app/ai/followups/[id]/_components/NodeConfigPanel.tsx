@@ -26,6 +26,7 @@ import { AssignLeadOwnerForm } from "./forms/AssignLeadOwnerForm";
 import { AddNoteForm } from "./forms/AddNoteForm";
 import { UpdateLeadFieldForm } from "./forms/UpdateLeadFieldForm";
 import { LeadProductForm } from "./forms/LeadProductForm";
+import { HttpRequestForm } from "./forms/HttpRequestForm";
 import { RepeatForm } from "./forms/RepeatForm";
 import { SkillForm } from "./forms/SkillForm";
 import { WaitForm } from "./forms/WaitForm";
@@ -178,6 +179,9 @@ export function NodeConfigPanel({
             config={node.data.config as ConfigOf<"edit_lead_tag">}
             onChange={(config) => onChange({ config })}
           />
+        )}
+        {type === "http_request" && (
+          <HttpRequestForm config={node.data.config as ConfigOf<"http_request">} onChange={(config) => onChange({ config })} />
         )}
         {type === "lead_product" && (
           <LeadProductForm config={node.data.config as ConfigOf<"lead_product">} onChange={(config) => onChange({ config })} />

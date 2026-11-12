@@ -105,6 +105,7 @@ describe("conferência do remapeamento (o destino é do tenant e do mesmo tipo)"
       usuario: [{ id: USUARIO_B, nome: "Bia" }],
       tipo_de_agenda: [],
       agente: [],
+      conexao_http: [],
     };
     const deps = pacote.dependencias;
     expect(problemaDoMapa(deps, { [ETAPA_A]: ETAPA_B, [USUARIO_A]: USUARIO_B }, destino)).toBeNull();

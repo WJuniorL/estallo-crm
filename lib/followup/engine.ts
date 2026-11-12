@@ -1,5 +1,7 @@
 import type { JobClaim } from "@/lib/agent-engine/queue/claim";
 import { pausaDepoisDoBloco } from "./passo-a-passo";
+import { executarRequisicaoHttp, falhaDaRequisicao, type ResultadoHttp } from "./requisicao-http";
+import type { NodeOutput } from "./node-output-contracts";
 import { assertAgendaEffectSupabase } from "@/lib/agenda/efeito";
 import { AgendaDeferredError } from "@/lib/agenda/protecao-followup";
 import type { ServiceBoundary } from "@/lib/atendimento/fronteira";
@@ -343,7 +345,7 @@ async function recordJournalFailure(
   handle: ExecutionAttemptHandle | undefined,
   error: unknown,
   summary: TickSummary,
-  operation: "task" | "decision" | "tags" | "move" | "send" | "classify",
+  operation: "task" | "decision" | "tags" | "move" | "send" | "classify" | "http",
 ): Promise<void> {
   if (error instanceof StaleServiceBoundaryError) return;
   if (error instanceof AgendaDeferredError) {
@@ -1093,6 +1095,49 @@ async function processEnrollment(
   const node = graph.nodes.find((n) => n.id === enrollment.current_node_id);
   if (!node) throw new Error("node_not_found");
   if (inboundBodyOverride !== undefined && node.type !== "match_reply" && node.type !== "wait") {
+    return;
+  }
+
+  // Requisição HTTP (Fase 5): a rede fica FORA de transação. A intenção é gravada antes (efeito `pending`), a chamada
+  // sai, e só então o diário confirma. Morrer no meio deixa a intenção sem desfecho: a próxima tentativa vê isso e
+  // para em "resultado incerto" (Central) — nunca reenvia sozinha algo que pode ter chegado.
+  if (enrollment.execution_contract === 1 && node.type === "http_request") {
+    if (!db.executionJournal) throw new Error("execution_journal_unavailable");
+    const journal = await db.executionJournal();
+    let handle: ExecutionAttemptHandle | undefined;
+    try {
+      const begun = await journal.begin(enrollment, {
+        contact_id: enrollment.contact_id,
+        lead_id: enrollment.lead_id ?? null,
+        conversation_id: enrollment.conversation_id,
+      });
+      if (begun.kind !== "ready") {
+        summary.dead++;
+        return;
+      }
+      handle = begun.handle;
+      const preparo = await journal.prepareHttp(enrollment, handle);
+      if (preparo.kind === "reused") return;
+      const resultado: ResultadoHttp =
+        preparo.kind === "incerto"
+          ? { kind: "incerto", motivo: "tentativa anterior sem desfecho" }
+          : await executarRequisicaoHttp(preparo.pedido);
+      if (resultado.kind === "resposta" && resultado.status >= 200 && resultado.status < 300) {
+        const result = await journal.completeHttp(enrollment, handle, {
+          status: resultado.status,
+          corpo: resultado.corpo as NodeOutput<"http_request">["corpo"],
+          truncado: resultado.truncado,
+        });
+        if (!result.reused) summary.advanced++;
+        return;
+      }
+      const falha = falhaDaRequisicao(resultado);
+      await journal.failHttp(enrollment, handle, falha.efeito, falha.erro);
+      summary.failed++;
+      if (!falha.erro.retryable) summary.dead++;
+    } catch (error) {
+      await recordJournalFailure(db, journal, enrollment, handle, error, summary, "http");
+    }
     return;
   }
 

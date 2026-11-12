@@ -144,6 +144,7 @@ const TIPO_DO_NO: Record<FlowNode["type"], string> = {
   add_note: "Nota interna",
   update_lead_field: "Atualizar campo do negócio",
   lead_product: "Produto do negócio",
+  http_request: "Requisição HTTP",
   end: "Fim",
 };
 
@@ -228,6 +229,11 @@ export function resumoDoNo(node: FlowNode): NoDoDossie {
             ? `remove a(s) tag(s) ${node.config.tags.join(", ")} — sem mensagem ao cliente`
             : `grava a(s) tag(s) ${node.config.tags.join(", ")} no lead — sem mensagem ao cliente`
           : "grava tag no lead, ainda sem destino escolhido — sem mensagem ao cliente",
+      };
+    case "http_request":
+      return {
+        ...base,
+        resumo: `chama ${node.config.metodo} ${node.config.caminho || "/"} num sistema externo, pela conexão escolhida — sem mensagem ao cliente`,
       };
     case "lead_product":
       return {

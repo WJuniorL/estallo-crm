@@ -16,6 +16,7 @@ export const TIPOS_COM_EFEITO = new Set([
   "add_note", // registra nota interna
   "update_lead_field", // grava campo do negócio
   "lead_product", // acrescenta ou tira produto do negócio
+  "http_request", // chama um sistema externo
 ]);
 
 export interface BlocoComEfeito {

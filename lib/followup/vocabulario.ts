@@ -594,6 +594,15 @@ export const PRIORIDADES_DA_TAREFA: Record<PrioridadeDaTarefa, string> = {
 
 // ─── destino da tag (nó edit_lead_tag) ───────────────────────────────────
 
+/** Métodos do bloco Requisição HTTP — o nome do método é o que o sistema externo documenta; o rótulo diz o uso. */
+export const METODOS_HTTP_ROTULOS: Record<"GET" | "POST" | "PUT" | "PATCH" | "DELETE", string> = {
+  GET: "GET — consultar",
+  POST: "POST — criar ou enviar",
+  PUT: "PUT — substituir",
+  PATCH: "PATCH — alterar parte",
+  DELETE: "DELETE — apagar",
+};
+
 /** O que o bloco Produto do negócio faz — rótulos do formulário. */
 export const ACOES_DO_PRODUTO: Record<"add" | "remove", string> = {
   add: "Acrescentar produto",

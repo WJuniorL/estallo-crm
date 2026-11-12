@@ -89,6 +89,13 @@ export const NODE_OUTPUT_CONTRACTS = {
     removed_tags: z.array(z.string().min(1)).optional(),
     tags: z.array(z.string().min(1)),
   }),
+  http_request: z.strictObject({
+    /** Status HTTP da resposta (só 2xx chega aqui: o resto é falha do bloco). */
+    status: z.number().int(),
+    /** O corpo: JSON lido, ou o texto; `null` se passou do teto. */
+    corpo: z.json().nullable(),
+    truncado: z.boolean(),
+  }),
   lead_product: z.strictObject({
     lead_id: id,
     product_id: id,

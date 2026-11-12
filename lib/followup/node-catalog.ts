@@ -12,10 +12,11 @@ export const NODE_CATEGORIES = {
   flow: "Fluxo e tempo",
   ai: "Inteligência artificial",
   data: "Dados e perguntas",
+  integracoes: "Integrações",
 } as const;
 
 export type NodeCategory = keyof typeof NODE_CATEGORIES;
-export type NodeEffect = "none" | "crm" | "message" | "agent";
+export type NodeEffect = "none" | "crm" | "message" | "agent" | "external";
 
 interface NodeDefinition {
   label: string;
@@ -134,6 +135,14 @@ const NODE_DEFINITIONS = {
     surfaces: CLOCK_SURFACES,
     effect: "crm",
   },
+  http_request: {
+    label: "Requisição HTTP",
+    description: "Chama um sistema externo por uma conexão protegida e entrega a resposta.",
+    category: "integracoes",
+    keywords: ["http", "api", "webhook", "integração", "requisição", "sistema externo", "erp"],
+    surfaces: CLOCK_SURFACES,
+    effect: "external",
+  },
   update_lead_field: {
     label: "Atualizar campo do negócio",
     description: "Grava um campo personalizado ou o valor do negócio.",
@@ -203,6 +212,7 @@ export const NODE_CATALOG = {
   add_note: withOutputContract("add_note"),
   update_lead_field: withOutputContract("update_lead_field"),
   lead_product: withOutputContract("lead_product"),
+  http_request: withOutputContract("http_request"),
   end: withOutputContract("end"),
 } as const;
 

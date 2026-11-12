@@ -1086,3 +1086,16 @@ Pedido do dono: atualizar os testes vermelhos do `verify` que vinham da frente d
 **Evidência:** suíte local `lib/followup` + editor + `lib/automation` + `lib/leads` = 133 arquivos / 1727 testes; `tsc` limpo. Invariantes novos: `remover-tags`, `produto-do-negocio`, caso do contato em `atualizar-campo-do-negocio`, troca de funil em `diario-transacional`.
 
 **Pendente com decisão do dono (parado aqui):** requisição HTTP (cofre de credenciais não existe); buscar/criar contato ou negócio dentro do fluxo (a execução é presa a um contato/negócio — o que fazer com ela?); extrair dados por IA (custo de modelo); Fase 8 (ambiente local com Docker + canal e IA de teste reais).
+
+## 2026-11-12 (12) — Fase 5: Requisição HTTP com conexão protegida (decisão do dono: «da forma mais segura»)
+
+**Feito:**
+- **Conexão protegida** — tabela `automation_http_connections` (migration **0716** + apêndice no baseline): origem (`https://host[:porta]`, sem caminho/credencial/query), autenticação `none | bearer | header | basic`, segredo cifrado AES-256-GCM no APP com `AI_CRED_AES_KEY` (fora do banco; dump sozinho não abre). **Sem GRANT para `anon`/`authenticated`**: só as rotas (`GET/POST /api/v1/ai/followup-http-connections`, `DELETE …/:id`; listar `manager`, criar/apagar `admin`, suporte, rate limit, auditoria `automation_http_connection.created/deleted`) e o motor leem. A RLS fica ligada com política `admin` da própria organização.
+- **Bloco `http_request`** (`lib/followup/requisicao-http.ts`): caminho resolvido contra a ORIGEM da conexão (sair dela é recusado — o segredo não vai a outro host); variáveis no corpo substituídas dentro dos valores do JSON (sem injeção; marca inteira mantém o tipo); guardas do `call_webhook` (anti-SSRF textual + IP resolvido, sem seguir redirect, 10 s, teto de 64 KB); `Idempotency-Key` = identidade do efeito, estável entre tentativas.
+- **Diário** (`prepareHttp` / `completeHttp` / `failHttp`): a intenção é gravada como efeito `pending` ANTES da rede; 2xx confirma a mesma linha, grava a saída (`status`, `corpo`, `truncado`), audita `automation.http_request_sent` (sem corpo) e avança. «Não saiu» (conexão recusada/DNS) → `failed` e nova tentativa; status não-2xx → falha conhecida (ramo de erro, se houver); timeout ou intenção sem desfecho → `unknown`, execução parada com aviso na Central — **nunca reenvio automático**. O `begin` passou a ignorar efeitos `failed` ao decidir «resultado desconhecido».
+- Exportação: a conexão vira referência `conexao_http` remapeável (o pacote leva só id e nome).
+- Tela: formulário com conexão, método, caminho e corpo com variáveis; diálogo «Gerenciar conexões» (credencial digitada uma vez, depois só `••••1234`).
+
+**Evidência:** `requisicao-http.test.ts` 14/14; suíte `lib/followup` + editor; `tsc` limpo; lint limpo. Invariante `automacoes-requisicao-http` (5 casos: 2xx, incerto, queda depois da intenção não reenvia, não-saiu tenta de novo, 500 e conexão inexistente) — só no CI.
+
+**NÃO MEDIDO:** chamada a um sistema externo real; tela no navegador.

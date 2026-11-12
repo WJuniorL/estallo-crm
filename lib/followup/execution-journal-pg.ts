@@ -48,10 +48,11 @@ import {
   type NodeResult,
   type NodeDecisionTrace,
 } from "./node-handlers";
-import { NODE_OUTPUT_CONTRACTS } from "./node-output-contracts";
+import { NODE_OUTPUT_CONTRACTS, type NodeOutput } from "./node-output-contracts";
 import { MARCA_DE_BLOCO, resolverReferencias } from "./variaveis-de-blocos";
 import { SQL_SAIDAS_DA_EXECUCAO } from "./sql-saidas-da-execucao";
 import { centavosDoValor, converterValorDoCampo } from "./valor-do-campo";
+import { corpoDaRequisicao, urlDaRequisicao, type PedidoHttp } from "./requisicao-http";
 import {
   avisoDeRecuperacaoEsgotada,
   SQL_AVISO_RECUPERACAO_ESGOTADA,
@@ -120,6 +121,14 @@ function taskRequest(
     origem: `followup:${row.id}`,
   };
 }
+
+const httpReadsSchema = z.object({
+  connection_id: z.string(),
+  metodo: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]),
+  url: z.string().nullable(),
+  corpo: z.json().nullable(),
+  erro: z.string().nullable(),
+});
 
 const tagReadsSchema = z.object({
   lead_id: z.uuid().nullable(),
@@ -429,6 +438,45 @@ export class PgExecutionJournal implements ExecutionJournal {
     return { requested, resolved: { ...base, valor: c.ok ? c.valor : null, erro: c.ok ? null : c.motivo } };
   }
 
+  /**
+   * A requisição HTTP resolvida e CONGELADA: URL (caminho contra a origem da conexão) e corpo com as saídas anteriores.
+   * A nova tentativa manda exatamente o mesmo pedido. A credencial NÃO entra aqui: é lida no `prepareHttp`.
+   */
+  private async httpInput(
+    client: pg.PoolClient,
+    row: LockedExecution,
+    node: Extract<FlowNode, { type: "http_request" }>,
+    requested: unknown,
+  ) {
+    const base = { connection_id: node.config.connection_id, metodo: node.config.metodo };
+    const conexao = node.config.connection_id
+      ? (
+          await client.query<{ base_url: string }>(
+            "select base_url from automation_http_connections where organization_id=$1 and id=$2",
+            [row.organization_id, node.config.connection_id],
+          )
+        ).rows[0]
+      : undefined;
+    if (!conexao)
+      return { requested, resolved: { ...base, url: null, corpo: null, erro: "A conexão escolhida não existe mais nesta organização." } };
+    const saidas = await this.saidasDaExecucao(client, row);
+    const alvo = urlDaRequisicao(conexao.base_url, node.config.caminho, saidas);
+    const corpo = corpoDaRequisicao(node.config.corpo, saidas);
+    const semValor = [...alvo.sem_valor, ...(corpo.ok ? corpo.sem_valor : [])];
+    const erro =
+      semValor.length > 0
+        ? `A requisição cita ${[...new Set(semValor.map((x) => x.marca))].join(", ")}, mas o bloco citado não produziu esse valor nesta execução.`
+        : !corpo.ok
+          ? corpo.motivo
+          : alvo.url === null
+            ? "O caminho precisa começar com / e não pode sair do endereço da conexão."
+            : null;
+    return {
+      requested,
+      resolved: { ...base, url: erro ? null : alvo.url, corpo: erro || !corpo.ok ? null : (corpo.corpo ?? null), erro },
+    };
+  }
+
   /** O texto da nota com as saídas anteriores resolvidas, congelado: a nova tentativa grava o MESMO texto. */
   private async noteInput(
     client: pg.PoolClient,
@@ -605,20 +653,30 @@ export class PgExecutionJournal implements ExecutionJournal {
     handle: ExecutionAttemptHandle,
     operation: string,
     output: unknown,
+    /** O efeito já existe como intenção `pending` (efeito externo, como a Requisição HTTP): confirma a MESMA linha. */
+    intencaoGravada = false,
   ): Promise<void> {
-    await client.query(
-      `insert into followup_execution_effects
-      (organization_id,enrollment_id,step_id,effect_key,operation,status,result_snapshot)
-      values($1,$2,$3,$4,$5,'confirmed',$6)`,
-      [
-        row.organization_id,
-        row.id,
-        handle.step_id,
-        this.localEffectKey(row, handle, operation),
-        operation,
-        output,
-      ],
-    );
+    if (intencaoGravada) {
+      const confirmado = await client.query(
+        `update followup_execution_effects set status='confirmed',result_snapshot=$4,updated_at=clock_timestamp()
+         where organization_id=$1 and step_id=$2 and effect_key=$3 and status='pending'`,
+        [row.organization_id, handle.step_id, this.localEffectKey(row, handle, operation), output],
+      );
+      if (confirmado.rowCount !== 1) throw new StaleServiceBoundaryError();
+    } else
+      await client.query(
+        `insert into followup_execution_effects
+        (organization_id,enrollment_id,step_id,effect_key,operation,status,result_snapshot)
+        values($1,$2,$3,$4,$5,'confirmed',$6)`,
+        [
+          row.organization_id,
+          row.id,
+          handle.step_id,
+          this.localEffectKey(row, handle, operation),
+          operation,
+          output,
+        ],
+      );
     await client.query(
       `update followup_execution_attempts set status='succeeded',completed_at=clock_timestamp(),
       output_snapshot=$3,output_recorded=true where organization_id=$1 and id=$2`,
@@ -855,7 +913,7 @@ export class PgExecutionJournal implements ExecutionJournal {
       }
       if (prior?.status === "running") {
         const { rows: effects } = await client.query(
-          "select id from followup_execution_effects where organization_id=$1 and step_id=$2 limit 1",
+          "select id from followup_execution_effects where organization_id=$1 and step_id=$2 and status<>'failed' limit 1",
           [org, step.id],
         );
         const unknown = effects.length > 0;
@@ -918,7 +976,9 @@ export class PgExecutionJournal implements ExecutionJournal {
                     ? await this.noteInput(client, row, node, snapshot)
                     : node.type === "update_lead_field"
                       ? await this.fieldInput(client, row, node, snapshot)
-                      : snapshot;
+                      : node.type === "http_request"
+                        ? await this.httpInput(client, row, node, snapshot)
+                        : snapshot;
       const { rows } = await client.query<{ id: string }>(
         `insert into followup_execution_attempts
           (organization_id,step_id,attempt_no,status,input_snapshot,config_snapshot,lease_revision,lease_until,next_eval_at)
@@ -1520,6 +1580,82 @@ export class PgExecutionJournal implements ExecutionJournal {
       await this.confirmLocalEffect(client, row, handle, "add_note", output);
       return { output, reused: false };
     });
+  }
+
+  async prepareHttp(scope: EnrollmentRow, handle: ExecutionAttemptHandle) {
+    this.assertHandle(scope, handle);
+    return this.transaction(async (client) => {
+      await this.lockContact(client, scope);
+      const receipt = await this.confirmedEffect(client, scope, handle, "http_request", NODE_OUTPUT_CONTRACTS.http_request);
+      if (receipt) return { kind: "reused" as const, output: receipt };
+      const { row, node } = await this.current(client, scope);
+      if (node.type !== "http_request") throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
+      const held = await this.holdAttempt(client, row, handle);
+      const reads = z.object({ resolved: httpReadsSchema }).parse(held.input_snapshot).resolved;
+      if (reads.erro || !reads.url) throw new ExecutionTaskConfigurationError("requisicao_http_invalida", reads.erro ?? "A requisição ficou sem endereço.");
+      const conexao = (
+        await client.query<PedidoHttp["conexao"]>(
+          `select base_url,auth_kind,header_name,secret_encrypted,secret_iv,secret_tag
+           from automation_http_connections where organization_id=$1 and id=$2`,
+          [row.organization_id, reads.connection_id],
+        )
+      ).rows[0];
+      if (!conexao)
+        throw new ExecutionTaskConfigurationError("conexao_http_ausente", "A conexão escolhida não existe mais nesta organização.");
+      // O pedido foi congelado contra a origem de ANTES: se a conexão mudou de endereço, o segredo novo não vai para o antigo.
+      if (new URL(reads.url).origin !== new URL(conexao.base_url).origin)
+        throw new ExecutionTaskConfigurationError("conexao_http_mudou", "A conexão mudou de endereço depois que esta execução começou.");
+      const chave = this.localEffectKey(row, handle, "http_request");
+      const intencao = await client.query(
+        `insert into followup_execution_effects (organization_id,enrollment_id,step_id,effect_key,operation,status)
+         values($1,$2,$3,$4,'http_request','pending')
+         on conflict (organization_id,effect_key) do update set status='pending',updated_at=clock_timestamp()
+         where followup_execution_effects.status='failed' and followup_execution_effects.step_id=excluded.step_id
+         returning id`,
+        [row.organization_id, row.id, handle.step_id, chave],
+      );
+      if (intencao.rowCount !== 1) return { kind: "incerto" as const };
+      return {
+        kind: "pedido" as const,
+        pedido: { conexao, metodo: reads.metodo, url: reads.url, corpo: reads.corpo ?? undefined, chave },
+      };
+    });
+  }
+
+  async completeHttp(scope: EnrollmentRow, handle: ExecutionAttemptHandle, resposta: NodeOutput<"http_request">) {
+    this.assertHandle(scope, handle);
+    return this.transaction(async (client) => {
+      await this.lockContact(client, scope);
+      const receipt = await this.confirmedEffect(client, scope, handle, "http_request", NODE_OUTPUT_CONTRACTS.http_request);
+      if (receipt) return { output: receipt, reused: true };
+      const { row, node } = await this.current(client, scope);
+      if (node.type !== "http_request") throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
+      const held = await this.holdAttempt(client, row, handle);
+      const reads = z.object({ resolved: httpReadsSchema }).parse(held.input_snapshot).resolved;
+      const output = NODE_OUTPUT_CONTRACTS.http_request.parse(resposta);
+      await this.auditEffect(client, row.organization_id, "automation.http_request_sent", "automation_http_connection", reads.connection_id, {
+        metodo: reads.metodo,
+        status: output.status,
+        origem: `followup:${row.id}`,
+        execution_step_id: handle.step_id,
+        execution_attempt_id: handle.attempt_id,
+      });
+      await this.confirmLocalEffect(client, row, handle, "http_request", output, true);
+      return { output, reused: false };
+    });
+  }
+
+  async failHttp(scope: EnrollmentRow, handle: ExecutionAttemptHandle, efeito: "failed" | "unknown", error: ExecutionError) {
+    this.assertHandle(scope, handle);
+    await this.transaction(async (client) => {
+      await this.lockContact(client, scope);
+      await client.query(
+        `update followup_execution_effects set status=$4,updated_at=clock_timestamp()
+         where organization_id=$1 and step_id=$2 and effect_key=$3 and status='pending'`,
+        [scope.organization_id, handle.step_id, this.localEffectKey(scope, handle, "http_request"), efeito],
+      );
+    });
+    await this.fail(scope, handle, error);
   }
 
   async completeOwner(scope: EnrollmentRow, handle: ExecutionAttemptHandle) {

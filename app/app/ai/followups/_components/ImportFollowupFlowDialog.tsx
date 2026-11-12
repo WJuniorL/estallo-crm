@@ -38,6 +38,7 @@ function RotuloDoTipo({ tipo }: { tipo: Pacote["dependencias"][number]["tipo"] }
   if (tipo === "funil") return <>{t("Funil")}</>;
   if (tipo === "usuario") return <>{t("Pessoa da equipe")}</>;
   if (tipo === "tipo_de_agenda") return <>{t("Tipo de agendamento")}</>;
+  if (tipo === "conexao_http") return <>{t("Conexão HTTP")}</>;
   if (tipo === "agente") return <>{t("Agente de IA")}</>;
   return <>{t("Referência desconhecida")}</>;
 }

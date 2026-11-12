@@ -118,7 +118,7 @@ export function InserirVariavel({
 }
 
 /** Insere `marca` no cursor de um campo de texto (ou no fim, sem foco) e devolve o texto novo. */
-export function inserirNoCursor(campo: HTMLTextAreaElement | null, texto: string, marca: string): string {
+export function inserirNoCursor(campo: HTMLTextAreaElement | HTMLInputElement | null, texto: string, marca: string): string {
   const inicio = campo?.selectionStart ?? texto.length;
   const fim = campo?.selectionEnd ?? texto.length;
   return texto.slice(0, inicio) + marca + texto.slice(fim);

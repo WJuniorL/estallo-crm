@@ -38,6 +38,8 @@ export const NODE_TYPES = [
   'update_lead_field',
   // Fase 5: adiciona ou remove um produto do catálogo no negócio (o valor é recalculado pelo banco).
   'lead_product',
+  // Fase 5: chama um sistema externo por uma conexão protegida (o segredo nunca está no fluxo).
+  'http_request',
   'end',
 ] as const;
 export type NodeType = (typeof NODE_TYPES)[number];
@@ -462,6 +464,20 @@ export const leadProductConfigSchema = z.strictObject({
   quantidade: z.number().int().min(1).max(10_000),
 });
 
+/** Métodos do bloco Requisição HTTP — aqui (e não em requisicao-http.ts) porque o construtor roda no navegador. */
+export const METODOS_HTTP = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
+
+/**
+ * Nó `http_request` (Fase 5) — cita uma CONEXÃO protegida (origem + credencial cifrada, no servidor); o caminho e o
+ * corpo JSON aceitam `{{nodes.<bloco>.<campo>}}`. Sem conexão é rascunho (`conexao_http_ausente`).
+ */
+export const httpRequestConfigSchema = z.strictObject({
+  connection_id: z.union([z.literal(''), z.string().uuid()]),
+  metodo: z.enum(METODOS_HTTP),
+  caminho: z.string().max(2000),
+  corpo: z.string().max(20_000),
+});
+
 export const mapDataConfigSchema = z.strictObject({
   fields: z.array(mapDataFieldSchema).max(30, "No máximo 30 campos por bloco."),
 });
@@ -751,6 +767,17 @@ export const flowNodeSchema = z.discriminatedUnion('type', [
     }),
     config: leadProductConfigSchema,
   }),
+  // Fase 5: requisição HTTP por conexão protegida
+  z.strictObject({
+    id: z.string().min(1),
+    type: z.literal('http_request'),
+    label: z.string().min(1).max(60),
+    position: z.strictObject({
+      x: z.number(),
+      y: z.number(),
+    }),
+    config: httpRequestConfigSchema,
+  }),
   // Fase 5: grava campo do negócio
   z.strictObject({
     id: z.string().min(1),
@@ -1037,6 +1064,7 @@ export const NODES_WITH_ERROR_BRANCH: ReadonlySet<NodeType> = new Set<NodeType>(
   'add_note',
   'update_lead_field',
   'lead_product',
+  'http_request',
 ]);
 
 function errorBranch(): FlowBranch {

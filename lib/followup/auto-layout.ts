@@ -58,6 +58,7 @@ const TYPE_ORDER: Record<NodeType, number> = {
   add_note: 8.8,
   update_lead_field: 8.65,
   lead_product: 8.66,
+  http_request: 8.67,
   end: 9,
 };
 

@@ -19,7 +19,7 @@ export const VERSAO_DO_FORMATO = 1;
 /** Teto do arquivo importado (bytes do JSON). Um fluxo real tem dezenas de KB. */
 export const TETO_DO_PACOTE_BYTES = 1_000_000;
 
-export const TIPOS_DE_REFERENCIA = ["etapa", "funil", "usuario", "tipo_de_agenda", "agente", "desconhecido"] as const;
+export const TIPOS_DE_REFERENCIA = ["etapa", "funil", "usuario", "tipo_de_agenda", "agente", "conexao_http", "desconhecido"] as const;
 export type TipoDeReferencia = (typeof TIPOS_DE_REFERENCIA)[number];
 
 const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;

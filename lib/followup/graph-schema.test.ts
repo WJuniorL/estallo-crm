@@ -52,6 +52,7 @@ describe('graph-schema', () => {
         'add_note',
         'update_lead_field',
         'lead_product',
+        'http_request',
         'end',
       ]);
     });

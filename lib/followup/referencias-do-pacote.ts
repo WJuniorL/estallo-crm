@@ -18,7 +18,7 @@ async function nomeDoUsuario(admin: SupabaseClient, userId: string): Promise<str
 
 /** Tudo que a organização tem para ser destino de um remapeamento. */
 export async function candidatosDaOrganizacao(admin: SupabaseClient, orgId: string): Promise<Candidatos> {
-  const [funis, etapas, membros, tipos, agentes] = await Promise.all([
+  const [funis, etapas, membros, tipos, agentes, conexoes] = await Promise.all([
     admin.from("crm_pipelines").select("id,name").eq("organization_id", orgId),
     admin.from("crm_stages").select("id,name,pipeline_id").eq("organization_id", orgId),
     admin
@@ -29,8 +29,10 @@ export async function candidatosDaOrganizacao(admin: SupabaseClient, orgId: stri
       .neq("role", "viewer"),
     admin.from("calendar_event_types").select("id,name").eq("organization_id", orgId),
     admin.from("ai_agents").select("id,name").eq("organization_id", orgId),
+    // Só o nome e o id: a credencial nunca viaja no pacote, quem importa escolhe a conexão equivalente no destino.
+    admin.from("automation_http_connections").select("id,label").eq("organization_id", orgId),
   ]);
-  for (const r of [funis, etapas, membros, tipos, agentes]) if (r.error) throw new Error(r.error.message);
+  for (const r of [funis, etapas, membros, tipos, agentes, conexoes]) if (r.error) throw new Error(r.error.message);
   const nomeDoFunil = new Map((funis.data ?? []).map((f) => [f.id as string, f.name as string]));
   return {
     funil: (funis.data ?? []).map((f) => ({ id: f.id as string, nome: f.name as string })),
@@ -43,6 +45,7 @@ export async function candidatosDaOrganizacao(admin: SupabaseClient, orgId: stri
     ),
     tipo_de_agenda: (tipos.data ?? []).map((t) => ({ id: t.id as string, nome: t.name as string })),
     agente: (agentes.data ?? []).map((a) => ({ id: a.id as string, nome: a.name as string })),
+    conexao_http: (conexoes.data ?? []).map((c) => ({ id: c.id as string, nome: c.label as string })),
   };
 }
 

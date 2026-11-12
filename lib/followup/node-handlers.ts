@@ -1265,6 +1265,13 @@ export function processNode(input: {
       return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
     }
 
+    case "http_request": {
+      // Fase 5 — passagem: quem chama o sistema externo é o motor (fora da transação) e quem grava é o diário.
+      const edge = selectEdge(edges, node.id, { type: "always" });
+      if (!edge) return { kind: "fail", error: `http_request node "${node.id}" has no outbound edge` };
+      return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
+    }
+
     case "lead_product": {
       // Fase 5 — passagem: quem grava o produto é o diário (`completeProduct`), na transação do avanço.
       const edge = selectEdge(edges, node.id, { type: "always" });

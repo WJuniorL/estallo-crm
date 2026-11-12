@@ -61,6 +61,11 @@ interface Plano {
   intervalo: Intervalo;
   max_assentos: number | null;
   max_canais: number | null;
+  max_pipelines: number | null;
+  max_etapas_por_pipeline: number | null;
+  max_leads: number | null;
+  max_automacoes: number | null;
+  max_webhooks: number | null;
   arquivado_em: string | null;
   oferecido_ao_cliente: boolean;
 }
@@ -91,7 +96,7 @@ async function limparSessaoExpirada(admin: SupabaseClient, orgId: string, sessao
 async function lerPlanoCompleto(admin: SupabaseClient, id: string): Promise<Plano | null | "erro"> {
   const { data, error } = await admin
     .from("cobranca_planos")
-    .select("id, nome, preco_cents, intervalo, max_assentos, max_canais, arquivado_em, oferecido_ao_cliente")
+    .select("id, nome, preco_cents, intervalo, max_assentos, max_canais, max_pipelines, max_etapas_por_pipeline, max_leads, max_automacoes, max_webhooks, arquivado_em, oferecido_ao_cliente")
     .eq("id", id)
     .maybeSingle();
   if (error) return "erro";
@@ -129,7 +134,11 @@ export async function trocarPlanoDaOrg(
   const [novo, antigo] = await Promise.all([lerPlanoCompleto(admin, planoId), lerPlanoCompleto(admin, atual.plano_id)]);
   if (novo === "erro" || antigo === "erro") return recusa(500, "internal_error", "Não foi possível ler o plano.");
   const desfazendo = novo !== null && novo.id === atual.plano_id;
-  if (!novo || !antigo || (!desfazendo && (novo.arquivado_em !== null || novo.intervalo !== antigo.intervalo))) {
+  // O intervalo (mensal, semestral, anual) só trava com assinatura VIVA no provedor:
+  // antes do primeiro pagamento ele é só a escolha do que o Assinar vai cobrar.
+  // ponytail: trocar intervalo de assinatura viva pede proração entre períodos; até lá, cancelar e assinar de novo.
+  const intervaloTravado = atual.provedor_assinatura_id !== null;
+  if (!novo || !antigo || (!desfazendo && (novo.arquivado_em !== null || (intervaloTravado && novo.intervalo !== antigo.intervalo)))) {
     return recusa(422, "plano_invalido", "Escolha um plano ativo com o mesmo intervalo de cobrança.");
   }
   // Enquanto houver link de pagamento em aberto, o plano não muda — a menos que

@@ -111,7 +111,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx): Promise<Response> 
     );
     return ok(funil, { requestId });
   } catch (err) {
-    return respostaDeRecusa(err, requestId);
+    return respostaDeRecusa(err, requestId, authz.user.idioma);
   }
 }
 
@@ -139,6 +139,6 @@ export async function DELETE(req: NextRequest, ctx: RouteCtx): Promise<Response>
     );
     return ok(funil, { requestId });
   } catch (err) {
-    return respostaDeRecusa(err, requestId);
+    return respostaDeRecusa(err, requestId, authz.user.idioma);
   }
 }

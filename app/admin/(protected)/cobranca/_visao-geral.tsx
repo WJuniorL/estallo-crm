@@ -60,6 +60,12 @@ export function VisaoGeral({
         ? (dados.problemas.avisosRecusados === 1 ? t("{n} aviso do Asaas recusado nas últimas 24 h: o token do aviso cadastrado no Asaas não é o do sistema. Conecte de novo na aba Conexão; se o aviso foi cadastrado à mão, troque nele o token pelo novo.") : t("{n} avisos do Asaas recusados nas últimas 24 h: o token do aviso cadastrado no Asaas não é o do sistema. Conecte de novo na aba Conexão; se o aviso foi cadastrado à mão, troque nele o token pelo novo."))
         : (dados.problemas.avisosRecusados === 1 ? t("{n} aviso de pagamento recusado nas últimas 24 h: a assinatura não confere. Conecte a chave de novo na aba Conexão.") : t("{n} avisos de pagamento recusados nas últimas 24 h: a assinatura não confere. Conecte a chave de novo na aba Conexão.")),
     ],
+    [
+      dados.problemas.dinheiroEmRisco,
+      dados.problemas.dinheiroEmRisco === 1
+        ? t("{n} reembolso, contestação ou alerta de fraude nos últimos 30 dias. Confira e responda no painel da Stripe; contestação tem prazo.")
+        : t("{n} reembolsos, contestações ou alertas de fraude nos últimos 30 dias. Confira e responda no painel da Stripe; contestação tem prazo."),
+    ],
   ] as const;
 
   return (

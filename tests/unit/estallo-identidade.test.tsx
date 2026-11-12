@@ -1,12 +1,9 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { renderToStaticMarkup } from "react-dom/server";
 import { DEFAULT_APP_NAME, branding } from "@/lib/branding";
 import { marcaDaPlataforma } from "@/lib/branding/plataforma";
 import { REGUA_DO_PRODUTO } from "@/lib/branding/regua-do-produto";
 import { razaoDeContraste } from "@/lib/branding/contraste";
-import { PLANOS_DEMONSTRATIVOS } from "@/lib/planos/catalogo";
-import { PlanosDemonstrativos } from "@/components/plans/PlanosDemonstrativos";
 import { buttonVariants } from "@/components/ui/button";
 import { GRAUS } from "@/lib/branding/rampa";
 
@@ -46,24 +43,5 @@ describe("identidade fixa do SaaS", () => {
         ).toBeGreaterThanOrEqual(4.5);
       }
     }
-  });
-});
-
-describe("planos demonstrativos", () => {
-  it("informa os preços e que não há cobrança nem limites aplicados", () => {
-    const html = renderToStaticMarkup(<PlanosDemonstrativos idioma="pt-BR" />);
-    for (const plano of PLANOS_DEMONSTRATIVOS) expect(html).toContain(plano.nome);
-    expect(html).toContain("Nenhuma cobrança será feita");
-    expect(html).toContain("ainda não são aplicados");
-    expect(html).toMatch(/R\$[^0-9]*97/);
-    expect(html).toMatch(/R\$[^0-9]*197/);
-    expect(html).toMatch(/R\$[^0-9]*397/);
-  });
-  it("não oferece checkout, seleção de plano ou link de pagamento", () => {
-    const html = renderToStaticMarkup(<PlanosDemonstrativos idioma="pt-BR" />);
-    const botoes = html.match(/<button[^>]*>/g) ?? [];
-    expect(botoes).toHaveLength(3);
-    for (const botao of botoes) expect(botao).toMatch(/disabled/);
-    expect(html).not.toMatch(/<a[\s>]|<input[\s>]|<form[\s>]/);
   });
 });

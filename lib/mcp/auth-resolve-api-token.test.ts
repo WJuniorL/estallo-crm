@@ -92,8 +92,15 @@ type Resposta = { data: LinhaDoToken | null; error: { message: string } | null }
  * pedida; `update(...).eq(...)` é thenable, como o builder real — é assim que o
  * `last_used_at` sem `await` se resolve.
  */
+/** O que `fn_plano_libera_api` responde no caso (padrão: o plano libera). */
+let planoLibera: { data: boolean | null; error: { message: string } | null } = { data: true, error: null };
+
 function adminDeTokens(resposta: Resposta, reg: Registro) {
   return {
+    rpc: async (nome: string) => {
+      if (nome !== "fn_plano_libera_api") throw new Error(`rpc inesperado: ${nome}`);
+      return planoLibera;
+    },
     from: (tabela: string) => {
       if (tabela !== "api_tokens") throw new Error(`tabela inesperada: ${tabela}`);
       return {
@@ -123,7 +130,8 @@ function adminDeTokens(resposta: Resposta, reg: Registro) {
   };
 }
 
-function armar(resposta: Resposta): Registro {
+function armar(resposta: Resposta, libera: typeof planoLibera = { data: true, error: null }): Registro {
+  planoLibera = libera;
   const reg: Registro = { colunas: [], filtros: [], updates: [], filtrosDeUpdate: [], idsAtualizados: [] };
   vi.mocked(createAdminClient).mockReturnValue(adminDeTokens(resposta, reg) as never);
   return reg;
@@ -199,6 +207,22 @@ describe("resolveApiToken — os cinco motivos de recusa", () => {
     // A distinção é o que separa 500 de 401 lá na casca. Se as duas colapsarem,
     // um banco fora do ar passa a ser reportado ao cliente como token ruim.
     expect(await reasonDe(PLAINTEXT)).toBe("lookup_failed");
+  });
+
+  it("⭐ token vivo de empresa cujo plano não inclui API é `plan_feature_unavailable` e não registra uso", async () => {
+    const reg = armar(achou(linhaViva()), { data: false, error: null });
+    expect(await reasonDe(PLAINTEXT)).toBe("plan_feature_unavailable");
+    expect(reg.updates).toEqual([]);
+  });
+
+  it("a leitura do plano que falha é `lookup_failed` (falha fechada, 500), nunca libera", async () => {
+    armar(achou(linhaViva()), { data: null, error: { message: "boom" } });
+    expect(await reasonDe(PLAINTEXT)).toBe("lookup_failed");
+  });
+
+  it("a casca devolve 403 com o código `plan_feature_unavailable`", async () => {
+    armar(achou(linhaViva()), { data: false, error: null });
+    await expect(validateBearerToken(`Bearer ${PLAINTEXT}`)).rejects.toMatchObject({ httpStatus: 403, codigo: "plan_feature_unavailable" });
   });
 });
 

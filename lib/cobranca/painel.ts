@@ -26,22 +26,31 @@ export interface PlanoParaTroca {
   intervalo: string;
 }
 
+/** Um plano que a empresa pode escolher, com os limites que a vitrine mostra. */
+export interface PlanoDoCatalogo extends PlanoParaTroca {
+  max_assentos: number | null;
+  max_canais: number | null;
+  max_pipelines: number | null;
+  max_etapas_por_pipeline: number | null;
+  max_leads: number | null;
+  max_automacoes: number | null;
+  max_webhooks: number | null;
+  libera_api: boolean;
+  teto_ia_usd_cents: number | null;
+}
+
 export interface DadosDoPainel {
   assinatura: AssinaturaDoPainel | null;
-  plano: {
-    id: string;
-    nome: string;
-    preco_cents: number;
-    intervalo: string;
-    max_assentos: number | null;
-    max_canais: number | null;
-    teto_ia_usd_cents: number | null;
-  } | null;
+  plano: PlanoDoCatalogo | null;
   uso: UsoDaOrganizacao;
   /** Na moeda de `fn_gasto_de_ia_do_mes` (centavos de dólar), a régua única de gasto. */
   gastoIaUsdCents: number;
   /** Planos ativos e oferecidos às empresas, do MESMO intervalo, fora o atual (a troca não muda o intervalo). */
   planosParaTroca: PlanoParaTroca[];
+  /** Todos os planos ativos e oferecidos às empresas, de todos os intervalos: a vitrine de escolha. */
+  catalogo: PlanoDoCatalogo[];
+  /** Assinatura viva no provedor: o intervalo não muda mais pela tela (lib/cobranca/troca.ts). */
+  intervaloTravado: boolean;
   /** IANA da empresa (`organizations.timezone`): as datas do painel e do recado saem nele. */
   fuso: string | null;
   /**
@@ -52,10 +61,7 @@ export interface DadosDoPainel {
   checkout: { provedor: ProvedorDeCobranca | null; documentoDoCadastro: string | null };
 }
 
-interface PlanoLido extends PlanoParaTroca {
-  max_assentos: number | null;
-  max_canais: number | null;
-  teto_ia_usd_cents: number | null;
+interface PlanoLido extends PlanoDoCatalogo {
   arquivado_em: string | null;
   /** false = plano negociado: só o dono atribui (Task 4A), a empresa não o vê na troca. */
   oferecido_ao_cliente: boolean;
@@ -71,7 +77,7 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
   const { data: a, error } = await db
     .from("cobranca_assinaturas")
     .select(
-      "plano_id, plano_agendado_id, estado, trial_ate, prazo_extra_ate, proximo_vencimento, vencida_desde, cancela_no_fim, modo, provedor, link_de_pagamento, assinaturas_vivas",
+      "plano_id, plano_agendado_id, estado, trial_ate, prazo_extra_ate, proximo_vencimento, vencida_desde, cancela_no_fim, modo, provedor, provedor_assinatura_id, link_de_pagamento, assinaturas_vivas",
     )
     .eq("organization_id", orgId)
     .maybeSingle();
@@ -80,7 +86,10 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
   const [planos, uso, gasto, org, daInstalacao] = await Promise.all([
     db
       .from("cobranca_planos")
-      .select("id, nome, preco_cents, intervalo, max_assentos, max_canais, teto_ia_usd_cents, arquivado_em, oferecido_ao_cliente"),
+      .select(
+        "id, nome, preco_cents, intervalo, max_assentos, max_canais, max_pipelines, max_etapas_por_pipeline, max_leads, max_automacoes, max_webhooks, libera_api, teto_ia_usd_cents, arquivado_em, oferecido_ao_cliente",
+      )
+      .order("preco_cents"),
     lerUsoDaOrganizacao(db, orgId),
     db.rpc("fn_gasto_de_ia_do_mes", { p_org: orgId }),
     db.from("organizations").select("timezone, cnpj").eq("id", orgId).maybeSingle(),
@@ -89,6 +98,7 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
   if (planos.error || !uso || gasto.error || org.error) throw new Error("painel da assinatura: leitura falhou");
 
   const todos = (planos.data ?? []) as PlanoLido[];
+  const ofertados = todos.filter((p) => p.arquivado_em === null && p.oferecido_ao_cliente);
   const plano = a ? (todos.find((p) => p.id === a.plano_id) ?? null) : null;
   const agendado = a?.plano_agendado_id ? (todos.find((p) => p.id === a.plano_agendado_id) ?? null) : null;
   return {
@@ -107,12 +117,7 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
           plano_agendado: agendado ? { id: agendado.id, nome: agendado.nome } : null,
         }
       : null,
-    plano: plano
-      ? {
-          id: plano.id, nome: plano.nome, preco_cents: plano.preco_cents, intervalo: plano.intervalo,
-          max_assentos: plano.max_assentos, max_canais: plano.max_canais, teto_ia_usd_cents: plano.teto_ia_usd_cents,
-        }
-      : null,
+    plano: plano ? (({ arquivado_em: _a, oferecido_ao_cliente: _o, ...p }) => p)(plano) : null,
     uso,
     gastoIaUsdCents: Number(gasto.data ?? 0),
     fuso: (org.data as { timezone: string | null } | null)?.timezone ?? null,
@@ -121,9 +126,11 @@ export async function lerPainelDaAssinatura(db: SupabaseClient, orgId: string): 
       documentoDoCadastro: sugestaoDoCadastro((org.data as { cnpj: string | null } | null)?.cnpj ?? null),
     },
     planosParaTroca: plano
-      ? todos
-          .filter((p) => p.arquivado_em === null && p.oferecido_ao_cliente && p.intervalo === plano.intervalo && p.id !== plano.id)
+      ? ofertados
+          .filter((p) => p.intervalo === plano.intervalo && p.id !== plano.id)
           .map((p) => ({ id: p.id, nome: p.nome, preco_cents: p.preco_cents, intervalo: p.intervalo }))
       : [],
+    catalogo: ofertados.map(({ arquivado_em: _a, oferecido_ao_cliente: _o, ...p }) => p),
+    intervaloTravado: Boolean((a as { provedor_assinatura_id?: string | null } | null)?.provedor_assinatura_id),
   };
 }

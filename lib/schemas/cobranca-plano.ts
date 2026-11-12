@@ -17,6 +17,12 @@ const campos = {
   max_assentos: z.number().int().min(1).max(INT4_MAX).nullable(),
   max_canais: z.number().int().min(1).max(INT4_MAX).nullable(),
   teto_ia_usd_cents: z.number().int().min(100).max(INT4_MAX).nullable(),
+  max_pipelines: z.number().int().min(1).max(INT4_MAX).nullable(),
+  max_etapas_por_pipeline: z.number().int().min(2).max(INT4_MAX).nullable(),
+  max_leads: z.number().int().min(1).max(INT4_MAX).nullable(),
+  max_automacoes: z.number().int().min(1).max(INT4_MAX).nullable(),
+  max_webhooks: z.number().int().min(1).max(INT4_MAX).nullable(),
+  libera_api: z.boolean(),
   padrao_no_cadastro: z.boolean(),
   oferecido_ao_cliente: z.boolean(),
 };
@@ -29,6 +35,12 @@ export const novoPlanoSchema = z.strictObject({
   max_assentos: campos.max_assentos.optional(),
   max_canais: campos.max_canais.optional(),
   teto_ia_usd_cents: campos.teto_ia_usd_cents.optional(),
+  max_pipelines: campos.max_pipelines.optional(),
+  max_etapas_por_pipeline: campos.max_etapas_por_pipeline.optional(),
+  max_leads: campos.max_leads.optional(),
+  max_automacoes: campos.max_automacoes.optional(),
+  max_webhooks: campos.max_webhooks.optional(),
+  libera_api: campos.libera_api.optional(),
   padrao_no_cadastro: campos.padrao_no_cadastro.optional(),
   oferecido_ao_cliente: campos.oferecido_ao_cliente.optional(),
 });
@@ -39,4 +51,4 @@ export const edicaoDoPlanoSchema = z
   .refine((v) => Object.keys(v).length > 0, "Nada para mudar.");
 
 export const COLUNAS_DO_PLANO =
-  "id, nome, preco_cents, moeda, intervalo, trial_dias, max_assentos, max_canais, teto_ia_usd_cents, padrao_no_cadastro, oferecido_ao_cliente, arquivado_em, created_at, updated_at";
+  "id, nome, preco_cents, moeda, intervalo, trial_dias, max_assentos, max_canais, teto_ia_usd_cents, max_pipelines, max_etapas_por_pipeline, max_leads, max_automacoes, max_webhooks, libera_api, padrao_no_cadastro, oferecido_ao_cliente, arquivado_em, created_at, updated_at";

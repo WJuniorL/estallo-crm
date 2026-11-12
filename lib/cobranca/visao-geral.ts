@@ -14,6 +14,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { provedorDaInstalacao } from "@/lib/cobranca/configuracao";
 import { modoDoProvedor } from "@/lib/cobranca/provedores";
 import { baseDeTesteDaCobranca } from "@/lib/cobranca/provedores/base-de-teste";
+import { EVENTOS_DE_RISCO_STRIPE } from "@/lib/cobranca/provedores/stripe";
 import { urlDoWebhookDaCobranca } from "@/lib/cobranca/url";
 import type { Modo, ProvedorDeCobranca } from "@/lib/cobranca/vocabulario";
 import { emailConfigurado } from "@/lib/email/roteador";
@@ -38,6 +39,8 @@ export interface DadosDaVisaoGeral {
     avisosComErro: number;
     /** Avisos do provedor recusados por assinatura nas últimas 24 h (segredo trocado à mão, conta errada). */
     avisosRecusados: number;
+    /** Reembolsos, contestações e alertas de fraude da Stripe nos últimos 30 dias. */
+    dinheiroEmRisco: number;
   };
 }
 
@@ -55,7 +58,8 @@ export async function lerVisaoGeral(admin: SupabaseClient): Promise<DadosDaVisao
   const provedor = await provedorDaInstalacao();
   const chaveDoCatalogo = provedor === null ? null : CHAVE_DO_PROVEDOR[provedor];
   const desde24h = new Date(Date.now() - 24 * 3_600_000).toISOString();
-  const [modo, chave, aviso, conjunto, linhas, avisosComErro, recusados, planoDoCadastro, emailPronto] = await Promise.all([
+  const desde30d = new Date(Date.now() - 30 * 86_400_000).toISOString();
+  const [modo, chave, aviso, conjunto, linhas, avisosComErro, recusados, planoDoCadastro, emailPronto, emRisco] = await Promise.all([
     provedor === null ? null : modoDoProvedor(provedor),
     chaveDoCatalogo === null ? null : estadoParaTela(chaveDoCatalogo, true),
     provedor === null
@@ -85,8 +89,15 @@ export async function lerVisaoGeral(admin: SupabaseClient): Promise<DadosDaVisao
       .gte("received_at", desde24h),
     admin.from("cobranca_planos").select("id").eq("padrao_no_cadastro", true).is("arquivado_em", null).limit(1).maybeSingle(),
     emailConfigurado(),
+    admin
+      .from("webhook_events_log")
+      .select("id", { count: "exact", head: true })
+      .eq("provider", "stripe")
+      .eq("valid_signature", true)
+      .in("event_type", [...EVENTOS_DE_RISCO_STRIPE])
+      .gte("received_at", desde30d),
   ]);
-  if (aviso.error || conjunto.error || linhas.error || avisosComErro.error || recusados.error || planoDoCadastro.error) {
+  if (aviso.error || conjunto.error || linhas.error || avisosComErro.error || recusados.error || planoDoCadastro.error || emRisco.error) {
     throw new Error("cobrança: visão geral ilegível");
   }
   const relidas = ((conjunto.data ?? []) as Array<{ relida_em: string | null }>)
@@ -116,6 +127,7 @@ export async function lerVisaoGeral(admin: SupabaseClient): Promise<DadosDaVisao
       pagouCancelada: assinaturas.filter((a) => a.ultimo_erro === "pagamento_de_assinatura_cancelada").length,
       avisosComErro: avisosComErro.count ?? 0,
       avisosRecusados: recusados.count ?? 0,
+      dinheiroEmRisco: emRisco.count ?? 0,
     },
   };
 }

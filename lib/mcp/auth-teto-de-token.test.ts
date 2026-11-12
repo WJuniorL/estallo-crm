@@ -62,7 +62,8 @@ function bancoFalso(resultado: { data: unknown; error: { message: string } | nul
       },
     },
   ) as never;
-  vi.mocked(createAdminClient).mockReturnValue({ from: () => cadeia } as never);
+  // `fn_plano_libera_api`: o plano libera a API (o teto de falhas é o assunto aqui).
+  vi.mocked(createAdminClient).mockReturnValue({ from: () => cadeia, rpc: async () => ({ data: true, error: null }) } as never);
 }
 
 /** Linha de `api_tokens` como o lookup devolve (schema real, token morto ou vivo). */

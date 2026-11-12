@@ -375,8 +375,10 @@ pr_no_principal() { # $1 = número do PR, $2 = nome da migration que a cabeça d
   done
   [ "$push_ok" = 1 ] || { echo "pr_no_principal: push para refs/pull/$1/head falhou 3x" >&2; exit 90; }
 }
+# GITHUB_REF fora: no CI ele é refs/pull/<n>/merge do PR que roda o teste, e o gate tiraria
+# da lista o PR falso de mesmo número (medido no PR #8, que caiu no «#8» do caso 18).
 gate_prs() { # $1 = PRs abertos que o gh falso lista, $2 = clone
-  ( export FAKE_GH_PRS="$1"; cd "$2" && bash scripts/checar-colisao-de-migration.sh origin/main 2>&1 )
+  ( export FAKE_GH_PRS="$1"; unset GITHUB_REF; cd "$2" && bash scripts/checar-colisao-de-migration.sh origin/main 2>&1 )
 }
 pr_no_principal 7 "20260917100000_0276_do_fork.sql"
 pr_no_principal 9 "20260917120000_0400_abandonado.sql"

@@ -114,8 +114,14 @@ describe("trocarPlanoDaOrg", () => {
     expect(escritas()).toEqual([]);
   });
 
-  it("outro intervalo: 422 plano_invalido", async () => {
+  it("outro intervalo com assinatura VIVA no provedor: 422 plano_invalido", async () => {
+    m.linha = { ...PAGANDO };
     expect(await trocar("anual")).toMatchObject({ ok: false, status: 422, code: "plano_invalido" });
+    expect(trocarNoProvedor).not.toHaveBeenCalled();
+  });
+
+  it("⭐ antes do 1º pagamento o intervalo é só a escolha: teste grátis troca de mensal para anual na hora", async () => {
+    expect(await trocar("anual")).toMatchObject({ ok: true, quando: "imediato", planoId: "anual" });
   });
 
   it("⭐ plano negociado (não oferecido): a EMPRESA não o escolhe; o DONO o atribui", async () => {

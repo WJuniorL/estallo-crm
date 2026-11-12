@@ -16,7 +16,7 @@ import { PlanosDaInstalacao, type PlanoDaTela } from "@/app/admin/(protected)/co
 
 const PLANO: PlanoDaTela = {
   id: "cccccccc-0000-4000-8000-000000000001", nome: "Básico", preco_cents: 4990, intervalo: "mes", trial_dias: 14,
-  max_assentos: 3, max_canais: null, teto_ia_usd_cents: null, padrao_no_cadastro: false, oferecido_ao_cliente: true, arquivado_em: null,
+  max_assentos: 3, max_canais: null, teto_ia_usd_cents: null, max_pipelines: null, max_etapas_por_pipeline: null, max_leads: null, max_automacoes: null, max_webhooks: null, libera_api: true, padrao_no_cadastro: false, oferecido_ao_cliente: true, arquivado_em: null,
 };
 
 beforeEach(() => {
@@ -44,6 +44,7 @@ describe("Planos da instalação", () => {
     expect(h.post).toHaveBeenCalledWith("/api/v1/admin/cobranca/planos", {
       nome: "Pro", preco_cents: 9990, intervalo: "mes", trial_dias: 7,
       max_assentos: 5, max_canais: null, teto_ia_usd_cents: null,
+      max_pipelines: null, max_etapas_por_pipeline: null, max_leads: null, max_automacoes: null, max_webhooks: null, libera_api: true,
     });
     expect(h.refresh).toHaveBeenCalled();
   });

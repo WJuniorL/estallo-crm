@@ -11,6 +11,7 @@ import { idsDeContatosPessoais } from "@/app/api/v1/conversations/_handler";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { ApiError } from "@/lib/api/types";
+import { traduzirLimiteDoPlano } from "@/lib/cobranca/limites";
 import type { Actor, HandlerCtx } from "@/lib/api/handlers/types";
 import { audit } from "@/lib/audit";
 import { traduzir } from "@/lib/i18n/dicionario";
@@ -723,6 +724,12 @@ export async function createLeadHandler(
       ctx.requestId,
       recusaDeMotivoNoInsert.mensagem,
     );
+  }
+
+  // Base de leads cheia para o plano (migration 0718): 409 com o teto e o caminho.
+  const limiteDoPlano = traduzirLimiteDoPlano(insErr, ctx.idioma ?? "pt-BR");
+  if (limiteDoPlano) {
+    throw new ApiError(409, limiteDoPlano.code, limiteDoPlano.details, ctx.requestId, limiteDoPlano.message);
   }
 
   if (insErr || !lead) {

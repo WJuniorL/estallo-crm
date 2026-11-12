@@ -134,6 +134,6 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
     );
     return ok(funil, { status: 201, requestId });
   } catch (err) {
-    return respostaDeRecusa(err, requestId);
+    return respostaDeRecusa(err, requestId, authz.user.idioma);
   }
 }

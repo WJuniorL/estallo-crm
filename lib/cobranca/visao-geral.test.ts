@@ -19,7 +19,7 @@ import { leituraAtrasada, lerVisaoGeral, montarChecklist, type DadosDaVisaoGeral
 const VAZIA: DadosDaVisaoGeral = {
   provedor: null, modo: null, chaveLast4: null, urlDoWebhook: "https://crm.exemplo.com/api/v1/webhooks/cobranca/stripe",
   ultimoAvisoEm: null, ultimaLeituraEm: null, compraConcluida: false, emailPronto: false, planoDoCadastro: false,
-  problemas: { credencialInvalida: 0, cobrancaDupla: 0, pagouCancelada: 0, avisosComErro: 0, avisosRecusados: 0 },
+  problemas: { credencialInvalida: 0, cobrancaDupla: 0, pagouCancelada: 0, avisosComErro: 0, avisosRecusados: 0, dinheiroEmRisco: 0 },
 };
 const passo = (d: DadosDaVisaoGeral, id: string) => montarChecklist(d).find((p) => p.id === id);
 
@@ -76,6 +76,7 @@ describe("lerVisaoGeral", () => {
   const leitor = (linhas: Array<Record<string, unknown>>) => (c: Cadeia): Resposta => {
     if (c.tabela === "webhook_events_log") {
       if (valorDoFiltro(c, "eq", "valid_signature") === false) return { count: 5 };
+      if (valorDoFiltro(c, "in", "event_type") !== undefined) return { count: 2 };
       return c.passos.some((p) => p.metodo === "in") ? { count: 3 } : { data: { received_at: "2026-10-09T12:00:00Z" } };
     }
     if (c.tabela === "cobranca_planos") return { data: { id: "plano-do-cadastro" } };
@@ -99,7 +100,7 @@ describe("lerVisaoGeral", () => {
     expect(v).toMatchObject({
       provedor: "stripe", modo: "teste", chaveLast4: "4242", ultimoAvisoEm: "2026-10-09T12:00:00Z",
       ultimaLeituraEm: "2026-10-10T11:00:00Z", compraConcluida: true, emailPronto: false, planoDoCadastro: true,
-      problemas: { credencialInvalida: 1, cobrancaDupla: 1, pagouCancelada: 1, avisosComErro: 3, avisosRecusados: 5 },
+      problemas: { credencialInvalida: 1, cobrancaDupla: 1, pagouCancelada: 1, avisosComErro: 3, avisosRecusados: 5, dinheiroEmRisco: 2 },
     });
   });
 

@@ -642,19 +642,30 @@ describe("diário transacional do motor existente — Postgres real", () => {
   });
 
   it("movimentação para etapa ABERTA de outro funil troca o mesmo negócio de funil (Fase 5)", async () => {
-    const f = await fixture({ decision: "move_lead", targetStageId: GOV_STAGE });
+    // Funil de destino PRÓPRIO, sem regras: o funil compartilhado do seed pode ganhar obrigatórios de outros testes.
+    const outroFunil = randomUUID(),
+      etapaAberta = randomUUID();
+    await pool.query("insert into crm_pipelines(id,organization_id,name,slug,settings) values($1,$2,$3,$3,'{}')", [
+      outroFunil,
+      GOV_ORG,
+      `destino-${outroFunil.slice(0, 8)}`,
+    ]);
+    await pool.query(
+      "insert into crm_stages(id,organization_id,pipeline_id,name,slug,position) values($1,$2,$3,'Aberta','aberta',1000)",
+      [etapaAberta, GOV_ORG, outroFunil],
+    );
+    const f = await fixture({ decision: "move_lead", targetStageId: etapaAberta });
     await avancarEnrollmentAtivo(
       { db: adapter, clock: () => new Date(), enqueueJob: async () => {} },
       await f.scope(),
     );
-    const destino = (await pool.query("select pipeline_id from crm_stages where id=$1", [GOV_STAGE])).rows[0] as {
-      pipeline_id: string;
-    };
+    // Se a troca for recusada, o motivo aparece aqui (e não só "o negócio não andou").
+    expect(await f.scope()).toMatchObject({ last_error: null });
     const lead = await pool.query("select stage_id,pipeline_id from crm_leads where organization_id=$1 and id=$2", [
       GOV_ORG,
       f.lead,
     ]);
-    expect(lead.rows[0]).toEqual({ stage_id: GOV_STAGE, pipeline_id: destino.pipeline_id });
+    expect(lead.rows[0]).toEqual({ stage_id: etapaAberta, pipeline_id: outroFunil });
   });
 
   it("movimentação para perda usa motivo válido e retorna a etapa efetivamente gravada", async () => {

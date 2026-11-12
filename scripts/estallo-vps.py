@@ -189,6 +189,27 @@ def configure(credentials):
     print('Configuração protegida preparada; valores não exibidos.')
 
 
+SECRETS_IN_DATABASE = (('nuvemshop_oauth_key', 'NUVEMSHOP_OAUTH_ENCRYPTION_KEY'),
+                       ('cpf_key', 'CPF_ENCRYPTION_KEY'))
+
+
+def seed_secrets():
+    # As cifras do banco (fn_encrypt_oauth: SMTP, webhooks, Google, Meta; encrypt_cpf)
+    # leem a chave de private.app_secrets, que o kit semeia (ensure_encryption_key).
+    # Sem a linha, toda gravação de segredo responde "cifra indisponível" e o CPF
+    # não é salvo. "do nothing": trocar chave existente invalidaria o que ela cifrou.
+    values = runtime()
+    lines = []
+    for name, key in SECRETS_IN_DATABASE:
+        value = values.get(key, '')
+        if not re.fullmatch(r'[A-Za-z0-9+/=]{32,}', value):
+            raise ValueError(f'{key} ausente ou inválida na configuração')
+        lines.append(f"insert into private.app_secrets (name, value) values ('{name}', '{value}') "
+                     'on conflict (name) do nothing;')
+    pg(['psql', '--single-transaction', '-v', 'ON_ERROR_STOP=1'], ''.join(l + '\n' for l in lines).encode())
+    print('Chaves de cifra presentes no banco.')
+
+
 def bootstrap(sha):
     # Retoma só uma instalação cujo baseline completo foi confirmado neste host.
     # Nunca trata um banco alheio ou uma aplicação parcial como bootstrap válido.
@@ -211,6 +232,7 @@ def bootstrap(sha):
            b'create extension if not exists pg_trgm with schema public;\n')
         pg(['psql', '-v', 'ON_ERROR_STOP=1'], baseline)
         save(marker, json.dumps(dict(project=PROJECT, baseline_sha256=digest)))
+    seed_secrets()
     run(['docker', 'run', '--rm', '--env-file', str(RUNTIME),
          '--env-file', str(ROOT / 'owner.env'),
          f'{image_namespace()}/estallo-crm-worker:{image_tag(sha)}',
@@ -607,7 +629,7 @@ def agent():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=['configure', 'bootstrap', 'deploy', 'rollback', 'backup', 'agent', 'verify'])
+    parser.add_argument('action', choices=['configure', 'bootstrap', 'deploy', 'rollback', 'backup', 'agent', 'verify', 'seed-secrets'])
     parser.add_argument('--credentials')
     parser.add_argument('--sha')
     parser.add_argument('--image-tag')
@@ -638,6 +660,8 @@ def main():
             backup()
         elif args.action == 'agent':
             agent()
+        elif args.action == 'seed-secrets':
+            seed_secrets()
         elif not healthy(state().get('sha')):
             raise RuntimeError('Verificação de saúde reprovada')
         else:

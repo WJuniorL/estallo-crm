@@ -208,6 +208,21 @@ class EstalloVpsTests(unittest.TestCase):
             key = dict(line.split('=', 1) for line in runtime.splitlines())['AI_CRED_AES_KEY']
             self.assertEqual(len(base64.b64decode(key, validate=True)), 32)
 
+    @patch.object(vps, 'pg')
+    def test_seed_secrets_puts_both_keys_in_the_database_without_replacing(self, pg):
+        # Sem estas linhas em private.app_secrets, SMTP, webhooks e CPF não cifram (12/11/2026).
+        with patch.object(vps, 'runtime', return_value={
+                'NUVEMSHOP_OAUTH_ENCRYPTION_KEY': 'a' * 64, 'CPF_ENCRYPTION_KEY': 'b' * 64}):
+            vps.seed_secrets()
+        sql = pg.call_args.args[1].decode()
+        self.assertIn(f"('nuvemshop_oauth_key', '{'a' * 64}')", sql)
+        self.assertIn(f"('cpf_key', '{'b' * 64}')", sql)
+        self.assertEqual(sql.count('on conflict (name) do nothing'), 2)
+        with patch.object(vps, 'runtime', return_value={
+                'NUVEMSHOP_OAUTH_ENCRYPTION_KEY': "x'; drop table t; --" * 3, 'CPF_ENCRYPTION_KEY': 'b' * 64}):
+            with self.assertRaises(ValueError):
+                vps.seed_secrets()
+
     @patch.object(vps, 'pg', return_value=b'1\n')
     @patch.object(vps, 'pull')
     @patch.object(vps, 'REPO', Path(__file__).resolve().parents[2])

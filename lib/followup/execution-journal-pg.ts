@@ -10,7 +10,7 @@ import {
   guardServiceEffect,
 } from "@/lib/atendimento/fronteira-server";
 import { buildLeadActivityRow } from "@/lib/leads/activity-emitter";
-import { prepararAdicaoDeTags } from "@/lib/leads/tags";
+import { aplicarTags } from "@/lib/leads/tags";
 import { resolveOwnerPatch } from "@/lib/leads/owner-patch";
 import type { AuditAction } from "@/lib/audit/actions";
 import { prepararMovimentacaoDeLead } from "@/lib/leads/preparar-movimentacao";
@@ -1136,18 +1136,19 @@ export class PgExecutionJournal implements ExecutionJournal {
       if (!lead) throw new ExecutionLeadUnavailableError();
       if (JSON.stringify(lead.tags ?? []) !== JSON.stringify(reads.previous_tags))
         throw new ExecutionInputChangedError();
-      const merged = prepararAdicaoDeTags(reads.previous_tags, node.config.tags);
+      const merged = aplicarTags(reads.previous_tags, node.config.tags, node.config.acao);
       const output = NODE_OUTPUT_CONTRACTS.edit_lead_tag.parse({
         lead_id: lead.id,
         added_tags: merged.added,
+        ...(merged.removed.length ? { removed_tags: merged.removed } : {}),
         tags: merged.tags,
       });
-      if (merged.added.length) {
+      if (merged.added.length || merged.removed.length) {
         await client.query(
           "update crm_leads set tags=$4,updated_at=clock_timestamp() where organization_id=$1 and contact_id=$2 and id=$3",
           [row.organization_id, row.contact_id, lead.id, merged.tags],
         );
-        await client.query("select emit_event($1,$2,$3,$4,$5,$6)", [
+        if (merged.added.length) await client.query("select emit_event($1,$2,$3,$4,$5,$6)", [
           "lead.tag_added",
           "crm_lead",
           lead.id,
@@ -1542,19 +1543,20 @@ export class PgExecutionJournal implements ExecutionJournal {
     if (!contact) throw new ExecutionLeadUnavailableError();
     if (JSON.stringify(contact.tags ?? []) !== JSON.stringify(reads.previous_tags))
       throw new ExecutionInputChangedError();
-    const merged = prepararAdicaoDeTags(reads.previous_tags, node.config.tags);
+    const merged = aplicarTags(reads.previous_tags, node.config.tags, node.config.acao);
     const output = NODE_OUTPUT_CONTRACTS.edit_lead_tag.parse({
       lead_id: row.lead_id,
       contact_id: row.contact_id,
       added_tags: merged.added,
+      ...(merged.removed.length ? { removed_tags: merged.removed } : {}),
       tags: merged.tags,
     });
-    if (merged.added.length) {
+    if (merged.added.length || merged.removed.length) {
       await client.query(
         "update contacts set tags=$3,updated_at=clock_timestamp() where organization_id=$1 and id=$2",
         [row.organization_id, row.contact_id, merged.tags],
       );
-      await client.query("select emit_event($1,$2,$3,$4,$5,$6)", [
+      if (merged.added.length) await client.query("select emit_event($1,$2,$3,$4,$5,$6)", [
         "contact.tag_added",
         "contact",
         row.contact_id,

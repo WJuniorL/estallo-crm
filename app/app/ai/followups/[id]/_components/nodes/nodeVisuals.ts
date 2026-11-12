@@ -348,7 +348,8 @@ export function describeNodeConfig(
     case "edit_lead_tag": {
       const c = config as ConfigOf<"edit_lead_tag">;
       if (!c.tags.length) return t("sem tag escolhida");
-      return c.destino === "contato" ? `${c.tags.join(", ")} (${t("no contato")})` : c.tags.join(", ");
+      const lista = c.acao === "remove" ? `− ${c.tags.join(", ")}` : c.tags.join(", ");
+      return c.destino === "contato" ? `${lista} (${t("no contato")})` : lista;
     }
     case "update_lead_field": {
       const c = config as ConfigOf<"update_lead_field">;

@@ -86,6 +86,7 @@ export const NODE_OUTPUT_CONTRACTS = {
     lead_id: id.nullable(),
     contact_id: id.optional(),
     added_tags: z.array(z.string().min(1)),
+    removed_tags: z.array(z.string().min(1)).optional(),
     tags: z.array(z.string().min(1)),
   }),
   update_lead_field: z.strictObject({

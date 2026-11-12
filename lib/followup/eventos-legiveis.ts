@@ -223,7 +223,9 @@ export function resumoDoNo(node: FlowNode): NoDoDossie {
       return {
         ...base,
         resumo: node.config.tags.length
-          ? `grava a(s) tag(s) ${node.config.tags.join(", ")} no lead — sem mensagem ao cliente`
+          ? node.config.acao === "remove"
+            ? `remove a(s) tag(s) ${node.config.tags.join(", ")} — sem mensagem ao cliente`
+            : `grava a(s) tag(s) ${node.config.tags.join(", ")} no lead — sem mensagem ao cliente`
           : "grava tag no lead, ainda sem destino escolhido — sem mensagem ao cliente",
       };
     case "update_lead_field":

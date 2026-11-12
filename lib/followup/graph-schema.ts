@@ -400,6 +400,8 @@ export const editLeadTagConfigSchema = z.strictObject({
    * fluxo que etiqueta quem ainda não tem negócio; é o mesmo `destino` da ação `add_tag`.
    */
   destino: z.enum(["card", "contato"]).optional(),
+  /** Fase 5 — `remove` tira as tags listadas (as outras ficam). Sem a chave: adicionar, como sempre. */
+  acao: z.enum(["add", "remove"]).optional(),
 });
 
 /**

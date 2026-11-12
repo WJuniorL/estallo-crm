@@ -594,6 +594,12 @@ export const PRIORIDADES_DA_TAREFA: Record<PrioridadeDaTarefa, string> = {
 
 // ─── destino da tag (nó edit_lead_tag) ───────────────────────────────────
 
+/** O que o bloco de tag faz — rótulos do formulário (Fase 5: também remove). */
+export const ACOES_DA_TAG: Record<"add" | "remove", string> = {
+  add: "Adicionar tags",
+  remove: "Remover tags",
+};
+
 /** Onde o bloco de tag grava — rótulos do formulário. */
 export const DESTINOS_DA_TAG: Record<"card" | "contato", string> = {
   card: "No negócio",

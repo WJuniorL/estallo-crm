@@ -226,6 +226,53 @@ class EstalloVpsTests(unittest.TestCase):
         self.assertEqual([call.args[0] for call in stack.call_args_list], [NEW, OLD])
         save.assert_not_called()
 
+    def make_backup(self, hours_ago, complete=True):
+        taken = vps.datetime.datetime.now(vps.datetime.timezone.utc) - vps.datetime.timedelta(hours=hours_ago)
+        directory = vps.ROOT / 'backups' / taken.strftime(vps.BACKUP_FORMAT)
+        directory.mkdir(parents=True)
+        (directory / ('database.dump' if complete else 'database.partial')).write_bytes(b'x')
+        return directory
+
+    @patch.object(vps, 'state', return_value={'sha': OLD})
+    @patch.object(vps, 'available_memory', return_value=1700)
+    @patch.object(vps, 'pull')
+    @patch.object(vps, 'backup')
+    @patch.object(vps, 'stack')
+    @patch.object(vps, 'wait_healthy')
+    @patch.object(vps, 'save')
+    def test_deploy_reuses_complete_backup_from_last_day(
+            self, _save, _wait, _stack, backup, _pull, _memory, _state):
+        self.make_backup(hours_ago=3)
+        with patch('sys.stdout', io.StringIO()):
+            vps.deploy(NEW)
+        backup.assert_not_called()
+
+    @patch.object(vps, 'state', return_value={'sha': OLD})
+    @patch.object(vps, 'available_memory', return_value=1700)
+    @patch.object(vps, 'pull')
+    @patch.object(vps, 'backup')
+    @patch.object(vps, 'stack')
+    @patch.object(vps, 'wait_healthy')
+    @patch.object(vps, 'save')
+    def test_deploy_backs_up_when_only_old_or_partial_backups_exist(
+            self, _save, _wait, _stack, backup, _pull, _memory, _state):
+        self.make_backup(hours_ago=30)
+        self.make_backup(hours_ago=1, complete=False)
+        vps.deploy(NEW)
+        backup.assert_called_once()
+
+    def test_prune_keeps_newest_complete_and_newer_partial(self):
+        old = [self.make_backup(hours_ago=24 * day + 1) for day in range(8)]
+        in_progress = self.make_backup(hours_ago=0, complete=False)
+        vps.prune_backups()
+        remaining = sorted(p.name for p in (vps.ROOT / 'backups').iterdir())
+        self.assertEqual(remaining, sorted([d.name for d in old[:vps.BACKUPS_KEPT]] + [in_progress.name]))
+
+    def test_prune_deletes_nothing_while_fewer_than_kept(self):
+        made = [self.make_backup(hours_ago=24 * day + 1) for day in range(3)]
+        vps.prune_backups()
+        self.assertEqual(len(list((vps.ROOT / 'backups').iterdir())), len(made))
+
     @patch.object(vps, 'state', return_value={})
     @patch.object(vps, 'available_memory', return_value=1700)
     @patch.object(vps, 'pull')

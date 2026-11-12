@@ -196,7 +196,7 @@ Esse modo recusa Swarm com mais de um nó, arquitetura diferente de Linux/AMD64,
 label de outra revisão e substituição de uma imagem já registrada. Os IDs das
 três imagens ficam no arquivo protegido `local-images.json`, incluído nos backups.
 O Swarm usa as imagens já carregadas, sem consultar tags inexistentes no registro.
-Backup prévio, verificações de saúde, margem de memória e rollback automático
+Backup prévio (reaproveitado se houver um completo das últimas 24 h), verificações de saúde, margem de memória e rollback automático
 continuam ativos. Somente app, worker e scheduler recebem imagens novas;
 WAHA, Redis, rede e volumes mantêm suas configurações. O deploy e o rollback
 preservam os digests instalados dessas dependências, para não recriá-las pela
@@ -287,6 +287,10 @@ Backups contêm banco, configuração, objetos do Supabase Storage e volumes de 
 é validado por `pg_restore --list`. Para cópia externa, configurar
 `BACKUP_SSH_TARGET=usuario@servidor:/diretorio` no arquivo protegido, com SSH por chave.
 Sem destino externo, o script declara a pendência; backup na mesma VPS não é cópia externa.
+Cada backup novo apaga os locais mais velhos que os 5 completos mais recentes (`BACKUPS_KEPT`):
+sem isso, a pasta encheu os 67 GB da VPS em 11/11/2026. O `deploy` não faz backup novo quando
+já existe um completo das últimas 24 h (`BACKUP_REUSE_HOURS`), porque ele só troca imagens e
+não aplica migrations; o fluxo `agent`, que aplica, continua fazendo backup antes.
 
 No piloto, o computador do proprietário faz a cópia externa pela tarefa Windows
 `Estallo CRM - Backup externo`, às 03:20 e ao entrar no Windows. Ela executa uma

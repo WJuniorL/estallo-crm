@@ -88,10 +88,21 @@ export function useReiniciarExecucao() {
   const qc = useQueryClient();
   return useMutation({
     mutationKey: ["followup", "enrollment", "restart"],
-    mutationFn: async ({ id, chave, passoAPasso }: { id: string; chave: string; passoAPasso?: boolean }) => {
+    mutationFn: async ({
+      id,
+      chave,
+      passoAPasso,
+      recuperar,
+    }: {
+      id: string;
+      chave: string;
+      passoAPasso?: boolean;
+      /** Recuperar a partir da falha (começa no bloco que falhou, herda as saídas) em vez de reiniciar do gatilho. */
+      recuperar?: boolean;
+    }) => {
       const res = await apiClient.post<{ data: { id: string; source_enrollment_id: string; status: string } }>(
         `/api/v1/ai/followups/enrollments/${id}/restart`,
-        passoAPasso ? { passo_a_passo: true } : {},
+        { ...(passoAPasso ? { passo_a_passo: true } : {}), ...(recuperar ? { modo: "retry" } : {}) },
         { idempotencyKey: chave },
       );
       return res.data;
@@ -99,7 +110,7 @@ export function useReiniciarExecucao() {
     onSuccess: (_novo, variaveis) => {
       void qc.invalidateQueries({ queryKey: dossieQueryKey(variaveis.id) });
       void qc.invalidateQueries({ queryKey: ["followup", "queue"] });
-      toast.success(t("Execução reiniciada."));
+      toast.success(variaveis.recuperar ? t("Execução recuperada a partir da falha.") : t("Execução reiniciada."));
     },
     onError: (err) => {
       showApiError(err);

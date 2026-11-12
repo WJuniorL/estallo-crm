@@ -147,6 +147,8 @@ export function ExecucoesDoFluxo({
   const [automatica, setAutomatica] = useState(true);
   const [confirmaCancelar, setConfirmaCancelar] = useState(false);
   const [confirmaReiniciar, setConfirmaReiniciar] = useState(false);
+  // «Recuperar da falha» (Fase 6) usa o mesmo diálogo e a mesma rota, em outro modo.
+  const [recuperar, setRecuperar] = useState(false);
   const [rodarPassoAPasso, setRodarPassoAPasso] = useState(false);
   // Um por abertura do diálogo: duplo clique em «Reexecutar» chega com a mesma chave e cria UMA reexecução.
   const chaveDoReinicio = useRef<string>("");
@@ -413,10 +415,27 @@ export function ExecucoesDoFluxo({
                     onClick={() => {
                       chaveDoReinicio.current = randomId();
                       setRodarPassoAPasso(false);
+                      setRecuperar(false);
                       setConfirmaReiniciar(true);
                     }}
                   >
                     <ArrowsClockwise size={14} aria-hidden className="mr-1" /> {t("Reexecutar do início")}
+                  </Button>
+                )}
+                {exec.status === "dead" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!podeReiniciar || reiniciar.isPending}
+                    data-testid="recuperar-da-falha"
+                    onClick={() => {
+                      chaveDoReinicio.current = randomId();
+                      setRodarPassoAPasso(false);
+                      setRecuperar(true);
+                      setConfirmaReiniciar(true);
+                    }}
+                  >
+                    <SkipForward size={14} aria-hidden className="mr-1" /> {t("Recuperar da falha")}
                   </Button>
                 )}
                 {CANCELAVEL.has(exec.status) && (
@@ -615,12 +634,14 @@ export function ExecucoesDoFluxo({
       <AlertDialog open={confirmaReiniciar} onOpenChange={setConfirmaReiniciar}>
         <AlertDialogContent data-testid="dialogo-reiniciar">
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("Reexecutar do início?")}</AlertDialogTitle>
+            <AlertDialogTitle>{recuperar ? t("Recuperar a partir da falha?") : t("Reexecutar do início?")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("Isto cria uma execução nova para o mesmo contato, desde o gatilho, na mesma versão do fluxo. A execução original não muda. Como é uma execução nova, o que o fluxo faz pode acontecer de novo — inclusive mensagens ao cliente.")}
+              {recuperar
+                ? t("Isto cria uma execução vinculada que começa no bloco que falhou, na mesma versão, com as saídas que a original já produziu. Os blocos já concluídos não rodam de novo; só o bloco que falhou roda outra vez. A execução original não muda.")
+                : t("Isto cria uma execução nova para o mesmo contato, desde o gatilho, na mesma versão do fluxo. A execução original não muda. Como é uma execução nova, o que o fluxo faz pode acontecer de novo — inclusive mensagens ao cliente.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {efeitos.length > 0 && (
+          {!recuperar && efeitos.length > 0 && (
             <div className="text-sm" data-testid="reiniciar-efeitos">
               <p className="mb-1 font-medium">{t("Blocos que podem repetir um efeito")}</p>
               <ul className="max-h-40 space-y-1 overflow-y-auto">
@@ -652,17 +673,17 @@ export function ExecucoesDoFluxo({
           <AlertDialogFooter>
             <AlertDialogCancel>{t("Voltar")}</AlertDialogCancel>
             <AlertDialogAction
-              data-testid="confirmar-reiniciar"
+              data-testid={recuperar ? "confirmar-recuperar" : "confirmar-reiniciar"}
               onClick={() => {
                 if (!exec) return;
                 reiniciar.mutate(
-                  { id: exec.id, chave: chaveDoReinicio.current, passoAPasso: rodarPassoAPasso },
+                  { id: exec.id, chave: chaveDoReinicio.current, passoAPasso: rodarPassoAPasso, recuperar },
                   { onSuccess: (novo) => onSelecionarExecucao(novo.id) },
                 );
                 setConfirmaReiniciar(false);
               }}
             >
-              {t("Reexecutar do início")}
+              {recuperar ? t("Recuperar da falha") : t("Reexecutar do início")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

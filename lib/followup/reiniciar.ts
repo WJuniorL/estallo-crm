@@ -34,6 +34,13 @@ export interface ReiniciarInput {
   requestId: string;
   /** Nasce pausada no gatilho, para o operador executar um bloco por vez. */
   passoAPasso?: boolean;
+  /**
+   * `retry` (Fase 6) — RECUPERAR a partir da falha: só de execução que morreu; a nova começa NO BLOCO QUE FALHOU, na
+   * mesma versão, e herda as saídas da original (os blocos seguintes continuam citando `{{nodes…}}` do que já rodou).
+   * Os blocos concluídos NÃO rodam de novo. Efeito com resultado desconhecido no bloco que falhou recusa: sem prova do
+   * que aconteceu, refazer pode duplicar (mensagem, tarefa) — isso pede conferência humana, não um botão.
+   */
+  modo?: "restart" | "retry";
 }
 
 export type ReiniciarResultado =
@@ -53,11 +60,12 @@ export async function reiniciarExecucao(
 ): Promise<ReiniciarResultado> {
   const { organizationId, enrollmentId, actorUserId, requestId } = input;
   const passoAPasso = input.passoAPasso === true;
+  const modo = input.modo ?? "restart";
 
   const { data: original, error: origErr } = await supabase
     .from("followup_enrollments")
     .select(
-      "id, pointer_id, version_id, contact_id, lead_id, agent_id, status, execution_mode, conversation_id",
+      "id, pointer_id, version_id, contact_id, lead_id, agent_id, status, execution_mode, conversation_id, current_node_id",
     )
     .eq("organization_id", organizationId)
     .eq("id", enrollmentId)
@@ -71,6 +79,31 @@ export async function reiniciarExecucao(
       "Esta execução ainda está em andamento. Cancele-a ou espere terminar para reiniciar.",
       409,
     );
+  }
+
+  if (modo === "retry" && original.status !== "dead") {
+    return recusa(
+      "execucao_nao_falhou",
+      "Só uma execução que parou por falha pode ser recuperada. Para começar de novo, use «Reexecutar».",
+      409,
+    );
+  }
+  if (modo === "retry") {
+    const { data: duvidosos, error: duvidososErr } = await supabase
+      .from("followup_execution_steps")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("enrollment_id", enrollmentId)
+      .eq("node_id", original.current_node_id)
+      .eq("status", "unknown");
+    if (duvidososErr) return recusa("internal_error", duvidososErr.message, 500);
+    if ((duvidosos ?? []).length > 0) {
+      return recusa(
+        "resultado_desconhecido",
+        "Não dá para saber se o bloco que falhou chegou a agir (por exemplo, se a mensagem saiu). Confira com o contato antes: recuperar poderia repetir o efeito.",
+        409,
+      );
+    }
   }
 
   const { data: filhas, error: filhasErr } = await supabase
@@ -130,6 +163,9 @@ export async function reiniciarExecucao(
   }
   const gatilho = grafo.data.nodes.find((n) => n.type === "trigger");
   if (!gatilho) return recusa("internal_error", "Grafo da versão sem nó trigger.", 500);
+  // Recuperar começa no bloco que falhou (o checkpoint da versão original); reiniciar, no gatilho.
+  const inicio = modo === "retry" ? grafo.data.nodes.find((n) => n.id === original.current_node_id) : gatilho;
+  if (!inicio) return recusa("versao_ilegivel", "O bloco que falhou não existe mais nesta versão.", 422);
 
   const fronteira = await beginServiceAtOrigin(supabase, organizationId, original.contact_id);
 
@@ -143,14 +179,14 @@ export async function reiniciarExecucao(
       lead_id: original.lead_id,
       agent_id: original.agent_id,
       execution_mode: original.execution_mode,
-      current_node_id: gatilho.id,
+      current_node_id: inicio.id,
       ...(passoAPasso
         ? { status: "paused_manual", next_eval_at: null, passo_a_passo: true }
         : { status: "active" }),
       service_boundary: fronteira,
       conversation_id: fronteira.conversation_id,
       source_enrollment_id: enrollmentId,
-      recovery_kind: "restart",
+      recovery_kind: modo,
     })
     .select("id, source_enrollment_id, status, version_id")
     .single();
@@ -164,7 +200,7 @@ export async function reiniciarExecucao(
   }
 
   void audit({
-    action: "followup_enrollment.restarted",
+    action: modo === "retry" ? "followup_enrollment.recovered" : "followup_enrollment.restarted",
     actorUserId,
     organizationId,
     resourceType: "followup_enrollment",
@@ -174,8 +210,9 @@ export async function reiniciarExecucao(
       source_enrollment_id: enrollmentId,
       pointer_id: original.pointer_id,
       version_id: original.version_id,
-      recovery_kind: "restart",
+      recovery_kind: modo,
       passo_a_passo: passoAPasso,
+      ...(modo === "retry" ? { node_id: inicio.id } : {}),
     },
   });
 

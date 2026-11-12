@@ -1784,6 +1784,19 @@ export function createSupabaseAdminClient(admin: SupabaseClient): AdminClient {
       return fusoDaOrganizacao(admin, orgId);
     },
     async loadStepOutputs(orgId, enrollmentId) {
+      // Recuperação (`recovery_kind = 'retry'`): as saídas da execução de origem valem como checkpoint — as dela
+      // primeiro (a cadeia inteira, recursivo), depois as desta, que sobrescrevem o bloco que rodou de novo.
+      const { data: eu, error: euErr } = await admin
+        .from("followup_enrollments")
+        .select("source_enrollment_id, recovery_kind")
+        .eq("organization_id", orgId)
+        .eq("id", enrollmentId)
+        .maybeSingle();
+      if (euErr) throw new Error(euErr.message);
+      const herdadas: Record<string, unknown> =
+        eu?.recovery_kind === "retry" && eu.source_enrollment_id
+          ? await this.loadStepOutputs!(orgId, eu.source_enrollment_id as string)
+          : {};
       const { data: passos, error } = await admin
         .from("followup_execution_steps")
         .select("id, node_id, entered_at")
@@ -1794,7 +1807,7 @@ export function createSupabaseAdminClient(admin: SupabaseClient): AdminClient {
         .limit(200);
       if (error) throw new Error(error.message);
       const lista = passos ?? [];
-      if (lista.length === 0) return {};
+      if (lista.length === 0) return herdadas;
       const { data: tentativas, error: tentativasErr } = await admin
         .from("followup_execution_attempts")
         .select("step_id, attempt_no, output_snapshot")
@@ -1813,7 +1826,7 @@ export function createSupabaseAdminClient(admin: SupabaseClient): AdminClient {
         const u = ultimaPorPasso.get(p.id as string);
         if (u && u.saida !== null && u.saida !== undefined) saidas[p.node_id as string] = u.saida;
       }
-      return saidas;
+      return { ...herdadas, ...saidas };
     },
     async loadLastInboundBody(orgId, contactId, conversationId, naoAntesDe) {
       const ids = await idsDoContatoEGemeos(admin, orgId, contactId);

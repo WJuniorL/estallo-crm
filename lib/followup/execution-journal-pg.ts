@@ -50,6 +50,7 @@ import {
 } from "./node-handlers";
 import { NODE_OUTPUT_CONTRACTS } from "./node-output-contracts";
 import { MARCA_DE_BLOCO, resolverReferencias } from "./variaveis-de-blocos";
+import { SQL_SAIDAS_DA_EXECUCAO } from "./sql-saidas-da-execucao";
 import { centavosDoValor, converterValorDoCampo } from "./valor-do-campo";
 import {
   avisoDeRecuperacaoEsgotada,
@@ -372,19 +373,10 @@ export class PgExecutionJournal implements ExecutionJournal {
 
   /** As saídas desta execução por bloco — a mesma régua de `loadStepOutputs` (passo concluído, última tentativa). */
   private async saidasDaExecucao(client: pg.PoolClient, row: LockedExecution): Promise<Record<string, unknown>> {
-    const { rows } = await client.query<{ node_id: string; output_snapshot: unknown }>(
-      `select s.node_id, a.output_snapshot
-         from followup_execution_steps s
-         join lateral (
-           select output_snapshot from followup_execution_attempts
-            where organization_id = s.organization_id and step_id = s.id
-            order by attempt_no desc limit 1
-         ) a on true
-        where s.organization_id = $1 and s.enrollment_id = $2 and s.status = 'succeeded'
-        order by s.entered_at asc
-        limit 200`,
-      [row.organization_id, row.id],
-    );
+    const { rows } = await client.query<{ node_id: string; output_snapshot: unknown }>(SQL_SAIDAS_DA_EXECUCAO, [
+      row.organization_id,
+      row.id,
+    ]);
     const saidas: Record<string, unknown> = {};
     for (const r of rows) if (r.output_snapshot !== null && r.output_snapshot !== undefined) saidas[r.node_id] = r.output_snapshot;
     return saidas;

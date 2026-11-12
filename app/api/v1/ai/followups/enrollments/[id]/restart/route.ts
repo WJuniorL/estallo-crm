@@ -25,7 +25,11 @@ export const dynamic = "force-dynamic";
 type RouteCtx = { params: Promise<{ id: string }> };
 
 /** Corpo opcional: `{ "passo_a_passo": true }` cria a reexecução pausada, para o operador executar um bloco por vez. */
-const corpoSchema = z.object({ passo_a_passo: z.boolean().optional() }).strict();
+/**
+ * `modo: "retry"` (Fase 6) = RECUPERAR a partir da falha: a execução nova começa no bloco que falhou e herda as saídas
+ * da original. Sem `modo`, reiniciar desde o gatilho (o de sempre).
+ */
+const corpoSchema = z.object({ passo_a_passo: z.boolean().optional(), modo: z.enum(["restart", "retry"]).optional() }).strict();
 
 const ENDPOINT = "POST /api/v1/ai/followups/enrollments/:id/restart";
 
@@ -55,6 +59,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
     return fail("validation_failed", t("Campos inválidos."), 422, { requestId, details: corpo.error.flatten() });
   }
   const passoAPasso = corpo.data.passo_a_passo === true;
+  const modo = corpo.data.modo ?? "restart";
 
   const executar = () =>
     reiniciarExecucao(createAdminClient(), {
@@ -63,6 +68,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
       actorUserId: user.id,
       requestId,
       passoAPasso,
+      modo,
     });
   const recusar = (r: Extract<ReiniciarResultado, { ok: false }>) =>
     fail(r.code, r.code === "internal_error" ? r.message : t(r.message), r.status, { requestId });
@@ -80,7 +86,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
     organizationId: org.orgId,
     endpoint: ENDPOINT,
     chave,
-    corpo: { id, passo_a_passo: passoAPasso },
+    corpo: { id, passo_a_passo: passoAPasso, modo },
     executar: async () => {
       const r = await executar();
       if (!r.ok) {

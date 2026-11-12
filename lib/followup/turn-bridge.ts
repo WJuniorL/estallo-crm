@@ -1,5 +1,6 @@
 import type { JobClaim } from "@/lib/agent-engine/queue/claim";
 import { fusoUtilizavel } from "@/lib/tempo/fusos";
+import { SQL_SAIDAS_DA_EXECUCAO } from "./sql-saidas-da-execucao";
 import { pausaDepoisDoBloco } from "./passo-a-passo";
 import { assertAgendaEffectPg } from "@/lib/agenda/efeito";
 import {
@@ -561,19 +562,10 @@ export function createPgAdminClient(pool: pg.Pool): TurnBridgeAdminClient {
       return fusoUtilizavel(rows[0]?.timezone);
     },
     async loadStepOutputs(orgId, enrollmentId) {
-      const { rows } = await pool.query<{ node_id: string; output_snapshot: unknown }>(
-        `select s.node_id, a.output_snapshot
-           from followup_execution_steps s
-           join lateral (
-             select output_snapshot from followup_execution_attempts
-              where organization_id = s.organization_id and step_id = s.id
-              order by attempt_no desc limit 1
-           ) a on true
-          where s.organization_id = $1 and s.enrollment_id = $2 and s.status = 'succeeded'
-          order by s.entered_at asc
-          limit 200`,
-        [orgId, enrollmentId],
-      );
+      const { rows } = await pool.query<{ node_id: string; output_snapshot: unknown }>(SQL_SAIDAS_DA_EXECUCAO, [
+        orgId,
+        enrollmentId,
+      ]);
       const saidas: Record<string, unknown> = {};
       for (const r of rows) if (r.output_snapshot !== null && r.output_snapshot !== undefined) saidas[r.node_id] = r.output_snapshot;
       return saidas;

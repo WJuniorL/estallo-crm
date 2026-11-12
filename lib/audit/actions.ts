@@ -354,6 +354,7 @@ export const AUDIT_ACTIONS = [
   "followup_flow.deleted",
   "followup_flow.duplicated",
   "followup_flow.exported",
+  "followup_enrollment.recovered",
   "followup_flow.imported",
   "followup_flow.rolled_back",
   "followup_flow.media_uploaded",

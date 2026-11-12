@@ -1055,3 +1055,11 @@ Pedido do dono: atualizar os testes vermelhos do `verify` que vinham da frente d
 **Evidência:** `pacote.test.ts` (segredo, leitura, pendências, ids novos e referências reescritas, reexportação com a mesma semântica, conferência do tenant); suíte do editor verde; `tsc` e eslint limpos.
 
 **NÃO MEDIDO:** rotas contra banco real (A→B ponta a ponta); tela no navegador. O isolamento entre organizações vem de `problemaDoMapa` (candidatos lidos com `organization_id` da sessão) — provado em teste unitário, não em invariante.
+
+## 2026-11-12 (9) — Fase 6: recuperar a partir da falha
+
+**Feito:** `reiniciarExecucao({ modo: "retry" })` (`lib/followup/reiniciar.ts`; rota `POST …/enrollments/:id/restart` com `{ modo: "retry" }`, idempotente pela mesma chave): só de execução **morta**; a nova começa **no bloco que falhou**, na mesma versão, com `recovery_kind = 'retry'` (coluna e CHECK já existiam). Recusa: execução não morta, reexecução viva, opt-out/anonimizado, fluxo inativo, e **passo do bloco que falhou com resultado desconhecido** (refazer poderia repetir mensagem/tarefa — pede conferência humana). Saídas herdadas: `loadStepOutputs` (adaptador Supabase, recursivo) e `SQL_SAIDAS_DA_EXECUCAO` (`lib/followup/sql-saidas-da-execucao.ts`, CTE recursiva sobre a cadeia `retry`, usada pelo diário e pelo adaptador pg) — blocos concluídos não rodam de novo e os seguintes citam `{{nodes…}}` do que já rodou. Auditoria `followup_enrollment.recovered`. Tela: botão «Recuperar da falha» (só em execução morta) com diálogo próprio.
+
+**Evidência:** `reiniciar.test.ts` (+3 casos de retry), rota de restart e painel verdes; invariante `automacoes-recuperar-da-falha` (só no CI).
+
+**Falta na Fase 6:** passos herdados exibidos como «herdados» no dossiê da recuperação (hoje aparecem na execução original, ligada pela reexecução); testar nó/caminho no rascunho com dados simulados (simulação sem efeito).

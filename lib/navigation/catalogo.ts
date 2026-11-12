@@ -837,13 +837,27 @@ export const NAV_CATALOG = [
     modulo: "honorarios",
   },
   {
+    // A visão de vendas de um funil num lugar só: carteira, conversão, gargalo,
+    // ranking (pessoas e IA), produtos, perdas e negócios esfriando. A conta é
+    // de `fn_dashboard_vendas` (migration 0719).
+    href: "/app/dashboard",
+    label: "Dashboard",
+    description: "Funil, conversão, ranking da equipe e negócios esfriando, com comparação ao período anterior.",
+    icon: "Gauge",
+    group: "analise",
+    section: "Os números do período",
+    sidebar: true,
+  },
+  {
     href: "/app/metrics",
     label: "Desempenho",
     description: "Funil e performance por atendente nos últimos 30 dias.",
     icon: "ChartBar",
     group: "analise",
     section: "Os números do período",
-    sidebar: true,
+    // Saiu do menu lateral quando o Dashboard entrou: o menu está no teto da
+    // dobra (tests/unit/interface-por-empresa.test.ts) e o Dashboard cobre a
+    // pergunta do dia a dia. Segue no hub de Análise e no ⌘K.
   },
   {
     // Logo abaixo de Desempenho porque responde a metade da MESMA pergunta: lá

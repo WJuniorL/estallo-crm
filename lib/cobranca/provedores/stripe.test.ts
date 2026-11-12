@@ -422,13 +422,17 @@ describe("garantirCliente e iniciarAssinatura", () => {
       "line_items[0][quantity]": "1",
       "subscription_data[metadata][organization_id]": ORG,
       "subscription_data[metadata][plano_id]": PLANO.id,
+      "subscription_data[billing_mode][type]": "flexible",
+      integration_identifier: "estallo_assinatura_qkzmwpra",
+      "excluded_payment_method_types[0]": "pix",
+      "excluded_payment_method_types[1]": "boleto",
       "metadata[organization_id]": ORG,
       "metadata[plano_id]": PLANO.id,
       success_url: "https://crm.example.com/app/settings/billing?voltou=1",
       cancel_url: "https://crm.example.com/app/settings/billing",
       locale: "pt-BR",
     });
-    // Sem payment_method_types: cartão e boleto aparecem conforme o painel da conta.
+    // Sem payment_method_types: cartão e carteiras seguem o painel; Pix e boleto ficam de fora da assinatura.
     expect(checkout?.headers.get("idempotency-key")).toBe(`${base.chaveIdempotencia}:checkout`);
   });
 
@@ -818,6 +822,9 @@ describe("trocarPlano, cancelarNoFim, prepararWebhook e portal", () => {
       "customer.subscription.resumed",
       "invoice.paid",
       "invoice.payment_failed",
+      "charge.refunded",
+      "charge.dispute.created",
+      "radar.early_fraud_warning.created",
     ]);
     expect(criar?.corpo.get("api_version")).toBe(STRIPE_VERSION);
     expect(criar?.corpo.get("url")).toBe(URL_DO_WEBHOOK);

@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import type { DadosDoPainel } from "@/lib/cobranca/painel";
 import { formatadorDeData } from "@/lib/cobranca/fuso";
+import { ehIntervalo, POR_INTERVALO } from "@/lib/cobranca/intervalo";
 import { ROTULO_DO_ESTADO } from "@/lib/cobranca/rotulos";
 import { traduzir } from "@/lib/i18n/dicionario";
 import type { Idioma } from "@/lib/i18n/idiomas";
@@ -43,7 +44,7 @@ export function PainelDaAssinatura({ dados, idioma }: { dados: DadosDoPainel; id
           {t("Seu plano")}: {p.nome}
         </h2>
         <p className="text-sm text-muted-foreground">
-          {brl.format(p.preco_cents / 100)} {p.intervalo === "mes" ? t("por mês") : t("por ano")}
+          {brl.format(p.preco_cents / 100)} {t(POR_INTERVALO[ehIntervalo(p.intervalo) ? p.intervalo : "mes"])}
         </p>
       </div>
       <p className="text-sm font-medium">{situacao}</p>
@@ -63,6 +64,18 @@ export function PainelDaAssinatura({ dados, idioma }: { dados: DadosDoPainel; id
         <dd data-uso="assentos">{deLimite(String(uso.assentos), limite(p.max_assentos))}</dd>
         <dt>{t("Números conectados")}</dt>
         <dd data-uso="canais">{deLimite(String(uso.canais), limite(p.max_canais))}</dd>
+        <dt>{t("Pipelines")}</dt>
+        <dd data-uso="pipelines">{deLimite(String(uso.pipelines), limite(p.max_pipelines))}</dd>
+        <dt>{t("Etapas no maior pipeline")}</dt>
+        <dd data-uso="etapas">{deLimite(String(uso.etapas), limite(p.max_etapas_por_pipeline))}</dd>
+        <dt>{t("Leads")}</dt>
+        <dd data-uso="leads">{deLimite(uso.leads.toLocaleString(idioma), p.max_leads === null ? null : p.max_leads.toLocaleString(idioma))}</dd>
+        <dt>{t("Automações")}</dt>
+        <dd data-uso="automacoes">{deLimite(String(uso.automacoes), limite(p.max_automacoes))}</dd>
+        <dt>{t("Webhooks")}</dt>
+        <dd data-uso="webhooks">{deLimite(String(uso.webhooks), limite(p.max_webhooks))}</dd>
+        <dt>{t("API REST")}</dt>
+        <dd data-uso="api">{p.libera_api ? t("Incluída") : t("Não incluída")}</dd>
         <dt>{t("Uso de IA no mês")}</dt>
         <dd data-uso="ia">
           {deLimite(

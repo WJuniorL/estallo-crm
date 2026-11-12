@@ -113,7 +113,14 @@ export function extractBearer(authHeader: string | null): string | null {
 /** Por que um `dsk_...` não validou — neutro, sem código MCP nem HTTP status. */
 export class ApiTokenError extends Error {
   constructor(
-    public readonly reason: "malformed" | "not_found" | "revoked" | "expired" | "lookup_failed" | "org_suspended",
+    public readonly reason:
+      | "malformed"
+      | "not_found"
+      | "revoked"
+      | "expired"
+      | "lookup_failed"
+      | "org_suspended"
+      | "plan_feature_unavailable",
     message: string,
   ) {
     super(message);
@@ -186,6 +193,15 @@ export async function resolveApiToken(
   if (orgSuspensa && !opcoes.permiteOrgSuspensa) {
     throw new ApiTokenError("org_suspended", "Organization suspended.");
   }
+  // O plano decide se a empresa tem API (migration 0718). Cobrança desligada ou
+  // org isenta: libera. Erro de leitura falha FECHADO como `lookup_failed`.
+  const { data: liberaApi, error: erroDoPlano } = await supabase.rpc("fn_plano_libera_api", { p_org: data.organization_id });
+  if (erroDoPlano) {
+    throw new ApiTokenError("lookup_failed", `Plan lookup failed: ${erroDoPlano.message}`);
+  }
+  if (liberaApi === false) {
+    throw new ApiTokenError("plan_feature_unavailable", "Your plan does not include the REST API. Upgrade in Settings › Plan and billing.");
+  }
 
   supabase
     .from("api_tokens")
@@ -237,10 +253,10 @@ export async function validateBearerToken(
     resolved = await resolveApiToken(plaintext, opcoes);
   } catch (err) {
     if (err instanceof ApiTokenError) {
-      if (err.reason === "org_suspended") {
+      if (err.reason === "org_suspended" || err.reason === "plan_feature_unavailable") {
         // Token VÁLIDO: nem chute nem token morto. Debitar o balde trancaria a
-        // integração do cliente por minutos depois da reativação.
-        throw new McpAuthError(-32002, 403, err.message, "org_suspended");
+        // integração do cliente por minutos depois da reativação (ou do upgrade).
+        throw new McpAuthError(-32002, 403, err.message, err.reason);
       }
       if (err.reason !== "lookup_failed") {
         // Chute (malformado/desconhecido) debita o balde por ORIGEM; token real

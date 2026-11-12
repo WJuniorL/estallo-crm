@@ -93,4 +93,19 @@ describe("o contrato com os gatilhos do banco", () => {
       );
     },
   );
+
+  it("⭐ a recusa comum dos recursos novos escreve a mensagem que este módulo lê", () => {
+    expect(baseline).toMatch(/raise\s+exception\s+'limite_do_plano:%:%',\s*p_recurso,\s*p_limite[^;]*errcode\s*=\s*'PT402'/i);
+  });
+
+  it.each(["pipelines", "etapas", "leads", "automacoes", "webhooks"] as const)(
+    "o gatilho de %s recusa pela função comum, e a recusa vira a frase com o teto",
+    (recurso) => {
+      expect(baseline).toContain(`perform public.fn_recusa_limite_do_plano('${recurso}', v_limite, v_em_uso);`);
+      const traduzido = traduzirLimiteDoPlano({ code: "PT402", message: `limite_do_plano:${recurso}:8` }, "pt-BR");
+      expect(traduzido?.details).toEqual({ recurso, limite: 8 });
+      expect(traduzido?.message).toContain("8");
+      expect(traduzido?.message).toContain("Plano e cobrança");
+    },
+  );
 });

@@ -130,6 +130,14 @@ describe("webhook da cobrança", () => {
     expect(emits()).toEqual([]);
   });
 
+  it("⭐ contestação sem cliente: 200, fechada como processed (conta em 'dinheiro em risco', não em 'sem empresa')", async () => {
+    h.sinal = { eventoId: "evt_d", tipo: "charge.dispute.created", clienteRef: null };
+    m.dona = null;
+    expect((await pedido()).status).toBe(200);
+    expect(argumentos(doLog("update")[0]!, "update")?.[0]).toMatchObject({ status: "processed", error_message: "cliente_desconhecido" });
+    expect(emits()).toEqual([]);
+  });
+
   it("emit que falha: 503 e a linha fica received (o provedor reentrega)", async () => {
     m.emit = { data: null, error: { code: "XX000", message: "boom" } };
     expect((await pedido()).status).toBe(503);

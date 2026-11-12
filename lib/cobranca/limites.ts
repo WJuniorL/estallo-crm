@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { fail } from "@/lib/api/wrappers";
 import type { RecursoDoPlano } from "@/lib/cobranca/vocabulario";
 import { traduzir } from "@/lib/i18n/dicionario";
 import type { Idioma } from "@/lib/i18n/idiomas";
@@ -23,9 +24,9 @@ import type { Idioma } from "@/lib/i18n/idiomas";
  * "Plano e cobrança".
  */
 
-export type RecursoComLimite = Extract<RecursoDoPlano, "assentos" | "canais">;
+export type RecursoComLimite = Exclude<RecursoDoPlano, "ia_usd_cents">;
 
-const LIMITE_ESTOURADO = /limite_do_plano:(assentos|canais):(\d+)/;
+const LIMITE_ESTOURADO = /limite_do_plano:(assentos|canais|pipelines|etapas|leads|automacoes|webhooks):(\d+)/;
 
 export function lerLimiteEstourado(
   erro: unknown,
@@ -43,6 +44,26 @@ const FRASE_DO_LIMITE: Record<RecursoComLimite, { um: string; varios: string }> 
     um: "Seu plano permite 1 pessoa e a vaga está ocupada. Revogue o acesso de alguém em Equipe ou troque de plano em Configurações › Plano e cobrança.",
     varios:
       "Seu plano permite {n} pessoas e todas as vagas estão ocupadas. Revogue o acesso de alguém em Equipe ou troque de plano em Configurações › Plano e cobrança.",
+  },
+  pipelines: {
+    um: "Seu plano permite 1 pipeline. Arquive um pipeline ou troque de plano em Configurações › Plano e cobrança.",
+    varios: "Seu plano permite {n} pipelines. Arquive um pipeline ou troque de plano em Configurações › Plano e cobrança.",
+  },
+  etapas: {
+    um: "Seu plano permite {n} etapas por pipeline. Arquive uma etapa ou troque de plano em Configurações › Plano e cobrança.",
+    varios: "Seu plano permite {n} etapas por pipeline. Arquive uma etapa ou troque de plano em Configurações › Plano e cobrança.",
+  },
+  leads: {
+    um: "Seu plano permite 1 lead. Exclua leads antigos ou troque de plano em Configurações › Plano e cobrança.",
+    varios: "Seu plano permite {n} leads e a base está cheia. Exclua leads antigos ou troque de plano em Configurações › Plano e cobrança.",
+  },
+  automacoes: {
+    um: "Seu plano permite 1 automação. Exclua uma automação ou troque de plano em Configurações › Plano e cobrança.",
+    varios: "Seu plano permite {n} automações. Exclua uma automação ou troque de plano em Configurações › Plano e cobrança.",
+  },
+  webhooks: {
+    um: "Seu plano permite 1 webhook. Exclua um webhook ou troque de plano em Configurações › Plano e cobrança.",
+    varios: "Seu plano permite {n} webhooks. Exclua um webhook ou troque de plano em Configurações › Plano e cobrança.",
   },
   canais: {
     um: "Seu plano permite 1 número conectado. Exclua um número em Conexões ou troque de plano em Configurações › Plano e cobrança.",
@@ -70,6 +91,15 @@ export function traduzirLimiteDoPlano(erro: unknown, idioma: Idioma): LimiteDoPl
     message: mensagemDoLimite(estourado.recurso, estourado.limite, idioma),
     details: estourado,
   };
+}
+
+/**
+ * A resposta 409 de uma rota cuja escrita bateu no limite do plano, ou `null`
+ * se o erro é outro. Uma linha por rota: `const l = falhaDoLimite(e, idioma, rid); if (l) return l;`
+ */
+export function falhaDoLimite(erro: unknown, idioma: Idioma, requestId: string) {
+  const limite = traduzirLimiteDoPlano(erro, idioma);
+  return limite ? fail(limite.code, limite.message, 409, { requestId, details: limite.details }) : null;
 }
 
 /**

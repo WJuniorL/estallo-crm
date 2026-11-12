@@ -15,6 +15,7 @@ import { NextRequest } from "next/server";
 
 import { resolveAuthDual, tetoDeEscritaDoToken } from "@/lib/api/auth-dual";
 import { ok, fail } from "@/lib/api/wrappers";
+import { falhaDoLimite } from "@/lib/cobranca/limites";
 import { audit } from "@/lib/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { moduloLigado } from "@/lib/instalacao/modulos";
@@ -112,6 +113,8 @@ export async function POST(req: NextRequest): Promise<Response> {
     if (insErr?.code === "23505") {
       return fail("conflict", t("Já existe um fluxo com este nome."), 409, { requestId });
     }
+    const limite = falhaDoLimite(insErr, authz.idioma ?? "pt-BR", requestId);
+    if (limite) return limite;
     return fail("internal_error", insErr?.message ?? "followup_flow_insert_failed", 500, {
       requestId,
     });

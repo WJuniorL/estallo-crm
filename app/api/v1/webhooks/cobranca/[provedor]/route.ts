@@ -21,6 +21,7 @@ import { segredoDoWebhook } from "@/lib/cobranca/configuracao";
 import { ipDoCliente } from "@/lib/http/ip-do-cliente";
 import { adaptador } from "@/lib/cobranca/provedores";
 import type { SinalDoWebhook } from "@/lib/cobranca/provedores/contrato";
+import { EVENTOS_DE_RISCO_STRIPE } from "@/lib/cobranca/provedores/stripe";
 import { PROVEDORES_DE_COBRANCA, type ProvedorDeCobranca } from "@/lib/cobranca/vocabulario";
 import { moduloLigado } from "@/lib/instalacao/modulos";
 import { logger } from "@/lib/logger";
@@ -119,9 +120,13 @@ export async function POST(req: NextRequest, { params }: Rota) {
   if (linha === "erro") return fail("internal_error", "Não foi possível registrar o aviso.", 500, { requestId });
   if (linha.status === "processed") return ok({ duplicado: true }, { requestId });
   if (!org) {
+    // Contestação e alerta de fraude não trazem cliente: sem empresa é o normal deles.
+    // Fechados como `processed`, contam só na linha de "dinheiro em risco" da Visão
+    // geral, e não como aviso sem empresa correspondente.
+    const deRisco = provedor === "stripe" && EVENTOS_DE_RISCO_STRIPE.includes(sinal.tipo);
     await admin
       .from("webhook_events_log")
-      .update({ status: "error", error_message: "cliente_desconhecido", processed_at: agora })
+      .update({ status: deRisco ? "processed" : "error", error_message: "cliente_desconhecido", processed_at: agora })
       .eq("id", linha.id)
       .is("organization_id", null);
     return ok({ ignorado: "cliente_desconhecido" }, { requestId });

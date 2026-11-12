@@ -17,7 +17,7 @@ export type ProvedorDeCobranca = (typeof PROVEDORES_DE_COBRANCA)[number];
 export const MODOS = ["teste", "producao"] as const;
 export type Modo = (typeof MODOS)[number];
 
-export const INTERVALOS = ["mes", "ano"] as const;
+export const INTERVALOS = ["mes", "semestre", "ano"] as const;
 export type Intervalo = (typeof INTERVALOS)[number];
 
 /** O Asaas não tem moeda e o boleto da Stripe é só BRL. Alargar = alargar o CHECK. */
@@ -35,5 +35,5 @@ export const ERROS_DE_LEITURA = [
 ] as const;
 export type ErroDeLeitura = (typeof ERROS_DE_LEITURA)[number];
 
-export const RECURSOS_DO_PLANO = ["assentos", "canais", "ia_usd_cents"] as const;
+export const RECURSOS_DO_PLANO = ["assentos", "canais", "ia_usd_cents", "pipelines", "etapas", "leads", "automacoes", "webhooks"] as const;
 export type RecursoDoPlano = (typeof RECURSOS_DO_PLANO)[number];

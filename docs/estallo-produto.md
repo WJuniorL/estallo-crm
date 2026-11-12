@@ -22,25 +22,34 @@ A implantação do padrão é progressiva: a primeira etapa abaixo está entregu
 - A empresa ativa aparece como contexto da conta, sem alterar a marca do produto. Claro e escuro têm tokens próprios.
 - A primeira etapa muda identidade, estrutura visual da navegação, acesso e apresentação dos planos. O redesenho interno de Inbox, kanban, dashboard e demais módulos será expandido depois.
 
-## Comercial — demonstração, sem cobrança
+## Comercial — planos e cobrança
 
-A base comercial futura será adaptada da implementação Stripe do Nutrigg, indicada pelo proprietário. O módulo de cobrança herdado do upstream não é a base comercial desta oferta. Seu schema e seus contratos não são removidos nesta etapa.
+Decisão do proprietário em 12/11/2026: a cobrança usa o módulo herdado (`lib/cobranca/`, provedor Stripe), que já tinha Checkout e Portal hospedados, webhook relido na Stripe, régua de inadimplência e limites no banco. A adaptação do Nutrigg deixou de ser necessária. A assinatura é paga só por cartão (Pix e boleto ficam fora do Checkout de assinatura); trial de 14 dias com cartão cadastrado.
 
-| Plano demonstrativo | Preço mensal fictício | Usuários | Números | Contatos |
-| ------------------- | --------------------: | -------: | ------: | -------: |
-| Essencial           |                 R$ 97 |        3 |       1 |    1.000 |
-| Profissional        |                R$ 197 |       10 |       3 |    5.000 |
-| Escala              |                R$ 397 |       25 |       5 |   20.000 |
+| Plano        | Mensal | Semestral (−17%)      | Anual (−28%)          |
+| ------------ | -----: | --------------------- | --------------------- |
+| Essencial    | R$ 247 | R$ 1.230 (≈ R$ 205/mês) | R$ 2.134 (≈ R$ 177,83/mês) |
+| Profissional | R$ 447 | R$ 2.226 (≈ R$ 371/mês) | R$ 3.862 (≈ R$ 321,83/mês) |
+| Escala       | R$ 947 | R$ 4.716 (≈ R$ 786/mês) | R$ 8.182 (≈ R$ 681,83/mês) |
 
-Os valores e limites são ilustrações para validar a apresentação. Não são uma oferta definitiva, não geram cobrança e não limitam a conta atual. A tela Plano e cobrança informa isso e não oferece checkout ativo. Não há franquia de IA contratada nesta fase.
+Desconto sobre seis ou doze mensalidades, arredondado para baixo em reais inteiros. Na tela, o número grande do semestral e do anual é a mensalidade equivalente; o valor do período fica pequeno embaixo.
 
-Pendências para ativar Stripe:
+| Limite                    | Essencial | Profissional | Escala       |
+| ------------------------- | --------: | -----------: | -----------: |
+| Pessoas na equipe         |         4 |           15 |           40 |
+| Conexões                  |         3 |           10 |           50 |
+| Pipelines / etapas        |     5 / 8 |      20 / 15 | ilimitado / 25 |
+| Leads                     |     5 mil |      100 mil |      500 mil |
+| Automações do CRM         |         8 |           20 |           80 |
+| Webhooks de entrada       |         3 |           15 |           80 |
+| API REST (token `dsk_`)  |       não |          sim |          sim |
+| Teto de IA por mês        |   US$ 10  |      US$ 25  |      US$ 60  |
 
-- Definir produtos, preços finais, periodicidade, trial, franquias de IA e política de alteração/cancelamento.
-- Disponibilizar `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` e IDs de preços em configuração protegida; nunca no Git ou no chat.
-- Adaptar do Nutrigg Checkout e Portal hospedados pelo Stripe, vinculados à organização autenticada no servidor.
-- Conferir assinatura do webhook sobre o corpo cru, idempotência e estado relido no Stripe; redirecionamento do navegador não concede acesso.
-- Definir e provar limites no servidor, conciliação, alertas de consumo, inadimplência e isolamento entre organizações antes de comercializar.
+Sem MCP como recurso comercial. Todos os limites são aplicados no banco (gatilhos `trg_trava_*_do_plano`, migration 0718) e a API por `fn_plano_libera_api`. Fonte dos valores: `lib/planos/catalogo.ts`; quem grava as nove linhas em `cobranca_planos` é `scripts/cobranca-planos-estallo.ts`. Depois disso vale o banco, editável em /admin/cobranca › Planos.
+
+Para ativar: ligar o módulo em /admin/sistema, conectar a chave restrita da Stripe em /admin/cobranca › Conexão, rodar o script dos planos. Empresas que já existem ficam isentas (sem plano, sem limite) até o dono atribuir um plano a cada uma. Quem se cadastra começa o teste grátis no Profissional mensal.
+
+Fora de escopo ainda: nota fiscal (NFS-e), limites de requisições por minuto por plano, troca de período (mensal ↔ anual) com assinatura já paga — hoje é cancelar e assinar de novo.
 
 ## Operação e aceite
 
@@ -48,7 +57,7 @@ A implantação atual é um piloto; não constitui dimensionamento de uma plataf
 
 GitHub Actions permanece desativado por decisão do proprietário após esgotamento da cota. Esta etapa é validada localmente, sem disparar workflows. A VPS de produção não faz build: as imagens são construídas fora dela e transferidas por SSH (ver `docs/estallo-vps.md`).
 
-Aceite desta etapa: marca consistente em acesso, navegação e ícones; operação desktop/mobile e claro/escuro; catálogo de navegação preservando RBAC; planos claramente demonstrativos; documentação coerente; ausência de alterações na licença MIT e no schema.
+Aceite desta etapa: marca consistente em acesso, navegação e ícones; operação desktop/mobile e claro/escuro; catálogo de navegação preservando RBAC; documentação coerente; ausência de alterações na licença MIT.
 
 ## Living System Checklist
 

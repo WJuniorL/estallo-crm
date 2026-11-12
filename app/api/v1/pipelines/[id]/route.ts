@@ -21,6 +21,7 @@ import { type NextRequest } from "next/server";
 import { z } from "zod";
 
 import { fail, ok } from "@/lib/api/wrappers";
+import { falhaDoLimite } from "@/lib/cobranca/limites";
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth/require-role";
 import {
@@ -289,6 +290,9 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx): Promise<Response> 
     const nome = funis.find((f) => f.id === u.pipelineId)?.name ?? alvo.name;
     const conflito = conflitoDoBanco(error as { code?: string }, nome, requestId);
     if (conflito) return conflito;
+    // Desarquivar acima do teto de pipelines do plano (migration 0718).
+    const limite = falhaDoLimite(error, authz.user.idioma, requestId);
+    if (limite) return limite;
     return fail("internal_error", error.message, 500, { requestId });
   }
 

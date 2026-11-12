@@ -62,6 +62,12 @@ describe("moldes de acesso do GoTrue", () => {
     });
   }
 
+  it("sem logo da marca, usa o logo do produto que a rota passa (URL absoluta)", () => {
+    const html = montarTemplateDeAcesso("confirmation", { ...MARCA, logoUrl: null }, "https://crm.exemplo.test/assets/logo-colorida.png");
+    expect(html).toContain('<img src="https://crm.exemplo.test/assets/logo-colorida.png"');
+    expect(html).toContain('<meta charset="utf-8">');
+  });
+
   it("sem logo configurado, nada é desenhado no lugar", () => {
     const html = montarTemplateDeAcesso("confirmation", { ...MARCA, logoUrl: null });
     expect(html).not.toContain("<img");

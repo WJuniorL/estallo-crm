@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { marcaDaSaida } from "@/lib/branding/saida";
+import { env } from "@/lib/env";
 import {
   MODELOS_DE_ACESSO,
   montarTemplateDeAcesso,
@@ -68,7 +69,10 @@ export async function GET(
   // do produto, que é uma instalação funcionando.
   const marca = await marcaDaSaida(null);
 
-  return new NextResponse(montarTemplateDeAcesso(modelo as ModeloDeAcesso, marca), {
+  // Absoluta: o e-mail é aberto fora do app. Sem URL pública configurada, o molde sai sem logo.
+  const base = (env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/+$/, "");
+  const logo = base.startsWith("https://") ? `${base}/assets/logo-colorida.png` : undefined;
+  return new NextResponse(montarTemplateDeAcesso(modelo as ModeloDeAcesso, marca, logo), {
     status: 200,
     headers: {
       "content-type": "text/html; charset=utf-8",

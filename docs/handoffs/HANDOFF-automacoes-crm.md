@@ -1111,3 +1111,15 @@ Pedido do dono: atualizar os testes vermelhos do `verify` que vinham da frente d
 **Evidência:** `buscar-ou-criar.test.ts` 4/4; suíte `lib/followup` + editor + `lib/automation` = 123 arquivos / 1477 testes; `tsc` e lint limpos. Invariante `automacoes-buscar-ou-criar` (cria contato → cria negócio → tag no negócio novo com o da execução intacto; achado sem duplicar; «Aplicar em» sem valor falha) — só no CI.
 
 **NÃO MEDIDO:** telas no navegador. Mensagem para o contato novo (o envio continua preso à conversa da execução — fora deste recorte).
+
+## 2026-11-12 (14) — Fase 5: Extrair dados por IA (decisão do dono: «pode fazer») + correções de cerca
+
+**Feito:**
+- **`ai_extract`** (`lib/followup/extrair-dados.ts`): texto a ler = `fonte` com variáveis, ou (vazia) a última mensagem de texto do cliente na conversa da execução — congelado no `begin` (`extractInput`). O motor chama o modelo FORA de transação pela porta única `runModelCall` (ponto novo `followup_extract` no registro de pontos: chave BYOK da org, orçamento conferido antes de gastar, custo em `llm_calls`). A saída é validada campo a campo pelo tipo (`text|number|boolean|list`); o que não confere vira `null`; chave a mais é descartada (`completeExtraction` usa os campos da versão PINADA). Sem texto → falha explicada SEM chamar a IA; orçamento esgotado / IA não configurada → falha de configuração legível; saída sem JSON → nova tentativa. Sem efeito externo: queda no meio só custa outra chamada (decisão registrada — não vai para «incerto»).
+- **Escolha de caminho:** o plano falava em seguir o caminho da classificação (fila + worker). A classificação espera a resposta do cliente; a extração lê um texto que já existe — chamada direta no motor, pela mesma porta de custo/orçamento, sem fila nova.
+- **Cercas do CI que o push anterior reprovou:** `branding` (host `api.exemplo.com` no código que embarca → `api.example.com`, domínio reservado) e `rls-completude-varredura` (tabela nova `automation_http_connections` em `PROVA_PROPRIA`, com prova nova: sem GRANT a anon/authenticated no catálogo e SELECT com JWT do admin da própria organização recusado com 42501).
+- **Remoto errado:** a branch rastreava `antigo` (`estallosolucoes/estallo-crm`); os pushes das entradas (12) e (13) foram para lá e o PR #3 não os recebeu. Corrigido: upstream = `origin` (`WJuniorL/estallo-crm`).
+
+**Evidência (local, Docker ligado nesta sessão):** `pnpm test:db` dos invariantes novos — `automacoes-requisicao-http` (6), `automacoes-buscar-ou-criar` (3), `automacoes-extrair-dados` (2) e `rls-completude-varredura` — verdes, com baseline em install e update (`ON_ERROR_STOP=1`). `extrair-dados.test.ts` 4/4; `tsc` e lint limpos. Falhas locais restantes são só `Test timed out` de cercas que varrem o repositório (máquina com duas stacks Supabase de pé).
+
+**NÃO MEDIDO:** chamada a um modelo real; telas no navegador.

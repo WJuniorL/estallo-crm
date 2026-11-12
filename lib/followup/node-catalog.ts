@@ -135,6 +135,14 @@ const NODE_DEFINITIONS = {
     surfaces: CLOCK_SURFACES,
     effect: "crm",
   },
+  ai_extract: {
+    label: "Extrair dados por IA",
+    description: "A IA lê um texto e devolve os campos que você definir, conferidos pelo tipo.",
+    category: "ai",
+    keywords: ["extrair", "ia", "dados", "campos", "ler", "entender", "estruturar", "inteligência"],
+    surfaces: CLOCK_SURFACES,
+    effect: "agent",
+  },
   find_or_create_contact: {
     label: "Buscar ou criar contato",
     description: "Acha um contato pelo telefone ou e-mail e, se pedido, cria quando não existe.",
@@ -231,6 +239,7 @@ export const NODE_CATALOG = {
   http_request: withOutputContract("http_request"),
   find_or_create_contact: withOutputContract("find_or_create_contact"),
   find_or_create_lead: withOutputContract("find_or_create_lead"),
+  ai_extract: withOutputContract("ai_extract"),
   end: withOutputContract("end"),
 } as const;
 

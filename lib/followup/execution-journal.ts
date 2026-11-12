@@ -2,6 +2,7 @@ import type { ExecutionError } from "./execution-contract";
 import type { EnrollmentRow, NodeResult, NodeDecisionTrace } from "./node-handlers";
 import type { NodeOutput } from "./node-output-contracts";
 import type { TimingPlan } from "./timing-plan";
+import type { Pool } from "pg";
 import type { PedidoHttp } from "./requisicao-http";
 
 /** Captação do `match_reply`: o texto que decidiu; o destino o diário tira do nó. */
@@ -175,6 +176,14 @@ export interface ExecutionJournal {
     efeito: "failed" | "unknown",
     error: ExecutionError,
   ): Promise<void>;
+  /** O pool do diário — o motor o empresta à chamada de modelo do Extrair dados (custo e orçamento em `llm_calls`). */
+  readonly pool: Pool;
+  /** Fase 5 — Extrair dados por IA: grava os campos que a validação aceitou e avança. */
+  completeExtraction(
+    scope: EnrollmentRow,
+    handle: ExecutionAttemptHandle,
+    fields: Record<string, unknown>,
+  ): Promise<{ output: NodeOutput<"ai_extract">; reused: boolean }>;
   /** Fase 5 — acha (e, se pedido, cria) um contato pelo telefone ou e-mail, na transação do avanço. */
   completeContactLookup(
     scope: EnrollmentRow,

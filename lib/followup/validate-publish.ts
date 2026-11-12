@@ -71,6 +71,8 @@ export const PUBLISH_ERROR_CODES = [
   'produto_ausente',
   'conexao_http_ausente',
   'busca_de_contato_sem_valor',
+  'extracao_sem_campos',
+  'extracao_campo_repetido',
   'negocio_sem_funil',
   'negocio_sem_etapa',
   'aplicar_em_invalido',
@@ -980,6 +982,18 @@ export function validateFlowForPublish(
         node_id: node.id,
         code: 'campo_do_negocio_incompleto',
         message: `A caixa "${node.label}" precisa do campo e do valor a gravar.`,
+      });
+    if (node.type === 'ai_extract' && node.config.fields.length === 0)
+      errors.push({
+        node_id: node.id,
+        code: 'extracao_sem_campos',
+        message: `A caixa "${node.label}" não tem campos a extrair.`,
+      });
+    if (node.type === 'ai_extract' && new Set(node.config.fields.map((f) => f.name)).size !== node.config.fields.length)
+      errors.push({
+        node_id: node.id,
+        code: 'extracao_campo_repetido',
+        message: `A caixa "${node.label}" tem dois campos com o mesmo nome.`,
       });
     if (node.type === 'find_or_create_contact' && !node.config.valor.trim())
       errors.push({

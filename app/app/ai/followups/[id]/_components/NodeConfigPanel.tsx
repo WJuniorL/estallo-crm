@@ -28,6 +28,7 @@ import { UpdateLeadFieldForm } from "./forms/UpdateLeadFieldForm";
 import { LeadProductForm } from "./forms/LeadProductForm";
 import { HttpRequestForm } from "./forms/HttpRequestForm";
 import { FindOrCreateContactForm } from "./forms/FindOrCreateContactForm";
+import { AiExtractForm } from "./forms/AiExtractForm";
 import { FindOrCreateLeadForm } from "./forms/FindOrCreateLeadForm";
 import { AlvoDoBloco } from "./VariaveisDoFluxo";
 import { NODES_COM_APLICAR_EM } from "@/lib/followup/graph-schema";
@@ -183,6 +184,9 @@ export function NodeConfigPanel({
             config={node.data.config as ConfigOf<"edit_lead_tag">}
             onChange={(config) => onChange({ config })}
           />
+        )}
+        {type === "ai_extract" && (
+          <AiExtractForm config={node.data.config as ConfigOf<"ai_extract">} onChange={(config) => onChange({ config })} />
         )}
         {type === "find_or_create_contact" && (
           <FindOrCreateContactForm

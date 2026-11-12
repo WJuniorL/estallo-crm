@@ -248,7 +248,7 @@ function reuseWindowMs(node: FlowNode): number {
 }
 
 export class PgExecutionJournal implements ExecutionJournal {
-  constructor(private readonly pool: pg.Pool) {}
+  constructor(readonly pool: pg.Pool) {}
 
   private async transaction<T>(work: (client: pg.PoolClient) => Promise<T>): Promise<T> {
     const client = await this.pool.connect();
@@ -396,6 +396,43 @@ export class PgExecutionJournal implements ExecutionJournal {
     if (contato.is_anonymized || contato.kind === "whatsapp_group")
       throw new ExecutionTaskConfigurationError("aplicar_em_indisponivel", "O contato de «Aplicar em» foi anonimizado ou é um grupo.");
     return { ...row, contact_id: contactId, lead_id: lead ? lead.id : null, conversation_id: null };
+  }
+
+  /**
+   * Extrair dados por IA: o texto a ler, congelado (a nova tentativa lê o MESMO texto). Fonte vazia = a última mensagem
+   * de texto do cliente na conversa da execução.
+   */
+  private async extractInput(
+    client: pg.PoolClient,
+    row: LockedExecution,
+    node: Extract<FlowNode, { type: "ai_extract" }>,
+    requested: unknown,
+  ) {
+    let texto: string | null = null;
+    let erro: string | null = null;
+    if (node.config.fonte.trim()) {
+      const r = resolverReferencias(node.config.fonte, await this.saidasDaExecucao(client, row));
+      if (r.sem_valor.length)
+        erro = `O texto a ler cita ${[...new Set(r.sem_valor.map((x) => x.marca))].join(", ")}, mas o bloco citado não produziu esse valor nesta execução.`;
+      texto = r.texto.trim() || null;
+    } else if (row.conversation_id) {
+      texto =
+        (
+          await client.query<{ body: string | null }>(
+            `select body from messages where organization_id=$1 and conversation_id=$2 and direction='inbound'
+             and body is not null and btrim(body) <> '' order by created_at desc limit 1`,
+            [row.organization_id, row.conversation_id],
+          )
+        ).rows[0]?.body ?? null;
+    }
+    if (!erro && !texto)
+      erro = node.config.fonte.trim()
+        ? "O texto a ler ficou vazio nesta execução."
+        : "O cliente ainda não mandou mensagem de texto nesta conversa.";
+    return {
+      requested,
+      resolved: { texto: erro ? null : texto!.slice(0, 8000), campos: node.config.fields, dica: node.config.dica, erro },
+    };
   }
 
   /** Buscar ou criar contato: o valor procurado e o nome, resolvidos e congelados. */
@@ -1099,7 +1136,9 @@ export class PgExecutionJournal implements ExecutionJournal {
                           ? await this.contactLookupInput(client, alvoRow, node, snapshot)
                           : node.type === "find_or_create_lead"
                             ? await this.leadLookupInput(client, alvoRow, node, snapshot)
-                            : snapshot;
+                            : node.type === "ai_extract"
+                              ? await this.extractInput(client, alvoRow, node, snapshot)
+                              : snapshot;
       const { rows } = await client.query<{ id: string }>(
         `insert into followup_execution_attempts
           (organization_id,step_id,attempt_no,status,input_snapshot,config_snapshot,lease_revision,lease_until,next_eval_at)
@@ -1699,6 +1738,24 @@ export class PgExecutionJournal implements ExecutionJournal {
       }
       const output = NODE_OUTPUT_CONTRACTS.add_note.parse({ destino: reads.destino, note_id: noteId, texto: reads.texto });
       await this.confirmLocalEffect(client, row, handle, "add_note", output);
+      return { output, reused: false };
+    });
+  }
+
+  async completeExtraction(scope: EnrollmentRow, handle: ExecutionAttemptHandle, fields: Record<string, unknown>) {
+    this.assertHandle(scope, handle);
+    return this.transaction(async (client) => {
+      await this.lockContact(client, scope);
+      const receipt = await this.confirmedEffect(client, scope, handle, "ai_extract", NODE_OUTPUT_CONTRACTS.ai_extract);
+      if (receipt) return { output: receipt, reused: true };
+      const { row, node } = await this.current(client, scope);
+      if (node.type !== "ai_extract") throw new ExecutionTaskConfigurationError("execution_node_type_mismatch");
+      await this.holdAttempt(client, row, handle);
+      // Só as chaves configuradas na versão PINADA — o que mais vier é descartado.
+      const output = NODE_OUTPUT_CONTRACTS.ai_extract.parse({
+        fields: Object.fromEntries(node.config.fields.map((f) => [f.name, fields[f.name] ?? null])),
+      });
+      await this.confirmLocalEffect(client, row, handle, "ai_extract", output);
       return { output, reused: false };
     });
   }

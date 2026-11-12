@@ -58,7 +58,7 @@ export const novaConexaoHttpSchema = z
   })
   .superRefine((v, ctx) => {
     if (!origemDaConexao(v.base_url))
-      ctx.addIssue({ code: "custom", path: ["base_url"], message: "Informe só o endereço base, como https://api.exemplo.com" });
+      ctx.addIssue({ code: "custom", path: ["base_url"], message: "Informe só o endereço base, como https://api.example.com" });
     if (v.auth_kind === "header" && !v.header_name)
       ctx.addIssue({ code: "custom", path: ["header_name"], message: "Informe o nome do cabeçalho." });
     if (v.auth_kind !== "none" && !v.segredo?.trim())

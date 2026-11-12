@@ -89,6 +89,10 @@ export const NODE_OUTPUT_CONTRACTS = {
     removed_tags: z.array(z.string().min(1)).optional(),
     tags: z.array(z.string().min(1)),
   }),
+  ai_extract: z.strictObject({
+    /** Um valor por campo configurado, no tipo do campo; `null` quando o texto não dizia. */
+    fields: z.record(z.string(), z.json()),
+  }),
   find_or_create_contact: z.strictObject({
     /** O contato achado ou criado; `null` quando não achou e não era para criar. */
     contact_id: id.nullable(),

@@ -12,7 +12,7 @@ import { avancarEnrollmentAtivo } from "@/lib/followup/engine";
 import { createPgAdminClient } from "@/lib/followup/turn-bridge";
 
 import { criarOrigemDeFollowup } from "./followup-service-origin";
-import { GOV_ORG, seedGov } from "./gov-helpers";
+import { GOV_ADMIN, GOV_ORG, seedGov } from "./gov-helpers";
 
 /**
  * Requisição HTTP (Fase 5), motor novo e Postgres real. A rede é trocada por uma chamada falsa (a guarda anti-SSRF
@@ -94,17 +94,43 @@ async function estado(run: string) {
   return { e, passo, efeitos };
 }
 
+describe("conexão HTTP é exclusiva do servidor", () => {
+  it("anon e authenticated não têm GRANT, e nem o admin da própria organização lê a linha pela sessão", async () => {
+    const id = await conexao();
+    const grants = (
+      await pool.query(
+        `select grantee, privilege_type from information_schema.role_table_grants
+          where table_schema='public' and table_name='automation_http_connections' and grantee in ('anon','authenticated','PUBLIC')`,
+      )
+    ).rows;
+    expect(grants).toEqual([]);
+    const c = await pool.connect();
+    try {
+      for (const papel of ["anon", "authenticated"]) {
+        await c.query("begin");
+        await c.query(`set local role ${papel}`);
+        await c.query("select set_config('request.jwt.claims', $1, true)", [JSON.stringify({ sub: GOV_ADMIN, role: papel })]);
+        await expect(c.query("select secret_encrypted from automation_http_connections where id=$1", [id])).rejects.toMatchObject({ code: "42501" });
+        await c.query("rollback");
+      }
+    } finally {
+      c.release();
+    }
+  });
+});
+
 describe("requisição HTTP (motor novo, Postgres real)", () => {
   it("2xx: a intenção vira recibo, a saída fica no diário e o fluxo avança; o pedido não carrega segredo em claro", async () => {
     const con = await conexao();
     const run = await execucao(con);
+    const vistos: unknown[] = [];
     rede.chamada.mockImplementation(async () => {
       // No instante da rede a intenção já está gravada como `pending`.
-      const pend = (await pool.query("select status from followup_execution_effects where enrollment_id=$1", [run])).rows;
-      expect(pend).toEqual([{ status: "pending" }]);
+      vistos.push((await pool.query("select status from followup_execution_effects where enrollment_id=$1", [run])).rows);
       return { kind: "resposta", status: 201, corpo: { id: 42 }, truncado: false };
     });
     await tick(run);
+    expect(vistos).toEqual([[{ status: "pending" }]]);
     const pedido = rede.chamada.mock.calls[0]![0];
     expect(pedido).toMatchObject({ metodo: "POST", url: "https://api.exemplo.com/pedidos", corpo: { origem: "crm" } });
     expect(JSON.stringify(pedido)).not.toContain("-123");

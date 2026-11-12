@@ -31,6 +31,7 @@ export const NODES_INTEGRATED_IN_EXECUTION_CONTRACT: ReadonlySet<string> = new S
   "http_request",
   "find_or_create_contact",
   "find_or_create_lead",
+  "ai_extract",
 ]);
 
 export function executionContractProblem(

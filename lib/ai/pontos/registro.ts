@@ -395,6 +395,17 @@ export const PONTOS_DE_IA: readonly PontoDeIa[] = [
     },
   },
   {
+    id: "followup_extract",
+    rotulo: "Extrair dados no fluxo",
+    oQueFaz:
+      "No passo «Extrair dados por IA» de um fluxo, lê um texto (por exemplo, a resposta do cliente) e devolve os campos que você definiu, conferidos pelo tipo.",
+    papel: "entender",
+    exige: {},
+    emissor: "lib/followup/extrair-dados.ts",
+    sintomaDeFalha: "O fluxo para no passo de extração e a execução mostra a falha, sem seguir com dado inventado.",
+    registraEm: "llm_calls",
+  },
+  {
     id: "followup_decide_timing",
     rotulo: "Escolher a hora do follow-up",
     oQueFaz: "Decide o melhor momento para retomar uma conversa que esfriou.",

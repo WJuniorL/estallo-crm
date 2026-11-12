@@ -55,6 +55,7 @@ describe('graph-schema', () => {
         'http_request',
         'find_or_create_contact',
         'find_or_create_lead',
+        'ai_extract',
         'end',
       ]);
     });

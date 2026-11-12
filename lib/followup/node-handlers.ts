@@ -1265,6 +1265,7 @@ export function processNode(input: {
       return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
     }
 
+    case "ai_extract":
     case "find_or_create_contact":
     case "find_or_create_lead": {
       // Fase 5 — passagem: quem acha ou cria é o diário, na transação do avanço.

@@ -145,6 +145,7 @@ const TIPO_DO_NO: Record<FlowNode["type"], string> = {
   update_lead_field: "Atualizar campo do negócio",
   lead_product: "Produto do negócio",
   http_request: "Requisição HTTP",
+  ai_extract: "Extrair dados por IA",
   find_or_create_contact: "Buscar ou criar contato",
   find_or_create_lead: "Buscar ou criar negócio",
   end: "Fim",
@@ -231,6 +232,11 @@ export function resumoDoNo(node: FlowNode): NoDoDossie {
             ? `remove a(s) tag(s) ${node.config.tags.join(", ")} — sem mensagem ao cliente`
             : `grava a(s) tag(s) ${node.config.tags.join(", ")} no lead — sem mensagem ao cliente`
           : "grava tag no lead, ainda sem destino escolhido — sem mensagem ao cliente",
+      };
+    case "ai_extract":
+      return {
+        ...base,
+        resumo: `a IA lê ${node.config.fonte.trim() ? "o texto escolhido" : "a última mensagem do cliente"} e extrai ${node.config.fields.map((f) => f.name).join(", ") || "os campos"} — sem mensagem ao cliente`,
       };
     case "find_or_create_contact":
       return {

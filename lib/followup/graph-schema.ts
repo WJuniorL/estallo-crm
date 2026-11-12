@@ -43,6 +43,8 @@ export const NODE_TYPES = [
   // Fase 5: acham (e, se pedido, criam) contato e negócio; os blocos seguintes miram o resultado por «Aplicar em».
   'find_or_create_contact',
   'find_or_create_lead',
+  // Fase 5: a IA lê um texto e devolve os campos configurados, validados pelo tipo.
+  'ai_extract',
   'end',
 ] as const;
 export type NodeType = (typeof NODE_TYPES)[number];
@@ -518,6 +520,26 @@ export const findOrCreateLeadConfigSchema = z.strictObject({
   criar: z.boolean(),
 });
 
+/**
+ * Nó `ai_extract` (Fase 5) — a IA lê um texto (`fonte`, com `{{nodes.<bloco>.<campo>}}`; vazio = a última mensagem do
+ * cliente na conversa da execução) e devolve os campos configurados. A saída é validada pelo TIPO de cada campo; o que
+ * não confere vira `null`. Os blocos seguintes citam `{{nodes.<bloco>.fields.<nome>}}`.
+ */
+export const aiExtractFieldSchema = z.strictObject({
+  name: z
+    .string()
+    .min(1)
+    .max(40)
+    .regex(/^[a-z_][a-z0-9_]*$/, "Use letras minúsculas, números e _ (começando por letra)."),
+  type: z.enum(['text', 'number', 'boolean', 'list']),
+  descricao: z.string().max(300),
+});
+export const aiExtractConfigSchema = z.strictObject({
+  fonte: z.string().max(4000),
+  fields: z.array(aiExtractFieldSchema).max(20, "No máximo 20 campos por bloco."),
+  dica: z.string().max(1000),
+});
+
 /** Métodos do bloco Requisição HTTP — aqui (e não em requisicao-http.ts) porque o construtor roda no navegador. */
 export const METODOS_HTTP = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
 
@@ -820,6 +842,14 @@ export const flowNodeSchema = z.discriminatedUnion('type', [
       y: z.number(),
     }),
     config: leadProductConfigSchema,
+  }),
+  // Fase 5: extrair dados por IA
+  z.strictObject({
+    id: z.string().min(1),
+    type: z.literal('ai_extract'),
+    label: z.string().min(1).max(60),
+    position: z.strictObject({ x: z.number(), y: z.number() }),
+    config: aiExtractConfigSchema,
   }),
   // Fase 5: buscar ou criar contato / negócio
   z.strictObject({
@@ -1136,6 +1166,7 @@ export const NODES_WITH_ERROR_BRANCH: ReadonlySet<NodeType> = new Set<NodeType>(
   'http_request',
   'find_or_create_contact',
   'find_or_create_lead',
+  'ai_extract',
 ]);
 
 function errorBranch(): FlowBranch {

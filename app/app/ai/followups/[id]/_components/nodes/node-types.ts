@@ -18,6 +18,7 @@ import { AddNoteNode } from "./AddNoteNode";
 import { UpdateLeadFieldNode } from "./UpdateLeadFieldNode";
 import { LeadProductNode } from "./LeadProductNode";
 import { HttpRequestNode } from "./HttpRequestNode";
+import { AiExtractNode } from "./AiExtractNode";
 import { FindOrCreateContactNode } from "./FindOrCreateContactNode";
 import { FindOrCreateLeadNode } from "./FindOrCreateLeadNode";
 import { SkillNode } from "./SkillNode";
@@ -49,6 +50,7 @@ export const nodeTypes: NodeTypes = {
   update_lead_field: UpdateLeadFieldNode,
   lead_product: LeadProductNode,
   http_request: HttpRequestNode,
+  ai_extract: AiExtractNode,
   find_or_create_contact: FindOrCreateContactNode,
   find_or_create_lead: FindOrCreateLeadNode,
   end: EndNode,

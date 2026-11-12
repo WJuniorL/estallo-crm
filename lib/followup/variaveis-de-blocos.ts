@@ -46,6 +46,7 @@ function textosProprios(no: FlowNode): string[] {
   if (no.type === "update_lead_field") return [no.config.valor];
   if (no.type === "http_request") return [no.config.caminho, no.config.corpo];
   if (no.type === "find_or_create_contact") return [no.config.valor, no.config.nome];
+  if (no.type === "ai_extract") return [no.config.fonte, no.config.dica];
   if (no.type === "find_or_create_lead") return [no.config.contato, no.config.titulo];
   if (no.type === "condition") return no.config.checks.flatMap((c) => (c.field === "variavel" && c.source ? [c.source] : []));
   if (no.type !== "action") return [];
@@ -133,6 +134,7 @@ export const CAMPOS_DE_SAIDA: Partial<Record<FlowNode["type"], Array<{ caminho: 
  */
 export function camposDeSaidaDoNo(no: FlowNode): Array<{ caminho: string; rotulo: string }> {
   if (no.type === "map_data") return no.config.fields.map((f) => ({ caminho: `fields.${f.name}`, rotulo: f.name }));
+  if (no.type === "ai_extract") return no.config.fields.map((f) => ({ caminho: `fields.${f.name}`, rotulo: f.name }));
   return CAMPOS_DE_SAIDA[no.type] ?? [];
 }
 

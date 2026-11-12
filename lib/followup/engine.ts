@@ -1,6 +1,19 @@
 import type { JobClaim } from "@/lib/agent-engine/queue/claim";
 import { pausaDepoisDoBloco } from "./passo-a-passo";
 import { executarRequisicaoHttp, falhaDaRequisicao, type ResultadoHttp } from "./requisicao-http";
+import { extrairDadosComIa } from "./extrair-dados";
+import { aiExtractFieldSchema } from "./graph-schema";
+import { LlmBudgetExceededError, llmEdgeConfigFromEnv, LlmNotConfiguredError } from "@/lib/agent-engine/edge/llm/run-model-call";
+
+/** O que o `begin` congelou para o Extrair dados (ver `extractInput` no diário). */
+const leituraDaExtracao = z.object({
+  resolved: z.object({
+    texto: z.string().nullable(),
+    campos: z.array(aiExtractFieldSchema),
+    dica: z.string(),
+    erro: z.string().nullable(),
+  }),
+});
 import type { NodeOutput } from "./node-output-contracts";
 import { assertAgendaEffectSupabase } from "@/lib/agenda/efeito";
 import { AgendaDeferredError } from "@/lib/agenda/protecao-followup";
@@ -19,7 +32,7 @@ import { assertServiceBoundarySupabase } from "@/lib/atendimento/origem";
  * `createSupabaseAdminClient` below adapts the real service-role client.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { ZodError } from "zod";
+import { z, ZodError } from "zod";
 
 import { idsDoContatoEGemeos } from "@/lib/channels/contato-por-telefone";
 import { logger } from "@/lib/logger";
@@ -345,7 +358,7 @@ async function recordJournalFailure(
   handle: ExecutionAttemptHandle | undefined,
   error: unknown,
   summary: TickSummary,
-  operation: "task" | "decision" | "tags" | "move" | "send" | "classify" | "http",
+  operation: "task" | "decision" | "tags" | "move" | "send" | "classify" | "http" | "extract",
 ): Promise<void> {
   if (error instanceof StaleServiceBoundaryError) return;
   if (error instanceof AgendaDeferredError) {
@@ -1095,6 +1108,58 @@ async function processEnrollment(
   const node = graph.nodes.find((n) => n.id === enrollment.current_node_id);
   if (!node) throw new Error("node_not_found");
   if (inboundBodyOverride !== undefined && node.type !== "match_reply" && node.type !== "wait") {
+    return;
+  }
+
+  // Extrair dados por IA (Fase 5): o texto é congelado no `begin`, o modelo é chamado FORA de transação pela porta
+  // única (`runModelCall`: chave da org, orçamento antes de gastar, custo em `llm_calls`) e o diário grava só o que a
+  // validação por tipo aceitou. Sem efeito externo: uma queda no meio só custa outra chamada na nova tentativa.
+  if (enrollment.execution_contract === 1 && node.type === "ai_extract") {
+    if (!db.executionJournal) throw new Error("execution_journal_unavailable");
+    const journal = await db.executionJournal();
+    let handle: ExecutionAttemptHandle | undefined;
+    try {
+      const begun = await journal.begin(enrollment, {
+        contact_id: enrollment.contact_id,
+        lead_id: enrollment.lead_id ?? null,
+        conversation_id: enrollment.conversation_id,
+      });
+      if (begun.kind !== "ready") {
+        summary.dead++;
+        return;
+      }
+      handle = begun.handle;
+      const reads = leituraDaExtracao.parse(begun.input).resolved;
+      if (reads.erro || !reads.texto) throw new ExecutionConfigurationError("extracao_sem_texto", reads.erro ?? "Sem texto a ler.");
+      let fields: Record<string, unknown>;
+      try {
+        fields = await extrairDadosComIa(
+          journal.pool,
+          // Só as chaves de IA: importar `@/lib/env` aqui validaria o ambiente inteiro em todo caminho do motor.
+          llmEdgeConfigFromEnv({
+            ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+            OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+            OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+            LLM_CACHE_TTL: process.env.LLM_CACHE_TTL,
+            AI_BUDGET_ENFORCEMENT: process.env.AI_BUDGET_ENFORCEMENT,
+            DEEPSEEK_THINKING: process.env.DEEPSEEK_THINKING,
+          }),
+          { tenantId: enrollment.organization_id, contactId: enrollment.contact_id },
+          { campos: reads.campos, texto: reads.texto, dica: reads.dica },
+          { log: logger },
+        );
+      } catch (erro) {
+        if (erro instanceof LlmBudgetExceededError)
+          throw new ExecutionConfigurationError("ia_sem_orcamento", "O orçamento de IA da organização acabou neste mês.");
+        if (erro instanceof LlmNotConfiguredError)
+          throw new ExecutionConfigurationError("ia_nao_configurada", "A IA não está configurada nesta instalação.");
+        throw erro;
+      }
+      const result = await journal.completeExtraction(enrollment, handle, fields);
+      if (!result.reused) summary.advanced++;
+    } catch (error) {
+      await recordJournalFailure(db, journal, enrollment, handle, error, summary, "extract");
+    }
     return;
   }
 

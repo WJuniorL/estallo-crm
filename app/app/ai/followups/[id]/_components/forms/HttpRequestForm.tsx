@@ -67,7 +67,7 @@ function ConexoesHttp() {
         <Input
           id="http-con-url"
           value={baseUrl}
-          placeholder="https://api.exemplo.com"
+          placeholder="https://api.example.com"
           onChange={(e) => setBaseUrl(e.target.value)}
         />
         <Label htmlFor="http-con-auth">{t("Autenticação")}</Label>

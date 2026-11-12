@@ -420,8 +420,59 @@ def storage_backup(destination):
     save(directory / 'manifest.json', json.dumps(dict(buckets=buckets, objects=objects)))
 
 
+BACKUP_FORMAT = '%Y%m%dT%H%M%S%fZ'
+BACKUPS_KEPT = 5  # o cron diário + deploys: ~5 dias de margem para a cópia externa puxar
+BACKUP_REUSE_HOURS = 24
+
+
+def complete_backups():
+    """Backups completos (com database.dump), do mais novo para o mais velho."""
+    found = []
+    for directory in (ROOT / 'backups').glob('*'):
+        try:
+            taken = datetime.datetime.strptime(directory.name, BACKUP_FORMAT).replace(
+                tzinfo=datetime.timezone.utc)
+        except ValueError:
+            continue
+        if (directory / 'database.dump').is_file():
+            found.append((taken, directory))
+    return sorted(found, reverse=True)
+
+
+def recent_backup():
+    """Backup completo das últimas BACKUP_REUSE_HOURS, ou None.
+
+    O deploy só troca imagens (migrations são aplicadas à mão), e voltar é trocar
+    de volta: o backup de antes do deploy custava ~35 min baixando o Storage
+    inteiro para proteger o que o deploy não toca. O cron diário garante um recente.
+    """
+    backups = complete_backups()
+    limit = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=BACKUP_REUSE_HOURS)
+    return backups[0][1] if backups and backups[0][0] >= limit else None
+
+
+def prune_backups():
+    """Mantém os BACKUPS_KEPT completos mais novos e apaga o que for mais velho que eles.
+
+    Sem isto a pasta crescia ~280 MB por backup e encheu o disco da VPS (11/11/2026).
+    Diretório parcial mais novo que o último mantido fica: pode ser um backup em curso.
+    """
+    kept = complete_backups()[:BACKUPS_KEPT]
+    if len(kept) < BACKUPS_KEPT:
+        return
+    oldest_kept = kept[-1][0]
+    for directory in (ROOT / 'backups').glob('*'):
+        try:
+            taken = datetime.datetime.strptime(directory.name, BACKUP_FORMAT).replace(
+                tzinfo=datetime.timezone.utc)
+        except ValueError:
+            continue
+        if taken < oldest_kept:
+            shutil.rmtree(directory)
+
+
 def backup():
-    destination = ROOT / 'backups' / datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
+    destination = ROOT / 'backups' / datetime.datetime.now(datetime.timezone.utc).strftime(BACKUP_FORMAT)
     destination.mkdir(parents=True, mode=0o700)
     partial = destination / 'database.partial'
     with partial.open('wb') as stream:
@@ -454,6 +505,7 @@ def backup():
         print('Backup criado e copiado para destino externo.')
     else:
         print('Backup local criado; destino SSH não configurado. Cópia pelo computador é conferida no log externo.')
+    prune_backups()
     return destination
 
 
@@ -464,7 +516,11 @@ def deploy(sha, backup_ready=False):
         raise RuntimeError('Menos de 1 GB disponível antes do deploy; piloto recusado')
     pull(sha)
     if previous.get('sha') and not backup_ready:
-        backup()
+        reused = recent_backup()
+        if reused:
+            print(f'Backup recente reaproveitado ({reused.name}); deploy não altera o banco.')
+        else:
+            backup()
     try:
         stack(sha)
         wait_healthy(sha)

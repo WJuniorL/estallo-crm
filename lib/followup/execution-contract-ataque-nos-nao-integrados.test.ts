@@ -96,7 +96,7 @@ const NOS: Record<string, FlowGraph["nodes"][number]> = {
     type: "add_note",
     label: "an",
     position: pos,
-    config: { destino: "negocio", texto: "x" },
+    config: { destino: "lead_timeline", texto: "x" },
   },
   assign_lead_owner: {
     id: "n",

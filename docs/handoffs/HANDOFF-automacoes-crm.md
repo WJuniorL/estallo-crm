@@ -1023,3 +1023,11 @@ Pedido do dono: atualizar os testes vermelhos do `verify` que vinham da frente d
 **Evidência:** vitest `lib/followup` + editor + `lib/automation` = 111 arquivos / 1389 testes; `tsc` limpo. Invariantes `automacoes-atribuir-responsavel` e `automacoes-nota-interna` só no CI (Docker local desligado).
 
 **Falta na Fase 5:** buscar/criar/atualizar contato; buscar/criar/atualizar lead, mover entre funis, produtos; próxima ação; avisar responsável pela Central; condição ampliada/caminhos por valor; aguardar data/horário; aguardar resposta com prazo; extrair dados por IA; requisição HTTP; paleta com categorias recolhíveis e inserção pelo ponto de conexão.
+
+## 2026-11-11 (6) — CI do PR #3 e Fase 5: Aguardar até
+
+**CI do PR #3 (1ª rodada: 20 verdes, 7 vermelhos — os três defeitos eram meus):** `t(r)` sobre variável no formulário da nota (cerca de i18n) → literais por ramo; invariante da tarefa com título do mapa escolhia «qualquer membro» (às vezes viewer, recusado pelo gatilho 0403) → `GOV_AGENT_A`; e2e `followup-linguagem` achava o valor de wire `conversa` na palavra «conversa» → destino da nota passou a `lead_timeline` / `conversation_notes` (rótulos de tela iguais).
+
+**Aguardar até** (`wait` modo `until`, `lib/followup/espera-ate.ts`): hora (e data opcional) no fuso da organização (`organizations.timezone`, lido por `loadOrgTimezone` nos dois adaptadores); relógio de parede de `lib/tempo/inicio-do-dia.ts` (correto sob horário de verão). Só hora → próxima ocorrência. Data passada → segue para o próximo bloco. Data/hora inexistente → falha explicada. Em laço: só a versão sem data conta como espera que quebra ciclo. Invariante `automacoes-aguardar-ate`.
+
+**NÃO MEDIDO:** `i18n-espanhol-cobre-a-tela` estoura 15 s nesta máquina (passa no CI); cobertura das chaves conferida por script — nenhuma faltando.

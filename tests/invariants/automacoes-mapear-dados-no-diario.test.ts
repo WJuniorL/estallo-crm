@@ -6,7 +6,7 @@ import { avancarEnrollmentAtivo } from "@/lib/followup/engine";
 import { createPgAdminClient } from "@/lib/followup/turn-bridge";
 
 import { criarOrigemDeFollowup } from "./followup-service-origin";
-import { GOV_ORG, seedGov } from "./gov-helpers";
+import { GOV_AGENT_A, GOV_ORG, seedGov } from "./gov-helpers";
 
 /**
  * Mapear dados (Fase 4) no motor novo, com Postgres real: o bloco lê a saída de um bloco ANTERIOR desta execução
@@ -139,12 +139,8 @@ describe("a saída do Mapear dados alimenta o título da Criar tarefa (aceite da
       pipeline = randomUUID(),
       stage = randomUUID(),
       slug = randomUUID().slice(0, 8);
-    const dono = (
-      await pool.query(
-        "select user_id from user_organizations where organization_id=$1 and accepted_at is not null limit 1",
-        [GOV_ORG],
-      )
-    ).rows[0] as { user_id: string };
+    // Atendente (não viewer): o gatilho 0403 recusa viewer como responsável do negócio.
+    const dono = { user_id: GOV_AGENT_A };
     await pool.query("insert into contacts(id,organization_id,name,display_name) values($1,$2,'Ana','Ana')", [contact, GOV_ORG]);
     await pool.query("insert into crm_pipelines(id,organization_id,name,slug) values($1,$2,'Vendas',$3)", [pipeline, GOV_ORG, `v-${slug}`]);
     await pool.query("insert into crm_stages(id,organization_id,pipeline_id,name,slug,position) values($1,$2,$3,'Novo',$4,1000)", [stage, GOV_ORG, pipeline, `n-${slug}`]);

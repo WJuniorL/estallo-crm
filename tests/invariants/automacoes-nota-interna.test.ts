@@ -31,7 +31,7 @@ const deps = {
 
 const no = (id: string, type: string, config: object) => ({ id, type, label: id, position: { x: 0, y: 0 }, config });
 
-async function rodar(config: { destino: "negocio" | "conversa"; texto: string }) {
+async function rodar(config: { destino: "lead_timeline" | "conversation_notes"; texto: string }) {
   const contact = randomUUID(),
     version = randomUUID(),
     flow = randomUUID(),
@@ -102,20 +102,20 @@ async function rodar(config: { destino: "negocio" | "conversa"; texto: string })
 
 describe("Nota interna no diário (motor novo, Postgres real)", () => {
   it("destino negócio: uma nota na linha do tempo, com a variável resolvida, e nada na conversa", async () => {
-    const { noNegocio, naConversa, passo } = await rodar({ destino: "negocio", texto: "Atenção: {{nodes.mapa.fields.motivo}}" });
+    const { noNegocio, naConversa, passo } = await rodar({ destino: "lead_timeline", texto: "Atenção: {{nodes.mapa.fields.motivo}}" });
     expect(passo.status).toBe("succeeded");
     expect(noNegocio.map((n) => n.reason)).toEqual(["Atenção: orçamento parado"]);
     expect(naConversa).toEqual([]);
   });
 
   it("destino conversa: uma nota interna na conversa, e nada no negócio", async () => {
-    const { noNegocio, naConversa } = await rodar({ destino: "conversa", texto: "Retomar contato" });
+    const { noNegocio, naConversa } = await rodar({ destino: "conversation_notes", texto: "Retomar contato" });
     expect(naConversa).toEqual([{ body: "Retomar contato", created_by_name: "Automação" }]);
     expect(noNegocio).toEqual([]);
   });
 
   it("variável sem valor: falha com a explicação e não grava nota cortada", async () => {
-    const { noNegocio, passo } = await rodar({ destino: "negocio", texto: "Motivo: {{nodes.mapa.fields.nao_existe}}" });
+    const { noNegocio, passo } = await rodar({ destino: "lead_timeline", texto: "Motivo: {{nodes.mapa.fields.nao_existe}}" });
     expect(passo.status).toBe("failed");
     expect(passo.error_snapshot?.message).toContain("nao_existe");
     expect(noNegocio).toEqual([]);

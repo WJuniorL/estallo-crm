@@ -545,6 +545,7 @@ export const ALVOS_DA_CLASSIFICACAO: Record<AlvoDaClassificacao, string> = {
 export const MODOS_DE_ESPERA: Record<ModoDeEspera, string> = {
   fixed: "Tempo fixo",
   smart: "A IA escolhe a hora",
+  until: "Até uma data ou horário",
 };
 
 export const MODOS_DA_ACAO: Record<ModoDaAcao, string> = {
@@ -573,9 +574,9 @@ export const DESTINOS_DA_TAG: Record<"card" | "contato", string> = {
 };
 
 /** Onde o bloco Nota interna grava — rótulos do formulário. */
-export const DESTINOS_DA_NOTA: Record<"negocio" | "conversa", string> = {
-  negocio: "No negócio (linha do tempo)",
-  conversa: "Na conversa (notas internas)",
+export const DESTINOS_DA_NOTA: Record<"lead_timeline" | "conversation_notes", string> = {
+  lead_timeline: "No negócio (linha do tempo)",
+  conversation_notes: "Na conversa (notas internas)",
 };
 
 /** Tipos de campo do bloco Mapear dados — a conversão explícita que cada campo faz. */

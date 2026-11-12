@@ -127,7 +127,7 @@ const tagReadsSchema = z.object({
 });
 
 const noteReadsSchema = z.object({
-  destino: z.enum(["negocio", "conversa"]),
+  destino: z.enum(["lead_timeline", "conversation_notes"]),
   /** O texto com as variáveis já resolvidas; `null` quando faltou valor (o complete falha com `erro`). */
   texto: z.string().nullable(),
   erro: z.string().nullable(),
@@ -1165,7 +1165,7 @@ export class PgExecutionJournal implements ExecutionJournal {
       if (reads.erro) throw new ExecutionTaskConfigurationError("variavel_sem_valor", reads.erro);
       if (!reads.texto) throw new ExecutionTaskConfigurationError("nota_sem_texto", "A nota ficou sem texto.");
       const noteId = randomUUID();
-      if (reads.destino === "negocio") {
+      if (reads.destino === "lead_timeline") {
         if (!row.lead_id)
           throw new ExecutionTaskConfigurationError(
             "execution_lead_required",

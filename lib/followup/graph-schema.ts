@@ -138,6 +138,13 @@ export const waitConfigSchema = z
        */
       immune_to_reply: z.boolean().optional(),
     }),
+    // Fase 5 — «aguardar até»: a hora (e, opcional, a data) no fuso da organização (`lib/followup/espera-ate.ts`).
+    // Data/hora inexistente falha na execução; data já passada segue para o próximo bloco.
+    z.strictObject({
+      mode: z.literal('until'),
+      hora: z.string().regex(/^\d{2}:\d{2}$/, 'Use HH:MM.'),
+      data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use AAAA-MM-DD.').optional(),
+    }),
     z.strictObject({
       mode: z.literal('smart'),
       min_ms: z.number().int().min(300_000),
@@ -418,12 +425,12 @@ export const assignLeadOwnerConfigSchema = z.strictObject({
 });
 
 /**
- * Nó `add_note` (Fase 5) — nota interna no destino ESCOLHIDO: `negocio` (linha do tempo do negócio) ou `conversa`
+ * Nó `add_note` (Fase 5) — nota interna no destino ESCOLHIDO: `lead_timeline` (linha do tempo do negócio) ou `conversation_notes`
  * (notas internas da conversa, que o cliente nunca vê). Texto aceita `{{nodes.<bloco>.<campo>}}`; vazio é rascunho e
  * o publish recusa (`nota_sem_texto`).
  */
 export const addNoteConfigSchema = z.strictObject({
-  destino: z.enum(['negocio', 'conversa']),
+  destino: z.enum(['lead_timeline', 'conversation_notes']),
   texto: z.string().max(2000, 'Nota muito longa: máximo de 2000 caracteres.'),
 });
 

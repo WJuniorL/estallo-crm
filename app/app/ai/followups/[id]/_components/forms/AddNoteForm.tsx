@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useT } from "@/hooks/i18n/useT";
-import { DESTINOS_DA_NOTA } from "@/lib/followup/vocabulario";
 
 import { InserirVariavel, inserirNoCursor, PreviaDoTexto } from "../VariaveisDoFluxo";
 import type { ConfigOf } from "./shared";
@@ -26,17 +25,15 @@ export function AddNoteForm({
       <Label htmlFor="add-note-destino">{t("Onde registrar")}</Label>
       <Select
         value={config.destino}
-        onValueChange={(v) => onChange({ ...config, destino: v === "conversa" ? "conversa" : "negocio" })}
+        onValueChange={(v) => onChange({ ...config, destino: v === "conversation_notes" ? "conversation_notes" : "lead_timeline" })}
       >
         <SelectTrigger id="add-note-destino">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {(Object.entries(DESTINOS_DA_NOTA) as Array<[keyof typeof DESTINOS_DA_NOTA, string]>).map(([v, r]) => (
-            <SelectItem key={v} value={v}>
-              {t(r)}
-            </SelectItem>
-          ))}
+          {/* Literais por ramo (cerca de i18n): os rótulos são os de `DESTINOS_DA_NOTA` (vocabulario.ts). */}
+          <SelectItem value="lead_timeline">{t("No negócio (linha do tempo)")}</SelectItem>
+          <SelectItem value="conversation_notes">{t("Na conversa (notas internas)")}</SelectItem>
         </SelectContent>
       </Select>
       <div className="flex items-center justify-between gap-2">

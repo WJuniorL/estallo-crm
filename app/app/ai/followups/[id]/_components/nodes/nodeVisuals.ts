@@ -195,7 +195,7 @@ export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
     chipClassName: "bg-accent-soft text-accent",
     borderClassName: "border-l-accent-500",
     defaultLabel: "Nota interna",
-    defaultConfig: () => ({ destino: "negocio", texto: "" }),
+    defaultConfig: () => ({ destino: "lead_timeline", texto: "" }),
   },
   assign_lead_owner: {
     type: "assign_lead_owner",
@@ -268,6 +268,7 @@ export function describeNodeConfig(
       return t("Início do fluxo");
     case "wait": {
       const c = config as ConfigOf<"wait">;
+      if (c.mode === "until") return c.data ? `${t("até")} ${c.data} ${c.hora}` : `${t("até as")} ${c.hora}`;
       return c.mode === "fixed"
         ? tempoCurto(c.duration_ms)
         : `${Math.round(c.min_ms / 60_000)}–${minutos(c.max_ms)} ${t("(adaptativo)")}`;
@@ -343,7 +344,7 @@ export function describeNodeConfig(
     case "add_note": {
       const c = config as ConfigOf<"add_note">;
       if (!c.texto.trim()) return t("sem texto");
-      return c.destino === "conversa" ? t("nota na conversa") : t("nota no negócio");
+      return c.destino === "conversation_notes" ? t("nota na conversa") : t("nota no negócio");
     }
     case "assign_lead_owner": {
       const c = config as ConfigOf<"assign_lead_owner">;

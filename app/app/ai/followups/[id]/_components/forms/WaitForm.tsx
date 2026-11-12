@@ -33,6 +33,8 @@ const ROTULO_DA_UNIDADE: Record<UnidadeDeTempo, string> = {
   dias: "Dias",
 };
 
+type Modo = ConfigOf<"wait">["mode"];
+
 export function WaitForm({
   config,
   onChange,
@@ -41,7 +43,9 @@ export function WaitForm({
   onChange: (c: ConfigOf<"wait">) => void;
 }) {
   const t = useT();
-  const [mode, setMode] = useState<"fixed" | "smart">(config.mode);
+  const [mode, setMode] = useState<Modo>(config.mode);
+  const [hora, setHora] = useState(config.mode === "until" ? config.hora : "09:00");
+  const [data, setData] = useState(config.mode === "until" ? (config.data ?? "") : "");
   const inicial = msParaValorEUnidade(config.mode === "fixed" ? config.duration_ms : 600_000);
   const [duracao, setDuracao] = useState(inicial.valor);
   const [unidade, setUnidade] = useState<UnidadeDeTempo>(inicial.unidade);
@@ -51,7 +55,9 @@ export function WaitForm({
   const [error, setError] = useState<string | null>(null);
 
   const commit = (next: {
-    mode: "fixed" | "smart";
+    mode: Modo;
+    hora?: string;
+    data?: string;
     duracao: number;
     unidade: UnidadeDeTempo;
     minMin: number;
@@ -59,7 +65,13 @@ export function WaitForm({
     guidance: string;
   }) => {
     const candidate =
-      next.mode === "fixed"
+      next.mode === "until"
+        ? {
+            mode: "until" as const,
+            hora: next.hora ?? hora,
+            ...((next.data ?? data) ? { data: next.data ?? data } : {}),
+          }
+        : next.mode === "fixed"
         ? { mode: "fixed" as const, duration_ms: valorEUnidadeParaMs(next.duracao, next.unidade) }
         : {
             mode: "smart" as const,
@@ -83,7 +95,7 @@ export function WaitForm({
         <Select
           value={mode}
           onValueChange={(v) => {
-            const next = v as "fixed" | "smart";
+            const next = v as Modo;
             setMode(next);
             commit({ mode: next, duracao, unidade, minMin, maxMin, guidance });
           }}
@@ -138,6 +150,36 @@ export function WaitForm({
               </SelectContent>
             </Select>
           </div>
+        </div>
+      ) : mode === "until" ? (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label htmlFor="wait-hora">{t("Horário")}</Label>
+            <Input
+              id="wait-hora"
+              type="time"
+              value={hora}
+              onChange={(e) => {
+                setHora(e.target.value);
+                commit({ mode, hora: e.target.value, duracao, unidade, minMin, maxMin, guidance });
+              }}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="wait-data">{t("Data (opcional)")}</Label>
+            <Input
+              id="wait-data"
+              type="date"
+              value={data}
+              onChange={(e) => {
+                setData(e.target.value);
+                commit({ mode, data: e.target.value, duracao, unidade, minMin, maxMin, guidance });
+              }}
+            />
+          </div>
+          <p className="col-span-2 text-xs text-text-muted">
+            {t("No fuso da organização. Sem data, espera até a próxima vez que o relógio marcar esse horário. Com data já passada, segue direto para o próximo bloco.")}
+          </p>
         </div>
       ) : (
         <>

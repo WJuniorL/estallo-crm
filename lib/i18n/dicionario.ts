@@ -2577,6 +2577,13 @@ export const DICIONARIO: Traducoes = {
   "Todas as versões": { es: "Todas las versiones" },
   "Mapear dados": { es: "Mapear datos" },
   "Atribuir responsável": { es: "Asignar responsable" },
+  "Até uma data ou horário": { es: "Hasta una fecha u hora" },
+  "Data (opcional)": { es: "Fecha (opcional)" },
+  "No fuso da organização. Sem data, espera até a próxima vez que o relógio marcar esse horário. Com data já passada, segue direto para o próximo bloco.":
+    {
+      es: "En la zona horaria de la organización. Sin fecha, espera hasta la próxima vez que el reloj marque esa hora. Con una fecha ya pasada, sigue directo al próximo bloque.",
+    },
+  "até as": { es: "hasta las" },
   "Registra uma nota interna no negócio ou na conversa.": { es: "Registra una nota interna en el negocio o en la conversación." },
   "No negócio (linha do tempo)": { es: "En el negocio (línea de tiempo)" },
   "Na conversa (notas internas)": { es: "En la conversación (notas internas)" },

@@ -19,7 +19,7 @@ export const NODE_OUTPUT_CONTRACTS = {
     conversation_id: id.nullable(),
   }),
   wait: z.strictObject({
-    mode: z.enum(["fixed", "smart"]),
+    mode: z.enum(["fixed", "smart", "until"]),
     scheduled_for: utc.nullable(),
     resumed_at: utc,
   }),
@@ -89,7 +89,7 @@ export const NODE_OUTPUT_CONTRACTS = {
     tags: z.array(z.string().min(1)),
   }),
   add_note: z.strictObject({
-    destino: z.enum(["negocio", "conversa"]),
+    destino: z.enum(["lead_timeline", "conversation_notes"]),
     note_id: id,
     texto: z.string().min(1),
   }),

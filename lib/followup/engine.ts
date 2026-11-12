@@ -78,6 +78,7 @@ import type { EventRow } from "@/lib/event-log/dispatcher";
 import { quandoDoRetornoVivo, reavaliarDepoisDoRetorno } from "./retorno-segura-o-fluxo";
 import { triggerConfigSchema } from "./api-schemas";
 import { executionContractProblem } from "./execution-contract";
+import { fusoDaOrganizacao } from "@/lib/tempo/fuso-da-organizacao";
 import {
   executionLeadTarget,
   ExecutionLeadUnavailableError,
@@ -205,6 +206,8 @@ export interface AdminClient {
    * `{{nodes.<bloco>.<campo>}}` lê. Só existe para inscrição de contrato 1; sem o diário, nenhuma saída.
    */
   loadStepOutputs?(orgId: string, enrollmentId: string): Promise<Record<string, unknown>>;
+  /** O fuso da organização (`organizations.timezone`, com o padrão do produto) — «aguardar até» uma hora. */
+  loadOrgTimezone?(orgId: string): Promise<string>;
   /** Latest inbound `messages.body` for the contact (optionally scoped to the enrollment conversation). */
   loadLastInboundBody(
     orgId: string,
@@ -1397,6 +1400,9 @@ async function processEnrollment(
           node.type === "match_reply" ? replyBody : (frozenInput.repeat?.reply ?? undefined),
         lastInboundMessageId: replyMessageId,
         saidasAnteriores: frozenInput.saidas,
+        ...(node.type === "wait" && node.config.mode === "until" && db.loadOrgTimezone
+          ? { fuso: await db.loadOrgTimezone(enrollment.organization_id) }
+          : {}),
         onDecision: (value) => {
           trace = value;
         },
@@ -1766,6 +1772,9 @@ export function createSupabaseAdminClient(admin: SupabaseClient): AdminClient {
       if (contact) contexto.contact = contact;
       if (lead) contexto.lead = lead;
       return contexto;
+    },
+    async loadOrgTimezone(orgId) {
+      return fusoDaOrganizacao(admin, orgId);
     },
     async loadStepOutputs(orgId, enrollmentId) {
       const { data: passos, error } = await admin

@@ -168,7 +168,11 @@ export function resumoDoNo(node: FlowNode): NoDoDossie {
       return {
         ...base,
         resumo:
-          node.config.mode === "fixed"
+          node.config.mode === "until"
+            ? node.config.data
+              ? `espera até ${node.config.data} às ${node.config.hora} (fuso da organização)`
+              : `espera até as ${node.config.hora} (fuso da organização)`
+            : node.config.mode === "fixed"
             ? `espera ${duracaoLegivel(node.config.duration_ms)}`
             : `espera adaptativa, entre ${duracaoLegivel(node.config.min_ms)} e ${duracaoLegivel(node.config.max_ms)}`,
       };
@@ -225,7 +229,7 @@ export function resumoDoNo(node: FlowNode): NoDoDossie {
       return {
         ...base,
         resumo:
-          node.config.destino === "conversa"
+          node.config.destino === "conversation_notes"
             ? "registra uma nota interna na conversa — o cliente não vê"
             : "registra uma nota na linha do tempo do negócio — o cliente não vê",
       };

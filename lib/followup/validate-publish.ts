@@ -293,6 +293,8 @@ const MIN_CYCLE_WAIT_MS = 300_000; // 5min
 const MAX_PATH_STEPS = 30;
 
 function waitMs(config: Extract<FlowNode, { type: 'wait' }>['config']): number {
+  // «Aguardar até» a hora espera no máximo um dia; com data, o prazo é a data (contado como um dia aqui).
+  if (config.mode === 'until') return 86_400_000;
   return config.mode === 'fixed' ? config.duration_ms : config.max_ms;
 }
 
@@ -300,6 +302,9 @@ function waitMs(config: Extract<FlowNode, { type: 'wait' }>['config']): number {
 function isSufficientWaitNode(node: FlowNode): boolean {
   if (node.type === 'match_reply') return node.config.grace_timeout_ms >= MIN_CYCLE_WAIT_MS;
   if (node.type !== 'wait') return false;
+  // «Até» só a hora: a próxima ocorrência fica no dia seguinte — trava o ciclo. Com data, data passada segue na hora:
+  // num laço isso giraria sem parar, então NÃO conta como espera que quebra ciclo.
+  if (node.config.mode === 'until') return node.config.data === undefined;
   return node.config.mode === 'fixed'
     ? node.config.duration_ms >= MIN_CYCLE_WAIT_MS
     : node.config.min_ms >= MIN_CYCLE_WAIT_MS;

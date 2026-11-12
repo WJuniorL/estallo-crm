@@ -16,6 +16,7 @@ import { parseReplyCount } from "./parse-count";
 import { clampEspera, esperaPlanejadaDe, type EsperaAdaptativa } from "./timing-plan";
 import { fraseDeConfirmacao } from "./vocabulario";
 import { mapearDados } from "./mapear-dados";
+import { alvoDaEsperaAte } from "./espera-ate";
 
 export type EnrollmentStatus =
   | "active"
@@ -704,6 +705,8 @@ export function processNode(input: {
   repeatTotal?: number | null;
   /** Próximo nó pela aresta `always` — a ação olha o `match_reply` seguinte para pular o envio. */
   proximo?: FlowNode | null;
+  /** `wait` no modo `until`: o fuso da organização (a hora configurada é a do relógio dela). */
+  fuso?: string;
   /** `map_data`: as saídas dos blocos anteriores desta execução, congeladas na entrada da tentativa. */
   saidasAnteriores?: Record<string, unknown>;
 }): NodeResult {
@@ -794,7 +797,19 @@ export function processNode(input: {
         onDecision?.({ edge_id: edge.id, branch_id: branchOfSelectedEdge(edge) });
         return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
       }
-      if (!waitElapsed) {
+      if (!waitElapsed && node.config.mode === "until") {
+        // «Aguardar até»: alvo no fuso da organização. Data/hora inexistente falha explicada; data já passada segue.
+        const alvo = alvoDaEsperaAte(node.config, input.fuso ?? "America/Sao_Paulo", clock());
+        if (!alvo.ok) return { kind: "fail", error: alvo.motivo };
+        if (alvo.ja_passou) {
+          const edge = selectEdge(edges, node.id, { type: "always" });
+          if (!edge) return { kind: "fail", error: `wait node "${node.id}" has no outbound edge` };
+          onDecision?.({ edge_id: edge.id, branch_id: branchOfSelectedEdge(edge) });
+          return { kind: "advance", next_node_id: edge.target, next_eval_at: clock() };
+        }
+        return { kind: "wait", next_eval_at: alvo.alvo };
+      }
+      if (!waitElapsed && node.config.mode !== "until") {
         // Adaptativo: o instante vem do plano decidido no acionamento. Sem plano
         // legível para ESTE nó (enrollment anterior à feature, fluxo v1, jsonb
         // corrompido), cai no máximo — que era o comportamento único até aqui.

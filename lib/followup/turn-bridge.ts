@@ -1,4 +1,5 @@
 import type { JobClaim } from "@/lib/agent-engine/queue/claim";
+import { fusoUtilizavel } from "@/lib/tempo/fusos";
 import { pausaDepoisDoBloco } from "./passo-a-passo";
 import { assertAgendaEffectPg } from "@/lib/agenda/efeito";
 import {
@@ -555,6 +556,10 @@ export function createPgAdminClient(pool: pg.Pool): TurnBridgeAdminClient {
       contextoDoContato(pool, orgId, contactId, target),
     // A mesma régua do adaptador Supabase (`engine.ts`): passos concluídos, última tentativa de cada um, e numa volta
     // a última visita do bloco vale.
+    async loadOrgTimezone(orgId) {
+      const { rows } = await pool.query<{ timezone: string | null }>("select timezone from organizations where id=$1", [orgId]);
+      return fusoUtilizavel(rows[0]?.timezone);
+    },
     async loadStepOutputs(orgId, enrollmentId) {
       const { rows } = await pool.query<{ node_id: string; output_snapshot: unknown }>(
         `select s.node_id, a.output_snapshot

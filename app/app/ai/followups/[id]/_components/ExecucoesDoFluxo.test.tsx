@@ -222,6 +222,20 @@ describe("ExecucoesDoFluxo — o histórico dentro do editor", () => {
     expect(screen.queryByText(/segunda-volta/)).toBeNull();
   });
 
+  it("recuperação mostra os passos herdados da original e diz que é recuperação", () => {
+    deps.dossie.mockReturnValue({
+      data: DOSSIE({
+        status: "active",
+        origem: { id: "e0", tipo: "retry" },
+        passos_herdados: [{ ...PASSO, step_id: "h1", rotulo: "Mapear dados", status: "succeeded", erro: null }],
+      }),
+      isLoading: false,
+    });
+    montar({ execucaoId: "e1" });
+    expect(screen.getByTestId("passos-herdados")).toHaveTextContent("Mapear dados");
+    expect(screen.getByTestId("execucao-origem")).toHaveTextContent("Recuperação");
+  });
+
   it("diário cortado no teto de leitura avisa", () => {
     deps.dossie.mockReturnValue({ data: DOSSIE({ passos_truncados: true }), isLoading: false });
     montar({ execucaoId: "e1" });

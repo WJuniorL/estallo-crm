@@ -54,6 +54,7 @@ export interface FollowupEnrollmentDossie {
   eventos: EventoDeEnrollment[];
   eventos_truncados: boolean;
   passos_truncados?: boolean;
+  passos_herdados?: FollowupEnrollmentDossie["passos"];
   plano_de_tempo: TimingPlan | null;
   autores: Record<string, string>;
 }

@@ -380,7 +380,9 @@ export function ExecucoesDoFluxo({
                   data-testid="execucao-origem"
                   onClick={() => onSelecionarExecucao(exec.origem!.id)}
                 >
-                  {t("Reexecução — ver a execução original")}
+                  {exec.origem.tipo === "retry"
+                    ? t("Recuperação — ver a execução original")
+                    : t("Reexecução — ver a execução original")}
                 </button>
               )}
               <span className="text-xs text-text-muted">{t("Somente leitura — esta é a versão que rodou.")}</span>
@@ -509,6 +511,16 @@ export function ExecucoesDoFluxo({
               <p className="border-b border-border bg-error-bg px-4 py-2 text-xs text-error-fg" data-testid="execucao-erro">
                 {exec.last_error ?? exec.cancel_reason}
               </p>
+            )}
+            {(exec.passos_herdados ?? []).length > 0 && (
+              <div className="border-b border-border bg-surface-muted px-4 py-2 text-xs" data-testid="passos-herdados">
+                <span className="font-medium">{t("Herdado da execução original:")}</span>{" "}
+                {(exec.passos_herdados ?? []).map((p, i) => (
+                  <Badge key={p.step_id} variant="neutral" className={cn(i > 0 && "ml-1")}>
+                    {p.rotulo}
+                  </Badge>
+                ))}
+              </div>
             )}
             {exec.passos_truncados && (
               <p className="border-b border-border bg-surface-muted px-4 py-2 text-xs text-text-muted" data-testid="execucao-diario-truncado">

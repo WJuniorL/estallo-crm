@@ -54,6 +54,7 @@ import { SQL_SAIDAS_DA_EXECUCAO } from "./sql-saidas-da-execucao";
 import { centavosDoValor, converterValorDoCampo } from "./valor-do-campo";
 import { corpoDaRequisicao, urlDaRequisicao, type PedidoHttp } from "./requisicao-http";
 import { canonicalPhoneBR, phoneLookupVariants } from "@/lib/channels/phone-variants";
+import { nomeDoContato } from "@/lib/contacts/rotulo-do-contato";
 import { validaCamposExigidos } from "@/lib/leads/campos-exigidos";
 import {
   avisoDeRecuperacaoEsgotada,
@@ -1898,7 +1899,7 @@ export class PgExecutionJournal implements ExecutionJournal {
             "campos_obrigatorios",
             `O funil exige ${faltando.map((f) => f.rotulo).join(", ")} para criar o negócio nesta etapa.`,
           );
-        const titulo = (reads.titulo || contato.display_name || contato.name || "Negócio").slice(0, 200);
+        const titulo = (reads.titulo || nomeDoContato(contato) || "Negócio").slice(0, 200);
         leadId = randomUUID();
         await client.query(
           `insert into crm_leads (id,organization_id,pipeline_id,stage_id,title,contact_id,currency,status,source,source_metadata,position_in_stage)

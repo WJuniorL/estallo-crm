@@ -17,6 +17,7 @@ import {
   origemDaConexao,
   urlDaRequisicao,
   type PedidoHttp,
+  chaveExterna,
 } from "./requisicao-http";
 
 const saidas = { m: { pedido: "A/1 ?x", n: 7, obj: { a: 1 } } };
@@ -88,7 +89,11 @@ describe("executar a requisição", () => {
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe("https://a.com/p");
     expect(init.redirect).toBe("manual");
-    expect(init.headers).toMatchObject({ Authorization: "Bearer segredo-123", "Idempotency-Key": "efeito-1" });
+    expect(init.headers).toMatchObject({ Authorization: "Bearer segredo-123", "Idempotency-Key": chaveExterna("efeito-1") });
+    // A chave externa é UUID, estável para a mesma chave do efeito e diferente para outra.
+    expect(chaveExterna("efeito-1")).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-8[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+    expect(chaveExterna("efeito-1")).toBe(chaveExterna("efeito-1"));
+    expect(chaveExterna("efeito-2")).not.toBe(chaveExterna("efeito-1"));
     expect(init.body).toBe('{"a":1}');
     expect(JSON.stringify(r)).not.toContain("segredo-123");
   });

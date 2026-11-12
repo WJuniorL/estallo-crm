@@ -11,6 +11,8 @@
  *  4. Variáveis no corpo são substituídas DENTRO dos valores do JSON, nunca no texto cru: um valor com aspas não
  *     consegue fechar a string e injetar campo. Um valor que é só a marca (`"{{nodes.x.y}}"`) mantém o tipo.
  */
+import { createHash } from "node:crypto";
+
 import { z } from "zod";
 
 import type { ExecutionError } from "./execution-contract";
@@ -22,6 +24,18 @@ import { bufToBytea, byteaToBuffer, decryptKey, encryptKey } from "@/lib/crypto/
 import { extrairReferencias, ler, MARCA_DE_BLOCO, resolverReferencias, type ReferenciaDeBloco } from "./variaveis-de-blocos";
 
 import type { METODOS_HTTP } from "./graph-schema";
+
+/**
+ * A chave do efeito no diário é um JSON com organização e execução: não sai assim para um terceiro. Sai a impressão
+ * dela no formato de UUID (SHA-256 truncado, bits de versão 8 da RFC 9562): estável entre tentativas, opaca, 36 chars.
+ */
+export function chaveExterna(chaveDoEfeito: string): string {
+  const b = createHash("sha256").update(chaveDoEfeito, "utf8").digest().subarray(0, 16);
+  b[6] = (b[6]! & 0x0f) | 0x80;
+  b[8] = (b[8]! & 0x3f) | 0x80;
+  const h = b.toString("hex");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
 export type MetodoHttp = (typeof METODOS_HTTP)[number];
 
 export const TIPOS_DE_AUTENTICACAO = ["none", "bearer", "header", "basic"] as const;
@@ -227,7 +241,7 @@ export async function executarRequisicaoHttp(
       method: pedido.metodo,
       headers: {
         Accept: "application/json",
-        "Idempotency-Key": pedido.chave,
+        "Idempotency-Key": chaveExterna(pedido.chave),
         ...(comCorpo ? { "Content-Type": "application/json" } : {}),
         ...autenticacao,
       },

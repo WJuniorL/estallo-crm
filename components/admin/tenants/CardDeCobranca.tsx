@@ -42,6 +42,11 @@ export function fimDoDia(dia: string): string {
 export const FRASE_DO_EXCEDENTE = {
   assentos: "Revogue o acesso de {n} pessoa(s) em Equipe.",
   canais: "Exclua {n} número(s) em Conexões.",
+  pipelines: "Arquive {n} pipeline(s).",
+  etapas: "Arquive {n} etapa(s) do pipeline que mais tem.",
+  leads: "Exclua {n} lead(s).",
+  automacoes: "Exclua {n} automação(ões).",
+  webhooks: "Exclua {n} webhook(s).",
 } as const;
 type RecursoExcedente = keyof typeof FRASE_DO_EXCEDENTE;
 

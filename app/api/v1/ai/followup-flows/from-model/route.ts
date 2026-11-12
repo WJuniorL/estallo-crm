@@ -30,6 +30,7 @@ import type { NextRequest } from "next/server";
 
 import { resolveAuthDual, tetoDeEscritaDoToken } from "@/lib/api/auth-dual";
 import { ok, fail } from "@/lib/api/wrappers";
+import { falhaDoLimite } from "@/lib/cobranca/limites";
 import { audit } from "@/lib/audit";
 import { instalarModeloSchema, triggerConfigSchema } from "@/lib/followup/api-schemas";
 import { flowGraphSchema } from "@/lib/followup/graph-schema";
@@ -154,6 +155,8 @@ export async function POST(req: NextRequest): Promise<Response> {
         { requestId },
       );
     }
+    const limite = falhaDoLimite(insErr, authz.idioma ?? "pt-BR", requestId);
+    if (limite) return limite;
     return fail("internal_error", insErr?.message ?? "followup_flow_insert_failed", 500, {
       requestId,
     });

@@ -24,6 +24,7 @@ import { createClient } from "@/lib/supabase/server";
 import { conflitoDoBanco, corpo, lerFunis } from "./_funis";
 import { listPipelinesHandler } from "./_handler";
 import { traduzir } from "@/lib/i18n/dicionario";
+import { falhaDoLimite } from "@/lib/cobranca/limites";
 
 export const dynamic = "force-dynamic";
 
@@ -134,6 +135,8 @@ export async function POST(req: NextRequest): Promise<Response> {
   if (error) {
     const conflito = conflitoDoBanco(error as { code?: string }, name, requestId);
     if (conflito) return conflito;
+    const limite = falhaDoLimite(error, authz.user.idioma, requestId);
+    if (limite) return limite;
     return fail("internal_error", error.message, 500, { requestId });
   }
   const pipelineId = (criado as { id: string }).id;
@@ -155,6 +158,9 @@ export async function POST(req: NextRequest): Promise<Response> {
       .delete()
       .eq("id", pipelineId)
       .eq("organization_id", orgId);
+    // Funil novo com mais etapas iniciais do que o plano permite: a recusa diz o teto.
+    const limite = falhaDoLimite(etapasErr, authz.user.idioma, requestId);
+    if (limite) return limite;
     return fail(
       "internal_error",
       `Não consegui criar as etapas de «${name}». Nada foi salvo — tente de novo.`,

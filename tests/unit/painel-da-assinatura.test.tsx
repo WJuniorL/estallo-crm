@@ -11,7 +11,7 @@ import type { DadosDoPainel } from "@/lib/cobranca/painel";
 
 afterEach(cleanup);
 
-const PLANO = { id: "plano-a", nome: "Básico", preco_cents: 4990, intervalo: "mes", max_assentos: 1, max_canais: null, teto_ia_usd_cents: 500 };
+const PLANO = { id: "plano-a", nome: "Básico", preco_cents: 4990, intervalo: "mes", max_assentos: 1, max_canais: null, teto_ia_usd_cents: 500, max_pipelines: null, max_etapas_por_pipeline: null, max_leads: null, max_automacoes: null, max_webhooks: null, libera_api: true };
 const ASSINATURA_EM_TESTE: NonNullable<DadosDoPainel["assinatura"]> = {
   estado: "trial", trial_ate: "2026-10-10T12:00:00Z", prazo_extra_ate: null, proximo_vencimento: null, vencida_desde: null,
   cancela_no_fim: false, modo: null, provedor: null, link_de_pagamento: null, assinaturas_vivas: 0, plano_agendado: null,
@@ -19,9 +19,9 @@ const ASSINATURA_EM_TESTE: NonNullable<DadosDoPainel["assinatura"]> = {
 const EM_TESTE: DadosDoPainel = {
   assinatura: ASSINATURA_EM_TESTE,
   plano: PLANO,
-  uso: { assentos: 1, canais: 2 },
+  uso: { assentos: 1, canais: 2, pipelines: 0, etapas: 0, leads: 0, automacoes: 0, webhooks: 0 },
   gastoIaUsdCents: 120,
-  planosParaTroca: [],
+  planosParaTroca: [], catalogo: [], intervaloTravado: false,
   fuso: null,
   checkout: { provedor: null, documentoDoCadastro: null },
 };

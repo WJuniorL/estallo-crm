@@ -49,7 +49,7 @@ export async function GET(): Promise<Response> {
     });
     return ok(entradas, { requestId });
   } catch (err) {
-    return respostaDeRecusa(err, requestId);
+    return respostaDeRecusa(err, requestId, authz.user.idioma);
   }
 }
 
@@ -112,6 +112,6 @@ export async function POST(req: NextRequest): Promise<Response> {
     });
     return ok(criada, { requestId, status: 201 });
   } catch (err) {
-    return respostaDeRecusa(err, requestId);
+    return respostaDeRecusa(err, requestId, authz.user.idioma);
   }
 }

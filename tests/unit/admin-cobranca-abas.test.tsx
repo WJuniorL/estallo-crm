@@ -25,7 +25,7 @@ const CHAVE_ASAAS = "$" + ["aact", "hmlg", "000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlN
 const VAZIA: DadosDaVisaoGeral = {
   provedor: null, modo: null, chaveLast4: null, urlDoWebhook: "https://crm.exemplo.com/api/v1/webhooks/cobranca/stripe",
   ultimoAvisoEm: null, ultimaLeituraEm: null, compraConcluida: false, emailPronto: false, planoDoCadastro: false,
-  problemas: { credencialInvalida: 0, cobrancaDupla: 0, pagouCancelada: 0, avisosComErro: 0, avisosRecusados: 0 },
+  problemas: { credencialInvalida: 0, cobrancaDupla: 0, pagouCancelada: 0, avisosComErro: 0, avisosRecusados: 0, dinheiroEmRisco: 0 },
 };
 
 beforeEach(() => {
@@ -104,6 +104,12 @@ describe("Visão geral", () => {
     const recusados = { ...VAZIA, problemas: { ...VAZIA.problemas, avisosRecusados: 4 } };
     render(<VisaoGeral dados={recusados} checklist={montarChecklist(recusados)} idioma="pt-BR" agora={new Date()} />);
     expect(screen.getByText(/4 avisos de pagamento recusados/)).toBeTruthy();
+  });
+
+  it("⭐ reembolso, contestação ou alerta de fraude vira problema que manda ao painel da Stripe", () => {
+    const risco = { ...VAZIA, problemas: { ...VAZIA.problemas, dinheiroEmRisco: 2 } };
+    render(<VisaoGeral dados={risco} checklist={montarChecklist(risco)} idioma="pt-BR" agora={new Date()} />);
+    expect(screen.getByText(/2 reembolsos, contestações ou alertas de fraude/)).toBeTruthy();
   });
 
   it("um problema só fala no singular, sem '(s)'", () => {

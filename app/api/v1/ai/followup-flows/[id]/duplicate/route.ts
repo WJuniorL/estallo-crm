@@ -14,6 +14,7 @@ import { randomUUID } from "node:crypto";
 import type { NextRequest } from "next/server";
 
 import { ok, fail } from "@/lib/api/wrappers";
+import { falhaDoLimite } from "@/lib/cobranca/limites";
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth/require-role";
 import { createClient } from "@/lib/supabase/server";
@@ -90,6 +91,8 @@ export async function POST(_req: NextRequest, ctx: RouteCtx): Promise<Response> 
     if (insErr?.code === "23505") {
       return fail("conflict", t("Já existe um fluxo com este nome."), 409, { requestId });
     }
+    const limite = falhaDoLimite(insErr, authz.user.idioma, requestId);
+    if (limite) return limite;
     return fail("internal_error", insErr?.message ?? "followup_flow_duplicate_failed", 500, {
       requestId,
     });

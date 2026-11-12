@@ -99,7 +99,27 @@ export const EVENTOS_DO_WEBHOOK_STRIPE = [
   "customer.subscription.resumed",
   "invoice.paid",
   "invoice.payment_failed",
+  "charge.refunded",
+  "charge.dispute.created",
+  "radar.early_fraud_warning.created",
 ] as const;
+
+/**
+ * Dinheiro em risco: reembolso, contestação e alerta de fraude. Nenhum muda o
+ * estado da assinatura por si (o reembolso traz `customer` e dispara a releitura
+ * como qualquer aviso), mas todos aparecem na Visão geral da cobrança. Contestação
+ * e alerta de fraude só trazem `charge`, então não acham a empresa — e não podem
+ * contar como "aviso sem empresa correspondente".
+ * ponytail: resolver charge→cliente pela API, quando a tela precisar dizer qual empresa.
+ */
+export const EVENTOS_DE_RISCO_STRIPE: readonly string[] = [
+  "charge.refunded",
+  "charge.dispute.created",
+  "radar.early_fraud_warning.created",
+];
+
+/** Rótulo fixo dos Checkouts no painel da Stripe (sufixo de 8 letras, como a Stripe pede). */
+export const IDENTIFICADOR_DO_CHECKOUT = "estallo_assinatura_qkzmwpra";
 
 /** `teste`/`producao` pelo prefixo; `null` = não é chave secreta nem restrita (inclusive `pk_`). */
 export function modoDaChaveStripe(chave: string): Modo | null {
@@ -234,7 +254,8 @@ function precoRecorrente(plano: PlanoParaProvedor, produto: string) {
   return {
     currency: "brl",
     unit_amount: plano.precoCents,
-    recurring: { interval: plano.intervalo === "ano" ? "year" : "month" },
+    // Semestral = a cada 6 meses (a Stripe não tem "semester").
+    recurring: plano.intervalo === "ano" ? { interval: "year" } : plano.intervalo === "semestre" ? { interval: "month", interval_count: 6 } : { interval: "month" },
     product: produto,
   };
 }
@@ -453,7 +474,14 @@ export function criarAdaptadorStripe(dep: DependenciasDaStripe): AdaptadorDeCobr
           customer: p.clienteRef,
           client_reference_id: orgId,
           line_items: [{ price_data: precoRecorrente(p.plano, produto), quantity: 1 }],
-          subscription_data: { metadata: metadados, trial_end: trialEnd },
+          // `flexible`: o modo de cobrança que a Stripe recomenda para assinatura nova.
+          subscription_data: { metadata: metadados, trial_end: trialEnd, billing_mode: { type: "flexible" } },
+          integration_identifier: IDENTIFICADOR_DO_CHECKOUT,
+          // Assinatura é só cartão (decisão do dono, 12/11/2026), com Pix e boleto ligados
+          // na conta para outras vendas. Hoje a Stripe já os esconde no modo assinatura;
+          // a exclusão vale se isso mudar. Nunca `payment_method_types`: ele desliga as
+          // carteiras e os métodos que o painel liga.
+          excluded_payment_method_types: ["pix", "boleto"],
           metadata: metadados,
           success_url: sucesso.toString(),
           cancel_url: p.urlDeVolta,

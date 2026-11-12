@@ -106,7 +106,7 @@ const cobrancaDoAsaas = z.object({
 type CobrancaDoAsaas = z.infer<typeof cobrancaDoAsaas>;
 /** Data civil `AAAA-MM-DD` ordena como texto. */
 const porVencimento = (a: CobrancaDoAsaas, b: CobrancaDoAsaas) => a.dueDate.localeCompare(b.dueDate);
-const CICLO_DO_INTERVALO = { mes: "MONTHLY", ano: "YEARLY" } as const;
+const CICLO_DO_INTERVALO = { mes: "MONTHLY", semestre: "SEMIANNUALLY", ano: "YEARLY" } as const;
 const assinaturaDoAsaas = z.object({
   id: z.string().min(1),
   status: z.string(),

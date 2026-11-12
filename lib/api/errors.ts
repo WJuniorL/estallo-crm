@@ -36,6 +36,8 @@ export const ApiErrorCodes = {
   // Conta da empresa suspensa (spec da cobrança §4): sessão, token `dsk_` e MCP.
   // Só LGPD e cobrança passam, por `requireRole({ permiteOrgSuspensa: true })`.
   org_suspended: "org_suspended",
+  // O plano da empresa não inclui o recurso (hoje: API REST por token `dsk_`, `fn_plano_libera_api`).
+  plan_feature_unavailable: "plan_feature_unavailable",
   // Platform admin `support_readonly` tentando ESCREVER (`requirePlatformAdminEscrita`).
   forbidden_scope: "forbidden_scope",
   lgpd_anonymization_irreversible: "lgpd_anonymization_irreversible",

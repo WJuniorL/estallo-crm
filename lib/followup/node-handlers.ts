@@ -15,7 +15,9 @@ import type { FlowEdge, FlowNode, ReplySaveTo } from "./graph-schema";
 import { parseReplyCount } from "./parse-count";
 import { clampEspera, esperaPlanejadaDe, type EsperaAdaptativa } from "./timing-plan";
 import { fraseDeConfirmacao } from "./vocabulario";
+import type { ConditionCheck } from "./graph-schema";
 import { mapearDados } from "./mapear-dados";
+import { extrairReferencias, ler } from "./variaveis-de-blocos";
 import { alvoDaEsperaAte } from "./espera-ate";
 
 export type EnrollmentStatus =
@@ -569,14 +571,56 @@ export function ultimoDesfechoDe(events: EnrollmentEventRef[]): string | null {
   return null;
 }
 
-function evaluateCheck(
-  check: {
-    field: "lead_stage" | "tag" | "steps_taken" | "last_outcome" | "product";
-    op: "eq" | "neq" | "gte" | "lte" | "contains";
-    value: string | number;
-  },
-  lead: LeadFacts,
-): boolean {
+/** «Tem valor»: ausente, nulo, texto vazio e lista vazia não têm. */
+function temValor(v: unknown): boolean {
+  if (v === undefined || v === null) return false;
+  if (typeof v === "string") return v.trim() !== "";
+  if (Array.isArray(v)) return v.length > 0;
+  return true;
+}
+
+/** A regra sobre a saída de um bloco anterior (Fase 5) — o MESMO avaliador, sem motor paralelo. */
+function evaluateVariavel(check: ConditionCheck, saidas: Record<string, unknown>): boolean {
+  const ref = check.source ? extrairReferencias(check.source)[0] : undefined;
+  const v = ref && Object.prototype.hasOwnProperty.call(saidas, ref.no_id) ? ler(saidas[ref.no_id], ref.caminho) : undefined;
+  if (check.op === "exists") return temValor(v);
+  if (check.op === "not_exists") return !temValor(v);
+  // Ausência não prova nada — nem a negação (a mesma régua do campo «Desfecho do passo anterior»).
+  if (!temValor(v)) return false;
+  const esperado = String(check.value).trim().toLowerCase();
+  if (Array.isArray(v)) {
+    const itens = v.map((i) => String(i).trim().toLowerCase());
+    if (check.op === "eq" || check.op === "contains") return itens.includes(esperado);
+    if (check.op === "neq") return !itens.includes(esperado);
+    return false;
+  }
+  if (check.op === "gte" || check.op === "lte") {
+    const a = typeof v === "number" ? v : Number(String(v).replace(",", "."));
+    const b = Number(String(check.value).replace(",", "."));
+    if (!Number.isFinite(a) || !Number.isFinite(b)) return false;
+    return check.op === "gte" ? a >= b : a <= b;
+  }
+  const atual = String(v).trim().toLowerCase();
+  if (check.op === "eq") return atual === esperado;
+  if (check.op === "neq") return atual !== esperado;
+  return atual.includes(esperado);
+}
+
+function evaluateCheck(check: ConditionCheck, lead: LeadFacts, saidas: Record<string, unknown> = {}): boolean {
+  if (check.field === "variavel") return evaluateVariavel(check, saidas);
+  if (check.op === "exists" || check.op === "not_exists") {
+    const atual =
+      check.field === "lead_stage"
+        ? lead.lead_stage
+        : check.field === "tag"
+          ? lead.tags
+          : check.field === "product"
+            ? (lead.products ?? [])
+            : check.field === "steps_taken"
+              ? lead.steps_taken
+              : lead.last_outcome;
+    return check.op === "exists" ? temValor(atual) : !temValor(atual);
+  }
   if (check.field === "product") {
     // Lista de nomes, sem diferença de caixa. `neq` = nenhum produto com esse nome; sem produto algum
     // o lead não "tem o produto" (eq/contains falsos) e "não tem" é verdadeiro — é afirmação sobre lista.
@@ -639,9 +683,10 @@ function evaluateCondition(
   config: Extract<FlowNode, { type: "condition" }>["config"],
   lead: LeadFacts,
   onCheck?: (index: number, matched: boolean) => void,
+  saidas: Record<string, unknown> = {},
 ): boolean {
   const results = config.checks.map((check, index) => {
-    const matched = evaluateCheck(check, lead);
+    const matched = evaluateCheck(check, lead, saidas);
     onCheck?.(index, matched);
     return matched;
   });
@@ -859,7 +904,7 @@ export function processNode(input: {
         // é consultado aqui, porque nesse modo a regra não vota, ela roteia.
         const hitId = node.config.checks.find((c, index) => {
           if (c.id === undefined) return false;
-          const matched = evaluateCheck(c, lead);
+          const matched = evaluateCheck(c, lead, input.saidasAnteriores ?? {});
           if (onDecision) checks.push({ index, matched });
           return matched;
         })?.id;
@@ -891,6 +936,7 @@ export function processNode(input: {
         node.config,
         lead,
         onDecision ? (index, matched) => checks.push({ index, matched }) : undefined,
+        input.saidasAnteriores ?? {},
       );
       const edge = selectEdge(edges, node.id, { type: "cond_result", value: result });
       if (!edge)

@@ -1316,7 +1316,8 @@ async function processEnrollment(
         contact_id: enrollment.contact_id,
         lead_id: enrollment.lead_id ?? null,
         conversation_id: enrollment.conversation_id,
-        ...(node.type === "map_data"
+        ...(node.type === "map_data" ||
+        (node.type === "condition" && node.config.checks.some((c) => c.field === "variavel"))
           ? { saidas: db.loadStepOutputs ? await db.loadStepOutputs(enrollment.organization_id, enrollment.id) : {} }
           : {}),
         ...(node.type === "repeat"

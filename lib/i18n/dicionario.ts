@@ -2577,6 +2577,12 @@ export const DICIONARIO: Traducoes = {
   "Todas as versões": { es: "Todas las versiones" },
   "Mapear dados": { es: "Mapear datos" },
   "Atribuir responsável": { es: "Asignar responsable" },
+  "Dado de um bloco anterior": { es: "Dato de un bloque anterior" },
+  "Nenhum dado escolhido": { es: "Ningún dato elegido" },
+  "tem valor": { es: "tiene valor" },
+  "não tem valor": { es: "no tiene valor" },
+  "é igual a": { es: "es igual a" },
+  "é diferente de": { es: "es diferente de" },
   "Até uma data ou horário": { es: "Hasta una fecha u hora" },
   "Data (opcional)": { es: "Fecha (opcional)" },
   "No fuso da organização. Sem data, espera até a próxima vez que o relógio marcar esse horário. Com data já passada, segue direto para o próximo bloco.":

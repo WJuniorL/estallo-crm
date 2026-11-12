@@ -454,9 +454,14 @@ export const conditionCheckSchema = z.strictObject({
     'last_outcome',
     // Nomes dos produtos do negócio (crm_lead_products); lista, como `tag`.
     'product',
+    // Fase 5 — a saída de um bloco ANTERIOR desta execução (`source` = `{{nodes.<bloco>.<caminho>}}`).
+    'variavel',
   ]),
-  op: z.enum(['eq', 'neq', 'gte', 'lte', 'contains']),
+  // `exists`/`not_exists` (Fase 5): o dado tem ou não tem valor — ausente, nulo, texto vazio e lista vazia não têm.
+  op: z.enum(['eq', 'neq', 'gte', 'lte', 'contains', 'exists', 'not_exists']),
   value: z.union([z.string(), z.number()]),
+  /** Só com `field: 'variavel'`: a marca do dado comparado. */
+  source: z.string().max(200).optional(),
 });
 
 export type ConditionCheck = z.infer<typeof conditionCheckSchema>;

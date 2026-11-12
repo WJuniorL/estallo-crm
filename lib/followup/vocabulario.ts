@@ -89,7 +89,7 @@ export function opcoes<K extends string>(mapa: Record<K, string>): ReadonlyArray
  * `stage_id` (um UUID, veja `engine.ts` → `loadLeadFacts`), então um campo de
  * texto livre pede ao dono da clínica que digite um identificador interno.
  */
-export type TipoDeValor = "etapa" | "etiqueta" | "numero" | "texto" | "produto";
+export type TipoDeValor = "etapa" | "etiqueta" | "numero" | "texto" | "produto" | "variavel";
 
 export interface CampoDeCondicao {
   rotulo: string;
@@ -104,6 +104,8 @@ export const CAMPOS_DA_CONDICAO: Record<CampoDaCondicao, CampoDeCondicao> = {
   // ESCOLHIDO no catálogo, nunca digitado: o motor compara o NOME do item do negócio (copiado do
   // catálogo ao vincular), e um campo livre pedia ao dono que acertasse a grafia à mão.
   product: { rotulo: "Produto do negócio", tipoDeValor: "produto" },
+  // Fase 5: a saída de um bloco anterior (um campo do Mapear dados, o id da tarefa criada...).
+  variavel: { rotulo: "Dado de um bloco anterior", tipoDeValor: "variavel" },
 };
 
 // ─── condição: o par (campo, operador) ───────────────────────────────────
@@ -164,8 +166,20 @@ function passos(valor: string | number): string {
  * A frase de cada par. Ordem das chaves = ordem no seletor (o mais usado
  * primeiro), então mexer na ordem aqui mexe na tela.
  */
+/**
+ * «Tem valor / não tem valor» (Fase 5). Nos campos antigos o motor entende o par, mas ele não entra no seletor —
+ * só no do dado de um bloco anterior, onde a pergunta «veio alguma coisa?» é a que importa.
+ */
+function presenca(tem: string, naoTem: string, oferecido = false): Record<"exists" | "not_exists", Comparador> {
+  return {
+    exists: { rotulo: "tem valor", frase: () => tem, oferecido },
+    not_exists: { rotulo: "não tem valor", frase: () => naoTem, oferecido },
+  };
+}
+
 const COMPARADORES: Record<CampoDaCondicao, Record<OperadorDaCondicao, Comparador>> = {
   lead_stage: {
+    ...presenca("O lead está em alguma etapa", "O lead não está em etapa nenhuma"),
     eq: {
       rotulo: "está na etapa",
       frase: (v) => `O lead está na etapa ${aspas(v)}`,
@@ -197,6 +211,7 @@ const COMPARADORES: Record<CampoDaCondicao, Record<OperadorDaCondicao, Comparado
     },
   },
   tag: {
+    ...presenca("O contato tem alguma etiqueta", "O contato não tem etiqueta nenhuma"),
     // O par que dá nome à regra deste módulo: no motor, `tag` é lista.
     eq: {
       rotulo: "tem a etiqueta",
@@ -229,6 +244,7 @@ const COMPARADORES: Record<CampoDaCondicao, Record<OperadorDaCondicao, Comparado
     },
   },
   steps_taken: {
+    ...presenca("O fluxo já deu algum passo", "O fluxo ainda não deu passo nenhum"),
     gte: {
       rotulo: "é pelo menos",
       frase: (v) => `O fluxo já deu pelo menos ${passos(v)}`,
@@ -257,6 +273,7 @@ const COMPARADORES: Record<CampoDaCondicao, Record<OperadorDaCondicao, Comparado
     },
   },
   last_outcome: {
+    ...presenca("O passo anterior teve um desfecho", "O passo anterior não teve desfecho"),
     eq: {
       rotulo: "foi",
       frase: (v) => `O desfecho do passo anterior foi ${aspas(v)}`,
@@ -286,6 +303,7 @@ const COMPARADORES: Record<CampoDaCondicao, Record<OperadorDaCondicao, Comparado
     },
   },
   product: {
+    ...presenca("O negócio tem algum produto", "O negócio não tem produto nenhum"),
     // No motor, `product` é lista de nomes (como `tag`), comparada sem diferença de caixa.
     // O valor é ESCOLHIDO no catálogo, então o par que a tela oferece é o exato. `contains` continua
     // entendido pelo motor (fluxo salvo com ele precisa ser lido), mas fica fora do seletor.
@@ -316,6 +334,15 @@ const COMPARADORES: Record<CampoDaCondicao, Record<OperadorDaCondicao, Comparado
       oferecido: false,
       aviso: AVISO_SO_NUMERO,
     },
+  },
+  variavel: {
+    // A ordem é a do seletor: a pergunta mais comum sobre um dado que veio de outro bloco vem primeiro.
+    eq: { rotulo: "é igual a", frase: (v) => `O dado do bloco anterior é igual a ${aspas(v)}`, oferecido: true },
+    neq: { rotulo: "é diferente de", frase: (v) => `O dado do bloco anterior é diferente de ${aspas(v)}`, oferecido: true },
+    contains: { rotulo: "contém", frase: (v) => `O dado do bloco anterior contém ${aspas(v)}`, oferecido: true },
+    gte: { rotulo: "é pelo menos", frase: (v) => `O dado do bloco anterior é pelo menos ${aspas(v)}`, oferecido: true },
+    lte: { rotulo: "é no máximo", frase: (v) => `O dado do bloco anterior é no máximo ${aspas(v)}`, oferecido: true },
+    ...presenca("O dado do bloco anterior tem valor", "O dado do bloco anterior não tem valor", true),
   },
 };
 

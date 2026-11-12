@@ -34,6 +34,7 @@ import { useProdutosDoCatalogo } from "@/hooks/followup/useProdutosDoCatalogo";
 import { useT } from "@/hooks/i18n/useT";
 
 import { useEtapasDoFluxo } from "../EtapasDoFluxo";
+import { InserirVariavel } from "../VariaveisDoFluxo";
 import { regraEmBranco } from "../nodes/nodeVisuals";
 import type { ConfigOf } from "./shared";
 
@@ -313,6 +314,32 @@ export function ConditionForm({
                 falhou={etapasFalharam}
                 onEscolher={(stageId) => trocarValor(idx, stageId)}
               />
+            ) : CAMPOS_DA_CONDICAO[check.field].tipoDeValor === "variavel" ? (
+              // Fase 5: o dado vem de um bloco ANTERIOR (o seletor só oferece esses); o valor só existe quando o
+              // operador compara com alguma coisa — «tem valor» não pede nada.
+              <div className="space-y-2" data-testid={`regra-variavel-${idx}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <code className="min-w-0 truncate font-mono text-[11px] text-text-muted">
+                    {check.source ?? t("Nenhum dado escolhido")}
+                  </code>
+                  <InserirVariavel
+                    soBlocos
+                    onInserir={(marca) => {
+                      const next = checks.map((c, i) => (i === idx ? { ...c, source: marca } : c));
+                      setChecks(next);
+                      commit({ checks: next });
+                    }}
+                  />
+                </div>
+                {check.op !== "exists" && check.op !== "not_exists" && (
+                  <Input
+                    aria-label={t("Valor")}
+                    placeholder={t("Valor")}
+                    value={String(check.value)}
+                    onChange={(e) => trocarValor(idx, e.target.value)}
+                  />
+                )}
+              </div>
             ) : CAMPOS_DA_CONDICAO[check.field].tipoDeValor === "produto" ? (
               <ValorDeProduto valor={String(check.value)} onEscolher={(nome) => trocarValor(idx, nome)} />
             ) : CAMPOS_DA_CONDICAO[check.field].tipoDeValor === "numero" ? (

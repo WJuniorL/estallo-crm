@@ -673,6 +673,12 @@ function conferirRegras(
     };
     const valor = String(check.value).trim();
 
+    if (check.field === 'variavel' && !(check.source && /^\s*\{\{\s*nodes\.[A-Za-z0-9_-]+\.[A-Za-z0-9_.]+\s*\}\}\s*$/.test(check.source))) {
+      errors.push({ ...ancora, code: 'empty_check_value', message: `${regra}: escolha o dado de um bloco anterior.` });
+      return;
+    }
+    // «Tem valor»/«não tem valor» não comparam com nada.
+    if (check.op === 'exists' || check.op === 'not_exists') return;
     if (valor === '') {
       errors.push({ ...ancora, code: 'empty_check_value', message: `${regra} sem valor: preencha ou remova a regra.` });
       return;

@@ -73,6 +73,10 @@ export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 #   3. identidade por ambiente, não por `git config` (NENHUM teste aqui mede o autor).
 unset $(git rev-parse --local-env-vars)
 export GIT_CEILING_DIRECTORIES="$TMP"
+# O script descobre "o PR deste CI" pelo GITHUB_REF (refs/pull/N/merge). Herdado,
+# ele tirava das contas o PR de cenário com o mesmo número: no PR #7 real, os
+# cenários com "PR #7" ficaram vermelhos (12/11/2026). Os cenários não são o CI.
+unset GITHUB_REF
 export GIT_AUTHOR_NAME="Teste" GIT_AUTHOR_EMAIL="teste@exemplo.invalid"
 export GIT_COMMITTER_NAME="Teste" GIT_COMMITTER_EMAIL="teste@exemplo.invalid"
 

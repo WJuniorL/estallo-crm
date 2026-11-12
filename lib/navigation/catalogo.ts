@@ -855,7 +855,9 @@ export const NAV_CATALOG = [
     icon: "ChartBar",
     group: "analise",
     section: "Os números do período",
-    sidebar: true,
+    // Saiu do menu lateral quando o Dashboard entrou: o menu está no teto da
+    // dobra (tests/unit/interface-por-empresa.test.ts) e o Dashboard cobre a
+    // pergunta do dia a dia. Segue no hub de Análise e no ⌘K.
   },
   {
     // Logo abaixo de Desempenho porque responde a metade da MESMA pergunta: lá

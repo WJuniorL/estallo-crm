@@ -118,7 +118,7 @@ function Cartao({
     <section className={`rounded-xl border border-border bg-surface p-5 ${className}`}>
       <header className="mb-4 flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-text">
+          <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
             {icone}
           </span>
           <div>
@@ -577,7 +577,7 @@ export function DashboardVendas({ funis, podeComparar }: { funis: Funil[]; podeC
                   <div className="flex items-center justify-between gap-2 text-sm">
                     <span className="flex min-w-0 items-center gap-2">
                       <span className="w-5 text-xs text-text-subtle">{i + 1}º</span>
-                      {r.tipo === "ia" ? <Robot size={14} className="shrink-0 text-accent-text" /> : null}
+                      {r.tipo === "ia" ? <Robot size={14} className="shrink-0 text-accent" /> : null}
                       <span className="truncate text-text">
                         {r.tipo === "ia" ? (r.agente_nome ?? t("Agente de IA")) : nomeDo(r.user_id)}
                       </span>
@@ -694,7 +694,7 @@ export function DashboardVendas({ funis, podeComparar }: { funis: Funil[]; podeC
         subtitulo={t("Os abertos parados há mais tempo na mesma etapa")}
         icone={<Snowflake size={16} />}
         acao={
-          <Link href="/app/kanban" className="text-xs font-medium text-accent-text hover:underline">
+          <Link href="/app/kanban" className="text-xs font-medium text-accent hover:underline">
             {t("Abrir o Kanban")}
           </Link>
         }

@@ -138,7 +138,7 @@ describe("Clientes", () => {
 describe("Conexão com o Asaas (PR 3b)", () => {
   it("⭐ a escolha Stripe × Asaas tem uma frase cada, sem prometer débito automático no Pix; escolher o Asaas troca o rótulo, a dica, o exemplo da chave e a URL do aviso", async () => {
     render(<ConexaoDaCobranca provedor={null} modo={null} last4={null} urlDoWebhook={VAZIA.urlDoWebhook} />);
-    expect(screen.getByText(/cobra o cartão sozinho todo mês e aceita boleto, mas não tem Pix\./)).toBeTruthy();
+    expect(screen.getByText(/a assinatura é só no cartão, sem Pix nem boleto\./)).toBeTruthy();
     expect(screen.getByText(/paga por Pix, boleto ou cartão/)).toBeTruthy();
     expect(screen.getByText(/Recomendado se seus clientes estão no Brasil\./)).toBeTruthy();
     expect(screen.queryByText(/recorrentes/)).toBeNull();

@@ -1043,3 +1043,15 @@ Pedido do dono: atualizar os testes vermelhos do `verify` que vinham da frente d
 **CI:** PR #3 verde em `01251c948` (27 ok); em `0af96db91` só a fixture de `dependentesDoNo` falhou (corrigida em `043333f91`). Invariantes novos (`atribuir-responsavel`, `nota-interna`, `aguardar-ate`, `mapear-dados-no-diario`) passaram no CI.
 
 **Falta na Fase 5:** contato (buscar/criar/atualizar, remover tag); lead (buscar/criar, mover entre funis, produtos); extrair dados por IA; requisição HTTP (reusar proteções do `call_webhook`); inserção pelo ponto de conexão.
+
+## 2026-11-12 (8) — Fase 7: exportar e importar JSON
+
+**Feito:**
+- `lib/followup/pacote.ts` (puro): formato nativo `estallo.automacao` v1 (origem rascunho/versão + número, fluxo, grafo, gatilho, política, manifesto de dependências). `lerPacote` valida ANTES de escrever (≤1 MB, JSON, formato, versão futura recusada com mensagem útil, schema). `importarPacote` exige destino para cada dependência, gera ids de bloco novos, reescreve `{{nodes.<id>…}}`, remapeia UUIDs externos e revalida grafo e gatilho. `segredosEmbutidos` (Bearer, chaves de API, AWS, Slack, chave privada, senha escrita) faz a exportação recusar.
+- `lib/followup/referencias-do-pacote.ts` (servidor): manifesto classifica cada UUID citado (etapa, funil, usuário, tipo de agenda, agente; o resto `desconhecido`) com o nome na origem; candidatos da organização de destino; `problemaDoMapa` recusa destino fora do tenant, tipo trocado e referência desconhecida.
+- Rotas: `GET /api/v1/ai/followup-flows/:id/export?origem=rascunho|publicado` e `POST /api/v1/ai/followup-flows/import` (`modo: previa|criar`; criar = UMA inserção de rascunho, nunca publica). Auditoria `followup_flow.exported` / `followup_flow.imported`. Sem importação por URL.
+- Tela: «Exportar» (rascunho salvo / versão no ar) na barra do editor; «Importar» na lista de fluxos com prévia e remapeamento por seleção.
+
+**Evidência:** `pacote.test.ts` (segredo, leitura, pendências, ids novos e referências reescritas, reexportação com a mesma semântica, conferência do tenant); suíte do editor verde; `tsc` e eslint limpos.
+
+**NÃO MEDIDO:** rotas contra banco real (A→B ponta a ponta); tela no navegador. O isolamento entre organizações vem de `problemaDoMapa` (candidatos lidos com `organization_id` da sessão) — provado em teste unitário, não em invariante.

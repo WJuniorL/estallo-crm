@@ -15775,7 +15775,7 @@ export const DICIONARIO: Traducoes = {
   "A fatura abre no Asaas, numa nova aba. Depois de pagar, volte aqui e clique em Já paguei: Pix confirma em minutos; boleto, em até 1 dia útil.": { es: "La factura se abre en Asaas, en una pestaña nueva. Después de pagar, vuelve aquí y haz clic en Ya pagué: Pix se confirma en minutos; boleto, en hasta 1 día hábil." },
   "Adiantar a próxima mensalidade": { es: "Adelantar la próxima mensualidad" },
   // ─── cobrança: Conexão com o Asaas (PR 3b) ───
-  "cobra o cartão sozinho todo mês e aceita boleto, mas não tem Pix.": { es: "cobra la tarjeta sola cada mes y acepta boleto, pero no tiene Pix." },
+  "cobra o cartão sozinho todo mês; a assinatura é só no cartão, sem Pix nem boleto.": { es: "cobra la tarjeta sola cada mes; la suscripción es solo con tarjeta, sin Pix ni boleto." },
   "todo mês o cliente recebe a cobrança e paga por Pix, boleto ou cartão: o jeito que o brasileiro paga. Pede o CPF ou CNPJ. Recomendado se seus clientes estão no Brasil.": { es: "cada mes el cliente recibe el cobro y paga con Pix, boleto o tarjeta: como paga el brasileño. Pide el CPF o CNPJ. Recomendado si tus clientes están en Brasil." },
   "Conectado. Falta um passo: cadastre o aviso no Asaas (veja abaixo).": { es: "Conectado. Falta un paso: registra el aviso en Asaas (mira abajo)." },
   "No Asaas: menu Integrações › Chaves de API. Comece pela conta de sandbox do Asaas; troque pela chave de produção quando a compra de teste der certo.": { es: "En Asaas: menú Integraciones › Claves de API. Empieza con la cuenta de sandbox de Asaas; cámbiala por la clave de producción cuando la compra de prueba funcione." },

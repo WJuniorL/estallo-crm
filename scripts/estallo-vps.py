@@ -172,11 +172,15 @@ def configure(credentials):
                   WAHA_WEBHOOK_REQUIRE_SIGNATURE='true', EVENT_LOG_WORKER_DRAINS='true',
                   UPSTASH_REDIS_REST_URL='http://srh:80')
     for key in ('INTERNAL_SECRET', 'INTERNAL_CRON_SECRET', 'CPF_ENCRYPTION_KEY',
-                'WAHA_BYO_ENCRYPTION_KEY', 'AI_CRED_AES_KEY', 'IMPERSONATE_COOKIE_SECRET',
+                'WAHA_BYO_ENCRYPTION_KEY', 'IMPERSONATE_COOKIE_SECRET',
                 'LGPD_SIGNING_KEY', 'NUVEMSHOP_OAUTH_ENCRYPTION_KEY', 'WAHA_HMAC_SECRET',
                 'WAHA_API_KEY', 'SRH_TOKEN'):
         if not values.get(key):
             values[key] = secrets.token_hex(32)
+    # AES-256-GCM: o app lê 32 bytes em BASE64 (lib/crypto/aes_gcm.ts). O token_hex(32)
+    # das outras dá 64 caracteres, que viram 48 bytes e deixam toda cifra indisponível.
+    if not values.get('AI_CRED_AES_KEY'):
+        values['AI_CRED_AES_KEY'] = base64.b64encode(secrets.token_bytes(32)).decode()
     values['WAHA_API_KEY_SHA512'] = hashlib.sha512(values['WAHA_API_KEY'].encode()).hexdigest()
     values['UPSTASH_REDIS_REST_TOKEN'] = values['SRH_TOKEN']
     save(ROOT / 'owner.env', ''.join(f'{key}={values.pop(key)}\n'

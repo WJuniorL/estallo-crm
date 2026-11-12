@@ -188,6 +188,26 @@ class EstalloVpsTests(unittest.TestCase):
                     vps.configure(path)
                 save.assert_not_called()
 
+    @patch.object(vps.urllib.request, 'urlopen')
+    def test_configure_generates_aes_key_the_app_can_read(self, urlopen):
+        # O app exige 32 bytes em base64 (lib/crypto/aes_gcm.ts); hex de 64 caracteres
+        # virava 48 bytes e deixava a cifra indisponível em produção (12/11/2026).
+        urlopen.return_value.__enter__.return_value.status = 200
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'credentials'
+            path.write_text(f'NEXT_PUBLIC_SUPABASE_URL={vps.PROJECT}\n'
+                            'SUPABASE_SERVICE_ROLE_KEY=sb_secret_test\n'
+                            'NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_test\n'
+                            'SUPABASE_DB_URL=postgresql://postgres.cbeqboyfmwyjsybszaxy:s3nha@'
+                            'aws-0-sa-east-1.pooler.supabase.com:5432/postgres\n'
+                            'OWNER_EMAIL=owner@example.test\nOWNER_PASSWORD=senha-de-teste-forte\n')
+            with patch.object(vps, 'RUNTIME', Path(directory) / 'runtime'), patch.object(vps, 'save') as save:
+                vps.configure(path)
+            runtime = next(data for target, data in (c.args for c in save.call_args_list)
+                           if Path(target).name == 'runtime')
+            key = dict(line.split('=', 1) for line in runtime.splitlines())['AI_CRED_AES_KEY']
+            self.assertEqual(len(base64.b64decode(key, validate=True)), 32)
+
     @patch.object(vps, 'pg', return_value=b'1\n')
     @patch.object(vps, 'pull')
     @patch.object(vps, 'REPO', Path(__file__).resolve().parents[2])

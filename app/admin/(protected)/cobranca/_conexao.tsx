@@ -147,7 +147,7 @@ export function ConexaoDaCobranca({
           <li>
             <span className="font-medium text-foreground">Stripe</span>
             {" — "}
-            {t("cobra o cartão sozinho todo mês e aceita boleto, mas não tem Pix.")}
+            {t("cobra o cartão sozinho todo mês; a assinatura é só no cartão, sem Pix nem boleto.")}
           </li>
         </ul>
       </div>

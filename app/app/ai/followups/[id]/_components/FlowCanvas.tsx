@@ -328,7 +328,9 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
           canAutoFit={nodes.length > 0}
         />
       )}
-      <div className="flex flex-1 overflow-hidden">
+      {/* `min-h-0`: sem ele, numa coluna flex, a altura mínima é a do conteúdo — a paleta longa (busca + categorias)
+          esticava a página, e o canto do canvas ia parar debaixo do cabeçalho fixo. A paleta rola dentro do espaço dela. */}
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         <NodePalette onAdd={onPaletteAdd} surface={surface} />
         {/* Abaixo de `lg` a paleta fixa de 224px não cabe do lado do canvas —
             vira um drawer, disparado por este botão flutuante. */}

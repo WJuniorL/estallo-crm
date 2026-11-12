@@ -44,13 +44,13 @@ export function NodePalette({ onAdd, variant = "desktop", surface = "followup" }
   return (
     <aside
       className={cn(
-        "flex flex-col gap-1.5 overflow-y-auto p-3",
-        isMobile
-          ? "h-full w-full"
-          : "hidden w-56 shrink-0 border-r border-border bg-surface lg:flex",
+        isMobile ? "flex h-full w-full flex-col" : "relative hidden w-56 shrink-0 border-r border-border bg-surface lg:block",
       )}
       data-testid="node-palette"
     >
+      {/* Desktop: o conteúdo é ABSOLUTO dentro do aside — não conta na altura da linha, ocupa a altura do canvas e rola
+          por dentro. Uma paleta longa esticava a página e punha o canto do canvas debaixo do cabeçalho fixo. */}
+      <div className={cn("flex flex-col gap-1.5 overflow-y-auto p-3", isMobile ? "h-full" : "absolute inset-0")}>
       <h2 className="px-1 pb-1 text-xs font-medium uppercase tracking-wide text-text-muted">
         {t("Adicionar nó")}
       </h2>
@@ -105,6 +105,7 @@ export function NodePalette({ onAdd, variant = "desktop", surface = "followup" }
           </div>
         </details>
       ))}
+      </div>
     </aside>
   );
 }

@@ -219,9 +219,10 @@ test("liga o módulo, cria um roteiro pela tela, o cliente responde pelo WhatsAp
       // A paleta do roteiro: quatro caixas, medidas no DOM — nenhuma do relógio.
       const paleta = page.getByTestId("node-palette").locator('[data-testid^="palette-add-"]');
       await expect(paleta).toHaveCount(4);
+      // O CONJUNTO oferecido no roteiro; a ordem segue as categorias da paleta (Fase 5).
       expect(
-        await paleta.evaluateAll((els) => els.map((e) => e.getAttribute("data-testid"))),
-      ).toEqual(["palette-add-trigger", "palette-add-collect", "palette-add-skill", "palette-add-end"]);
+        (await paleta.evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")))).sort(),
+      ).toEqual(["palette-add-collect", "palette-add-end", "palette-add-skill", "palette-add-trigger"]);
 
       await page.getByTestId("palette-add-trigger").click();
       await page.getByTestId("palette-add-collect").click();

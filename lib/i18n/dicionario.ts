@@ -15419,6 +15419,7 @@ export const DICIONARIO: Traducoes = {
   "Cobrança mensal recorrente": { es: "Cobro mensual recurrente" },
   "cobrado de uma vez": { es: "cobrado de una vez" },
   "A contratação abre quando a cobrança estiver ligada.": { es: "La contratación se abre cuando el cobro esté activado." },
+  "Este é o plano da sua assinatura.": { es: "Este es el plan de su suscripción." },
   "Para mudar o período da assinatura, cancele e assine de novo no período desejado.": { es: "Para cambiar el período de la suscripción, cancela y suscríbete de nuevo en el período deseado." },
   "Estes são os planos da Estallo. A contratação pelo sistema abre em breve; até lá, nenhuma cobrança é feita.": { es: "Estos son los planes de Estallo. La contratación por el sistema se abre pronto; hasta entonces, no se hace ningún cobro." },
   "Para começar a organizar o comercial.": { es: "Para empezar a organizar el área comercial." },

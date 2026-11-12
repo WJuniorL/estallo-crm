@@ -143,7 +143,7 @@ export function EscolhaDePlano({ planos, atualId, podeEscolher, intervaloTravado
                     {t("Contratação em breve")}
                   </Button>
                 ) : ehAtual ? (
-                  <Button disabled className="w-full" variant="secondary">
+                  <Button disabled className="w-full" variant="secondary" title={t("Este é o plano da sua assinatura.")}>
                     {t("Plano atual")}
                   </Button>
                 ) : (

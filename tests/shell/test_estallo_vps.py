@@ -296,6 +296,46 @@ class EstalloVpsTests(unittest.TestCase):
         vps.deploy(NEW)
         backup.assert_called_once()
 
+    def fake_storage(self, objects, downloads):
+        """Storage de mentira: {nome: (eTag, bytes)}; anota cada download."""
+        def urlopen(request, timeout=None):
+            path = request.full_url.split('/storage/v1', 1)[1]
+            if path == '/bucket':
+                body = [{'id': 'whatsapp-media'}]
+            elif path.startswith('/object/list/'):
+                body = [{'name': n, 'id': n, 'metadata': {'eTag': e, 'size': len(b), 'mimetype': 'x/y'}}
+                        for n, (e, b) in objects.items()]
+            else:
+                name = vps.urllib.parse.unquote(path.split('/object/whatsapp-media/', 1)[1])
+                downloads.append(name)
+                return io.BytesIO(objects[name][1])
+            return io.BytesIO(json.dumps(body).encode())
+        return urlopen
+
+    @patch.object(vps, 'runtime', return_value={'SUPABASE_SERVICE_ROLE_KEY': 'k'})
+    def test_storage_backup_downloads_only_new_or_changed_objects(self, _runtime):
+        objects = {'a.ogg': ('e1', b'audio'), 'avatar.jpg': ('e2', b'foto-velha')}
+        downloads = []
+        first = self.make_backup(hours_ago=24)
+        with patch.object(vps.urllib.request, 'urlopen', side_effect=self.fake_storage(objects, downloads)), \
+                patch('sys.stdout', io.StringIO()):
+            vps.storage_backup(first)
+        self.assertEqual(sorted(downloads), ['a.ogg', 'avatar.jpg'])
+
+        # Dia seguinte: o avatar foi regravado (eTag novo) e chegou uma mídia nova.
+        objects['avatar.jpg'] = ('e3', b'foto-nova')
+        objects['b.mp4'] = ('e4', b'video')
+        downloads.clear()
+        second = self.make_backup(hours_ago=0)
+        with patch.object(vps.urllib.request, 'urlopen', side_effect=self.fake_storage(objects, downloads)), \
+                patch('sys.stdout', io.StringIO()):
+            vps.storage_backup(second)
+        self.assertEqual(sorted(downloads), ['avatar.jpg', 'b.mp4'])
+        manifest = json.loads((second / 'storage' / 'manifest.json').read_text(encoding='utf-8'))
+        for entry in manifest['objects']:
+            stored = (second / 'storage' / entry['file']).read_bytes()
+            self.assertEqual(stored, objects[entry['name']][1], entry['name'])
+
     def test_prune_keeps_newest_complete_and_newer_partial(self):
         old = [self.make_backup(hours_ago=24 * day + 1) for day in range(8)]
         in_progress = self.make_backup(hours_ago=0, complete=False)

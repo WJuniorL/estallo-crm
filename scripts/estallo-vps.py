@@ -437,6 +437,8 @@ def storage_backup(destination):
             data=json.dumps(payload).encode() if payload is not None else None), timeout=60)
 
     objects = []
+    reused = 0
+    previous = previous_storage(destination)
     directory = destination / 'storage'
     directory.mkdir(mode=0o700)
     with request('/bucket') as response:
@@ -458,16 +460,49 @@ def storage_backup(destination):
                         pending.append(name + '/')
                         continue
                     filename = hashlib.sha256((identifier + '/' + name).encode()).hexdigest()
-                    with request('/object/' + urllib.parse.quote(identifier, safe='') + '/' +
-                                 urllib.parse.quote(name, safe='/')) as response:
-                        with (directory / filename).open('wb') as stream:
-                            shutil.copyfileobj(response, stream)
+                    fingerprint = storage_fingerprint(item)
+                    old = previous.get((identifier, name))
+                    if fingerprint and old and old[1] == fingerprint and old[0].is_file():
+                        # Mesmo objeto, mesma versão: vínculo físico com a cópia de ontem, sem egress.
+                        os.link(old[0], directory / filename)
+                        reused += 1
+                    else:
+                        with request('/object/' + urllib.parse.quote(identifier, safe='') + '/' +
+                                     urllib.parse.quote(name, safe='/')) as response:
+                            with (directory / filename).open('wb') as stream:
+                                shutil.copyfileobj(response, stream)
                     objects.append(dict(bucket=identifier, name=name, file=filename,
-                                        content_type=item.get('metadata', {}).get('mimetype')))
+                                        content_type=item.get('metadata', {}).get('mimetype'),
+                                        fingerprint=fingerprint))
                 if len(page) < 1000:
                     break
                 offset += len(page)
     save(directory / 'manifest.json', json.dumps(dict(buckets=buckets, objects=objects)))
+    print(f'Storage: {len(objects) - reused} objeto(s) baixado(s), {reused} reaproveitado(s) do backup anterior.')
+
+
+def storage_fingerprint(item):
+    """Versão do objeto segundo o Storage: eTag + tamanho, ou None quando a listagem não traz."""
+    metadata = item.get('metadata') or {}
+    if not metadata.get('eTag'):
+        return None
+    return f"{metadata['eTag']}:{metadata.get('size')}"
+
+
+def previous_storage(destination):
+    """(bucket, nome) -> (arquivo, versão) do backup completo mais novo que tenha Storage.
+
+    O backup das 3h baixava o bucket inteiro todo dia (~660 MB de egress do Supabase, 13/11/2026)
+    para guardar quase só o que já estava no de ontem. Objeto sem versão registrada é baixado de novo.
+    """
+    for _, directory in complete_backups():
+        manifest = directory / 'storage' / 'manifest.json'
+        if directory == destination or not manifest.is_file():
+            continue
+        objects = json.loads(manifest.read_text(encoding='utf-8'))['objects']
+        return {(o['bucket'], o['name']): (directory / 'storage' / o['file'], o.get('fingerprint'))
+                for o in objects if o.get('fingerprint')}
+    return {}
 
 
 BACKUP_FORMAT = '%Y%m%dT%H%M%S%fZ'

@@ -291,6 +291,12 @@ Cada backup novo apaga os locais mais velhos que os 5 completos mais recentes (`
 sem isso, a pasta encheu os 67 GB da VPS em 11/11/2026. O `deploy` não faz backup novo quando
 já existe um completo das últimas 24 h (`BACKUP_REUSE_HOURS`), porque ele só troca imagens e
 não aplica migrations; o fluxo `agent`, que aplica, continua fazendo backup antes.
+O Storage é incremental: objeto com o mesmo `eTag` e tamanho do backup completo anterior vira
+vínculo físico (`os.link`) com a cópia de lá, e só o novo ou regravado é baixado. Antes disso cada
+backup baixava o bucket inteiro (~660 MB de egress do Supabase por noite, medido em 13/11/2026,
+quando a organização estourou a cota do plano gratuito). O log diz quantos foram baixados e
+quantos reaproveitados. O primeiro backup depois da mudança ainda baixa tudo: os manifests antigos
+não guardam a versão do objeto.
 Depois de um deploy validado, as imagens nossas (de qualquer namespace, inclusive o antigo
 `estallosolucoes`) que não são do commit atual nem do anterior são removidas, sem `--force`;
 versões mais velhas voltam pelo registro se um rollback as pedir.

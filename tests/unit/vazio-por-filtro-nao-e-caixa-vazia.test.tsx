@@ -22,8 +22,9 @@ import type { ConversationsFilters } from "@/hooks/inbox/useConversationsRealtim
  */
 
 vi.mock("@/hooks/i18n/useT", () => ({ useT: () => (s: string) => s }));
+const canais = vi.hoisted(() => ({ lista: [{ id: "c1" }] as unknown[] }));
 vi.mock("@/hooks/channels/useChannelSessions", () => ({
-  useChannelSessions: () => ({ data: [] }),
+  useChannelSessions: () => ({ data: canais.lista, isLoading: false, isError: false }),
 }));
 vi.mock("@/hooks/ai/useAutomaticoAtivo", () => ({
   useAutomaticoAtivo: () => ({ data: false }),
@@ -57,7 +58,10 @@ function montar(filters: ConversationsFilters, hasNextPage = false) {
   );
 }
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  canais.lista = [{ id: "c1" }];
+});
 
 describe("quais filtros a tela nomeia", () => {
   it("a ABA não entra — ela é onde o operador está, não algo a limpar", () => {
@@ -78,6 +82,13 @@ describe("o vazio por FILTRO não se disfarça de caixa vazia", () => {
   it("sem filtro e sem conversa: diz que a caixa está vazia", () => {
     montar({} as ConversationsFilters);
     expect(screen.getByText(/Sem conversas por aqui/i)).toBeInTheDocument();
+  });
+
+  it("sem canal nenhum: diz o que falta e leva à Central de Conexões", () => {
+    canais.lista = [];
+    montar({} as ConversationsFilters);
+    expect(screen.getByText("Nenhum canal conectado")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Conectar WhatsApp" })).toHaveAttribute("href", "/app/connections");
   });
 
   it("COM filtro e sem resultado: NÃO diz que a caixa está vazia, e nomeia o filtro", () => {

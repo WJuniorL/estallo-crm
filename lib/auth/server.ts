@@ -134,12 +134,27 @@ export function ehSessaoAusente(error: { name?: string } | null | undefined): bo
   return error?.name === "AuthSessionMissingError";
 }
 
+/**
+ * O `getUser()` da requisição — UMA ida ao GoTrue por requisição, não uma por pergunta.
+ *
+ * `mfa.listFactors()` do auth-js chama `getUser()` pela rede só para ler `user.factors` (2.117.3,
+ * `GoTrueClient._listFactors`). Com `loadAuthUser` e `isMfaEnrolled` perguntando cada um por si, toda
+ * rota da API validava o mesmo JWT duas vezes no GoTrue (mais a do `proxy.ts`): medido em 13/11/2026,
+ * 104 mil `GET /auth/v1/user` por dia para 36 mil requisições, e a organização do Supabase estourou a
+ * cota de egress do plano gratuito. Continua sendo `getUser()` (valida o JWT no servidor), nunca
+ * `getSession()`.
+ */
+const getUserDaRequisicao = cache(async () => {
+  const supabase = await createClient();
+  return supabase.auth.getUser();
+});
+
 export const loadAuthUser = cache(async (): Promise<AuthUser | null> => {
   const supabase = await createClient();
   const {
     data: { user },
     error,
-  } = await supabase.auth.getUser();
+  } = await getUserDaRequisicao();
   // ⚠️ O `error` era DESCARTADO — nem chegava a ser desestruturado —, e aqui
   // `user: null` é tão ambíguo quanto o `data: null` que a query logo abaixo
   // trata com todo o cuidado: significa "não está logado" (estado normal) E
@@ -389,10 +404,10 @@ export async function requireAuth(): Promise<AuthUser> {
  * fechado (a exceção vira 500 na rota, nunca 200).
  */
 export const isMfaEnrolled = cache(async (): Promise<boolean> => {
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.mfa.listFactors();
+  // A mesma leitura que o `listFactors()` faria (`user.factors` do `getUser()`), sem a segunda ida ao GoTrue.
+  const { data, error } = await getUserDaRequisicao();
   if (error) throw error;
-  return !!data?.totp?.some((f) => f.status === "verified");
+  return !!data.user?.factors?.some((f) => f.factor_type === "totp" && f.status === "verified");
 });
 
 /**

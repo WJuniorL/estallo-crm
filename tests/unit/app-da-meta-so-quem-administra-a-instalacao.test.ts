@@ -40,10 +40,9 @@ const tabelasDoServiceRole: string[] = [];
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({
     auth: {
-      getUser: async () => ({ data: { user: { id: USUARIO } }, error: null }),
+      getUser: async () => ({ data: { user: { id: USUARIO, factors: [] } }, error: null }),
       mfa: {
         getAuthenticatorAssuranceLevel: async () => ({ data: { currentLevel: "aal2" }, error: null }),
-        listFactors: async () => ({ data: { totp: [] }, error: null }),
       },
     },
     from: (tabela: string) => {

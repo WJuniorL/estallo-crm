@@ -208,6 +208,21 @@ class EstalloVpsTests(unittest.TestCase):
             key = dict(line.split('=', 1) for line in runtime.splitlines())['AI_CRED_AES_KEY']
             self.assertEqual(len(base64.b64decode(key, validate=True)), 32)
 
+    @patch.object(vps, 'pg')
+    def test_seed_secrets_puts_both_keys_in_the_database_without_replacing(self, pg):
+        # Sem estas linhas em private.app_secrets, SMTP, webhooks e CPF não cifram (12/11/2026).
+        with patch.object(vps, 'runtime', return_value={
+                'NUVEMSHOP_OAUTH_ENCRYPTION_KEY': 'a' * 64, 'CPF_ENCRYPTION_KEY': 'b' * 64}):
+            vps.seed_secrets()
+        sql = pg.call_args.args[1].decode()
+        self.assertIn(f"('nuvemshop_oauth_key', '{'a' * 64}')", sql)
+        self.assertIn(f"('cpf_key', '{'b' * 64}')", sql)
+        self.assertEqual(sql.count('on conflict (name) do nothing'), 2)
+        with patch.object(vps, 'runtime', return_value={
+                'NUVEMSHOP_OAUTH_ENCRYPTION_KEY': "x'; drop table t; --" * 3, 'CPF_ENCRYPTION_KEY': 'b' * 64}):
+            with self.assertRaises(ValueError):
+                vps.seed_secrets()
+
     @patch.object(vps, 'pg', return_value=b'1\n')
     @patch.object(vps, 'pull')
     @patch.object(vps, 'REPO', Path(__file__).resolve().parents[2])
@@ -287,6 +302,44 @@ class EstalloVpsTests(unittest.TestCase):
         vps.prune_backups()
         remaining = sorted(p.name for p in (vps.ROOT / 'backups').iterdir())
         self.assertEqual(remaining, sorted([d.name for d in old[:vps.BACKUPS_KEPT]] + [in_progress.name]))
+
+    @patch.object(vps, 'run')
+    def test_prune_images_keeps_current_and_previous_and_skips_foreign(self, run):
+        old = '3' * 40
+        listing = '\n'.join([
+            f'registry.example/estallo/estallo-crm:{NEW}', f'registry.example/estallo/estallo-crm-worker:{OLD}',
+            f'registry.example/estallo/estallo-crm-scheduler:{old}',
+            f'registry.example/antigo/estallo-crm:{old}',
+            'devlikeapro/waha:latest-2026.7.2', 'redis:7-alpine', 'alpine:3.20'])
+
+        def fake(args, **_):
+            if args[:3] == ['docker', 'image', 'ls']:
+                return listing.encode()
+            if args[-1].endswith(':' + old) and '/antigo/' in args[-1]:
+                raise RuntimeError('em uso')  # recusa do Docker não derruba a limpeza
+            return b''
+        run.side_effect = fake
+        with patch('sys.stdout', io.StringIO()):
+            vps.prune_images((NEW, OLD))
+        removed = [call.args[0][-1] for call in run.call_args_list if call.args[0][:3] == ['docker', 'image', 'rm']]
+        self.assertEqual(sorted(removed), sorted([f'registry.example/estallo/estallo-crm-scheduler:{old}',
+                                                  f'registry.example/antigo/estallo-crm:{old}']))
+        self.assertFalse(any('--force' in call.args[0] or '-f' in call.args[0] for call in run.call_args_list))
+
+    @patch.object(vps, 'state', return_value={'sha': OLD})
+    @patch.object(vps, 'available_memory', return_value=1700)
+    @patch.object(vps, 'pull')
+    @patch.object(vps, 'backup')
+    @patch.object(vps, 'stack')
+    @patch.object(vps, 'wait_healthy')
+    @patch.object(vps, 'save')
+    @patch.object(vps, 'prune_images', side_effect=RuntimeError('docker fora'))
+    def test_validated_deploy_prunes_images_and_survives_prune_failure(
+            self, prune, save, _wait, _stack, _backup, _pull, _memory, _state):
+        with patch('sys.stdout', io.StringIO()):
+            vps.deploy(NEW)
+        prune.assert_called_once_with((NEW, OLD))
+        save.assert_called_once()
 
     def test_prune_deletes_nothing_while_fewer_than_kept(self):
         made = [self.make_backup(hours_ago=24 * day + 1) for day in range(3)]

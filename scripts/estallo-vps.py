@@ -189,6 +189,27 @@ def configure(credentials):
     print('Configuração protegida preparada; valores não exibidos.')
 
 
+SECRETS_IN_DATABASE = (('nuvemshop_oauth_key', 'NUVEMSHOP_OAUTH_ENCRYPTION_KEY'),
+                       ('cpf_key', 'CPF_ENCRYPTION_KEY'))
+
+
+def seed_secrets():
+    # As cifras do banco (fn_encrypt_oauth: SMTP, webhooks, Google, Meta; encrypt_cpf)
+    # leem a chave de private.app_secrets, que o kit semeia (ensure_encryption_key).
+    # Sem a linha, toda gravação de segredo responde "cifra indisponível" e o CPF
+    # não é salvo. "do nothing": trocar chave existente invalidaria o que ela cifrou.
+    values = runtime()
+    lines = []
+    for name, key in SECRETS_IN_DATABASE:
+        value = values.get(key, '')
+        if not re.fullmatch(r'[A-Za-z0-9+/=]{32,}', value):
+            raise ValueError(f'{key} ausente ou inválida na configuração')
+        lines.append(f"insert into private.app_secrets (name, value) values ('{name}', '{value}') "
+                     'on conflict (name) do nothing;')
+    pg(['psql', '--single-transaction', '-v', 'ON_ERROR_STOP=1'], ''.join(l + '\n' for l in lines).encode())
+    print('Chaves de cifra presentes no banco.')
+
+
 def bootstrap(sha):
     # Retoma só uma instalação cujo baseline completo foi confirmado neste host.
     # Nunca trata um banco alheio ou uma aplicação parcial como bootstrap válido.
@@ -211,6 +232,7 @@ def bootstrap(sha):
            b'create extension if not exists pg_trgm with schema public;\n')
         pg(['psql', '-v', 'ON_ERROR_STOP=1'], baseline)
         save(marker, json.dumps(dict(project=PROJECT, baseline_sha256=digest)))
+    seed_secrets()
     run(['docker', 'run', '--rm', '--env-file', str(RUNTIME),
          '--env-file', str(ROOT / 'owner.env'),
          f'{image_namespace()}/estallo-crm-worker:{image_tag(sha)}',
@@ -269,6 +291,30 @@ def pull(sha):
         return
     for image in IMAGES:
         run(['docker', 'pull', f'{image_namespace()}/{image}:{image_tag(sha)}'])
+
+
+def prune_images(keep):
+    """Remove imagens nossas (qualquer namespace) cuja tag não é de um commit em `keep`.
+
+    Cada deploy deixava ~1 GB de imagens no disco e nada as apagava: em 12/11/2026
+    eram dezenas de versões, inclusive do namespace antigo (estallosolucoes).
+    Sem --force: imagem em uso por contêiner o Docker recusa, e a recusa é ignorada.
+    O commit anterior fica para o rollback; versões mais velhas voltam pelo registro.
+    """
+    # ponytail: entrada de local-images.json de commit podado fica órfã; o pull dela
+    # falha alto (inspect), o que basta para um rollback que ninguém pede para tão longe.
+    tags = {image_tag(sha) for sha in keep if sha}
+    removed = 0
+    for reference in run(['docker', 'image', 'ls', '--format',
+                          '{{.Repository}}:{{.Tag}}']).decode().split():
+        repository, _, tag = reference.rpartition(':')
+        if repository.rsplit('/', 1)[-1] in IMAGES and tag not in tags:
+            try:
+                run(['docker', 'image', 'rm', reference])
+                removed += 1
+            except RuntimeError:
+                pass
+    print(f'{removed} imagem(ns) antiga(s) removida(s).')
 
 
 def available_memory():
@@ -541,6 +587,10 @@ def deploy(sha, backup_ready=False):
     save(STATE, json.dumps({'sha': sha, 'previous_sha': previous.get('sha'),
                            'deployed_at': datetime.datetime.now(datetime.timezone.utc).isoformat()}))
     print('Deploy validado: stack saudável, HTTPS e margem de memória conferidos.')
+    try:
+        prune_images((sha, previous.get('sha')))
+    except Exception as error:  # limpeza nunca derruba um deploy validado
+        print(f'Limpeza de imagens antigas não concluída: {error}')
 
 
 def post(payload):
@@ -607,7 +657,7 @@ def agent():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=['configure', 'bootstrap', 'deploy', 'rollback', 'backup', 'agent', 'verify'])
+    parser.add_argument('action', choices=['configure', 'bootstrap', 'deploy', 'rollback', 'backup', 'agent', 'verify', 'seed-secrets'])
     parser.add_argument('--credentials')
     parser.add_argument('--sha')
     parser.add_argument('--image-tag')
@@ -638,6 +688,8 @@ def main():
             backup()
         elif args.action == 'agent':
             agent()
+        elif args.action == 'seed-secrets':
+            seed_secrets()
         elif not healthy(state().get('sha')):
             raise RuntimeError('Verificação de saúde reprovada')
         else:

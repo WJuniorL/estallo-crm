@@ -291,6 +291,9 @@ Cada backup novo apaga os locais mais velhos que os 5 completos mais recentes (`
 sem isso, a pasta encheu os 67 GB da VPS em 11/11/2026. O `deploy` não faz backup novo quando
 já existe um completo das últimas 24 h (`BACKUP_REUSE_HOURS`), porque ele só troca imagens e
 não aplica migrations; o fluxo `agent`, que aplica, continua fazendo backup antes.
+Depois de um deploy validado, as imagens nossas (de qualquer namespace, inclusive o antigo
+`estallosolucoes`) que não são do commit atual nem do anterior são removidas, sem `--force`;
+versões mais velhas voltam pelo registro se um rollback as pedir.
 
 No piloto, o computador do proprietário faz a cópia externa pela tarefa Windows
 `Estallo CRM - Backup externo`, às 03:20 e ao entrar no Windows. Ela executa uma

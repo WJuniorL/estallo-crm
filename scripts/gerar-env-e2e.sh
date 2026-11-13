@@ -182,6 +182,8 @@ COBRANCA_API_BASE_URL_TESTE=http://127.0.0.1:3995
 # eram iguais (\`e2e-placeholder…\` aqui, \`ci-placeholder…\` lá) — a promessa por
 # coincidência durou até a primeira divergência, que custou 8 specs em 401.
 INTERNAL_SECRET=e2e-placeholder-nao-e-segredo
+# O assistente de boas-vindas segue exercitado pela suíte (produção o deixa desligado).
+ONBOARDING_GUIADO=ligado
 IMPERSONATE_COOKIE_SECRET=e2e-support-cookie-local-placeholder-32-chars
 # As três abaixo são chaves de CIFRA de verdade: o app exige 32 bytes e recusa
 # um rótulo. Medido — com o placeholder, criar credencial de IA devolvia 500

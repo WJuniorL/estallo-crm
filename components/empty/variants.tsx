@@ -25,13 +25,18 @@ interface VariantProps {
   secondary?: EmptyStateAction;
 }
 
-export function EmptyInbox({ primary, secondary }: VariantProps = {}) {
+export function EmptyInbox({ primary, secondary, semCanal = false }: VariantProps & { semCanal?: boolean } = {}) {
   const t = useT();
+  // Sem canal, "quando chegarem mensagens" é promessa que não se cumpre: diz o que falta e onde.
   return (
     <EmptyState
       icon={ChatCircle}
-      headline={t("Sem conversas por aqui")}
-      subcopy={t("Quando chegarem mensagens, elas aparecem aqui em tempo real.")}
+      headline={semCanal ? t("Nenhum canal conectado") : t("Sem conversas por aqui")}
+      subcopy={
+        semCanal
+          ? t("Conecte seu WhatsApp para começar a receber mensagens aqui.")
+          : t("Quando chegarem mensagens, elas aparecem aqui em tempo real.")
+      }
       primary={primary}
       secondary={secondary}
     />

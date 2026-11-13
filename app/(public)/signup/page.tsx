@@ -117,6 +117,18 @@ export default async function SignupPage({
           convidado e cria a conta com Google ganharia uma empresa própria. */}
       <EntrarComGoogle convite={convite?.token} />
 
+      <p className="text-center text-xs text-muted-foreground">
+        {t("Ao criar sua conta, você aceita os")}{" "}
+        <a className="underline underline-offset-4" href="/legal/terms" target="_blank" rel="noreferrer">
+          {t("Termos de Uso")}
+        </a>{" "}
+        {t("e a")}{" "}
+        <a className="underline underline-offset-4" href="/legal/privacy" target="_blank" rel="noreferrer">
+          {t("Política de Privacidade")}
+        </a>
+        .
+      </p>
+
       <p className="text-center text-sm text-muted-foreground">
         {t("Já tem conta?")}{" "}
         <Link href="/login" className="font-medium text-foreground underline underline-offset-4">

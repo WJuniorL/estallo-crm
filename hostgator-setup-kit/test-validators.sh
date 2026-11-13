@@ -3757,7 +3757,7 @@ ESTADO="$TMPDIR_STUB/estado.json"
 corpo=""; metodo=GET
 prev=""
 for a in "$@"; do
-  case "$prev" in -X) metodo="$a";; -d) corpo="$a";; esac
+  case "$prev" in -X) metodo="$a";; -d) corpo="$a";; --data-binary) if [ "$a" = "@-" ]; then corpo="$(cat)"; else corpo="$a"; fi;; esac
   prev="$a"
 done
 if [ "$metodo" = PATCH ]; then

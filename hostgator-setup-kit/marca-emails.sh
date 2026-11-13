@@ -229,8 +229,19 @@ renderizar() {  # renderizar <arquivo>
     | trocar "__ACCENT__" "$ACCENT"
 }
 
-HTML_CONFIRM="$(renderizar "$PROJ_DIR/supabase/templates/confirmation.html")" || instrua_e_saia "não achei supabase/templates/ — rode de dentro do repositório."
-HTML_RECOVERY="$(renderizar "$PROJ_DIR/supabase/templates/recovery.html")" || instrua_e_saia "não achei supabase/templates/ — rode de dentro do repositório."
+# O molde que o APP serve (logo, cartão, marca do banco) vence o arquivo cru:
+# é o mesmo que o GoTrue próprio usa por GOTRUE_MAILER_TEMPLATES_*. Fora do ar
+# (primeira instalação, antes do app subir) ou sem o link certo, vale o arquivo.
+do_app() {  # do_app <modelo>
+  [ -n "$APP_URL" ] && [ -z "$RENDER_EM" ] || return 1
+  local html
+  html="$(curl -fsS --max-time 15 "${APP_URL%/}/email-templates/$1" 2>/dev/null)" || return 1
+  case "$html" in *'{{ .RedirectTo }}&token_hash={{ .TokenHash }}'*) ;; *) return 1;; esac
+  printf '<!-- %s -->\n%s' "$MARCADOR" "$html"
+}
+
+HTML_CONFIRM="$(do_app confirmation || renderizar "$PROJ_DIR/supabase/templates/confirmation.html")" || instrua_e_saia "não achei supabase/templates/ — rode de dentro do repositório."
+HTML_RECOVERY="$(do_app recovery || renderizar "$PROJ_DIR/supabase/templates/recovery.html")" || instrua_e_saia "não achei supabase/templates/ — rode de dentro do repositório."
 
 if [ -n "$RENDER_EM" ]; then
   # Renderiza os modelos com a marca do .env e para por aqui.
@@ -316,9 +327,12 @@ esac
 api() {  # api <método> <caminho> [corpo]
   local method="$1" path="$2" body="${3:-}"
   if [ -n "$body" ]; then
+    # Corpo pela ENTRADA, nunca por argumento: no Git Bash do Windows o argumento
+    # passa pela página de código do sistema e o acento chega como "?" (medido em
+    # 12/11/2026: "est� quase pronta" no e-mail de produção).
     curl -sS -X "$method" "$API$path" \
       -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
-      -H "Content-Type: application/json" -d "$body"
+      -H "Content-Type: application/json; charset=utf-8" --data-binary @- <<<"$body"
   else
     curl -sS -X "$method" "$API$path" -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"
   fi

@@ -24,6 +24,7 @@ import { listarConexoesCaidas, type ConexaoCaida } from "@/lib/channels/health";
 import { VoiceCallProvider } from "@/components/voice/VoiceCallContext";
 import { ProvedorDaOcupacaoDoRodape } from "@/lib/ui/rodape-ocupado";
 import { acessoFoiRevogado } from "@/lib/auth/vinculo-revogado";
+import { env } from "@/lib/env";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await loadAuthUser();
@@ -111,7 +112,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     // Suspensão ANTES de onboarding: a org suspensa que nunca terminou o
     // onboarding ia para `/onboarding` e escapava da tela da suspensão.
     if (!ehOperante(orgRow?.status)) redirect("/account-suspended");
-    if (orgRow && !orgRow.onboarded_at && !user.support) redirect("/onboarding");
+    if (orgRow && !orgRow.onboarded_at && !user.support && env.ONBOARDING_GUIADO === "ligado") redirect("/onboarding");
     // G4-02: expõe visibility_mode ao client (inbox decide visões visíveis).
     // Fonte confiável (admin client, org do cookie validado) — nunca do body.
     const mode = (orgRow?.settings as { visibility_mode?: VisibilityMode } | null)?.visibility_mode;

@@ -70,41 +70,44 @@ export function assuntoDoModelo(modelo: ModeloDeAcesso, marca: MarcaDeSaida): st
  * de `invite.ts` — inclusive a dimensão no atributo, que o Outlook desktop
  * exige porque descarta `height` de style em imagem.
  */
-export function montarTemplateDeAcesso(modelo: ModeloDeAcesso, marca: MarcaDeSaida): string {
+export function montarTemplateDeAcesso(modelo: ModeloDeAcesso, marca: MarcaDeSaida, logoPadraoUrl?: string): string {
   const t = COPIA[modelo];
   const nome = escapeHtml(marca.nome);
+  // A identidade fixa não tem logo no banco (`marcaDaSaida` devolve null): quem
+  // serve o molde passa o logo do produto, em URL absoluta (e-mail não resolve relativa).
+  const logoUrl = marca.logoUrl ?? logoPadraoUrl ?? null;
+  const logo = logoUrl
+    ? `<img src="${escapeHtml(logoUrl)}" alt="${nome}" height="32" style="height:32px;width:auto;max-width:180px;border:0;display:block">`
+    : `<span style="font-size:18px;font-weight:700;color:${NEUTROS_DE_SAIDA.texto}">${nome}</span>`;
 
-  const logo = marca.logoUrl
-    ? `<p style="margin:0 0 24px"><img src="${escapeHtml(marca.logoUrl)}" alt="${nome}" height="40" style="height:40px;width:auto;max-width:200px;border:0;display:block"></p>`
-    : "";
-
-  // As chaves duplas ficam CRUAS de propósito: o GoTrue as substitui.
+  // `&`, nunca `?`: `.RedirectTo` já chega com `?type=` (app/actions/auth/signUp.ts).
   const destino = "{{ .RedirectTo }}&token_hash={{ .TokenHash }}";
 
   return `<!doctype html>
 <html lang="pt-BR">
-<body style="margin:0;padding:0;background:${NEUTROS_DE_SAIDA.fundo};font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:${NEUTROS_DE_SAIDA.texto}">
-  <div style="max-width:560px;margin:0 auto;padding:32px 24px">
-    ${logo}
-    <h1 style="font-size:22px;line-height:1.3;margin:0 0 16px;color:${NEUTROS_DE_SAIDA.texto}">
-      ${escapeHtml(t.titulo)}
-    </h1>
-    <p style="margin:0 0 16px;font-size:15px;line-height:1.5">
-      ${escapeHtml(t.corpo(marca.nome))}
-    </p>
-    <p style="margin:24px 0">
-      <a href="${destino}" style="display:inline-block;padding:12px 24px;background:${marca.accent};color:${marca.accentFg};border-radius:6px;text-decoration:none;font-weight:600">
-        ${escapeHtml(t.botao)}
-      </a>
-    </p>
-    <p style="margin:0 0 8px;font-size:13px;color:${NEUTROS_DE_SAIDA.suave}">
-      Ou copie e cole este link no navegador:<br>
-      <span style="word-break:break-all;color:${marca.accent}">${destino}</span>
-    </p>
-    <p style="margin:24px 0 0;font-size:13px;color:${NEUTROS_DE_SAIDA.suave}">
-      ${escapeHtml(t.rodape)}
-    </p>
-  </div>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(t.titulo)}</title></head>
+<body style="margin:0;padding:0;background:${NEUTROS_DE_SAIDA.fundo};font-family:Manrope,system-ui,-apple-system,'Segoe UI',Arial,sans-serif;color:${NEUTROS_DE_SAIDA.texto}">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${NEUTROS_DE_SAIDA.fundo}">
+    <tr><td align="center" style="padding:40px 16px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px">
+        <tr><td style="padding:0 4px 20px">${logo}</td></tr>
+        <tr><td style="background:#ffffff;border:1px solid ${NEUTROS_DE_SAIDA.linha};border-radius:12px;padding:36px 32px">
+          <h1 style="font-size:22px;line-height:1.3;margin:0 0 12px;color:${NEUTROS_DE_SAIDA.texto}">${escapeHtml(t.titulo)}</h1>
+          <p style="margin:0 0 28px;font-size:15px;line-height:1.6;color:${NEUTROS_DE_SAIDA.texto}">${escapeHtml(t.corpo(marca.nome))}</p>
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+            <td style="border-radius:8px;background:${marca.accent}">
+              <a href="${destino}" style="display:inline-block;padding:14px 28px;font-size:15px;font-weight:600;color:${marca.accentFg};text-decoration:none;border-radius:8px">${escapeHtml(t.botao)}</a>
+            </td>
+          </tr></table>
+          <p style="margin:28px 0 0;font-size:13px;line-height:1.5;color:${NEUTROS_DE_SAIDA.suave}">
+            Se o botão não funcionar, copie e cole este link no navegador:<br>
+            <span style="word-break:break-all;color:${marca.accent}">${destino}</span>
+          </p>
+        </td></tr>
+        <tr><td style="padding:20px 4px 0;font-size:12px;line-height:1.5;color:${NEUTROS_DE_SAIDA.suave}">${escapeHtml(t.rodape)}</td></tr>
+      </table>
+    </td></tr>
+  </table>
 </body>
 </html>`;
 }

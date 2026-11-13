@@ -428,6 +428,14 @@ const schema = z.object({
   RESEND_FROM_EMAIL: z.string().optional().default(""),
 
   /**
+   * O assistente de boas-vindas (/onboarding) depois do cadastro. Desligado no
+   * Estallo CRM (decisão do dono, 12/11/2026): a empresa nova entra direto na
+   * Inbox e o aceite dos Termos fica no cadastro. O e2e liga para seguir
+   * exercitando o assistente, que continua no código.
+   */
+  ONBOARDING_GUIADO: z.enum(["ligado", "desligado"]).optional().default("desligado"),
+
+  /**
    * SMTP — o SEGUNDO transporte de e-mail, ao lado da Resend, nunca no lugar
    * dela. Quem já roda com Resend não mexe em nada; quem instala numa VPS e não
    * quer criar conta em serviço externo preenche estas sete e o envio sai pelo

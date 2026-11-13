@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { audit } from "@/lib/audit";
+import { env } from "@/lib/env";
 
 /** Normaliza o nome da empresa para um slug candidato (citext unique no DB). */
 export function slugify(name: string): string {
@@ -112,6 +113,14 @@ export async function ensureTenantForUser(
         legal_name: orgName,
         status: "active",
         created_by: user.id,
+        // Sem assistente de boas-vindas (ONBOARDING_GUIADO desligado), a empresa já
+        // nasce configurada, e o aceite dos Termos é o do cadastro (aviso na tela).
+        ...(env.ONBOARDING_GUIADO === "ligado"
+          ? {}
+          : {
+              onboarded_at: new Date().toISOString(),
+              onboarding_state: { welcome: { accepted_at: new Date().toISOString(), display_name: orgName, aceite: "cadastro" } },
+            }),
       })
       .select("id, slug")
       .single();

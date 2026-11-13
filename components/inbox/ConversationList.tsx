@@ -160,7 +160,7 @@ export function ConversationList({
   if (items.length === 0 && filtrosAtivos.length === 0) {
     return (
       <div className="flex h-full items-center justify-center p-6">
-        <EmptyInbox />
+        <InboxVazia />
       </div>
     );
   }
@@ -214,5 +214,17 @@ export function ConversationList({
         )}
       </div>
     </div>
+  );
+}
+
+/** Caixa vazia: sem canal nenhum (lido, não falho nem carregando), leva à Central de Conexões. */
+function InboxVazia() {
+  const t = useT();
+  const canais = useChannelSessions();
+  const semCanal = !canais.isLoading && !canais.isError && (canais.data?.length ?? 0) === 0;
+  return semCanal ? (
+    <EmptyInbox semCanal primary={{ label: t("Conectar WhatsApp"), href: "/app/connections" }} />
+  ) : (
+    <EmptyInbox />
   );
 }

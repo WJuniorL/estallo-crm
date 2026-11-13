@@ -56,7 +56,11 @@ export function useMessagesRealtime(conversationId: string | null) {
   });
 
   const onChange = useCallback(() => {
-    if (conversationId) qc.invalidateQueries({ queryKey: ["messages", conversationId] });
+    if (conversationId) {
+      qc.invalidateQueries({ queryKey: ["messages", conversationId] });
+      // A sugestão de resposta nasce de mensagem nova; o painel deixou de consultar a cada 4 s.
+      qc.invalidateQueries({ queryKey: ["reply-drafts", conversationId] });
+    }
     agendarRecargaDasConversas(qc);
   }, [qc, conversationId]);
 

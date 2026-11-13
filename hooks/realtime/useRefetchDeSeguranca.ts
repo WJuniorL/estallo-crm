@@ -126,7 +126,11 @@ export function useRefetchDeSeguranca<T>({
 
   useEffect(() => {
     if (!enabled) return;
-    const timer = setInterval(() => void verificar(), intervaloMs);
+    // Aba escondida não verifica: ninguém está olhando, e o `aoVoltar` abaixo relê na hora em que alguém
+    // volta. Sem isto, cada aba esquecida aberta relia a lista inteira a cada 45 s o dia todo.
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") void verificar();
+    }, intervaloMs);
 
     // AO VOLTAR PARA A ABA, imediatamente: é o momento em que o usuário mais
     // acredita no que vê, e é justamente quando a tela pode estar mais velha —

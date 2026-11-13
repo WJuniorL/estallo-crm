@@ -99,7 +99,10 @@ export function InterfaceRefresh({
     const refresh = () => {
       void check();
     };
-    const timer = setInterval(refresh, 30_000);
+    // Rede de segurança do realtime acima: aba escondida não consulta (ao voltar, o `visibilitychange` relê).
+    const timer = setInterval(() => {
+      if (!document.hidden) refresh();
+    }, 30_000);
     window.addEventListener("focus", refresh);
     window.addEventListener("online", refresh);
     document.addEventListener("visibilitychange", refresh);

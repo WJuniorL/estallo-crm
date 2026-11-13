@@ -19,6 +19,7 @@ type Draft = {
   error_code: string | null;
   proposals: Array<{ tool: string; arguments: unknown }>;
 };
+const EM_ANDAMENTO = new Set(["generating", "approved", "sending"]);
 export function ReplyReviewPanel({
   conversationId,
   disabled,
@@ -35,7 +36,12 @@ export function ReplyReviewPanel({
       apiClient.get<{ data: { drafts: Draft[] } }>(
         `/api/v1/conversations/${conversationId}/draft-reply`,
       ),
-    refetchInterval: 4000,
+    // Rápido só enquanto uma sugestão está andando sozinha (gerando, aprovada aguardando envio, enviando).
+    // Parada, o painel ficava consultando a cada 4 s toda conversa aberta — medido em 13/11/2026 como a
+    // rota mais chamada da API (13,5 mil por dia, ~9 idas ao Supabase cada) quando o plano gratuito estourou
+    // o egress. Mensagem nova na conversa invalida esta consulta (`useMessagesRealtime`); os 30 s são a rede.
+    refetchInterval: (q) =>
+      q.state.data?.data.drafts.some((d) => EM_ANDAMENTO.has(d.status)) ? 4000 : 30_000,
     retry: false,
   });
   const [edits, setEdits] = useState<Record<string, string>>({}),

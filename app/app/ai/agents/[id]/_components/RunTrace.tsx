@@ -134,7 +134,7 @@ export function RunTrace({
 
       {finalText ? (
         <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-sm">
-          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-primary">
+          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-accent-text">
             {t("Mensagem que SERIA enviada")}
           </p>
           <p className="whitespace-pre-wrap">{finalText}</p>

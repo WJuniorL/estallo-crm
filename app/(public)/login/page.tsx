@@ -37,7 +37,7 @@ export default async function LoginPage({
       </div>
       {reset === "success" && (
         <div
-          className="rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm"
+          className="rounded-md border border-primary/30 bg-accent-soft px-3 py-2 text-sm"
           role="status"
         >
           {t("Senha redefinida com sucesso. Entre com a nova senha.")}

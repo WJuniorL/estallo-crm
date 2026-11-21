@@ -609,7 +609,7 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
         {respondendo && mode === "reply" && (
           <div className="mb-1 flex items-start gap-2 rounded-md border-l-2 border-primary bg-muted/60 px-2 py-1.5">
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] font-medium text-primary">
+              <div className="text-[11px] font-medium text-accent-text">
                 {respondendo.direction === "outbound" ? t("Você") : t("Cliente")}
               </div>
               <div className="line-clamp-2 text-xs text-muted-foreground">
@@ -632,7 +632,7 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
           <div className="mb-1.5 flex">
             <span
               data-testid="chip-agendamento"
-              className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 py-1 pl-2.5 pr-1 text-xs font-medium text-primary"
+              className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft py-1 pl-2.5 pr-1 text-xs font-medium text-accent-text"
             >
               <button
                 type="button"
@@ -647,7 +647,7 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
                 type="button"
                 onClick={() => setAgendarPara(null)}
                 aria-label={t("Remover agendamento")}
-                className="rounded-full p-0.5 hover:bg-primary/15"
+                className="rounded-full p-0.5 hover:bg-accent-soft"
               >
                 <X className="size-3.5" />
               </button>
@@ -673,7 +673,7 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
               type="button"
               size="icon"
               variant="ghost"
-              className={cn("h-8 w-8 shrink-0", agendando && "text-primary")}
+              className={cn("h-8 w-8 shrink-0", agendando && "text-accent-text")}
               aria-label={t("Agendar envio")}
               title={t("Agendar envio")}
               aria-pressed={agendando}

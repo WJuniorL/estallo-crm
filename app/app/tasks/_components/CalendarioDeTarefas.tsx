@@ -198,7 +198,7 @@ export function CalendarioDeTarefas({ tarefas, podeEditar, aoAbrirTarefa, aoClic
                       ? "bg-muted text-muted-foreground line-through"
                       : estaAtrasada(tarefa)
                         ? "bg-destructive/15 font-semibold text-destructive"
-                        : "bg-primary/10 text-primary",
+                        : "bg-accent-soft text-accent-text",
                   )}
                 >
                   <span

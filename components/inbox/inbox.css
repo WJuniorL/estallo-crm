@@ -1006,7 +1006,7 @@
   cursor: pointer;
 }
 .ibx-bubble.ibx-agendada .ibx-bubble-label {
-  color: var(--ibx-blue);
+  color: var(--color-accent-text);
   opacity: 1;
 }
 .ibx-bubble.ibx-agendada:hover,

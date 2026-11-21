@@ -151,7 +151,7 @@ function GrupoDeDuplicados({
                 {c.phone_number ? phoneForDisplay(c.phone_number) : "—"}
               </span>
               {c.id === principal ? (
-                <span className="mt-1 block text-xs font-medium text-primary">
+                <span className="mt-1 block text-xs font-medium text-accent-text">
                   {t("Este fica")}
                 </span>
               ) : (

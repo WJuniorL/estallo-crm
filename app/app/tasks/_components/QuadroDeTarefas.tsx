@@ -143,10 +143,13 @@ export function QuadroDeTarefas({
   return (
     <DragDropContext onDragEnd={aoSoltar}>
       <div
-        className="flex min-h-0 flex-1 items-start overflow-auto pb-4"
+        // Do tablet para cima as 4 colunas DIVIDEM a largura (crescem quando a
+        // barra lateral fecha) e não há rolagem lateral; no celular, uma coluna
+        // por tela com rolagem lateral e encaixe.
+        className="flex min-h-0 flex-1 snap-x items-start overflow-auto pb-4 md:snap-none md:overflow-x-hidden"
         data-testid="quadro-de-tarefas"
       >
-        <div className="flex min-h-full w-max gap-3">
+        <div className="flex min-h-full w-max gap-3 md:w-full">
           {COLUNAS_DO_QUADRO.map((status) => {
             const sentido = ordem[status];
             const lista = ordenarTarefas(colunas[status], sentido);
@@ -155,7 +158,7 @@ export function QuadroDeTarefas({
                 key={status}
                 aria-label={titulo[status]}
                 data-coluna-de-tarefas={status}
-                className="flex w-[85vw] max-w-[320px] shrink-0 snap-center flex-col md:w-[300px]"
+                className="flex w-[85vw] max-w-[320px] shrink-0 snap-center flex-col md:w-auto md:min-w-0 md:max-w-none md:flex-1 md:shrink"
               >
                 <header className="sticky top-0 z-10 flex items-center justify-between gap-2 bg-background pb-2">
                   <div className="flex min-w-0 items-center gap-2">
@@ -171,24 +174,22 @@ export function QuadroDeTarefas({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 gap-1 px-2 text-[11px] text-muted-foreground"
+                    className="size-7 shrink-0 p-0 text-muted-foreground"
                     onClick={() => alternar(status)}
                     aria-label={`${titulo[status]}: ${
                       sentido === "antigas"
                         ? t("prazo mais antigo primeiro")
                         : t("prazo mais recente primeiro")
                     }`}
+                    title={sentido === "antigas" ? t("Mais antigas primeiro") : t("Mais recentes primeiro")}
                     data-testid={`ordem-${status}`}
                     data-sentido={sentido}
                   >
                     {sentido === "antigas" ? (
-                      <SortAscending size={14} aria-hidden />
+                      <SortAscending size={16} aria-hidden />
                     ) : (
-                      <SortDescending size={14} aria-hidden />
+                      <SortDescending size={16} aria-hidden />
                     )}
-                    {sentido === "antigas"
-                      ? t("Mais antigas primeiro")
-                      : t("Mais recentes primeiro")}
                   </Button>
                 </header>
                 <div className="flex flex-1 flex-col rounded-2xl border border-border bg-muted/20">
@@ -199,7 +200,7 @@ export function QuadroDeTarefas({
                         {...provided.droppableProps}
                         className={cn(
                           "flex flex-1 flex-col gap-2 rounded-2xl p-2 transition-colors",
-                          snapshot.isDraggingOver && "bg-accent/10 ring-2 ring-accent/40",
+                          snapshot.isDraggingOver && "bg-accent-soft ring-2 ring-accent/40",
                         )}
                       >
                         {lista.map((tarefa, i) => (

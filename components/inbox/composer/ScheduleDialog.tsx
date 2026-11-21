@@ -102,7 +102,7 @@ function Formulario({ onOpenChange, nomeDoContato, inicial, corpoInicial, salvan
       <DialogContent className="sm:max-w-[460px]">
         <DialogHeader>
           <div className="flex items-start gap-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+            <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-accent-soft text-accent-text">
               <Clock size={20} aria-hidden />
             </span>
             <div className="min-w-0 space-y-1">
@@ -137,12 +137,12 @@ function Formulario({ onOpenChange, nomeDoContato, inicial, corpoInicial, salvan
                   aria-pressed={ativa}
                   className={cn(
                     "flex items-start gap-2 rounded-lg border border-border p-2.5 text-left transition-colors hover:border-primary/60",
-                    ativa && "border-primary bg-primary/10",
+                    ativa && "border-primary bg-accent-soft",
                   )}
                 >
-                  <Icone size={16} className={cn("mt-0.5 shrink-0", ativa ? "text-primary" : "text-muted-foreground")} aria-hidden />
+                  <Icone size={16} className={cn("mt-0.5 shrink-0", ativa ? "text-accent-text" : "text-muted-foreground")} aria-hidden />
                   <span className="min-w-0">
-                    <span className={cn("block text-sm font-medium", ativa && "text-primary")}>{titulos[chave]}</span>
+                    <span className={cn("block text-sm font-medium", ativa && "text-accent-text")}>{titulos[chave]}</span>
                     <span className="block text-xs text-muted-foreground">{rotuloDoHorario(q, t, locale)}</span>
                   </span>
                 </button>
@@ -176,7 +176,7 @@ function Formulario({ onOpenChange, nomeDoContato, inicial, corpoInicial, salvan
           role="status"
           className={cn(
             "flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm",
-            valido ? "bg-primary/10 text-foreground" : "bg-destructive/10 text-destructive",
+            valido ? "bg-accent-soft text-foreground" : "bg-destructive/10 text-destructive",
           )}
         >
           <Clock size={16} className="shrink-0" aria-hidden />

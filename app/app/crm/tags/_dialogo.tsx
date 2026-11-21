@@ -22,7 +22,7 @@ function Secao({ icone, titulo, children }: { icone: ReactNode; titulo: string; 
   return (
     <div className="space-y-2.5">
       <div className="flex items-center gap-2.5">
-        <span className="flex size-8 items-center justify-center rounded-lg bg-accent/10 text-accent-text">{icone}</span>
+        <span className="flex size-8 items-center justify-center rounded-lg bg-accent-soft text-accent-text">{icone}</span>
         <span className="text-sm font-medium">{titulo}</span>
       </div>
       {children}
@@ -128,7 +128,7 @@ export function DialogoDeTag({
                   className={cn(
                     "flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-medium transition-colors disabled:cursor-not-allowed",
                     entidade === e
-                      ? "bg-accent/10 text-accent-text ring-1 ring-accent/30"
+                      ? "bg-accent-soft text-accent-text ring-1 ring-accent/30"
                       : "bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-50",
                   )}
                 >

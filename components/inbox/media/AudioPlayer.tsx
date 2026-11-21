@@ -94,7 +94,7 @@ export function AudioPlayer({ messageId, isOutbound, src }: Props) {
           "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors",
           isOutbound
             ? "bg-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/30 dark:bg-black/15 dark:hover:bg-black/25"
-            : "bg-primary/10 text-primary hover:bg-primary/20",
+            : "bg-accent-soft text-accent-text hover:bg-primary/20",
         )}
       >
         {playing ? (
@@ -127,7 +127,7 @@ export function AudioPlayer({ messageId, isOutbound, src }: Props) {
           "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold tabular-nums transition-colors",
           isOutbound
             ? "bg-primary-foreground/20 text-primary-foreground dark:bg-black/15"
-            : "bg-primary/10 text-primary",
+            : "bg-accent-soft text-accent-text",
         )}
       >
         {RATES[rateIdx]}x

@@ -156,7 +156,7 @@ export function ActiveCallPanel() {
             className="object-cover"
           />
         ) : null}
-        <AvatarFallback className="bg-primary/15 text-sm font-semibold text-primary">
+        <AvatarFallback className="bg-accent-soft text-sm font-semibold text-accent-text">
           {inicial}
         </AvatarFallback>
       </Avatar>

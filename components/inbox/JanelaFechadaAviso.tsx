@@ -149,7 +149,7 @@ function Trecho({ texto }: { texto: string }) {
           <span
             key={i}
             data-testid="parametro-em-falta"
-            className="rounded-md bg-primary/10 px-1 py-0.5 font-mono text-[11px] font-medium text-primary ring-1 ring-primary/20"
+            className="rounded-md bg-accent-soft px-1 py-0.5 font-mono text-[11px] font-medium text-accent-text ring-1 ring-primary/20"
           >
             {parte}
           </span>

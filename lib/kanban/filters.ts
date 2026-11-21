@@ -68,6 +68,97 @@ export interface LeadFilters {
   lostCategory?: string;
   /** Estallo (0660): só negócios com este produto do catálogo. */
   produto?: string;
+  /**
+   * Intervalos de data, `YYYY-MM-DD`, inclusivos nas duas pontas. Criação e
+   * fechamento são `timestamptz` e comparam pelo DIA LOCAL de quem olha; a
+   * previsão já é data pura. Lead sem a data fica FORA quando o intervalo existe.
+   */
+  criadoDe?: string;
+  criadoAte?: string;
+  previsaoDe?: string;
+  previsaoAte?: string;
+  fechadoDe?: string;
+  fechadoAte?: string;
+  /** Filtro por campo personalizado do funil, chaveado pela `key` do campo. */
+  campos?: Record<string, FiltroDeCampo>;
+}
+
+/**
+ * Uma condição por campo. O TIPO do campo decide qual chave a tela preenche
+ * (texto → `contem`, número/moeda/data → `de`/`ate`, seleção → `opcoes`,
+ * sim/não → `booleano`); quem aplica não precisa do tipo, só do valor gravado.
+ */
+export interface FiltroDeCampo {
+  contem?: string;
+  opcoes?: string[];
+  de?: string;
+  ate?: string;
+  booleano?: boolean;
+}
+
+const DATA = /^\d{4}-\d{2}-\d{2}$/;
+const data = (v: string | null): string | undefined => (v && DATA.test(v) ? v : undefined);
+
+/** O dia LOCAL (`YYYY-MM-DD`) de um instante — o dia que a pessoa viu no calendário. */
+export function diaLocal(iso: string): string {
+  const d = new Date(iso);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+function dentro(dia: string | null | undefined, de?: string, ate?: string): boolean {
+  if (!de && !ate) return true;
+  if (!dia) return false;
+  if (de && dia < de) return false;
+  if (ate && dia > ate) return false;
+  return true;
+}
+
+function filtroDeCampoVazio(c: FiltroDeCampo): boolean {
+  return (
+    !c.contem?.trim() && !c.opcoes?.length && !c.de && !c.ate && typeof c.booleano !== "boolean"
+  );
+}
+
+function passaCampo(valor: unknown, c: FiltroDeCampo): boolean {
+  if (c.contem?.trim()) {
+    if (valor == null) return false;
+    if (!String(valor).toLowerCase().includes(c.contem.trim().toLowerCase())) return false;
+  }
+  if (c.opcoes?.length) {
+    const tem = Array.isArray(valor) ? valor.map(String) : valor == null ? [] : [String(valor)];
+    if (!c.opcoes.some((o) => tem.includes(o))) return false;
+  }
+  if (c.de || c.ate) {
+    if (valor == null || valor === "") return false;
+    const numero = typeof valor === "number" ? valor : Number(valor);
+    const ehData = typeof valor === "string" && DATA.test(valor.slice(0, 10));
+    if (ehData) {
+      if (!dentro(valor.slice(0, 10), c.de, c.ate)) return false;
+    } else if (Number.isFinite(numero)) {
+      if (c.de && numero < Number(c.de)) return false;
+      if (c.ate && numero > Number(c.ate)) return false;
+    } else return false;
+  }
+  if (typeof c.booleano === "boolean" && (valor === true) !== c.booleano) return false;
+  return true;
+}
+
+/** Quantos filtros estão ligados — o número do botão "Filtros". A busca fica fora: ela tem campo próprio. */
+export function contarFiltrosAtivos(f: LeadFilters): number {
+  let n = 0;
+  if (f.owner && f.owner !== "any") n++;
+  if (f.status && f.status !== "all") n++;
+  if (f.lostReason) n++;
+  if (f.lostCategory) n++;
+  if (marcadoresDoFiltro(f.tag).length) n++;
+  if (f.produto) n++;
+  if (f.overdueOnly) n++;
+  if (f.criadoDe || f.criadoAte) n++;
+  if (f.previsaoDe || f.previsaoAte) n++;
+  if (f.fechadoDe || f.fechadoAte) n++;
+  for (const c of Object.values(f.campos ?? {})) if (!filtroDeCampoVazio(c)) n++;
+  return n;
 }
 
 /**
@@ -99,16 +190,17 @@ export function primeiroMarcador(tag: LeadFilters["tag"]): string | undefined {
  * O `modo` só sai quando é `ou` — `e` é o padrão, e um `?tag=vip` de hoje não
  * ganha um `&modo=e` colado nele.
  */
-export function filtersFromParams(
-  sp: { get(key: string): string | null; getAll?: (key: string) => string[] },
-): LeadFilters {
+export function filtersFromParams(sp: {
+  get(key: string): string | null;
+  getAll?: (key: string) => string[];
+}): LeadFilters {
   const owner = sp.get("owner");
   const status = sp.get("status");
   // `getAll` não existe no tipo mínimo desta assinatura (o chamador real passa um
   // `URLSearchParams`), e o fallback de uma lista mantém o deep-link legível
   // quando um objeto de busca minimalista é passado em teste.
   const tags = typeof sp.getAll === "function" ? sp.getAll("tag") : [];
-  const tag = tags.length > 0 ? tags : sp.get("tag") ?? undefined;
+  const tag = tags.length > 0 ? tags : (sp.get("tag") ?? undefined);
   const search = sp.get("q");
   const modo = sp.get("modo") ?? undefined;
   return {
@@ -128,7 +220,36 @@ export function filtersFromParams(
     lostReason: sp.get("motivo") ?? undefined,
     lostCategory: sp.get("categoria") ?? undefined,
     produto: sp.get("produto") ?? undefined,
+    criadoDe: data(sp.get("criado_de")),
+    criadoAte: data(sp.get("criado_ate")),
+    previsaoDe: data(sp.get("previsao_de")),
+    previsaoAte: data(sp.get("previsao_ate")),
+    fechadoDe: data(sp.get("fechado_de")),
+    fechadoAte: data(sp.get("fechado_ate")),
+    ...camposDosParams(sp),
   };
+}
+
+/**
+ * Campos personalizados na URL: `cf.<key>.<condição>=valor`, com `opcoes`
+ * repetido (como o `tag`). Precisa de um `URLSearchParams` de verdade (com
+ * `keys`); o objeto mínimo dos testes antigos simplesmente não tem campos.
+ */
+function camposDosParams(sp: object): Pick<LeadFilters, "campos"> {
+  const real = sp as Partial<URLSearchParams>;
+  if (typeof real.keys !== "function" || typeof real.getAll !== "function") return {};
+  const campos: Record<string, FiltroDeCampo> = {};
+  for (const nome of new Set(real.keys())) {
+    const m = /^cf\.([a-z][a-z0-9_]*)\.(contem|opcoes|de|ate|booleano)$/i.exec(nome);
+    if (!m) continue;
+    const [, key, cond] = m;
+    const c = (campos[key!] ??= {});
+    const valores = real.getAll(nome);
+    if (cond === "opcoes") c.opcoes = valores.filter(Boolean);
+    else if (cond === "booleano") c.booleano = valores[0] === "sim";
+    else if (valores[0]) c[cond as "contem" | "de" | "ate"] = valores[0];
+  }
+  return Object.keys(campos).length ? { campos } : {};
 }
 
 export function filtersToParams(f: LeadFilters): string {
@@ -144,6 +265,19 @@ export function filtersToParams(f: LeadFilters): string {
   if (f.lostReason) p.set("motivo", f.lostReason);
   if (f.lostCategory) p.set("categoria", f.lostCategory);
   if (f.produto) p.set("produto", f.produto);
+  if (f.criadoDe) p.set("criado_de", f.criadoDe);
+  if (f.criadoAte) p.set("criado_ate", f.criadoAte);
+  if (f.previsaoDe) p.set("previsao_de", f.previsaoDe);
+  if (f.previsaoAte) p.set("previsao_ate", f.previsaoAte);
+  if (f.fechadoDe) p.set("fechado_de", f.fechadoDe);
+  if (f.fechadoAte) p.set("fechado_ate", f.fechadoAte);
+  for (const [key, c] of Object.entries(f.campos ?? {})) {
+    if (c.contem?.trim()) p.set(`cf.${key}.contem`, c.contem.trim());
+    for (const o of c.opcoes ?? []) p.append(`cf.${key}.opcoes`, o);
+    if (c.de) p.set(`cf.${key}.de`, c.de);
+    if (c.ate) p.set(`cf.${key}.ate`, c.ate);
+    if (typeof c.booleano === "boolean") p.set(`cf.${key}.booleano`, c.booleano ? "sim" : "nao");
+  }
   return p.toString();
 }
 
@@ -157,11 +291,7 @@ export interface ContextoDosFiltros {
   categoriaDo?: (motivo: string) => string | undefined;
 }
 
-export function applyFilters(
-  leads: Lead[],
-  f: LeadFilters,
-  contexto?: ContextoDosFiltros,
-): Lead[] {
+export function applyFilters(leads: Lead[], f: LeadFilters, contexto?: ContextoDosFiltros): Lead[] {
   const today = new Date().toISOString().slice(0, 10);
   const search = f.search?.trim().toLowerCase() ?? "";
   // Fora do `filter`: a escolha de E/OU é do filtro, não do card, e calculá-la a
@@ -188,10 +318,7 @@ export function applyFilters(
 
   return leads.filter((l) => {
     // "Sem responsável" é sem dono NENHUM — lead de dono agente tem dono.
-    if (
-      f.owner === "unassigned" &&
-      (l.owner_user_id !== null || l.owner_agent_id !== null)
-    )
+    if (f.owner === "unassigned" && (l.owner_user_id !== null || l.owner_agent_id !== null))
       return false;
     if (f.owner && f.owner !== "any" && f.owner !== "unassigned") {
       const agentId = parseAgentOwnerFilter(f.owner);
@@ -218,11 +345,7 @@ export function applyFilters(
     // `passaMarcador`, lá em cima.
     if (!passaMarcador(l)) return false;
     if (f.produto && !(l.produtos_ids ?? []).includes(f.produto)) return false;
-    if (
-      search &&
-      !`${l.title} ${l.description ?? ""}`.toLowerCase().includes(search)
-    )
-      return false;
+    if (search && !`${l.title} ${l.description ?? ""}`.toLowerCase().includes(search)) return false;
     // O LIMITE DE VALOR SÓ SE COMPARA COM A MOEDA EM QUE FOI ESCRITO (#1531).
     // Um negócio de 5.000,00 € não "passa" nem "reprova" um mínimo de
     // 1.000,00 R$: responder exigiria converter, e converter é o que a issue
@@ -241,6 +364,15 @@ export function applyFilters(
     if (f.overdueOnly) {
       if (l.status !== "open") return false;
       if (!l.expected_close_date || l.expected_close_date >= today) return false;
+    }
+    if (!dentro(l.created_at ? diaLocal(l.created_at) : null, f.criadoDe, f.criadoAte))
+      return false;
+    if (!dentro(l.expected_close_date?.slice(0, 10), f.previsaoDe, f.previsaoAte)) return false;
+    if (!dentro(l.closed_at ? diaLocal(l.closed_at) : null, f.fechadoDe, f.fechadoAte))
+      return false;
+    for (const [key, c] of Object.entries(f.campos ?? {})) {
+      if (filtroDeCampoVazio(c)) continue;
+      if (!passaCampo(l.custom_fields?.[key], c)) return false;
     }
     return true;
   });

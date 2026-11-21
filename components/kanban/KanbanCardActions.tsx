@@ -31,12 +31,13 @@ import { useAssignableAgents } from "@/hooks/kanban/useAssignableAgents";
 import { usePermission } from "@/hooks/auth/AuthProvider";
 import { LoseLeadDialog } from "./LoseLeadDialog";
 import { MoveToOtherPipelineDialog } from "./MoveToOtherPipelineDialog";
-import { EditLeadDialog } from "./EditLeadDialog";
 import type { Lead } from "@/lib/types/leads";
 
 interface KanbanCardActionsProps {
   lead: Lead;
   pipelineId: string;
+  /** "Editar" abre o dossiê do lead já nos campos (a gaveta lateral), não um diálogo. */
+  onEditar?: () => void;
 }
 
 // O menu permanece visível em mouse, toque e teclado.
@@ -80,11 +81,10 @@ export function KanbanCardActions(props: KanbanCardActionsProps) {
   );
 }
 
-function AcoesDoCard({ lead, pipelineId }: KanbanCardActionsProps) {
+function AcoesDoCard({ lead, pipelineId, onEditar }: KanbanCardActionsProps) {
   const t = useT();
   const [loseOpen, setLoseOpen] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const winMutation = useWinLead(pipelineId);
   const editMutation = useEditLead(pipelineId);
@@ -151,13 +151,11 @@ function AcoesDoCard({ lead, pipelineId }: KanbanCardActionsProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-          <DropdownMenuItem
-            onSelect={() => {
-              setEditOpen(true);
-            }}
-          >
-            <PencilSimple size={14} className="mr-2" /> {t("Editar")}
-          </DropdownMenuItem>
+          {onEditar && (
+            <DropdownMenuItem onSelect={onEditar}>
+              <PencilSimple size={14} className="mr-2" /> {t("Editar")}
+            </DropdownMenuItem>
+          )}
           {canAssign && (
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
@@ -312,12 +310,6 @@ function AcoesDoCard({ lead, pipelineId }: KanbanCardActionsProps) {
         leadId={lead.id}
         pipelineId={pipelineId}
         expectedUpdatedAt={lead.updated_at}
-      />
-      <EditLeadDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        lead={lead}
-        pipelineId={pipelineId}
       />
     </span>
   );

@@ -38,6 +38,7 @@ import {
 import { Plus } from "@/lib/ui/icons";
 import type { LeadFilters } from "@/lib/kanban/filters";
 import { applyFilters, filtersFromParams, filtersToParams } from "@/lib/kanban/filters";
+import { ordenacaoDaUrl, type OrdenacaoDoFunil } from "@/lib/kanban/ordenacao";
 import { categoriaDoMotivo } from "@/lib/leads/motivos-de-perda-do-funil";
 import { ROLE_RANK, type Role } from "@/lib/auth/types";
 import { cn } from "@/lib/utils";
@@ -64,15 +65,26 @@ export function PipelinePageClient({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const filters = useMemo(() => filtersFromParams(searchParams), [searchParams]);
-  const setFilters = useCallback(
-    (next: LeadFilters) => {
-      const qs = filtersToParams(next);
+  const ordenacao = ordenacaoDaUrl(searchParams.get("ordem"));
+  const escreverUrl = useCallback(
+    (next: LeadFilters, ordem: OrdenacaoDoFunil) => {
+      const p = new URLSearchParams(filtersToParams(next));
+      if (ordem !== "manual") p.set("ordem", ordem);
+      const qs = p.toString();
       // History API nativa, e não `router.replace`: esta página é dinâmica, e o
       // router relia o servidor (sessão, organização, funis) a cada filtro. O
       // Next sincroniza `useSearchParams` com o `replaceState` sem ida à rede.
       window.history.replaceState(null, "", qs ? `${pathname}?${qs}` : pathname);
     },
     [pathname],
+  );
+  const setFilters = useCallback(
+    (next: LeadFilters) => escreverUrl(next, ordenacao),
+    [escreverUrl, ordenacao],
+  );
+  const setOrdenacao = useCallback(
+    (ordem: OrdenacaoDoFunil) => escreverUrl(filters, ordem),
+    [escreverUrl, filters],
   );
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [newStage, setNewStage] = useState<string | undefined>();
@@ -275,6 +287,9 @@ export function PipelinePageClient({
         onChange={setFilters}
         leads={data?.leads ?? []}
         settings={data?.pipeline.settings}
+        ordenacao={ordenacao}
+        // A ordem é do QUADRO; no calendário ela não muda nada.
+        onOrdenacao={visao === "quadro" ? setOrdenacao : undefined}
       />
       {error ? (
         <div className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm">
@@ -308,6 +323,7 @@ export function PipelinePageClient({
             setNewOpen(true);
           }}
           podeRenomearEtapa={ROLE_RANK[role] >= ROLE_RANK.manager}
+          ordenacao={ordenacao}
         />
       )}
       <BulkActionBar

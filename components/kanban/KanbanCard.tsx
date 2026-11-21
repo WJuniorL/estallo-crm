@@ -23,6 +23,7 @@ import { ScoreSlot } from "./ScoreSlot";
 import { OwnerBadge } from "./OwnerBadge";
 import { ContatoNoCard } from "./ContatoNoCard";
 import { TarefasNoCard } from "./TarefasNoCard";
+import { MotivoDaPerdaNoCard } from "./MotivoDaPerdaNoCard";
 
 /** Os dois gestos de seleção que o card sabe relatar. */
 export type GestoDeSelecao = "alterna" | "intervalo";
@@ -57,7 +58,9 @@ interface KanbanCardProps {
    */
   onSelect?: (leadId: string, gesto: GestoDeSelecao) => void;
   /** Abrir o dossiê. Separado de `onSelect`: são gestos e intenções diferentes. */
-  onOpen?: (leadId: string) => void;
+  onOpen?: (leadId: string, foco?: "campos") => void;
+  /** A etapa do card é a de perda (`is_lost`) — só nela aparece o motivo da perda. */
+  etapaDePerda?: boolean;
 }
 
 function formatValor(cents: number | null, currency: string | null): string | null {
@@ -83,6 +86,7 @@ export const KanbanCard = memo(function KanbanCard({
   pulseCount = 0,
   onSelect,
   onOpen,
+  etapaDePerda = false,
 }: KanbanCardProps) {
   const t = useT();
   const chatSuspenso = useChatSuspenso();
@@ -263,7 +267,11 @@ export const KanbanCard = memo(function KanbanCard({
                 </div>
               )}
             </div>
-            <KanbanCardActions lead={lead} pipelineId={pipelineId} />
+            <KanbanCardActions
+              lead={lead}
+              pipelineId={pipelineId}
+              onEditar={onOpen ? () => onOpen(card.id, "campos") : undefined}
+            />
           </div>
 
           {/* Valor em destaque; ausência de valor continua explícita. */}
@@ -382,6 +390,7 @@ export const KanbanCard = memo(function KanbanCard({
                 </Link>
               ))}
           </div>
+          <MotivoDaPerdaNoCard etapaDePerda={etapaDePerda} motivo={lead.lost_reason} />
         </div>
       )}
     </Draggable>

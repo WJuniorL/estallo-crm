@@ -218,11 +218,11 @@ export function CatalogAdmission({
           <h3 className="text-sm font-semibold">{t("Antes de admitir")}</h3>
           <ul className="mt-3 space-y-3 text-sm text-muted-foreground">
             <li className="flex gap-2">
-              <CheckCircle className="mt-0.5 shrink-0 text-accent" aria-hidden />
+              <CheckCircle className="mt-0.5 shrink-0 text-accent-text" aria-hidden />
               {t("Registra quem admitiu, quando, a origem e a revisão do arquivo.")}
             </li>
             <li className="flex gap-2">
-              <CheckCircle className="mt-0.5 shrink-0 text-accent" aria-hidden />
+              <CheckCircle className="mt-0.5 shrink-0 text-accent-text" aria-hidden />
               {t("Confere que o arquivo não mudou antes de qualquer instalação.")}
             </li>
             <li className="flex gap-2">

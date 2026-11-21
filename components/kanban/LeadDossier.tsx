@@ -126,7 +126,7 @@ export function LeadDossier({
             <Button
               size="sm"
               variant="outline"
-              className="h-7 shrink-0 border-border-strong bg-transparent px-2 text-xs hover:border-accent hover:bg-transparent hover:text-accent"
+              className="h-7 shrink-0 border-border-strong bg-transparent px-2 text-xs hover:border-accent hover:bg-transparent hover:text-accent-text"
               onClick={() => setMoverAberto(true)}
               data-testid="dossie-mover-de-funil"
             >
@@ -179,7 +179,7 @@ export function LeadDossier({
         <button
           type="button"
           onClick={() => campos.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
-          className="ml-auto text-accent underline-offset-[3px] hover:underline"
+          className="ml-auto text-accent-text underline-offset-[3px] hover:underline"
         >
           {t("Editar campos")}
         </button>

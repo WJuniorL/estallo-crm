@@ -488,6 +488,10 @@
   --color-accent: var(--color-accent);
   --color-accent-foreground: var(--color-accent-fg);
   --color-accent-soft: var(--color-accent-soft);
+  /* Texto azul legível nos dois temas (no escuro, #8fd9f5): use `text-accent-text`,
+     nunca `text-accent` — no escuro o `accent` é o azul de FUNDO (#085a7f) e some
+     sobre o painel e sobre o `accent-soft` do hover. */
+  --color-accent-text: var(--color-accent-text);
   --color-accent-hover: var(--color-accent-hover);
   --color-accent-50: var(--color-accent-50);
   --color-accent-100: var(--color-accent-100);
@@ -1745,4 +1749,34 @@ html body[data-scroll-locked] {
   .text-accent {
     color: var(--color-accent-text, var(--color-accent));
   }
+}
+
+/* Contador de não lidos (Inbox, Casos, sino). Uma régua só: altura e raio em
+   pixel INTEIRO — `py-0.5` + `leading-none` sobre 10px dava altura fracionária, e
+   o `rounded-full` desenhava a borda em meio pixel (o "serrilhado"). O vermelho é
+   o `--color-error` claro da marca nos dois temas: o `bg-red-600` do Tailwind era
+   saturado demais, e o `error` do escuro (#ff8e95) não segura texto branco. */
+.contador-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 18px;
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #bc3038;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+.contador-badge.contador-badge-ponto {
+  height: 8px;
+  min-width: 8px;
+  width: 8px;
+  padding: 0;
+  border-radius: 4px;
 }

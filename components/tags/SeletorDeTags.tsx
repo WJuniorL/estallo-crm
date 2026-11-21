@@ -159,7 +159,7 @@ export function SeletorDeTags({
                   onMouseDown={(ev) => ev.preventDefault()}
                   onClick={() => adicionar(texto)}
                   className={cn(
-                    "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-accent hover:bg-muted",
+                    "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-accent-text hover:bg-muted",
                     opcoes.length > 0 && "border-t border-border",
                   )}
                 >

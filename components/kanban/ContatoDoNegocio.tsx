@@ -209,7 +209,7 @@ function DadosDoContato({ contato }: { contato: Contact }) {
                   href={`https://wa.me/${digitos}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-accent underline-offset-2 hover:underline"
+                  className="text-xs text-accent-text underline-offset-2 hover:underline"
                 >
                   {t("Abrir no WhatsApp")}
                 </a>
@@ -343,7 +343,7 @@ function FormularioDeLinks({ contato, pipelineId }: { contato: Contact; pipeline
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={`${t("Abrir")} ${t(rotulo)}`}
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-background text-text-muted hover:bg-accent-soft hover:text-accent"
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-background text-text-muted hover:bg-accent-soft hover:text-accent-text"
                   >
                     <ArrowSquareOut size={16} aria-hidden />
                   </a>

@@ -1,9 +1,11 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { ROLE_RANK } from "@/lib/auth/types";
 import { moedaDaOrganizacao } from "@/lib/catalogo/moeda-da-org";
 import { traduzir } from "@/lib/i18n/dicionario";
+import { moduloLigado } from "@/lib/instalacao/modulos";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 import { Faturamento } from "./_client";
@@ -33,6 +35,8 @@ export const dynamic = "force-dynamic";
  * BRL: o limite está descrito em `blocosPorMoeda` (_client.tsx).
  */
 export default async function Page() {
+  // Módulo de tabela (ADR-0002): sem o `financeiro` instalado a tela não existe.
+  if (!(await moduloLigado(createAdminClient(), "financeiro"))) notFound();
   const user = await requireAuth();
   const org = await resolveActiveOrg(user);
   if (!org) redirect("/app");

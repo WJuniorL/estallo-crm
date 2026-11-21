@@ -819,6 +819,18 @@ function contextoDaCitacao(p: WahaPayload): Record<string, unknown> | null {
 }
 
 /**
+ * Mensagem ENCAMINHADA: o WhatsApp marca no mesmo `contextInfo` da citação
+ * (`isForwarded`, `forwardingScore`). A partir de 5 encaminhamentos o app mostra
+ * "Encaminhada com frequência" — a mesma régua aqui. `null` quando não é.
+ */
+export function encaminhamentoDoPayload(p: WahaPayload): { forwarded: true; forwarded_many: boolean } | null {
+  const contexto = contextoDaCitacao(p);
+  const score = typeof contexto?.forwardingScore === "number" ? contexto.forwardingScore : 0;
+  if (contexto?.isForwarded !== true && score <= 0) return null;
+  return { forwarded: true, forwarded_many: score >= 5 };
+}
+
+/**
  * A CITAÇÃO DO "RESPONDER EM CIMA" (issue #2474): o id da mensagem respondida
  * e, quando vem, o texto citado.
  *
@@ -1029,6 +1041,8 @@ async function handleInbound(
         // gravada vazia, e gravação é de linha NOVA (o INSERT é o único caminho
         // que escreve `metadata` aqui), então nada do que já está é sobrescrito.
         ...(nomeDoArquivo ? { media_filename: nomeDoArquivo } : {}),
+        // Encaminhada: a bolha mostra o selo, como no app.
+        ...(encaminhamentoDoPayload(p) ?? {}),
         // Cartão do anúncio de "Clique para o WhatsApp" na bolha (thumb + link),
         // como no app. Chaves documentadas em `cartaoDoAnuncio`.
         ...(atribuicao ? { anuncio: cartaoDoAnuncio(atribuicao) } : {}),
@@ -1468,6 +1482,8 @@ async function handleOutboundFromUserPhone(
         ...(citacao?.texto && !citadaId ? { reply_to_body: citacao.texto } : {}),
         // Mesma regra do inbound (#2613): nome só quando há nome.
         ...(nomeDoArquivo ? { media_filename: nomeDoArquivo } : {}),
+        // Encaminhada: a bolha mostra o selo, como no app.
+        ...(encaminhamentoDoPayload(p) ?? {}),
       },
     })
     .select("id")

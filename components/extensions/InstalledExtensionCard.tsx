@@ -162,7 +162,7 @@ export function InstalledExtensionCard({
   return (
     <Card className="flex h-full flex-col p-5" data-testid={`extension-installed-${extension.id}`}>
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-accent-soft text-accent">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-accent-soft text-accent-text">
           <Icon size={22} weight="duotone" aria-hidden />
         </div>
         <div className="min-w-0 flex-1">

@@ -247,7 +247,7 @@ export function ExtensionGuide({
           </p>
           {displayTitle.fallback || displaySummary.fallback ? <FallbackNotice /> : null}
           <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
-            <ListChecks size={16} weight="duotone" aria-hidden className="text-accent" />
+            <ListChecks size={16} weight="duotone" aria-hidden className="text-accent-text" />
             {portasLegiveis(guide.manifest.permissions, t)}
           </div>
         </div>
@@ -300,7 +300,7 @@ export function ExtensionGuide({
               } ${compact ? "p-4" : "p-5 sm:p-6"}`}
             >
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-accent-soft text-accent">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-accent-soft text-accent-text">
                   <Icon size={22} weight="duotone" aria-hidden />
                 </div>
                 <div>

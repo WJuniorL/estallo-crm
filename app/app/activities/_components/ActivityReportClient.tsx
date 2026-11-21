@@ -237,7 +237,7 @@ export function ActivityReportClient() {
                     {i.negocioId && (
                       <Link
                         href={`/app/leads/${i.negocioId}`}
-                        className="text-xs text-accent underline underline-offset-2"
+                        className="text-xs text-accent-text underline underline-offset-2"
                       >
                         {i.negocioTitulo ?? `${vocabulario.deal} ${i.negocioId.slice(0, 8)}`}
                       </Link>

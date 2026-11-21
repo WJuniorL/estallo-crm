@@ -13,6 +13,8 @@ import { MAXIMO_DE_FOTOS } from "@/lib/catalogo/fotos";
 import { formatCents } from "@/lib/money";
 import { precoParaCentavos, type Produto } from "@/lib/schemas/produtos";
 
+import { GerenciarCategorias } from "@/components/catalogo/GerenciarCategorias";
+import { SeletorDeCategoria } from "@/components/catalogo/SeletorDeCategoria";
 import { EdicaoDoProduto } from "./_edicao";
 import { CampoDeDinheiro } from "@/components/ui/campo-de-dinheiro";
 
@@ -244,6 +246,7 @@ export function ProdutosClient({
   const [rascunho, setRascunho] = React.useState<Rascunho>(VAZIO);
   const [salvando, setSalvando] = React.useState(false);
   const [importando, setImportando] = React.useState(false);
+  const [categoriasAbertas, setCategoriasAbertas] = React.useState(false);
   const [resumo, setResumo] = React.useState<ResumoDaImportacao | null>(null);
   const arquivoRef = React.useRef<HTMLInputElement>(null);
   const [fotosAbertas, setFotosAbertas] = React.useState<string | null>(null);
@@ -365,6 +368,14 @@ export function ProdutosClient({
             >
               {t(importando ? "Importando…" : "Importar planilha")}
             </Button>
+            <Button variant="outline" onClick={() => setCategoriasAbertas(true)} data-testid="abrir-categorias">
+              {t("Categorias")}
+            </Button>
+            <GerenciarCategorias
+              open={categoriasAbertas}
+              onOpenChange={setCategoriasAbertas}
+              onRenomeou={() => router.refresh()}
+            />
           </>
         ) : null}
       </div>
@@ -438,14 +449,14 @@ export function ProdutosClient({
                 data-testid="produto-nome"
               />
             </label>
-            <label className="text-sm">
+            <div className="text-sm">
               {t("Categoria")}
-              <input
-                value={rascunho.categoria}
-                onChange={(e) => setRascunho({ ...rascunho, categoria: e.target.value })}
-                className="mt-1 h-9 w-full rounded-md border px-3"
+              <SeletorDeCategoria
+                valor={rascunho.categoria}
+                onChange={(categoria) => setRascunho({ ...rascunho, categoria })}
+                testId="produto-categoria"
               />
-            </label>
+            </div>
             <label className="text-sm">
               {t("Preço de venda")}
               <CampoDeDinheiro

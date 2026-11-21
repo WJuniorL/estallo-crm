@@ -1027,6 +1027,19 @@
     0 0 0 2px var(--color-background),
     0 0 0 4px var(--color-foreground);
 }
+/* "Encaminhada": itálico discreto acima do texto, como no app do WhatsApp. */
+.ibx-encaminhada {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 2px;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--ibx-muted);
+}
+.ibx-outgoing .ibx-encaminhada {
+  color: color-mix(in srgb, var(--color-accent-foreground) 80%, transparent);
+}
 .ibx-bubble-label {
   display: block;
   font-size: 12px;

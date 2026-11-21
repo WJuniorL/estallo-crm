@@ -70,7 +70,7 @@ export function DadosInspecionados({
               onClick={() => setVisao(v)}
               className={cn(
                 "rounded-full border px-2 py-0.5 text-[11px]",
-                visao === v ? "border-accent text-accent" : "border-border text-text-muted",
+                visao === v ? "border-accent text-accent-text" : "border-border text-text-muted",
               )}
             >
               {v === "arvore" ? t("Árvore") : v === "tabela" ? t("Tabela") : "JSON"}

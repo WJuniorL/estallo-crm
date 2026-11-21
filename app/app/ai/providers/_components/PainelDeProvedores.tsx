@@ -518,7 +518,7 @@ function CartaoDoPonto({
           {/* O modelo deste cartão continua valendo com o Jev ligado — como
               reserva, ou como quem decide enquanto o Jev só observa. */}
           {oJevAqui && (
-            <p className="mt-1 text-xs text-accent" data-testid={`jev-no-ponto-${ponto.id}`}>
+            <p className="mt-1 text-xs text-accent-text" data-testid={`jev-no-ponto-${ponto.id}`}>
               {oJevAqui === "observacao"
                 ? t("O Jev observa; o modelo abaixo ainda decide.")
                 : oJevAqui === "sozinho"

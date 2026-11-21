@@ -16229,6 +16229,22 @@ export const DICIONARIO: Traducoes = {
   "O horário precisa ser pelo menos 1 minuto no futuro.": { es: "La hora debe ser al menos 1 minuto en el futuro." },
   "O horário não pode passar de um ano.": { es: "La hora no puede superar un año." },
   "Esta mensagem já foi enviada ou cancelada.": { es: "Este mensaje ya fue enviado o cancelado." },
+
+  // Inbox › mensagem encaminhada; Produtos › categorias cadastradas (0721)
+  Encaminhada: { es: "Reenviado" },
+  "Encaminhada com frequência": { es: "Reenviado muchas veces" },
+  "Buscar ou criar categoria…": { es: "Buscar o crear categoría…" },
+  "Tirar categoria": { es: "Quitar categoría" },
+  "Criar categoria": { es: "Crear categoría" },
+  "Categorias de produto": { es: "Categorías de producto" },
+  "As categorias aparecem na lista ao cadastrar ou editar um produto.": { es: "Las categorías aparecen en la lista al registrar o editar un producto." },
+  "Nova categoria": { es: "Nueva categoría" },
+  "Nenhuma categoria cadastrada ainda.": { es: "Aún no hay categorías registradas." },
+  "Nome da categoria": { es: "Nombre de la categoría" },
+  "Já existe uma categoria com esse nome.": { es: "Ya existe una categoría con ese nombre." },
+  "Categoria não encontrada.": { es: "Categoría no encontrada." },
+  "Há produtos nesta categoria. Troque a categoria deles antes de apagar.": { es: "Hay productos en esta categoría. Cambia su categoría antes de eliminarla." },
+  Categorias: { es: "Categorías" },
 };
 
 /**

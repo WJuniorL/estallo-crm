@@ -152,7 +152,7 @@ export function Parcelas({
                       type="button"
                       disabled={!contaId || pagar.isPending}
                       onClick={() => pagar.mutate(p.id)}
-                      className="text-xs text-accent disabled:opacity-50"
+                      className="text-xs text-accent-text disabled:opacity-50"
                       data-testid={`pagar-parcela-${p.id}`}
                     >
                       {t("Pagar")}

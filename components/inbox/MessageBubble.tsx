@@ -4,7 +4,7 @@ import { FormatacaoWhatsApp } from "@/lib/mensagens/formatacao-whatsapp";
 import { useLocaleDeData } from "@/hooks/i18n/useLocaleDeData";
 import { format } from "date-fns";
 import { useT } from "@/hooks/i18n/useT";
-import { ArrowBendUpLeft, CaretDown, PencilSimple, Robot, Trash, WarningOctagon } from "@/lib/ui/icons";
+import { ArrowBendDoubleUpRight, ArrowBendUpLeft, ArrowBendUpRight, CaretDown, PencilSimple, Robot, Trash, WarningOctagon } from "@/lib/ui/icons";
 import { AckIndicator } from "@/components/inbox/AckIndicator";
 import { CartaoDeAnuncio, anuncioDaMensagem } from "@/components/inbox/media/CartaoDeAnuncio";
 import { useEffect, useRef, useState } from "react";
@@ -374,6 +374,17 @@ export function MessageBubble({
             {senderLabel && t(senderLabel)}
           </div>
         )}
+        {/* Encaminhada (metadata gravado pela ingestão do WAHA), como no app. */}
+        {message.metadata?.forwarded === true && (
+          <div data-testid="selo-encaminhada" className="ibx-encaminhada">
+            {message.metadata?.forwarded_many === true ? (
+              <ArrowBendDoubleUpRight size={13} aria-hidden />
+            ) : (
+              <ArrowBendUpRight size={13} aria-hidden />
+            )}
+            {message.metadata?.forwarded_many === true ? t("Encaminhada com frequência") : t("Encaminhada")}
+          </div>
+        )}
 
         {editando ? (
           <div ref={editorRef} className="space-y-2">
@@ -400,7 +411,7 @@ export function MessageBubble({
                 {t("Cancelar")}
               </Button>
               <Button size="sm" disabled={ocupado || !texto.trim()} onClick={() => void salvarEdicao()}
-                className={cn(isOutbound && "bg-primary-foreground text-accent shadow-none hover:bg-primary-foreground/90 dark:bg-primary-foreground dark:hover:bg-primary-foreground/90")}>
+                className={cn(isOutbound && "bg-primary-foreground text-accent-text shadow-none hover:bg-primary-foreground/90 dark:bg-primary-foreground dark:hover:bg-primary-foreground/90")}>
                 {t("Salvar")}
               </Button>
             </div>

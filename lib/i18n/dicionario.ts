@@ -2362,6 +2362,19 @@ export const DICIONARIO: Traducoes = {
   "Selecione uma execução.": { es: "Selecciona una ejecución." },
   "Sem trace disponível.": { es: "Sin traza disponible." },
   "(sem nome)": { es: "(sin nombre)" },
+  // Equipe e gestão de tenants: corrigir o nome de um membro.
+  "Alterar nome": { es: "Cambiar nombre" },
+  "Nome alterado.": { es: "Nombre cambiado." },
+  "Não foi possível alterar o nome": { es: "No fue posible cambiar el nombre" },
+  "O nome aparece para a equipe em todas as empresas em que esta pessoa entra.": {
+    es: "El nombre aparece para el equipo en todas las empresas a las que esta persona accede.",
+  },
+  "O nome de um administrador da plataforma só é trocado pelo próprio dono da conta.": {
+    es: "El nombre de un administrador de la plataforma solo lo cambia el propio dueño de la cuenta.",
+  },
+  "Quem perdeu o acesso a este tenant não tem o nome trocado por aqui.": {
+    es: "A quien perdió el acceso a este tenant no se le cambia el nombre por aquí.",
+  },
   erro: { es: "error" },
   Args: { es: "Argumentos" },
   Result: { es: "Resultado" },

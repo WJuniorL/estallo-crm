@@ -98,9 +98,10 @@ interface Props {
 /**
  * O QUADRO DE TAREFAS: uma coluna por situação, arrastar muda a situação.
  *
- * Mesma estrutura do quadro do funil (`components/kanban/KanbanBoard.tsx`): UM
- * contêiner de rolagem, a linha interna cresce com a coluna mais alta e as
- * outras esticam até ela — título preso no alto e área de soltar até o fim.
+ * Mesma estrutura do quadro do funil (`components/kanban/KanbanBoard.tsx`): a
+ * página não rola; cada coluna tem a altura do quadro, título fixo, e rola só
+ * os próprios cards (a área de soltar é a rolagem). Do tablet para cima o
+ * quadro não rola de lado — um rolável só por coluna, o que o dnd suporta.
  * Soltar na MESMA coluna não faz nada: a ordem vem da ordenação por prazo, não
  * de uma posição gravada.
  */
@@ -146,10 +147,10 @@ export function QuadroDeTarefas({
         // Do tablet para cima as 4 colunas DIVIDEM a largura (crescem quando a
         // barra lateral fecha) e não há rolagem lateral; no celular, uma coluna
         // por tela com rolagem lateral e encaixe.
-        className="flex min-h-0 flex-1 snap-x items-start overflow-auto pb-4 md:snap-none md:overflow-x-hidden"
+        className="flex min-h-0 flex-1 snap-x overflow-x-auto overflow-y-hidden pb-4 md:snap-none md:overflow-x-hidden"
         data-testid="quadro-de-tarefas"
       >
-        <div className="flex min-h-full w-max gap-3 md:w-full">
+        <div className="flex h-full w-max gap-3 md:w-full">
           {COLUNAS_DO_QUADRO.map((status) => {
             const sentido = ordem[status];
             const lista = ordenarTarefas(colunas[status], sentido);
@@ -158,9 +159,9 @@ export function QuadroDeTarefas({
                 key={status}
                 aria-label={titulo[status]}
                 data-coluna-de-tarefas={status}
-                className="flex w-[85vw] max-w-[320px] shrink-0 snap-center flex-col md:w-auto md:min-w-0 md:max-w-none md:flex-1 md:shrink"
+                className="flex h-full min-h-0 w-[85vw] max-w-[320px] shrink-0 snap-center flex-col md:w-auto md:min-w-0 md:max-w-none md:flex-1 md:shrink"
               >
-                <header className="sticky top-0 z-10 flex items-center justify-between gap-2 bg-background pb-2">
+                <header className="flex shrink-0 items-center justify-between gap-2 bg-background pb-2">
                   <div className="flex min-w-0 items-center gap-2">
                     <span className={cn("size-2 shrink-0 rounded-full", COR_DA_SITUACAO[status])} />
                     <h2 className="truncate text-sm font-semibold">{titulo[status]}</h2>
@@ -192,14 +193,14 @@ export function QuadroDeTarefas({
                     )}
                   </Button>
                 </header>
-                <div className="flex flex-1 flex-col rounded-2xl border border-border bg-muted/20">
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-muted/20">
                   <Droppable droppableId={status} isDropDisabled={!podeEditar}>
                     {(provided, snapshot) => (
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
                         className={cn(
-                          "flex flex-1 flex-col gap-2 rounded-2xl p-2 transition-colors",
+                          "flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain rounded-2xl p-2 transition-colors",
                           snapshot.isDraggingOver && "bg-accent-soft ring-2 ring-accent/40",
                         )}
                       >

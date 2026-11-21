@@ -733,6 +733,10 @@ export const AUDIT_ACTIONS = [
   "catalog_product.updated",
   "catalog_product.deleted",
   "catalog_product.imported",
+  // Categorias cadastradas do catálogo (0721).
+  "catalog_category.created",
+  "catalog_category.renamed",
+  "catalog_category.deleted",
   // As fotos do produto (migration 0390): subir uma, e reordenar/remover.
   "catalog_product.photo_added",
   "catalog_product.photos_updated",

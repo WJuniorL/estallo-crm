@@ -32,7 +32,7 @@ export default async function IdentidadeDoProdutoPage() {
         </p>
         <Link
           href="/app/settings/tenant"
-          className="text-sm font-semibold text-accent underline underline-offset-4"
+          className="text-sm font-semibold text-accent-text underline underline-offset-4"
         >
           Editar dados da empresa
         </Link>

@@ -263,7 +263,7 @@ export function TrilhoDeEtapas({
               onClick={() => rolar(-1)}
               disabled={rola.inicio}
               aria-label={t("Ver etapas anteriores")}
-              className="flex h-[26px] w-7 items-center justify-center rounded-md border border-border-strong bg-surface hover:border-accent hover:text-accent disabled:opacity-30"
+              className="flex h-[26px] w-7 items-center justify-center rounded-md border border-border-strong bg-surface hover:border-accent hover:text-accent-text disabled:opacity-30"
             >
               <CaretLeft size={14} aria-hidden />
             </button>
@@ -272,7 +272,7 @@ export function TrilhoDeEtapas({
               onClick={() => rolar(1)}
               disabled={rola.fim}
               aria-label={t("Ver próximas etapas")}
-              className="flex h-[26px] w-7 items-center justify-center rounded-md border border-border-strong bg-surface hover:border-accent hover:text-accent disabled:opacity-30"
+              className="flex h-[26px] w-7 items-center justify-center rounded-md border border-border-strong bg-surface hover:border-accent hover:text-accent-text disabled:opacity-30"
             >
               <CaretRight size={14} aria-hidden />
             </button>

@@ -299,7 +299,7 @@ export const StageColumn = memo(function StageColumn({
             )}
             {leads.length === 0 && !snapshot.isDraggingOver && (
               <div className="flex min-h-64 flex-1 flex-col items-center justify-center px-4 py-8 text-center">
-                <span className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-accent-soft text-accent">
+                <span className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-accent-soft text-accent-text">
                   <ListChecks size={28} aria-hidden />
                 </span>
                 <p className="text-base font-bold text-text">{t("Nenhum lead nesta etapa")}</p>

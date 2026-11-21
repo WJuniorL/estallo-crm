@@ -16,6 +16,7 @@ import {
 } from "@/lib/catalogo/edicao-do-produto";
 import type { Produto } from "@/lib/schemas/produtos";
 import { CampoDeDinheiro } from "@/components/ui/campo-de-dinheiro";
+import { SeletorDeCategoria } from "@/components/catalogo/SeletorDeCategoria";
 
 /**
  * O FORMULÁRIO DE EDIÇÃO — o que a tela nunca teve.
@@ -108,16 +109,15 @@ export function EdicaoDoProduto({ produto, aoFechar }: { produto: Produto; aoFec
             data-testid="edicao-descricao"
           />
         </label>
-        <label className="text-sm">
+        <div className="text-sm">
           {t("Categoria")}
-          <input
-            value={rascunho.categoria}
-            onChange={(e) => setRascunho({ ...rascunho, categoria: e.target.value })}
-            className="mt-1 h-9 w-full rounded-md border px-3"
+          <SeletorDeCategoria
+            valor={rascunho.categoria}
+            onChange={(categoria) => setRascunho({ ...rascunho, categoria })}
             disabled={desabilitado}
-            data-testid="edicao-categoria"
+            testId="edicao-categoria"
           />
-        </label>
+        </div>
         <label className="text-sm">
           {t("Preço de venda")}
           <CampoDeDinheiro

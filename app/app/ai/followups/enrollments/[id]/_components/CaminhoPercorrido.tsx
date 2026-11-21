@@ -98,7 +98,7 @@ export function Passo({
               onClick={() => setEscolhida(x.numero)}
               className={cn(
                 "rounded-full border px-2 py-0.5 text-[11px]",
-                x.numero === atual.numero ? "border-accent text-accent" : "border-border text-text-muted",
+                x.numero === atual.numero ? "border-accent text-accent-text" : "border-border text-text-muted",
                 x.status === "failed" && "border-error text-error-fg",
               )}
             >
@@ -116,7 +116,7 @@ export function Passo({
         <div className="mt-1">
           <button
             type="button"
-            className="text-xs text-accent underline-offset-[3px] hover:underline"
+            className="text-xs text-accent-text underline-offset-[3px] hover:underline"
             onClick={() => setAberto((v) => !v)}
             aria-expanded={aberto}
           >
@@ -184,7 +184,7 @@ export function CaminhoPercorrido({
         {grafo && passos.length > 0 && (
           <button
             type="button"
-            className="text-xs text-accent underline-offset-[3px] hover:underline"
+            className="text-xs text-accent-text underline-offset-[3px] hover:underline"
             onClick={() => setDesenho((v) => !v)}
             aria-expanded={desenho}
             data-testid="caminho-ver-no-fluxo"

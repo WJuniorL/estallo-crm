@@ -157,7 +157,7 @@ export function NavHub({
             </div>
             <Link
               href="/app/extensions"
-              className="text-xs font-medium text-accent underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:outline-hidden"
+              className="text-xs font-medium text-accent-text underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:outline-hidden"
             >
               {traduzir("Gerenciar extensões", locale)}
             </Link>
@@ -205,7 +205,7 @@ export function NavHub({
                           size={20}
                           weight="duotone"
                           aria-hidden
-                          className="mt-0.5 shrink-0 text-accent"
+                          className="mt-0.5 shrink-0 text-accent-text"
                         />
                         <div className="min-w-0">
                           <p className="truncate text-[11px] font-medium tracking-wide text-muted-foreground uppercase">

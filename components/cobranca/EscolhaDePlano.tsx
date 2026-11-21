@@ -107,7 +107,7 @@ export function EscolhaDePlano({ planos, atualId, podeEscolher, intervaloTravado
               className={cn("flex flex-col gap-5 p-6", (ehAtual || nivel?.destaque) && "border-accent shadow-md")}
             >
               <div>
-                <p className="mb-2 text-xs font-semibold tracking-wider text-accent uppercase">
+                <p className="mb-2 text-xs font-semibold tracking-wider text-accent-text uppercase">
                   {ehAtual ? t("Seu plano") : nivel?.destaque ? t("Mais escolhido") : t("Plano")}
                 </p>
                 <h3 className="text-xl font-semibold">{p.nome}</h3>

@@ -165,7 +165,7 @@ export function CamposPersonalizadosClient() {
             onClick={() => setAba(e)}
             className={cn(
               "flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium",
-              aba === e ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted",
+              aba === e ? "bg-accent/15 text-accent-text" : "text-muted-foreground hover:bg-muted",
             )}
           >
             {e === "lead" ? <Funnel size={14} aria-hidden /> : <Users size={14} aria-hidden />}

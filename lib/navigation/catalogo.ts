@@ -496,7 +496,7 @@ export const NAV_CATALOG = [
     minRole: "viewer",
     // Módulo de tabela (ADR-0002, #1907): as cinco tabelas da comanda nascem na
     // instalação do `financeiro` em `/admin/modulos`; sem ele a porta some, como
-    // `/app/honorarios`. O caixa (Configurações › Financeiro) é núcleo e fica.
+    // `/app/honorarios`. Estallo: Configurações › Financeiro e Faturamento seguem a mesma trava.
     modulo: "financeiro",
   },
   {
@@ -518,6 +518,9 @@ export const NAV_CATALOG = [
     // dinheiro vai, e esconder a tela não esconde o dado — só torna a
     // conferência impossível.
     minRole: "viewer",
+    // Estallo: contas e formas de pagamento só servem à comanda — sem o módulo
+    // `financeiro` instalado a porta some (a página também recusa, `notFound`).
+    modulo: "financeiro",
   },
   {
     // Estava enterrado em Configurações e ninguém sabia que existia — o achado
@@ -820,6 +823,8 @@ export const NAV_CATALOG = [
     group: "analise",
     section: "Dinheiro",
     minRole: "viewer",
+    // Lê as comandas: sem o módulo `financeiro` não há o que faturar.
+    modulo: "financeiro",
   },
   {
     // Módulo opcional (ADR-0002), fonte `modulos_instalados` — a porta só existe

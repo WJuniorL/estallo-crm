@@ -72,7 +72,7 @@ export function OwnerBadge({
         className={
           isAgent
             ? // Vazado com anel: o fundo do card atravessa o disco.
-              `flex ${compacto ? "h-4 w-4 text-[8px]" : "h-7 w-7 text-xs"} shrink-0 items-center justify-center rounded-full border border-accent bg-surface font-mono font-semibold text-accent ring-1 ring-inset ring-accent/40`
+              `flex ${compacto ? "h-4 w-4 text-[8px]" : "h-7 w-7 text-xs"} shrink-0 items-center justify-center rounded-full border border-accent bg-surface font-mono font-semibold text-accent-text ring-1 ring-inset ring-accent/40`
             : // Preenchido SÓLIDO: a um metro, o humano é uma mancha escura e o
               // agente é um anel claro. Contraste que não depende da borda —
               // fundo suave fazia os dois lerem como "círculo claro".

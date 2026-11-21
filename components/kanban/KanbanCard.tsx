@@ -213,7 +213,7 @@ export const KanbanCard = memo(function KanbanCard({
                     className="object-cover"
                   />
                 )}
-                <AvatarFallback className="bg-accent-soft text-sm font-semibold text-accent">
+                <AvatarFallback className="bg-accent-soft text-sm font-semibold text-accent-text">
                   {(lead.contact_name || card.title).trim().slice(0, 1).toUpperCase() || "?"}
                 </AvatarFallback>
               </Avatar>

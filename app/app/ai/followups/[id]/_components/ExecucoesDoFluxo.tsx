@@ -108,7 +108,7 @@ function Cartao({ linha, ativa, onClick }: { linha: FollowupQueueRow; ativa: boo
           <Badge variant={tomDoStatus(linha.status)}>{rotuloDoStatus(linha.status, t)}</Badge>
         </span>
         {linha.reexecucao && (
-          <span className="text-[11px] text-accent" data-testid="execucao-e-reexecucao">
+          <span className="text-[11px] text-accent-text" data-testid="execucao-e-reexecucao">
             {t("Reexecução")}
           </span>
         )}
@@ -376,7 +376,7 @@ export function ExecucoesDoFluxo({
               {exec.origem && (
                 <button
                   type="button"
-                  className="text-xs text-accent underline-offset-[3px] hover:underline"
+                  className="text-xs text-accent-text underline-offset-[3px] hover:underline"
                   data-testid="execucao-origem"
                   onClick={() => onSelecionarExecucao(exec.origem!.id)}
                 >
@@ -630,7 +630,7 @@ export function ExecucoesDoFluxo({
                     )}
                     <button
                       type="button"
-                      className="self-start text-xs text-accent underline-offset-[3px] hover:underline"
+                      className="self-start text-xs text-accent-text underline-offset-[3px] hover:underline"
                       onClick={() => onSelecionarNo(null)}
                     >
                       {t("Fechar")}

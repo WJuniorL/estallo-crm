@@ -6,6 +6,7 @@ import { apiClient } from "@/lib/api/client";
 export interface MembroDoTenant {
   user_id: string;
   email: string | null;
+  full_name: string | null;
   role: string;
   accepted_at: string | null;
   revoked_at: string | null;
@@ -30,6 +31,19 @@ export function useChangeMemberEmail(tenantId: string) {
   return useMutation({
     mutationFn: ({ userId, email }: { userId: string; email: string }) =>
       apiClient.patch(`/api/v1/admin/tenants/${tenantId}/members/${userId}/email`, { email }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["admin", "tenant", tenantId, "members"] });
+    },
+  });
+}
+
+export function useChangeTenantMemberName(tenantId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, fullName }: { userId: string; fullName: string }) =>
+      apiClient.patch(`/api/v1/admin/tenants/${tenantId}/members/${userId}/name`, {
+        full_name: fullName,
+      }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["admin", "tenant", tenantId, "members"] });
     },

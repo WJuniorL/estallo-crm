@@ -1,6 +1,8 @@
 "use client";
 
+import { EditarNomeDialog } from "@/components/team/EditarNomeDialog";
 import { MemberInterfaceDialog } from "@/components/team/MemberInterfaceDialog";
+import { useChangeMemberName } from "@/hooks/team/useChangeMemberName";
 import { useTagDeIdioma } from "@/hooks/i18n/useLocaleDeData";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -60,6 +62,8 @@ export function TeamMembersClient({ currentUserId, canManage }: Props) {
 
   const [interfaceMember, setInterfaceMember] = useState<TeamMember | null>(null);
   const [revokeDialog, setRevokeDialog] = useState<TeamMember | null>(null);
+  const [nomeMember, setNomeMember] = useState<TeamMember | null>(null);
+  const trocarNome = useChangeMemberName();
 
   if (isLoading) {
     return <p className="text-sm text-muted-foreground">{t("Carregando…")}</p>;
@@ -176,6 +180,11 @@ export function TeamMembersClient({ currentUserId, canManage }: Props) {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          {!m.revoked_at && (
+                            <DropdownMenuItem onClick={() => setNomeMember(m)}>
+                              {t("Alterar nome")}
+                            </DropdownMenuItem>
+                          )}
                           {/*
                             Revogar e reativar são exclusivos: oferecer os dois
                             na mesma linha convidaria ao clique errado. Sem o
@@ -218,6 +227,24 @@ export function TeamMembersClient({ currentUserId, canManage }: Props) {
           onClose={() => setInterfaceMember(null)}
         />
       )}
+      <EditarNomeDialog
+        key={nomeMember?.user_id ?? "fechado"}
+        membro={nomeMember}
+        salvando={trocarNome.isPending}
+        onClose={() => setNomeMember(null)}
+        onSalvar={(nome) =>
+          nomeMember &&
+          trocarNome.mutate(
+            { userId: nomeMember.user_id, fullName: nome },
+            {
+              onSuccess: () => {
+                toast.success(t("Nome alterado."));
+                setNomeMember(null);
+              },
+            },
+          )
+        }
+      />
       <Dialog open={!!revokeDialog} onOpenChange={(o) => !o && setRevokeDialog(null)}>
         <DialogContent>
           <DialogHeader>

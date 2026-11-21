@@ -996,6 +996,29 @@
 .ibx-bubble.ibx-com-menu {
   padding-right: 32px;
 }
+/* Mensagem agendada: ainda não saiu. Mesma forma da enviada, sem o azul cheio —
+   borda tracejada e fundo tênue, para nunca ser lida como entregue. */
+.ibx-bubble.ibx-agendada {
+  border-radius: 12px 2px 12px 12px;
+  border: 1.5px dashed var(--ibx-blue);
+  background: color-mix(in srgb, var(--ibx-blue) 9%, var(--ibx-panel));
+  color: var(--color-text);
+  cursor: pointer;
+}
+.ibx-bubble.ibx-agendada .ibx-bubble-label {
+  color: var(--ibx-blue);
+  opacity: 1;
+}
+.ibx-bubble.ibx-agendada:hover,
+.ibx-bubble.ibx-agendada[data-state="open"] {
+  background: color-mix(in srgb, var(--ibx-blue) 16%, var(--ibx-panel));
+}
+.ibx-bubble.ibx-agendada.ibx-agendada-falhou {
+  border-color: var(--color-error);
+}
+.ibx-bubble.ibx-agendada.ibx-agendada-falhou .ibx-bubble-label {
+  color: var(--color-error);
+}
 .ibx-bubble.ibx-falhou {
   border-color: var(--color-error);
 }

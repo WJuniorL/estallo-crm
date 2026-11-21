@@ -18,6 +18,7 @@ const TRATA = "trata";
 
 const CHAMADORES: Record<string, string> = {
   "app/api/v1/cron/agenda-reminder/route.ts": TRATA, // tests/unit/lembrete-pula-org-parada.test.ts
+  "app/api/v1/cron/scheduled-messages/route.ts": TRATA, // OrgNaoOperanteError devolve a agendada a pending; a varredura pula org parada
   "lib/campanhas/rodada.ts": TRATA, // registrarExcecaoDoEnvio, tests/unit/suspensao-nao-dispara-campanha.test.ts
   "lib/prospecting/worker.ts": TRATA, // tests/unit/prospecting-worker.test.ts
   "lib/followup/enviar-texto-fixo.ts": TRATA, // lib/followup/enviar-texto-fixo.test.ts

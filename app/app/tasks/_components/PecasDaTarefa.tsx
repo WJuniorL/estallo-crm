@@ -62,7 +62,7 @@ export function ConversarDaTarefa({ contactId }: { contactId: string }) {
 /** A cor é do TEMA, nunca um hex: ela tem de sobreviver ao claro e ao escuro. */
 export const COR_DA_PRIORIDADE: Record<PrioridadeDaTarefa, string> = {
   low: "bg-muted text-muted-foreground",
-  medium: "bg-primary/10 text-primary",
+  medium: "bg-accent-soft text-accent-text",
   high: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
   urgent: "bg-destructive/15 text-destructive",
 };

@@ -459,8 +459,8 @@ function SeletorDeInstancia({
         </DropdownMenuLabel>
         <DropdownMenuItem disabled className="gap-2 opacity-100">
           <ChannelLogo channel={atual} size={14} />
-          <span className="min-w-0 flex-1 truncate font-medium text-primary">{rotulo}</span>
-          <Check size={14} aria-label={t("Instância atual")} className="text-primary" />
+          <span className="min-w-0 flex-1 truncate font-medium text-accent-text">{rotulo}</span>
+          <Check size={14} aria-label={t("Instância atual")} className="text-accent-text" />
         </DropdownMenuItem>
         {outras.map((s) => (
           <DropdownMenuItem

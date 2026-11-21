@@ -135,7 +135,7 @@ export function AlertasDoAviso({ avisos }: { avisos: AvisoDaTela[] }) {
               {href && rotulo ? (
                 <Link
                   href={href}
-                  className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-accent-text hover:underline"
                 >
                   {t(rotulo)}
                   <ArrowSquareOut className="h-3 w-3" />

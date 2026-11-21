@@ -93,7 +93,7 @@ export function IncomingCallBanner() {
             className="object-cover"
           />
         ) : null}
-        <AvatarFallback className="bg-primary/15 text-base font-semibold text-primary">
+        <AvatarFallback className="bg-accent-soft text-base font-semibold text-accent-text">
           {inicial}
         </AvatarFallback>
       </Avatar>

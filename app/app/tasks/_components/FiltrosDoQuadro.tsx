@@ -17,7 +17,7 @@ interface Pessoa {
 }
 
 const chip = (ativo: boolean) =>
-  cn("h-7 px-2.5 text-xs", ativo && "border-accent bg-accent/10 text-accent hover:bg-accent/15");
+  cn("h-7 px-2.5 text-xs", ativo && "border-accent bg-accent-soft text-accent-text hover:bg-accent/15");
 
 /** "Minhas tarefas" (alternância) + "Filtro" (prazo, prioridade, responsável), combináveis. */
 export function FiltrosDoQuadro({
@@ -56,7 +56,7 @@ export function FiltrosDoQuadro({
     .sort((a, b) => (a.full_name ?? "").localeCompare(b.full_name ?? "", "pt-BR"));
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex shrink-0 items-center gap-2">
       <Button
         variant="outline"
         size="sm"
@@ -64,7 +64,7 @@ export function FiltrosDoQuadro({
         data-testid="minhas-tarefas"
         className={cn(
           "h-9 gap-1.5 text-xs",
-          filtro.minhas && "border-accent bg-accent/10 text-accent",
+          filtro.minhas && "border-accent bg-accent-soft text-accent-text",
         )}
         onClick={() => onChange({ ...filtro, minhas: filtro.minhas ? undefined : true })}
       >
@@ -78,7 +78,7 @@ export function FiltrosDoQuadro({
             variant="outline"
             size="sm"
             data-testid="botao-filtro-tarefas"
-            className={cn("h-9 gap-1.5 text-xs", ativos > 0 && "border-accent text-accent")}
+            className={cn("h-9 gap-1.5 text-xs", ativos > 0 && "border-accent text-accent-text")}
           >
             <FadersHorizontal size={14} aria-hidden />
             {t("Filtro")}

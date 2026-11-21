@@ -32,7 +32,7 @@ export default async function InboxPage({
             idioma,
           )}
         </p>
-        <Link className="text-primary underline underline-offset-4" href="/get-started">
+        <Link className="text-accent-text underline underline-offset-4" href="/get-started">
           {traduzir("Configurar minha organização", idioma)}
         </Link>
       </div>

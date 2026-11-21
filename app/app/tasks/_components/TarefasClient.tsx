@@ -2,6 +2,7 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/hooks/auth/AuthProvider";
@@ -103,8 +104,14 @@ export function TarefasClient({ podeEditar }: { podeEditar: boolean }) {
   }
 
   async function salvar(entrada: NovaTarefa) {
-    if (emEdicao) await editarTarefa(emEdicao.id, entrada);
-    else await criarTarefa(entrada);
+    if (!emEdicao) return criarTarefa(entrada);
+    // OTIMISTA: o modal fecha na hora e o card já mostra a mudança; se o
+    // servidor recusar, a lista se desfaz sozinha e o aviso diz por quê.
+    editarTarefa(emEdicao.id, entrada).catch((erro: unknown) =>
+      toast.error(t("Não foi possível salvar a tarefa."), {
+        description: erro instanceof Error ? erro.message : undefined,
+      }),
+    );
   }
 
   const alternaVisao = (visao: "quadro" | "calendario") => escrever(filtro, visao);
@@ -113,6 +120,8 @@ export function TarefasClient({ podeEditar }: { podeEditar: boolean }) {
       type="button"
       onClick={() => alternaVisao(visao)}
       aria-pressed={modo === visao}
+      aria-label={rotulo}
+      title={rotulo}
       data-testid={`visao-${visao}`}
       className={cn(
         "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
@@ -122,7 +131,7 @@ export function TarefasClient({ podeEditar }: { podeEditar: boolean }) {
       )}
     >
       <Icone size={14} aria-hidden />
-      {rotulo}
+      <span className="hidden lg:inline">{rotulo}</span>
     </button>
   );
 
@@ -138,17 +147,12 @@ export function TarefasClient({ podeEditar }: { podeEditar: boolean }) {
           "h-[calc(100dvh-3.5rem-var(--space-6)-max(var(--space-6),var(--rodape-ocupado,0px)))] min-h-[28rem]",
       )}
     >
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("Tarefas")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t(
-              "O que ficou combinado, com prazo. Tarefa presa a um negócio aparece na linha do tempo dele.",
-            )}
-          </p>
-        </div>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <h1 className="shrink-0 text-2xl font-semibold tracking-tight">{t("Tarefas")}</h1>
 
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Uma linha só a partir do tablet, com "Nova tarefa" sempre por último;
+            os rótulos secundários viram só ícone quando o espaço aperta. */}
+        <div className="flex flex-wrap items-center gap-2 md:flex-nowrap">
           <FiltrosDoQuadro
             filtro={filtro}
             onChange={(f) => escrever(f, modo)}
@@ -167,13 +171,15 @@ export function TarefasClient({ podeEditar }: { podeEditar: boolean }) {
             className="h-9 gap-1.5 text-xs"
             onClick={() => recarregar()}
             disabled={carregando}
+            aria-label={t("Atualizar")}
+            title={t("Atualizar")}
           >
             <ArrowsClockwise size={14} className={cn(carregando && "animate-spin")} aria-hidden />
-            {t("Atualizar")}
+            <span className="hidden xl:inline">{t("Atualizar")}</span>
           </Button>
 
           {podeEditar && (
-            <Button size="sm" className="h-9 gap-1.5 text-xs" onClick={() => abrirNova()}>
+            <Button size="sm" className="h-9 shrink-0 gap-1.5 text-xs" onClick={() => abrirNova()}>
               <Plus size={14} aria-hidden />
               {t("Nova tarefa")}
             </Button>
@@ -195,7 +201,7 @@ export function TarefasClient({ podeEditar }: { podeEditar: boolean }) {
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className="h-64 w-[300px] shrink-0 animate-pulse rounded-2xl border bg-card"
+              className="h-64 w-[300px] shrink-0 animate-pulse rounded-2xl border bg-card md:w-auto md:flex-1"
             />
           ))}
         </div>

@@ -254,7 +254,7 @@ export function FilterBar({
             variant="outline"
             size="sm"
             data-testid="botao-filtros"
-            className={cn(ativos > 0 && "border-accent text-accent")}
+            className={cn(ativos > 0 && "border-accent text-accent-text")}
           >
             <FadersHorizontal size={14} className="mr-1.5" aria-hidden />
             {t("Filtros")}
@@ -486,7 +486,7 @@ export function FilterBar({
             <label
               className={cn(
                 "flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm select-none",
-                filters.overdueOnly && "border-accent bg-accent/10",
+                filters.overdueOnly && "border-accent bg-accent-soft",
               )}
             >
               <input

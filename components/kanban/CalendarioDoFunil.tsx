@@ -335,7 +335,7 @@ export function CalendarioDoFunil({ pipelineId, pipeline: funil, stages, leads }
                     data-testid={`calendario-negocio-${lead.id}`}
                     title={lead.title}
                     onClick={() => setDossieId(lead.id)}
-                    className="w-full truncate rounded-md bg-primary/10 px-1.5 py-0.5 text-left text-[10px] font-medium text-primary transition-colors hover:bg-primary/20"
+                    className="w-full truncate rounded-md bg-accent-soft px-1.5 py-0.5 text-left text-[10px] font-medium text-accent-text transition-colors hover:bg-primary/20"
                   >
                     {lead.title}
                   </button>

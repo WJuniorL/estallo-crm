@@ -119,7 +119,7 @@ export function useTasks(filtros: FiltrosDeTarefa = {}, opcoes: OpcoesDeTarefas 
     falhou: query.isError,
     recarregar: invalidar,
     criarTarefa: (entrada: NovaTarefa) => criar.mutateAsync(entrada),
-    editarTarefa: (id: string, entrada: EdicaoDaTarefa) => editar.mutateAsync({ id, entrada }),
+    editarTarefa: (id: string, entrada: EdicaoDaTarefa) => editarOtimista(id, entrada),
     apagarTarefa: (id: string) => apagar.mutateAsync(id),
     // A MESMA regra da caixa da lista: `cancelled` reabre para `pending`
     // (#2549), nunca para `done`.
@@ -129,18 +129,23 @@ export function useTasks(filtros: FiltrosDeTarefa = {}, opcoes: OpcoesDeTarefas 
     mudarSituacao: (tarefa: Tarefa, status: SituacaoDaTarefa) => mudarSituacao(tarefa, status),
   };
 
-  // OTIMISTA (30/10/2026): o card muda na hora em TODA lista em cache (quadro,
-  // dossiê do lead); erro relê (desfaz) e o erro segue para quem chamou avisar.
-  // O sucesso relê também (`invalidar` do `editar`): a tela mostra o que o
-  // banco gravou, não só o que o clique pediu.
-  async function mudarSituacao(tarefa: Tarefa, status: SituacaoDaTarefa) {
+  function mudarSituacao(tarefa: Tarefa, status: SituacaoDaTarefa) {
+    return editarOtimista(tarefa.id, { status });
+  }
+
+  // OTIMISTA (30/10/2026; edição inteira desde 21/11/2026): o card muda na
+  // hora em TODA lista em cache (quadro, calendário, dossiê do lead); erro relê
+  // (desfaz) e o erro segue para quem chamou avisar. O sucesso relê também
+  // (`invalidar` do `editar`): a tela mostra o que o banco gravou.
+  // ponytail: os objetos aninhados (`lead`) só se atualizam na releitura.
+  async function editarOtimista(id: string, entrada: EdicaoDaTarefa) {
     queryClient.setQueriesData<{ tasks: Tarefa[] }>({ queryKey: CHAVE }, (old) =>
       old
-        ? { ...old, tasks: old.tasks.map((t) => (t.id === tarefa.id ? { ...t, status } : t)) }
+        ? { ...old, tasks: old.tasks.map((t) => (t.id === id ? { ...t, ...entrada } : t)) }
         : old,
     );
     try {
-      return await editar.mutateAsync({ id: tarefa.id, entrada: { status } });
+      return await editar.mutateAsync({ id, entrada });
     } catch (erro) {
       void invalidar();
       throw erro;

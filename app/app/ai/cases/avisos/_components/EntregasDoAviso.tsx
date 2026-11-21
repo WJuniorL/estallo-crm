@@ -114,7 +114,7 @@ export function EntregasDoAviso({
                 <span className="text-xs text-muted-foreground">{entrega.destino_mascarado}</span>
                 <Link
                   href={`/app/ai/cases?caso=${entrega.case_id}`}
-                  className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-accent-text hover:underline"
                 >
                   {t("Abrir o atendimento")}
                   <ArrowSquareOut className="h-3 w-3" />

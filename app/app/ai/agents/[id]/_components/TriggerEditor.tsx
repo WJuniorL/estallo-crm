@@ -239,7 +239,7 @@ export function TriggerEditor({ value, onChange, disabled, organizationTimezone 
                       disabled={disabled}
                       className={`rounded-md border px-2 py-1 text-xs ${
                         active
-                          ? "border-primary bg-primary/10 text-primary"
+                          ? "border-primary bg-accent-soft text-accent-text"
                           : "border-border/60 text-muted-foreground"
                       } disabled:cursor-not-allowed disabled:opacity-50`}
                     >

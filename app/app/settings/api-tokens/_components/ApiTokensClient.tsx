@@ -217,7 +217,7 @@ export function ApiTokensClient() {
                     title={t(s.label)}
                     aria-label={`${s.id} — ${t(s.label)}`}
                     className={`rounded-md border px-2 py-1 text-xs ${
-                      scopes.includes(s.id) ? "border-primary bg-primary/10" : "border-border"
+                      scopes.includes(s.id) ? "border-primary bg-accent-soft" : "border-border"
                     }`}
                   >
                     {s.id}

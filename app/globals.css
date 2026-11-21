@@ -1745,8 +1745,13 @@ html body[data-scroll-locked] {
   min-width: 16px;
   min-height: 16px;
 }
+/* Azul como TEXTO é sempre o azul de texto: no escuro `accent`/`primary` são o
+   azul de FUNDO (#085a7f) e somem sobre o painel e sobre o `accent-soft` — o
+   "azul sobre azul". Rede de proteção do design system; o nome certo no código é
+   `text-accent-text` (cerca: tests/unit/azul-de-texto-legivel-no-escuro.test.ts). */
 @layer utilities {
-  .text-accent {
+  .text-accent,
+  .text-primary {
     color: var(--color-accent-text, var(--color-accent));
   }
 }

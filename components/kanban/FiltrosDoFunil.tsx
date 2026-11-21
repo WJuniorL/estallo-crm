@@ -259,7 +259,7 @@ function CondicaoDoCampo({
             aria-pressed={valor.booleano === o.v}
             className={cn(
               "h-7 flex-1 text-xs",
-              valor.booleano === o.v && "border-accent bg-accent/10",
+              valor.booleano === o.v && "border-accent bg-accent-soft",
             )}
             onClick={() => onChange({ booleano: valor.booleano === o.v ? undefined : o.v })}
           >
@@ -281,7 +281,7 @@ function CondicaoDoCampo({
             size="sm"
             variant="outline"
             aria-pressed={marcada}
-            className={cn("h-7 text-xs", marcada && "border-accent bg-accent/10")}
+            className={cn("h-7 text-xs", marcada && "border-accent bg-accent-soft")}
             onClick={() =>
               onChange({
                 opcoes: marcada

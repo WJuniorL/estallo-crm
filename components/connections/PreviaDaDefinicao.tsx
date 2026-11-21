@@ -90,7 +90,7 @@ export function PreviaDaDefinicao({
                     return (
                       <span
                         key={i}
-                        className="flex items-center justify-center gap-1.5 rounded-lg bg-background py-2 text-sm font-medium text-primary shadow-sm"
+                        className="flex items-center justify-center gap-1.5 rounded-lg bg-background py-2 text-sm font-medium text-accent-text shadow-sm"
                       >
                         <Icone size={14} aria-hidden />
                         {b.texto}

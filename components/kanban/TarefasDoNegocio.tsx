@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { FormularioDeTarefa } from "@/app/app/tasks/_components/FormularioDeTarefa";
 import { ListaDeTarefas } from "@/app/app/tasks/_components/ListaDeTarefas";
@@ -60,8 +61,14 @@ export function TarefasDoNegocio({ leadId, contactId, podeEditar, aberto }: Prop
   }
 
   async function salvar(entrada: NovaTarefa) {
-    if (emEdicao) await editarTarefa(emEdicao.id, entrada);
-    else await criarTarefa(entrada);
+    if (!emEdicao) return criarTarefa(entrada);
+    // OTIMISTA: o modal fecha na hora e o card já mostra a mudança; se o
+    // servidor recusar, a lista se desfaz sozinha e o aviso diz por quê.
+    editarTarefa(emEdicao.id, entrada).catch((erro: unknown) =>
+      toast.error(t("Não foi possível salvar a tarefa."), {
+        description: erro instanceof Error ? erro.message : undefined,
+      }),
+    );
   }
 
   return (

@@ -204,7 +204,7 @@ export function SidebarContent({
           </span>
         )}
         {collapsed && !marcaDoProduto && (
-          <span aria-hidden className="text-lg font-bold text-primary">
+          <span aria-hidden className="text-lg font-bold text-accent-text">
             {/* Spread e não `[0]`: nome começando com emoji ou acento composto
                 quebraria no meio do code point. Mesma regra de `resolveBranding`
                 — a inicial precisa acompanhar o nome que a barra mostra, senão

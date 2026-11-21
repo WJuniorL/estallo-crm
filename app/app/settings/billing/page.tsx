@@ -44,7 +44,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 p-4 md:p-6">
       <header>
-        <p className="mb-2 text-xs font-semibold tracking-wider text-accent uppercase">{t("Seu próximo passo")}</p>
+        <p className="mb-2 text-xs font-semibold tracking-wider text-accent-text uppercase">{t("Seu próximo passo")}</p>
         {/* Mesmo nome do item de menu (catalogo.ts), ligada ou não. */}
         <h1 className="text-2xl font-semibold tracking-tight">{t("Plano e cobrança")}</h1>
         <p className="mt-2 text-sm text-text-muted">{t("Uma opção para cada etapa da sua operação.")}</p>

@@ -148,3 +148,13 @@ export interface Produto {
 export const COLUNAS_DO_PRODUTO =
   "id, codigo, nome, descricao, marca, categoria, preco_cents, moeda, custo_cents, " +
   "controla_estoque, quantidade, ativo, origem, imagem_url, fotos, updated_at";
+
+/** Categoria cadastrada (0721): o nome, sem espaço sobrando, até 80 letras. */
+export const categoriaSchema = z.object({
+  nome: z
+    .string()
+    .trim()
+    .min(1, "dê um nome à categoria")
+    .max(80)
+    .transform((v) => v.replace(/\s+/g, " ")),
+});

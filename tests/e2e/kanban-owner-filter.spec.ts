@@ -63,7 +63,8 @@ test("filtro por responsável reflete na URL e esconde leads com dono", async ({
   // A badge de ausência de dono está presente em ao menos um card.
   await expect(page.getByText("Sem responsável").first()).toBeVisible();
 
-  // Abre o filtro de responsável e escolhe "Sem responsável".
+  // Abre o painel "Filtros", depois o filtro de responsável, e escolhe "Sem responsável".
+  await page.getByTestId("botao-filtros").click();
   await page.getByRole("button", { name: /^Responsável:/ }).click();
   await page.getByRole("menuitem", { name: "Sem responsável" }).click();
 

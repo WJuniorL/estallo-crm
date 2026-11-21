@@ -9,7 +9,7 @@ import {
   type ClipboardEvent,
   type KeyboardEvent,
 } from "react";
-import { Note, PaperPlaneTilt } from "@/lib/ui/icons";
+import { Clock, Note, PaperPlaneTilt } from "@/lib/ui/icons";
 import { Button } from "@/components/ui/button";
 import { AttachMenu } from "@/components/inbox/composer/AttachMenu";
 import { AttachmentPreviewDialog } from "@/components/inbox/composer/AttachmentPreviewDialog";
@@ -17,6 +17,8 @@ import { ContactPickerDialog } from "@/components/inbox/composer/ContactPickerDi
 import { AudioRecorder } from "@/components/inbox/composer/AudioRecorder";
 import { ReplyReviewPanel } from "@/components/inbox/composer/ReplyReviewPanel";
 import { EmojiButton } from "@/components/inbox/composer/EmojiButton";
+import { ScheduleDialog } from "@/components/inbox/composer/ScheduleDialog";
+import { useAgendarMensagem } from "@/hooks/inbox/useScheduledMessages";
 import {
   MentionMenu,
   opcoesDeMencao,
@@ -198,6 +200,11 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
   const send = useSendMessage();
   const upload = useUploadMedia();
   const createNote = useCreateNote();
+  const agendar = useAgendarMensagem(conversationId);
+  /** Horário escolhido no relógio: com ele, o Enviar AGENDA em vez de enviar (só em Responder). */
+  const [agendarPara, setAgendarPara] = useState<Date | null>(null);
+  const [relogioAberto, setRelogioAberto] = useState(false);
+  const agendando = mode === "reply" && agendarPara !== null;
   const templates = useMessageTemplates();
   const slash = resolveSlash(text);
   const slashFiltrados = slash.open ? filtrarTemplates(templates.data ?? [], slash.query) : [];
@@ -329,6 +336,20 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
           // seguinte sairia como texto puro (com homônimos, avisando os dois).
           onSuccess: () =>
             setMencoes((atual) => atual.filter((m) => !mencoesEnviadas.includes(m))),
+        },
+      );
+      return;
+    }
+    if (agendando && agendarPara) {
+      agendar.mutate(
+        { body: legivel, send_at: agendarPara.toISOString() },
+        {
+          onSuccess: () => {
+            setAgendarPara(null);
+            consumirRascunhoEnviado();
+            toast.success(t("Mensagem agendada."));
+          },
+          onError: restoreOnError,
         },
       );
       return;
@@ -607,6 +628,32 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
             </button>
           </div>
         )}
+        {agendando && agendarPara && (
+          <div className="mb-1.5 flex">
+            <span
+              data-testid="chip-agendamento"
+              className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 py-1 pl-2.5 pr-1 text-xs font-medium text-primary"
+            >
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5"
+                onClick={() => setRelogioAberto(true)}
+                aria-label={t("Alterar horário do agendamento")}
+              >
+                <Clock size={14} aria-hidden />
+                {agendarPara.toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}
+              </button>
+              <button
+                type="button"
+                onClick={() => setAgendarPara(null)}
+                aria-label={t("Remover agendamento")}
+                className="rounded-full p-0.5 hover:bg-primary/15"
+              >
+                <X className="size-3.5" />
+              </button>
+            </span>
+          </div>
+        )}
         <div className="ibx-input-box">
           {/* O "+" existe nos DOIS modos desde a F3 da #1863: em "Nota interna"
               ele abre o mesmo menu, com as DUAS primeiras opções — foto/vídeo e
@@ -616,10 +663,26 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
               continua o de sempre: em modo nota `respostaBarrada` é só
               `isDisabled`, e a janela fechada barra a resposta, não a nota. */}
           <AttachMenu
-            disabled={respostaBarrada}
+            // Anexo sai na hora; com horário escolhido, só o texto é agendado.
+            disabled={respostaBarrada || agendando}
             onPick={escolherArquivo}
             onPickContact={mode === "reply" ? () => setContactPickerOpen(true) : undefined}
           />
+          {mode === "reply" && (
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className={cn("h-8 w-8 shrink-0", agendando && "text-primary")}
+              aria-label={t("Agendar envio")}
+              title={t("Agendar envio")}
+              aria-pressed={agendando}
+              disabled={respostaBarrada}
+              onClick={() => setRelogioAberto(true)}
+            >
+              <Clock size={18} weight="regular" aria-hidden />
+            </Button>
+          )}
           <EmojiButton
             disabled={isDisabled}
             onPick={(emoji) => {
@@ -697,22 +760,38 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
             disabled={mode === "note" ? isDisabled : respostaBarrada}
             aria-label={t("Mensagem")}
           />
-          {text.trim() || mode === "note" ? (
+          {text.trim() || mode === "note" || agendando ? (
             <Button
               type="button"
               size="icon"
               className="h-9 w-9 shrink-0"
               onClick={handleSubmit}
-              disabled={(mode === "note" ? isDisabled : respostaBarrada) || !text.trim()}
-              aria-label={t("Enviar")}
+              disabled={(mode === "note" ? isDisabled : respostaBarrada) || !text.trim() || agendar.isPending}
+              aria-label={agendando ? t("Agendar") : t("Enviar")}
+              title={agendando ? t("Agendar") : undefined}
             >
-              <PaperPlaneTilt size={16} weight="fill" aria-hidden />
+              {agendando ? (
+                <Clock size={16} weight="bold" aria-hidden />
+              ) : (
+                <PaperPlaneTilt size={16} weight="fill" aria-hidden />
+              )}
             </Button>
           ) : (
             active && <AudioRecorder conversationId={conversationId} disabled={respostaBarrada} />
           )}
         </div>
       </div>
+      <ScheduleDialog
+        open={relogioAberto}
+        onOpenChange={setRelogioAberto}
+        nomeDoContato={contactName || contactDisplayName}
+        inicial={agendarPara}
+        onConfirm={(quando) => {
+          setAgendarPara(quando);
+          setRelogioAberto(false);
+          requestAnimationFrame(() => taRef.current?.focus());
+        }}
+      />
       <AttachmentPreviewDialog
         file={pendingFile}
         sending={upload.isPending || send.isPending || createNote.isPending}

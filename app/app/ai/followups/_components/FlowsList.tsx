@@ -164,7 +164,7 @@ export function FlowsList({ initialData, canWrite, surface }: Props) {
               <div className="flex items-center justify-between gap-2 border-t border-border pt-2">
                 <Link
                   href={deAtendimento ? `${baseHref}?aba=fila&fluxo=${flow.id}` : `${baseHref}/${flow.id}?painel=execucoes`}
-                  className="text-xs text-accent underline-offset-[3px] hover:underline"
+                  className="text-xs text-accent-text underline-offset-[3px] hover:underline"
                   data-testid="fluxo-ver-execucoes"
                 >
                   {t("Ver execuções")}

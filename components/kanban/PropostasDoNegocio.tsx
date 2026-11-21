@@ -59,7 +59,7 @@ export function PropostasDoNegocio({ leadId, podeCriar = false }: Props): React.
       {podeCriar && (
         <Link
           href={`/app/proposals/novo?lead_id=${leadId}`}
-          className="mt-2 inline-block text-xs font-medium text-accent hover:underline"
+          className="mt-2 inline-block text-xs font-medium text-accent-text hover:underline"
         >
           {t("Nova proposta")}
         </Link>

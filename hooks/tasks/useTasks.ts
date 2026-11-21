@@ -6,6 +6,7 @@ import {
   proximoEstadoAoAlternar,
   type EdicaoDaTarefa,
   type NovaTarefa,
+  type SituacaoDaTarefa,
   type Tarefa,
 } from "@/lib/tarefas/tipos";
 
@@ -120,21 +121,29 @@ export function useTasks(filtros: FiltrosDeTarefa = {}, opcoes: OpcoesDeTarefas 
     criarTarefa: (entrada: NovaTarefa) => criar.mutateAsync(entrada),
     editarTarefa: (id: string, entrada: EdicaoDaTarefa) => editar.mutateAsync({ id, entrada }),
     apagarTarefa: (id: string) => apagar.mutateAsync(id),
-    // OTIMISTA (30/10/2026): a caixa marca na hora; erro relê a lista (desfaz)
-    // e o erro segue para quem chamou avisar.
-    alternarConcluida: async (tarefa: Tarefa) => {
-      // A MESMA regra da caixa da lista: `cancelled` reabre para `pending`
-      // (#2549), nunca para `done`.
-      const status = proximoEstadoAoAlternar(tarefa.status);
-      queryClient.setQueriesData<{ tasks: Tarefa[] }>({ queryKey: CHAVE }, (old) =>
-        old ? { ...old, tasks: old.tasks.map((t) => (t.id === tarefa.id ? { ...t, status } : t)) } : old,
-      );
-      try {
-        return await editar.mutateAsync({ id: tarefa.id, entrada: { status } });
-      } catch (erro) {
-        void invalidar();
-        throw erro;
-      }
-    },
+    // A MESMA regra da caixa da lista: `cancelled` reabre para `pending`
+    // (#2549), nunca para `done`.
+    alternarConcluida: (tarefa: Tarefa) =>
+      mudarSituacao(tarefa, proximoEstadoAoAlternar(tarefa.status)),
+    /** O arraste entre colunas do quadro de Tarefas. */
+    mudarSituacao: (tarefa: Tarefa, status: SituacaoDaTarefa) => mudarSituacao(tarefa, status),
   };
+
+  // OTIMISTA (30/10/2026): o card muda na hora em TODA lista em cache (quadro,
+  // dossiê do lead); erro relê (desfaz) e o erro segue para quem chamou avisar.
+  // O sucesso relê também (`invalidar` do `editar`): a tela mostra o que o
+  // banco gravou, não só o que o clique pediu.
+  async function mudarSituacao(tarefa: Tarefa, status: SituacaoDaTarefa) {
+    queryClient.setQueriesData<{ tasks: Tarefa[] }>({ queryKey: CHAVE }, (old) =>
+      old
+        ? { ...old, tasks: old.tasks.map((t) => (t.id === tarefa.id ? { ...t, status } : t)) }
+        : old,
+    );
+    try {
+      return await editar.mutateAsync({ id: tarefa.id, entrada: { status } });
+    } catch (erro) {
+      void invalidar();
+      throw erro;
+    }
+  }
 }

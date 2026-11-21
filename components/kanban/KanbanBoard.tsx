@@ -25,6 +25,7 @@ import { StageColumn } from "./StageColumn";
 import { LeadDossier } from "./LeadDossier";
 import { RetomarComoNovoNegocioDialog } from "./RetomarComoNovoNegocioDialog";
 import { camposDoFunil } from "@/lib/leads/campos-do-funil";
+import { ordenarLeads, type OrdenacaoDoFunil } from "@/lib/kanban/ordenacao";
 
 interface KanbanBoardProps {
   pipelineId: string;
@@ -53,19 +54,22 @@ interface KanbanBoardProps {
    * então o cabeçalho fica só leitura para eles.
    */
   podeRenomearEtapa?: boolean;
+  /** A ordem dos cards em cada etapa (`lib/kanban/ordenacao.ts`). Padrão: a arrastada. */
+  ordenacao?: OrdenacaoDoFunil;
 }
 
-function groupLeadsByStage(stages: Stage[], leads: Lead[]): Map<string, Lead[]> {
+function groupLeadsByStage(
+  stages: Stage[],
+  leads: Lead[],
+  ordem: OrdenacaoDoFunil,
+): Map<string, Lead[]> {
   const map = new Map<string, Lead[]>();
   for (const stage of stages) map.set(stage.id, []);
   for (const lead of leads) {
     const bucket = map.get(lead.stage_id);
     if (bucket) bucket.push(lead);
   }
-  // Already ordered by position_in_stage at fetch time, but be defensive.
-  for (const list of map.values()) {
-    list.sort((a, b) => a.position_in_stage - b.position_in_stage);
-  }
+  for (const [id, list] of map) map.set(id, ordenarLeads(list, ordem));
   return map;
 }
 
@@ -98,6 +102,7 @@ export function KanbanBoard({
   onAddLead,
   leadInicial,
   podeRenomearEtapa = false,
+  ordenacao = "manual",
 }: KanbanBoardProps) {
   const t = useT();
   const useExternal = stagesProp !== undefined && leadsProp !== undefined;
@@ -158,6 +163,13 @@ export function KanbanBoard({
   // o histórico de captação tinha o id e nenhum lugar para levá-lo. Uma vez
   // aberto, o estado local manda (fechar não reabre pela URL).
   const [dossieId, setDossieId] = useState<string | null>(leadInicial ?? null);
+  // "Editar" do menu do card abre o MESMO dossiê, já rolado até os campos —
+  // a edição mora na gaveta, não num diálogo à parte.
+  const [dossieNosCampos, setDossieNosCampos] = useState(false);
+  const abrirDossie = useCallback((leadId: string, foco?: "campos") => {
+    setDossieId(leadId);
+    setDossieNosCampos(foco === "campos");
+  }, []);
   const [internalSelected, setInternalSelected] = useState<Set<string>>(new Set());
   const selectedLeadIds = useMemo(
     () => (selectedIds ? new Set(selectedIds) : internalSelected),
@@ -185,8 +197,8 @@ export function KanbanBoard({
 
   const grouped = useMemo(() => {
     if (!data) return null;
-    return groupLeadsByStage(data.stages, data.leads);
-  }, [data]);
+    return groupLeadsByStage(data.stages, data.leads, ordenacao);
+  }, [data, ordenacao]);
 
   // Um conjunto por vez, e não um card por vez: o board recebe o resultado do
   // gesto já resolvido pela coluna (um card, um intervalo, a etapa inteira). A
@@ -237,6 +249,41 @@ export function KanbanBoard({
       if (!lead) return;
 
       const destStageId = destination.droppableId;
+
+      // Com uma ordenação que não é a manual, o índice do arraste foi lido numa
+      // lista em OUTRA ordem — não diz nada sobre `position_in_stage`. Reordenar
+      // na mesma etapa não faz nada; mudar de etapa põe o card no FIM da etapa
+      // na ordem manual (a tela mostra onde a ordenação manda).
+      if (ordenacao !== "manual") {
+        if (source.droppableId === destStageId) return;
+        const etapa =
+          qc
+            .getQueryData<BoardData>(chaveDoQuadro(pipelineId))
+            ?.leads.filter((l) => l.stage_id === destStageId && l.id !== draggableId) ??
+          (grouped.get(destStageId) ?? []).filter((l) => l.id !== draggableId);
+        const ultima = etapa.reduce<number | null>(
+          (max, l) => (max === null || l.position_in_stage > max ? l.position_in_stage : max),
+          null,
+        );
+        const args = {
+          leadId: lead.id,
+          stageId: destStageId,
+          positionInStage: midpoint(ultima, null),
+          expectedUpdatedAt: lead.updated_at,
+        };
+        if (
+          pedeEscolhaDeReabertura(
+            lead.status,
+            data.stages.find((s) => s.id === destStageId),
+          )
+        ) {
+          setRetomada({ leadId: lead.id, stageId: destStageId, args });
+          return;
+        }
+        moveCard.mutate(args);
+        return;
+      }
+
       const destList = (grouped.get(destStageId) ?? []).filter((l) => l.id !== draggableId);
 
       const before = destination.index > 0 ? destList[destination.index - 1] : null;
@@ -278,13 +325,18 @@ export function KanbanBoard({
       };
       // Ganho/perdido solto numa etapa aberta: o card não sai do lugar até a
       // escolha "Criar novo lead × Mover lead existente" (30/10/2026).
-      if (pedeEscolhaDeReabertura(lead.status, data.stages.find((s) => s.id === destStageId))) {
+      if (
+        pedeEscolhaDeReabertura(
+          lead.status,
+          data.stages.find((s) => s.id === destStageId),
+        )
+      ) {
         setRetomada({ leadId: lead.id, stageId: destStageId, args });
         return;
       }
       moveCard.mutate(args);
     },
-    [data, grouped, moveCard, qc, pipelineId],
+    [data, grouped, moveCard, qc, pipelineId, ordenacao],
   );
 
   if (isLoading) {
@@ -320,37 +372,45 @@ export function KanbanBoard({
           scroll containers are currently not supported") — o arraste perderia
           a rolagem automática. Com o quadro como único pai rolável, o arraste
           continua inteiro, e o cabeçalho de cada etapa fica preso em cima
-          (`sticky` em StageColumn). `items-start` + `min-h-full` na coluna: a
-          coluna curta ocupa a altura toda (dá para soltar card no vazio) e a
-          comprida cresce com os cards, com o fundo acompanhando.
+          (`sticky` em StageColumn).
+          TODAS AS ETAPAS TÊM A ALTURA DA MAIOR. Antes era `items-start` e cada
+          coluna tinha a altura dos próprios cards: rolando até o fim de uma
+          etapa comprida, as curtas saíam da tela — título e moldura juntos,
+          porque o `sticky` só prende enquanto o pai está visível — e não havia
+          onde soltar o card. Agora a linha interna (`w-max min-h-full`) cresce
+          com a coluna mais alta e as demais esticam (`stretch`, o padrão do
+          flex) até ela: o cabeçalho fica preso até o fim da rolagem e o vazio
+          embaixo do último card é área de soltar.
           Sem padding no ALTO, e é de propósito: o `sticky` prende o cabeçalho
           na borda do conteúdo do contêiner, então um `pt-4` deixava uma faixa
           de 16px acima dele por onde os cards apareciam rolando (medido no e2e
           "o quadro cabe na tela"). O respiro até os filtros vem do `gap-4` da
           página. */}
-      <div
-        className="flex min-h-0 flex-1 items-start gap-3 overflow-auto px-4 pb-4"
-        data-quadro-do-funil
-      >
-        {data.stages.map((stage) => (
-          <StageColumn
-            key={stage.id}
-            stage={stage}
-            leads={grouped.get(stage.id) ?? []}
-            pipelineId={pipelineId}
-            ownerNames={ownerNames}
-            coolingIds={coolingIds}
-            reactivations={reactivations}
-            pulses={pulsesProp ?? queryResult.pulses}
-            canonicalTags={canonicalTags}
-            selectedLeadIds={selectedLeadIds}
-            onSelectMany={handleSelectMany}
-            onOpen={setDossieId}
-            onAddLead={onAddLead}
-            podeRenomear={podeRenomearEtapa}
-            onRenomear={renomearPorEtapa.get(stage.id)}
-          />
-        ))}
+      {/* `items-start` no rolador: a LINHA interna precisa da altura do próprio
+          conteúdo (a coluna mais alta). Esticada, ela teria a altura da tela e
+          a coluna comprida vazaria da moldura. */}
+      <div className="flex min-h-0 flex-1 items-start overflow-auto px-4 pb-4" data-quadro-do-funil>
+        <div className="flex min-h-full w-max gap-3">
+          {data.stages.map((stage) => (
+            <StageColumn
+              key={stage.id}
+              stage={stage}
+              leads={grouped.get(stage.id) ?? []}
+              pipelineId={pipelineId}
+              ownerNames={ownerNames}
+              coolingIds={coolingIds}
+              reactivations={reactivations}
+              pulses={pulsesProp ?? queryResult.pulses}
+              canonicalTags={canonicalTags}
+              selectedLeadIds={selectedLeadIds}
+              onSelectMany={handleSelectMany}
+              onOpen={abrirDossie}
+              onAddLead={onAddLead}
+              podeRenomear={podeRenomearEtapa}
+              onRenomear={renomearPorEtapa.get(stage.id)}
+            />
+          ))}
+        </div>
       </div>
       {leadDoDossie && (
         <LeadDossier
@@ -362,6 +422,7 @@ export function KanbanBoard({
           stageName={data.stages.find((s) => s.id === leadDoDossie.stage_id)?.name ?? "—"}
           ownerNames={ownerNames}
           stages={data.stages}
+          focarCampos={dossieNosCampos}
         />
       )}
 

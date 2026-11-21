@@ -191,7 +191,7 @@ export function ListaDeLancamentos({
                       <button
                         type="button"
                         onClick={() => onPagar(l.id)}
-                        className="text-xs text-accent"
+                        className="text-xs text-accent-text"
                         data-testid={`pagar-${l.id}`}
                       >
                         {t("Pagar")}

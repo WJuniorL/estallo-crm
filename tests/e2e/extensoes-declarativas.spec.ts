@@ -849,7 +849,10 @@ test("pacote pós-build atravessa catálogo, tenants, guia e Tarefas com recuper
       has: page.getByText(taskTitle, { exact: true }),
     });
     await linha.getByRole("checkbox", { name: "Marcar como concluída" }).click();
-    await expect(page.getByText(taskTitle, { exact: true })).toHaveCount(0);
+    // Tarefas é um quadro: concluir leva o card para a coluna Concluídas.
+    await expect(
+      page.locator('[data-coluna-de-tarefas="done"]').getByText(taskTitle, { exact: true }),
+    ).toBeVisible();
 
     await expect
       .poll(async () => {

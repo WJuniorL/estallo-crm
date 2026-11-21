@@ -733,6 +733,10 @@ export const AUDIT_ACTIONS = [
   "catalog_product.updated",
   "catalog_product.deleted",
   "catalog_product.imported",
+  // Categorias cadastradas do catálogo (0721).
+  "catalog_category.created",
+  "catalog_category.renamed",
+  "catalog_category.deleted",
   // As fotos do produto (migration 0390): subir uma, e reordenar/remover.
   "catalog_product.photo_added",
   "catalog_product.photos_updated",
@@ -1145,6 +1149,9 @@ export const AUDIT_ACTIONS = [
   "platform_admin.tenant_members_viewed",
   // O admin da plataforma corrigiu o e-mail de login de um membro (só hashes).
   "member.email_changed",
+  // O admin da organização ou da plataforma corrigiu o nome de exibição de um
+  // membro (`full_name` do login) — a coluna não guarda o anterior; a trilha guarda.
+  "member.name_changed",
   // O gestor mudou a carteira do cliente (põe/tira o dono) pela porta
   // dedicada `PATCH /contacts/[id]/carteira` (#2591) — a escrita é do servidor,
   // então o audit é a única trilha de quem mudou o dono.
@@ -1155,6 +1162,11 @@ export const AUDIT_ACTIONS = [
   "lead_product.updated",
   "lead_product.removed",
   "followup.retention_updated",
+  // Mensagem agendada no Inbox (0720): agendar, editar, cancelar e a rodada do cron que envia.
+  "message.scheduled",
+  "message.schedule_updated",
+  "message.schedule_canceled",
+  "message.scheduled_run",
 ] as const;
 
 /** Um código de auditoria. Derivado de `AUDIT_ACTIONS` — não redigite a lista. */

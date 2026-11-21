@@ -89,7 +89,7 @@ export function TarefasDoNegocio({ leadId, contactId, podeEditar, aberto }: Prop
           <button
             type="button"
             onClick={abrirNova}
-            className="flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+            className="flex items-center gap-1 text-xs font-medium text-accent-text hover:underline"
           >
             <Plus size={12} aria-hidden />
             {t("Nova tarefa")}

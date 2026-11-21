@@ -707,7 +707,7 @@ export function PainelDeMarcacao({
             <Link
               href="/app/team?aba=atendimento"
               data-testid="ir-configurar-horarios"
-              className="mt-2 inline-block text-xs font-medium text-accent underline underline-offset-2 hover:text-accent-strong"
+              className="mt-2 inline-block text-xs font-medium text-accent-text underline underline-offset-2 hover:text-accent-strong"
             >
               {t("Configurar meus horários de atendimento")}
             </Link>
@@ -734,7 +734,7 @@ export function PainelDeMarcacao({
             <Link
               href="/app/team?aba=atendimento"
               data-testid="ir-configurar-horarios"
-              className="mt-2 inline-block text-xs font-medium text-accent underline underline-offset-2 hover:text-accent-strong"
+              className="mt-2 inline-block text-xs font-medium text-accent-text underline underline-offset-2 hover:text-accent-strong"
             >
               {t("Configurar meus horários de atendimento")}
             </Link>

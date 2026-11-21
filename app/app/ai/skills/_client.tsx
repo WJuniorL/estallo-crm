@@ -154,7 +154,7 @@ export function SkillsClient({ initialState }: Props) {
                   className="flex flex-col gap-1.5 rounded-md border border-border/60 p-3 text-sm"
                 >
                   <div className="flex flex-wrap items-center gap-2">
-                    <PuzzlePiece className="text-accent" aria-hidden />
+                    <PuzzlePiece className="text-accent-text" aria-hidden />
                     <span className="font-medium">{skill.name}</span>
                     <Badge variant={skill.source === "catalog" ? "info" : "neutral"} className="text-[10px]">
                       {skill.source === "catalog" ? t("do catálogo") : t("manual")}
@@ -188,7 +188,7 @@ export function SkillsClient({ initialState }: Props) {
                                   <span>
                                     • {t("Palavras-chave de ativação")}:{" "}
                                     {skill.comparativo.any_adicionadas.length > 0 && (
-                                      <span className="text-accent">+{skill.comparativo.any_adicionadas.join(", ")}</span>
+                                      <span className="text-accent-text">+{skill.comparativo.any_adicionadas.join(", ")}</span>
                                     )}
                                     {skill.comparativo.any_adicionadas.length > 0 &&
                                       skill.comparativo.any_removidas.length > 0 && <span aria-hidden> </span>}

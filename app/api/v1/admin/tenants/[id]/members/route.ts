@@ -20,6 +20,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export interface MembroDoTenant {
   user_id: string;
   email: string | null;
+  full_name: string | null;
   role: string;
   accepted_at: string | null;
   revoked_at: string | null;
@@ -70,6 +71,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       return {
         user_id: v.user_id as string,
         email: data?.user?.email ?? null,
+        full_name:
+          typeof data?.user?.user_metadata?.full_name === "string"
+            ? (data.user.user_metadata.full_name as string)
+            : null,
         role: v.role as string,
         accepted_at: (v.accepted_at as string | null) ?? null,
         revoked_at: (v.revoked_at as string | null) ?? null,

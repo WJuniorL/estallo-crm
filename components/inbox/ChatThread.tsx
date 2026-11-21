@@ -11,6 +11,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MessageBubble } from "./MessageBubble";
 import { NoteCard } from "./NoteCard";
 import { PassagemCard } from "./PassagemCard";
+import { ScheduledMessageCard } from "./ScheduledMessageCard";
+import { useScheduledMessages } from "@/hooks/inbox/useScheduledMessages";
 import { useMessagesRealtime } from "@/hooks/inbox/useMessagesRealtime";
 import { useConversationNotes } from "@/hooks/inbox/useConversationNotes";
 import { usePassagensDaConversa } from "@/hooks/inbox/usePassagensDaConversa";
@@ -104,6 +106,7 @@ export function ChatThread({
   const q = useMessagesRealtime(conversationId);
   const notes = useConversationNotes(conversationId);
   const passagens = usePassagensDaConversa(conversationId);
+  const agendadas = useScheduledMessages(conversationId);
   const claim = useClaimConversation();
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
@@ -539,6 +542,15 @@ export function ChatThread({
             )}
           </div>
         ))}
+
+        {/* Agendadas ainda não aconteceram: ficam sempre no fim do fio, pela ordem de envio. */}
+        {conversationId && agendadas.length > 0 && (
+          <div className="mt-[13px] flex flex-col gap-[13px]">
+            {agendadas.map((a) => (
+              <ScheduledMessageCard key={`agendada-${a.id}`} agendada={a} conversationId={conversationId} />
+            ))}
+          </div>
+        )}
 
         <div ref={bottomRef} />
         </div>

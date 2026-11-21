@@ -996,6 +996,29 @@
 .ibx-bubble.ibx-com-menu {
   padding-right: 32px;
 }
+/* Mensagem agendada: ainda não saiu. Mesma forma da enviada, sem o azul cheio —
+   borda tracejada e fundo tênue, para nunca ser lida como entregue. */
+.ibx-bubble.ibx-agendada {
+  border-radius: 12px 2px 12px 12px;
+  border: 1.5px dashed var(--ibx-blue);
+  background: color-mix(in srgb, var(--ibx-blue) 9%, var(--ibx-panel));
+  color: var(--color-text);
+  cursor: pointer;
+}
+.ibx-bubble.ibx-agendada .ibx-bubble-label {
+  color: var(--ibx-blue);
+  opacity: 1;
+}
+.ibx-bubble.ibx-agendada:hover,
+.ibx-bubble.ibx-agendada[data-state="open"] {
+  background: color-mix(in srgb, var(--ibx-blue) 16%, var(--ibx-panel));
+}
+.ibx-bubble.ibx-agendada.ibx-agendada-falhou {
+  border-color: var(--color-error);
+}
+.ibx-bubble.ibx-agendada.ibx-agendada-falhou .ibx-bubble-label {
+  color: var(--color-error);
+}
 .ibx-bubble.ibx-falhou {
   border-color: var(--color-error);
 }
@@ -1003,6 +1026,19 @@
   box-shadow:
     0 0 0 2px var(--color-background),
     0 0 0 4px var(--color-foreground);
+}
+/* "Encaminhada": itálico discreto acima do texto, como no app do WhatsApp. */
+.ibx-encaminhada {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 2px;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--ibx-muted);
+}
+.ibx-outgoing .ibx-encaminhada {
+  color: color-mix(in srgb, var(--color-accent-foreground) 80%, transparent);
 }
 .ibx-bubble-label {
   display: block;

@@ -143,6 +143,16 @@ beforeAll(() => {
             values (v_org, v_conv, v_sess, v_contact, 'text', 'inbound', 'rls invariant probe');
         end if;
 
+        -- migration 0720 — a mensagem agendada: texto que a empresa ainda vai
+        -- mandar a esta pessoa. Vazar entregaria ao vizinho o que vai sair.
+        if not exists (select 1 from public.scheduled_messages where organization_id = v_org) then
+          insert into public.scheduled_messages
+            (organization_id, conversation_id, created_by_user_id, body, send_at)
+          values (v_org, v_conv,
+                  (select user_id from public.user_organizations where organization_id = v_org limit 1),
+                  'RLS invariant agendada', now() + interval '1 hour');
+        end if;
+
         -- migration 0419 — o rascunho sugerido por integração (#1611): o TEXTO
         -- que outro sistema escreveu para esta pessoa, guardado ANTES de alguém
         -- clicar em enviar. Vazar a linha entregaria ao vizinho a mensagem que a
@@ -317,6 +327,10 @@ beforeAll(() => {
           insert into public.contact_field_proposals
             (organization_id, contact_id, campo, valor_proposto, expires_at)
             values (v_org, v_contact, 'email', 'rls-invariant@exemplo.test', now() + interval '7 days');
+        end if;
+
+        if not exists (select 1 from public.catalog_categories where organization_id = v_org) then
+          insert into public.catalog_categories (organization_id, nome) values (v_org, 'Categoria de invariante');
         end if;
 
         if not exists (select 1 from public.catalog_products where organization_id = v_org) then
@@ -628,12 +642,16 @@ export const TABLES = [
   // exige `manager` — esse segundo eixo é medido em
   // `tests/invariants/catalogo-so-gestor-muda-preco.test.ts`, não aqui.
   "catalog_products",
+  // migration 0721 — o cadastro de categorias do catálogo (mesmo molde de leitura).
+  "catalog_categories",
   // migration 0210 — as tarefas do CRM. A leitura é org-scoped sem gate de papel
   // (o `viewer` precisa ver o que o time combinou); a ESCRITA exige `agent`, e
   // esse segundo eixo NÃO é medido aqui — o usuário semeado é `agent`, então o
   // controle positivo passaria por acerto. Quem mede a escrita é a rota, em
   // `tests/unit/tarefas-rota-nao-tem-porta-dos-fundos.test.ts`.
   "crm_tasks",
+  // migration 0720 — mensagem agendada no Inbox (texto que ainda vai sair).
+  "scheduled_messages",
   // migration 0464 — a proposta comercial. Read/write org-scoped sem gate de
   // papel além de fn_role_at_least('agent'); o gate de ENVIO (manager) é
   // medido na rota, não aqui (mesmo eixo separado de catalog_products acima).

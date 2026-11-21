@@ -55,7 +55,6 @@ vi.mock("@/components/kanban/LoseLeadDialog", () => ({ LoseLeadDialog: () => nul
 vi.mock("@/components/kanban/MoveToOtherPipelineDialog", () => ({
   MoveToOtherPipelineDialog: () => null,
 }));
-vi.mock("@/components/kanban/EditLeadDialog", () => ({ EditLeadDialog: () => null }));
 
 const LEAD = {
   id: "l-1",
@@ -69,7 +68,7 @@ function renderCard() {
   return render(
     <QueryClientProvider client={client}>
       <div className="group">
-        <KanbanCardActions lead={LEAD} pipelineId="p-1" />
+        <KanbanCardActions lead={LEAD} pipelineId="p-1" onEditar={() => {}} />
       </div>
     </QueryClientProvider>,
   );

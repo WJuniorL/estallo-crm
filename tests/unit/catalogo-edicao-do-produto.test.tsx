@@ -9,6 +9,10 @@ vi.mock("next/navigation", () => ({
 }));
 // A tradução não é o assunto deste arquivo: a chave em português é o texto.
 vi.mock("@/hooks/i18n/useT", () => ({ useT: () => (s: string) => s }));
+vi.mock("@/hooks/catalogo/useCategoriasDeProduto", () => ({
+  useCategoriasDeProduto: () => ({ data: [] }),
+  useAlterarCategorias: () => ({ criar: { mutate: vi.fn(), isPending: false } }),
+}));
 
 import { ProdutosClient } from "@/app/app/products/_client";
 import { apiClient } from "@/lib/api/client";

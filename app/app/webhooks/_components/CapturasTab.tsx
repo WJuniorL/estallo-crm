@@ -218,7 +218,7 @@ export function CapturasTab() {
         <div className="flex justify-center pt-10">
           <Card className="max-w-md">
             <CardContent className="space-y-3 pt-6 text-center">
-              <Tray className="mx-auto h-10 w-10 text-accent" />
+              <Tray className="mx-auto h-10 w-10 text-accent-text" />
               <p className="text-sm text-muted-foreground">
                 {temFiltro
                   ? t("Nenhuma captação com esses filtros. Tente ampliar o período.")

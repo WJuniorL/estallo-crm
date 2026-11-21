@@ -1,7 +1,7 @@
 "use client";
 
 import { useTagDeIdioma } from "@/hooks/i18n/useLocaleDeData";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useT } from "@/hooks/i18n/useT";
 import { useActiveOrg, useUser } from "@/hooks/auth/AuthProvider";
@@ -43,6 +43,8 @@ interface Props {
    * trocar de gaveta no meio faria a animação de entrada rodar duas vezes).
    */
   embutido?: boolean;
+  /** Abriu pelo "Editar" do card: rola direto até os campos editáveis. */
+  focarCampos?: boolean;
 }
 
 /** A gaveta do dossiê — a mesma medida aberta pelo quadro e pelo Inbox. */
@@ -79,10 +81,20 @@ export function LeadDossier({
   ownerNames,
   stages,
   embutido = false,
+  focarCampos = false,
 }: Props) {
   const tagDoIdioma = useTagDeIdioma();
   const t = useT();
   const campos = useRef<HTMLDivElement | null>(null);
+  // Depois da animação de entrada da gaveta: rolar antes dela não tem para onde.
+  useEffect(() => {
+    if (!open || !focarCampos) return;
+    const id = setTimeout(
+      () => campos.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      300,
+    );
+    return () => clearTimeout(id);
+  }, [open, focarCampos, lead.id]);
   const timeline = useLeadTimeline(open ? lead.id : null, lead.contact_id);
   const owner = resolveLeadOwner(lead, ownerNames);
   const score = lead.score ?? null;
@@ -126,7 +138,7 @@ export function LeadDossier({
             <Button
               size="sm"
               variant="outline"
-              className="h-7 shrink-0 border-border-strong bg-transparent px-2 text-xs hover:border-accent hover:bg-transparent hover:text-accent"
+              className="h-7 shrink-0 border-border-strong bg-transparent px-2 text-xs hover:border-accent hover:bg-transparent hover:text-accent-text"
               onClick={() => setMoverAberto(true)}
               data-testid="dossie-mover-de-funil"
             >
@@ -179,7 +191,7 @@ export function LeadDossier({
         <button
           type="button"
           onClick={() => campos.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
-          className="ml-auto text-accent underline-offset-[3px] hover:underline"
+          className="ml-auto text-accent-text underline-offset-[3px] hover:underline"
         >
           {t("Editar campos")}
         </button>
@@ -251,11 +263,7 @@ export function LeadDossier({
           // Recolher a ficha não desmonta o campo em edição (a gravação dele sai no blur).
           manterMontado
         >
-          <LeadFieldsForm
-            lead={lead}
-            pipelineId={pipelineId}
-            fieldDefs={fieldDefs}
-          />
+          <LeadFieldsForm lead={lead} pipelineId={pipelineId} fieldDefs={fieldDefs} />
         </BlocoRecolhivel>
       </div>
 

@@ -15,8 +15,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EditarNomeDialog } from "@/components/team/EditarNomeDialog";
 import {
   useChangeMemberEmail,
+  useChangeTenantMemberName,
   useTenantMembers,
   type MembroDoTenant,
 } from "@/hooks/useTenantMembers";
@@ -40,6 +42,8 @@ export function TenantMembers({ organizationId, readOnly = false }: TenantMember
   const t = useT();
   const { data, isLoading, isError } = useTenantMembers(organizationId);
   const [editando, setEditando] = useState<MembroDoTenant | null>(null);
+  const [nomeando, setNomeando] = useState<MembroDoTenant | null>(null);
+  const trocarNome = useChangeTenantMemberName(organizationId);
 
   const membros = data?.data.members ?? [];
 
@@ -61,7 +65,10 @@ export function TenantMembers({ organizationId, readOnly = false }: TenantMember
         {membros.map((m) => (
           <li key={m.user_id} className="flex flex-wrap items-center justify-between gap-3 py-3">
             <div className="min-w-0 space-y-1">
-              <p className="truncate text-sm font-medium" data-testid="membro-email">
+              <p className="truncate text-sm font-medium" data-testid="membro-nome">
+                {m.full_name ?? <span className="text-muted-foreground">{t("(sem nome)")}</span>}
+              </p>
+              <p className="truncate text-sm text-muted-foreground" data-testid="membro-email">
                 {m.email ?? t("(sem e-mail)")}
               </p>
               <div className="flex flex-wrap gap-1.5">
@@ -72,25 +79,44 @@ export function TenantMembers({ organizationId, readOnly = false }: TenantMember
               </div>
             </div>
             {!readOnly && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setEditando(m)}
-                disabled={m.is_platform_admin || !!m.revoked_at}
-                title={
-                  m.is_platform_admin
-                    ? t(
-                        "O e-mail de um administrador da plataforma só é trocado pelo próprio dono da conta.",
-                      )
-                    : m.revoked_at
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setNomeando(m)}
+                  disabled={m.is_platform_admin || !!m.revoked_at}
+                  title={
+                    m.is_platform_admin
                       ? t(
-                          "Quem perdeu o acesso a este tenant não tem o e-mail trocado por aqui: a empresa avisada seria uma em que a pessoa já não está.",
+                          "O nome de um administrador da plataforma só é trocado pelo próprio dono da conta.",
                         )
-                      : undefined
-                }
-              >
-                {t("Alterar e-mail")}
-              </Button>
+                      : m.revoked_at
+                        ? t("Quem perdeu o acesso a este tenant não tem o nome trocado por aqui.")
+                        : undefined
+                  }
+                >
+                  {t("Alterar nome")}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setEditando(m)}
+                  disabled={m.is_platform_admin || !!m.revoked_at}
+                  title={
+                    m.is_platform_admin
+                      ? t(
+                          "O e-mail de um administrador da plataforma só é trocado pelo próprio dono da conta.",
+                        )
+                      : m.revoked_at
+                        ? t(
+                            "Quem perdeu o acesso a este tenant não tem o e-mail trocado por aqui: a empresa avisada seria uma em que a pessoa já não está.",
+                          )
+                        : undefined
+                  }
+                >
+                  {t("Alterar e-mail")}
+                </Button>
+              </div>
             )}
           </li>
         ))}
@@ -100,6 +126,26 @@ export function TenantMembers({ organizationId, readOnly = false }: TenantMember
         organizationId={organizationId}
         membro={editando}
         onClose={() => setEditando(null)}
+      />
+      <EditarNomeDialog
+        key={nomeando?.user_id ?? "fechado"}
+        membro={nomeando}
+        salvando={trocarNome.isPending}
+        onClose={() => setNomeando(null)}
+        onSalvar={(nome) =>
+          nomeando &&
+          trocarNome.mutate(
+            { userId: nomeando.user_id, fullName: nome },
+            {
+              onSuccess: () => {
+                toast.success(t("Nome alterado."));
+                setNomeando(null);
+              },
+              onError: (err: Error) =>
+                toast.error(t("Não foi possível alterar o nome"), { description: err.message }),
+            },
+          )
+        }
       />
     </div>
   );

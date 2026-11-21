@@ -60,6 +60,8 @@ export function useMessagesRealtime(conversationId: string | null) {
       qc.invalidateQueries({ queryKey: ["messages", conversationId] });
       // A sugestão de resposta nasce de mensagem nova; o painel deixou de consultar a cada 4 s.
       qc.invalidateQueries({ queryKey: ["reply-drafts", conversationId] });
+      // A agendada que o cron enviou vira mensagem aqui; o balão "agendada" sai junto.
+      qc.invalidateQueries({ queryKey: ["scheduled-messages", conversationId] });
     }
     agendarRecargaDasConversas(qc);
   }, [qc, conversationId]);

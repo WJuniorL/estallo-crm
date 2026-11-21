@@ -81,7 +81,7 @@ export function BlocoRecolhivel({
           aria-expanded={aberto}
           className="flex min-w-0 flex-1 items-center gap-2 text-left"
         >
-          {icone && <span className="shrink-0 text-accent">{icone}</span>}
+          {icone && <span className="shrink-0 text-accent-text">{icone}</span>}
           <h3 className="truncate font-sans text-xs font-semibold text-text">{titulo}</h3>
           {contagem != null && contagem > 0 && (
             <span className="rounded-full bg-background px-1.5 text-[10px] font-medium tabular-nums text-muted-foreground">

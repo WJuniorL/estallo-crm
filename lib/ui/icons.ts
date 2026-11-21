@@ -47,6 +47,9 @@ export {
   Dot,
   // actions
   ArrowBendUpLeft,
+  // Inbox: selo de mensagem encaminhada
+  ArrowBendUpRight,
+  ArrowBendDoubleUpRight,
   // videochamada (#2440): ícone de câmera, não Video (que no Phosphor é a
   // janela de player) — junto do Phone do DialButton, a família é a mesma.
   VideoCamera,
@@ -65,6 +68,7 @@ export {
   Eraser,
   PushPinSlash,
   FadersHorizontal,
+  ArrowsDownUp,
   SidebarSimple,
   ArrowsLeftRight,
   PencilSimple,
@@ -146,6 +150,8 @@ export {
   BookOpen,
   Key,
   UserCircle,
+  SortAscending,
+  SortDescending,
   ClockCounterClockwise,
   // inbox no celular: voltar para a lista e abrir a ficha do contato
   IdentificationCard,
@@ -171,4 +177,6 @@ export {
   Trophy,
   TrendDown,
   Snowflake,
+  // Inbox › agendar mensagem: sugestão "Amanhã de manhã"
+  SunHorizon,
 } from "@phosphor-icons/react/dist/ssr";

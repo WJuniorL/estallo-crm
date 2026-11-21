@@ -209,7 +209,7 @@ export function CaseChatPanel({ caseId }: { caseId: string }) {
                     // `t(s)`, não `s`: quem lê em espanhol clicaria num botão em
                     // espanhol e veria o campo preencher em português.
                     onClick={() => setPergunta(t(s))}
-                    className="rounded-sm border border-border px-3 py-1.5 text-left text-xs text-text transition-colors hover:border-accent hover:text-accent"
+                    className="rounded-sm border border-border px-3 py-1.5 text-left text-xs text-text transition-colors hover:border-accent hover:text-accent-text"
                   >
                     {t(s)}
                   </button>
@@ -262,7 +262,7 @@ export function CaseChatPanel({ caseId }: { caseId: string }) {
               "Nenhum provedor de IA está configurado. Peça a quem administra para configurar em IA › Provedores.",
             )}
           </p>
-          <a className="text-sm text-accent underline underline-offset-2" href="/app/ai/providers">
+          <a className="text-sm text-accent-text underline underline-offset-2" href="/app/ai/providers">
             {t("Abrir IA › Provedores")}
           </a>
         </div>
@@ -320,7 +320,7 @@ function Moldura({ t, children }: { t: (s: string) => string; children: ReactNod
       className="flex flex-col gap-3 rounded-lg border border-border p-4"
     >
       <div className="flex items-center gap-2">
-        <ChatCircle weight="duotone" aria-hidden className="size-4 text-accent" />
+        <ChatCircle weight="duotone" aria-hidden className="size-4 text-accent-text" />
         <h3 className="text-sm font-semibold">{t("Conversar sobre o caso")}</h3>
       </div>
       {/* O antídoto do modo de falha "a IA já avisou o cliente". Permanente de

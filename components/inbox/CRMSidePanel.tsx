@@ -431,7 +431,7 @@ function ondeEstaOLead(l: LeadRow): string {
 const CLASSES_DE_ONDE_ESTA = "line-clamp-2 text-muted-foreground";
 
 const COR_DO_STATUS: Record<string, string> = {
-  open: "bg-accent/10 text-accent",
+  open: "bg-accent/10 text-accent-text",
   won: "bg-success/15 text-success",
   lost: "bg-destructive/10 text-destructive",
 };
@@ -552,7 +552,7 @@ function CardDoNegocio({
                   aria-label={t("Ações do lead")}
                   title={t("Ações do lead")}
                   data-testid={`inbox-lead-acoes-${l.id}`}
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent/10 hover:text-text data-[state=open]:bg-accent/10 data-[state=open]:text-accent"
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent/10 hover:text-text data-[state=open]:bg-accent/10 data-[state=open]:text-accent-text"
                 >
                   <DotsThree size={16} weight="bold" aria-hidden />
                 </button>
@@ -952,7 +952,7 @@ export function CRMSidePanel({ conversation }: Props) {
           <Button
             size="sm"
             variant="ghost"
-            className="h-6 px-1.5 text-xs text-accent"
+            className="h-6 px-1.5 text-xs text-accent-text"
             disabled={readonly || !contactId || (leadDialogOpen && defaultPipeline.isLoading)}
             onClick={() => setLeadDialogOpen(true)}
           >

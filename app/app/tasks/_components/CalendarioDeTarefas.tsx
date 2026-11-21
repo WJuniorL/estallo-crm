@@ -5,9 +5,18 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useTagDeIdioma } from "@/hooks/i18n/useLocaleDeData";
 import { useT } from "@/hooks/i18n/useT";
-import { diaLocalDoPrazo, estaAtrasada, estaEncerrada, type Tarefa } from "@/lib/tarefas/tipos";
+import { COLUNAS_DO_QUADRO } from "@/lib/tarefas/quadro";
+import {
+  diaLocalDoPrazo,
+  estaAtrasada,
+  estaEncerrada,
+  type SituacaoDaTarefa,
+  type Tarefa,
+} from "@/lib/tarefas/tipos";
 import { CaretLeft, CaretRight } from "@/lib/ui/icons";
 import { cn } from "@/lib/utils";
+
+import { COR_DA_SITUACAO } from "./QuadroDeTarefas";
 
 interface Props {
   tarefas: Tarefa[];
@@ -64,6 +73,14 @@ export function CalendarioDeTarefas({ tarefas, podeEditar, aoAbrirTarefa, aoClic
     nomeDoDiaDaSemana.format(new Date(2026, 2, 1 + i)),
   );
 
+  const nomeDaSituacao: Record<SituacaoDaTarefa, string> = {
+    cancelled: t("Canceladas"),
+    pending: t("Pendentes"),
+    in_progress: t("Em andamento"),
+    done: t("Concluídas"),
+  };
+  const hora = new Intl.DateTimeFormat(tag, { hour: "2-digit", minute: "2-digit" });
+
   function mover(delta: number) {
     const alvo = new Date(ano, mes + delta, 1);
     setAno(alvo.getFullYear());
@@ -94,11 +111,25 @@ export function CalendarioDeTarefas({ tarefas, podeEditar, aoAbrirTarefa, aoClic
         </Button>
       </div>
 
+      {/* A MESMA cor de cada coluna do quadro: as duas visões falam a mesma língua. */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b px-4 py-2 text-[11px] text-muted-foreground">
+        {COLUNAS_DO_QUADRO.map((s) => (
+          <span key={s} className="flex items-center gap-1.5">
+            <span className={cn("size-2 rounded-full", COR_DA_SITUACAO[s])} aria-hidden />
+            {nomeDaSituacao[s]}
+          </span>
+        ))}
+        <span className="flex items-center gap-1.5">
+          <span className="size-2 rounded-full bg-destructive" aria-hidden />
+          {t("Atrasada")}
+        </span>
+      </div>
+
       <div className="grid grid-cols-7 border-b bg-muted/40">
         {cabecalhos.map((rotulo) => (
           <div
             key={rotulo}
-            className="py-2 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+            className="py-2 text-center text-[11px] font-semibold tracking-wider text-muted-foreground uppercase"
           >
             {rotulo}
           </div>
@@ -112,6 +143,7 @@ export function CalendarioDeTarefas({ tarefas, podeEditar, aoAbrirTarefa, aoClic
           const chave = diaLocalDoPrazo(dia.toISOString());
           const doDia = porDia.get(chave) ?? [];
           const excedente = doDia.length - POR_DIA_VISIVEIS;
+          const atrasadasNoDia = doDia.filter((x) => estaAtrasada(x)).length;
 
           return (
             <div
@@ -123,28 +155,45 @@ export function CalendarioDeTarefas({ tarefas, podeEditar, aoAbrirTarefa, aoClic
               )}
               onClick={podeEditar ? () => aoClicarNoDia(chave) : undefined}
             >
-              <span
-                className={cn(
-                  "flex h-6 w-6 items-center justify-center self-start rounded-full text-xs font-semibold",
-                  chave === diaDeHoje
-                    ? "bg-primary dark:bg-accent-700 font-bold text-primary-foreground"
-                    : "text-muted-foreground",
+              <div className="flex items-center justify-between">
+                <span
+                  className={cn(
+                    "flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold",
+                    chave === diaDeHoje
+                      ? "bg-primary font-bold text-primary-foreground dark:bg-accent-700"
+                      : "text-muted-foreground",
+                  )}
+                >
+                  {dia.getDate()}
+                </span>
+                {atrasadasNoDia > 0 && (
+                  <span
+                    className="rounded-full bg-destructive/15 px-1.5 text-[10px] font-semibold text-destructive"
+                    title={t("Atrasadas")}
+                    aria-label={`${atrasadasNoDia} ${t("Atrasadas")}`}
+                  >
+                    {atrasadasNoDia}
+                  </span>
                 )}
-              >
-                {dia.getDate()}
-              </span>
+              </div>
 
               {doDia.slice(0, POR_DIA_VISIVEIS).map((tarefa) => (
                 <button
                   key={tarefa.id}
                   type="button"
-                  title={tarefa.title}
+                  title={[
+                    tarefa.title,
+                    nomeDaSituacao[tarefa.status],
+                    estaAtrasada(tarefa) ? t("Atrasada") : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
                   onClick={(e) => {
                     e.stopPropagation();
                     aoAbrirTarefa(tarefa);
                   }}
                   className={cn(
-                    "w-full truncate rounded-md px-1.5 py-0.5 text-left text-[10px] font-medium",
+                    "flex w-full min-w-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-left text-[10px] font-medium",
                     estaEncerrada(tarefa)
                       ? "bg-muted text-muted-foreground line-through"
                       : estaAtrasada(tarefa)
@@ -152,7 +201,14 @@ export function CalendarioDeTarefas({ tarefas, podeEditar, aoAbrirTarefa, aoClic
                         : "bg-primary/10 text-primary",
                   )}
                 >
-                  {tarefa.title}
+                  <span
+                    className={cn("size-1.5 shrink-0 rounded-full", COR_DA_SITUACAO[tarefa.status])}
+                    aria-hidden
+                  />
+                  <span className="shrink-0 tabular-nums opacity-80">
+                    {hora.format(new Date(tarefa.due_date!))}
+                  </span>
+                  <span className="truncate">{tarefa.title}</span>
                 </button>
               ))}
 

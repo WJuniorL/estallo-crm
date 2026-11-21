@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { ROLE_RANK } from "@/lib/auth/types";
@@ -25,8 +25,6 @@ export const dynamic = "force-dynamic";
  * Quem atende não define plano de contas.
  */
 export default async function Page() {
-  // Contas e formas de pagamento só servem à comanda: sem o módulo, a tela some.
-  if (!(await moduloLigado(createAdminClient(), "financeiro"))) notFound();
   const user = await requireAuth();
   const org = await resolveActiveOrg(user);
   // Sem organização ativa não há catálogo — mesmo caminho da tela irmã de
@@ -48,7 +46,7 @@ export default async function Page() {
       </div>
       <CatalogoFinanceiro
         podeEditar={podeEditar}
-        comissaoDisponivel
+        comissaoDisponivel={await moduloLigado(createAdminClient(), "financeiro")}
       />
     </div>
   );

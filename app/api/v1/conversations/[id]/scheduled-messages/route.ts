@@ -23,7 +23,10 @@ interface RouteParams {
 
 export async function GET(_req: NextRequest, { params }: RouteParams): Promise<Response> {
   const requestId = randomUUID();
-  const authz = await requireRole("agent", { requestId, resource: "scheduled_messages" });
+  // LER é de quem vê a conversa (a RLS `scheduled_messages_select` confere
+  // `fn_can_view_conversation`): `viewer` e o suporte só-leitura abrem o Inbox,
+  // e com `agent` aqui cada conversa aberta por eles virava um 403.
+  const authz = await requireRole("viewer", { requestId, resource: "scheduled_messages" });
   if (!authz.ok) return authz.response;
   const { id } = await params;
 

@@ -15,6 +15,8 @@ import {
 } from "@/lib/tarefas/quadro";
 import {
   estaAtrasada,
+  estaEncerrada,
+  proximoEstadoAoAlternar,
   SITUACOES_DA_TAREFA,
   type PrioridadeDaTarefa,
   type SituacaoDaTarefa,
@@ -22,6 +24,7 @@ import {
 } from "@/lib/tarefas/tipos";
 import {
   CalendarBlank,
+  Check,
   Kanban,
   SortAscending,
   SortDescending,
@@ -124,7 +127,10 @@ export function QuadroDeTarefas({
     if (!destination || destination.droppableId === source.droppableId) return;
     const tarefa = tarefas.find((x) => x.id === draggableId);
     if (!tarefa) return;
-    const status = destination.droppableId as SituacaoDaTarefa;
+    mover(tarefa, destination.droppableId as SituacaoDaTarefa);
+  }
+
+  function mover(tarefa: Tarefa, status: SituacaoDaTarefa) {
     aoMover(tarefa, status).then(
       () => toast.success(`${t("Tarefa movida para")} ${titulo[status]}`),
       (erro: unknown) =>
@@ -205,6 +211,9 @@ export function QuadroDeTarefas({
                             responsavel={nomeDoResponsavel(tarefa)}
                             aoEditar={aoEditar}
                             aoApagar={aoApagar}
+                            // A caixa da lista antiga, mantida: concluir (ou
+                            // reabrir) sem arrastar. Mesma regra da lista (#2549).
+                            aoAlternar={(x) => mover(x, proximoEstadoAoAlternar(x.status))}
                           />
                         ))}
                         {provided.placeholder}
@@ -233,6 +242,7 @@ function CardDeTarefa({
   responsavel,
   aoEditar,
   aoApagar,
+  aoAlternar,
 }: {
   tarefa: Tarefa;
   index: number;
@@ -240,6 +250,7 @@ function CardDeTarefa({
   responsavel: string | null;
   aoEditar: (t: Tarefa) => void;
   aoApagar: (t: Tarefa) => Promise<unknown>;
+  aoAlternar: (t: Tarefa) => void;
 }) {
   const t = useT();
   const tag = useTagDeIdioma();
@@ -286,6 +297,28 @@ function CardDeTarefa({
               >
                 {t("Atrasada")}
               </span>
+            )}
+            {podeEditar && (
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={estaEncerrada(tarefa)}
+                aria-label={
+                  estaEncerrada(tarefa) ? t("Reabrir a tarefa") : t("Marcar como concluída")
+                }
+                onClick={(e) => {
+                  e.stopPropagation();
+                  aoAlternar(tarefa);
+                }}
+                className={cn(
+                  "ml-auto flex h-4 w-4 shrink-0 items-center justify-center rounded-md border transition-colors",
+                  estaEncerrada(tarefa)
+                    ? "border-primary bg-primary text-primary-foreground dark:bg-accent-700"
+                    : "border-muted-foreground/40 hover:border-primary",
+                )}
+              >
+                {estaEncerrada(tarefa) ? <Check size={12} weight="bold" aria-hidden /> : null}
+              </button>
             )}
           </div>
 

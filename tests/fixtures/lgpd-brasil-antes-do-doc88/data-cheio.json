@@ -42,6 +42,7 @@
   "group_messages_authored": [],
   "conversation_drafts": [],
   "conversation_notes": [],
+  "scheduled_messages": [],
   "contact_field_proposals": [],
   "lead_notes": [],
   "ai_agent_runs": [],

@@ -171,4 +171,6 @@ export {
   Trophy,
   TrendDown,
   Snowflake,
+  // Inbox › agendar mensagem: sugestão "Amanhã de manhã"
+  SunHorizon,
 } from "@phosphor-icons/react/dist/ssr";

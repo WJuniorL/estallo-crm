@@ -32,6 +32,7 @@ vi.mock("@/hooks/inbox/useAssignableMembers", () => ({ useAssignableMembers: () 
 vi.mock("@/hooks/team/useTeamMembers", () => ({ useTeamMembers: () => ({ data: undefined }) }));
 vi.mock("@/hooks/inbox/useConversationNotes", () => ({ useConversationNotes: () => [] }));
 vi.mock("@/hooks/inbox/usePassagensDaConversa", () => ({ usePassagensDaConversa: () => [] }));
+vi.mock("@/hooks/inbox/useScheduledMessages", () => ({ useScheduledMessages: () => [] }));
 vi.mock("@/hooks/inbox/useClaimConversation", () => ({
   useClaimConversation: () => ({ mutate: vi.fn(), isPending: false }),
 }));

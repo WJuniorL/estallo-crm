@@ -761,6 +761,15 @@ export interface ExportPayload {
     created_at: string;
     created_by_name: string | null;
   }>;
+  /** Mensagens agendadas para o titular (0720), redigidas na anonimização (passo 6e). */
+  scheduled_messages?: Array<{
+    id: string;
+    conversation_id: string;
+    body: string;
+    send_at: string;
+    status: string;
+    created_at: string;
+  }>;
   /** Propostas de campo do contato (0123), também APAGADAS na anonimização. */
   contact_field_proposals?: Array<{
     id: string;
@@ -1929,6 +1938,7 @@ export async function collectExportData(args: CollectArgs): Promise<ExportPayloa
   const avisos_de_caso: AvisoDeCasoEntregaRow[] = [];
   const conversation_drafts: NonNullable<ExportPayload["conversation_drafts"]> = [];
   const conversation_notes: NonNullable<ExportPayload["conversation_notes"]> = [];
+  const scheduled_messages: NonNullable<ExportPayload["scheduled_messages"]> = [];
   if (contactId) {
     const pageSize = 500;
     const refBatchSize = 100; // Mantém o filtro IN abaixo dos limites de URL dos proxies.
@@ -2107,6 +2117,23 @@ export async function collectExportData(args: CollectArgs): Promise<ExportPayloa
         if (!data || data.length < pageSize) break;
       }
     }
+    // As MENSAGENS AGENDADAS das conversas do titular (migration 0720): texto
+    // escrito PARA a pessoa, redigido pela cascata (passo 6e). Sem FK para
+    // `contacts`, como as notas — mesmo escopo, pelos mesmos ids.
+    for (let batch = 0; batch < conversationIds.length; batch += refBatchSize) {
+      for (let offset = 0; ; offset += pageSize) {
+        const { data, error } = await admin
+          .from("scheduled_messages")
+          .select("id, conversation_id, body, send_at, status, created_at")
+          .eq("organization_id", organizationId)
+          .in("conversation_id", conversationIds.slice(batch, batch + refBatchSize))
+          .order("id")
+          .range(offset, offset + pageSize - 1);
+        if (error) throw error;
+        scheduled_messages.push(...(data ?? []));
+        if (!data || data.length < pageSize) break;
+      }
+    }
     // O registro de entrega do aviso ao suporte (migration 0292). O escopo sai
     // dos CASOS já coletados, e não de uma segunda derivação pela conversa: um
     // `case_id` que não esteja em `cases` seria de outro titular.
@@ -2275,6 +2302,7 @@ export async function collectExportData(args: CollectArgs): Promise<ExportPayloa
     group_messages_authored,
     conversation_drafts,
     conversation_notes,
+    scheduled_messages,
     contact_field_proposals,
     lead_notes,
     ai_agent_runs,

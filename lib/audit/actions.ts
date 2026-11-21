@@ -1158,6 +1158,11 @@ export const AUDIT_ACTIONS = [
   "lead_product.updated",
   "lead_product.removed",
   "followup.retention_updated",
+  // Mensagem agendada no Inbox (0720): agendar, editar, cancelar e a rodada do cron que envia.
+  "message.scheduled",
+  "message.schedule_updated",
+  "message.schedule_canceled",
+  "message.scheduled_run",
 ] as const;
 
 /** Um código de auditoria. Derivado de `AUDIT_ACTIONS` — não redigite a lista. */

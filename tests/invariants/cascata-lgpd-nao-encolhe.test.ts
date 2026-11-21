@@ -69,6 +69,9 @@ const TABELAS_NA_CASCATA = [
   // `lgpd-cascata-alcanca-quem-guarda-pessoa.test.ts` não a alcança — é ESTA
   // catraca que segura o passo 6d de não sumir.
   "conversation_notes",
+  // 0720 — a mensagem agendada: texto escrito PARA a pessoa que ainda não
+  // saiu. Sem FK para `contacts`, como a nota — esta catraca segura o passo 6e.
+  "scheduled_messages",
   "crm_lead_activities", //0071 — payload, metadata e `reason` escrito por LLM
   "crm_leads", //          0019 — título, descrição, campos personalizados, tags
   // 0477 — destinatario_nome (nome impresso no PDF), briefing_json e

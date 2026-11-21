@@ -41,8 +41,8 @@ interface StageColumnProps {
    * resolver o intervalo no board significaria reconstruir essa ordem lá.
    */
   onSelectMany?: (leadIds: string[], marcar: boolean) => void;
-  /** Abrir o dossiê — atravessa o board até o card, como `pulses`. */
-  onOpen?: (leadId: string) => void;
+  /** Abrir o dossiê — atravessa o board até o card, como `pulses`. `campos` = já rolado até a edição. */
+  onOpen?: (leadId: string, foco?: "campos") => void;
   onAddLead?: (stageId: string) => void;
   /** `manager`+ — mesmo corte de papel da rota que renomeia a etapa. */
   podeRenomear?: boolean;
@@ -274,6 +274,7 @@ export const StageColumn = memo(function StageColumn({
                 key={lead.id}
                 lead={lead}
                 stageName={stage.name}
+                etapaDePerda={stage.is_lost}
                 ownerNames={ownerNames}
                 coolingIds={coolingIds}
                 reactivations={reactivations}

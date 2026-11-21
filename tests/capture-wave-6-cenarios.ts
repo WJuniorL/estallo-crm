@@ -367,7 +367,6 @@ async function main(): Promise<void> {
     // lista — é o mesmo furo do caminho inexistente, pelo lado da omissão.
     "components/kanban/LeadDossier.tsx",
     "hooks/leads/useLeadTimeline.ts",
-    "components/kanban/EditLeadDialog.tsx",
     "components/contacts/TimelineView.tsx",
     "lib/leads/activity-vocabulary.ts",
   ]);

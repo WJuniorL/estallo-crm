@@ -513,6 +513,8 @@ test.describe("filtro por marcador, pela tela", () => {
     await abreQuadro(page, funil, cardMarcado);
     await expect(page.getByRole("group", { name: `Lead: ${cardNeutro}` })).toBeVisible();
 
+    // Os filtros moram no painel do botão "Filtros".
+    await page.getByTestId("botao-filtros").click();
     await page.getByRole("button", { name: "Tag: todas" }).click();
     await expect(page.getByRole("menuitemcheckbox", { name: tagDoContato, exact: true })).toBeVisible({
       timeout: 30_000,

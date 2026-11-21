@@ -22,8 +22,19 @@ import { useCatalogoDeProdutos } from "@/hooks/leads/useProdutosDoNegocio";
 import type { Lead, OwnerKind } from "@/lib/types/leads";
 import { marcadoresDoCard } from "@/lib/kanban/marcadores-do-card";
 import { OwnerBadge } from "./OwnerBadge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { camposDoFunil } from "@/lib/leads/campos-do-funil";
+import type { OrdenacaoDoFunil } from "@/lib/kanban/ordenacao";
+import { FadersHorizontal } from "@/lib/ui/icons";
+import {
+  FiltroDeCamposPersonalizados,
+  IntervaloDeDatas,
+  MenuDeOrdenacao,
+  SecaoDeFiltro,
+} from "./FiltrosDoFunil";
 import {
   agentOwnerFilter,
+  contarFiltrosAtivos,
   marcadoresDoFiltro,
   parseAgentOwnerFilter,
   type LeadFilters,
@@ -42,6 +53,9 @@ interface FilterBarProps {
    * de categoria não teria o que oferecer.
    */
   settings?: Record<string, unknown>;
+  /** A ordem dos cards nas etapas — mora ao lado dos filtros, fora do painel. */
+  ordenacao?: OrdenacaoDoFunil;
+  onOrdenacao?: (o: OrdenacaoDoFunil) => void;
 }
 
 const STATUS_OPTIONS: Array<{ value: NonNullable<LeadFilters["status"]>; label: string }> = [
@@ -51,7 +65,14 @@ const STATUS_OPTIONS: Array<{ value: NonNullable<LeadFilters["status"]>; label: 
   { value: "lost", label: "Perdidos" },
 ];
 
-export function FilterBar({ filters, onChange, leads, settings }: FilterBarProps) {
+export function FilterBar({
+  filters,
+  onChange,
+  leads,
+  settings,
+  ordenacao = "manual",
+  onOrdenacao,
+}: FilterBarProps) {
   const t = useT();
   const user = useUser();
   const { data: members } = useAssignableMembers(true);
@@ -143,8 +164,7 @@ export function FilterBar({ filters, onChange, leads, settings }: FilterBarProps
           ? (agents?.find((a) => a.agent_id === filteredAgentId)?.name ?? t("Agente"))
           : filters.owner === user.id
             ? t("Eu")
-            : (members?.find((m) => m.user_id === filters.owner)?.full_name ??
-              t("Responsável"));
+            : (members?.find((m) => m.user_id === filters.owner)?.full_name ?? t("Responsável"));
 
   const statusLabel = t(
     STATUS_OPTIONS.find((o) => o.value === (filters.status ?? "all"))?.label ?? "Todos",
@@ -205,6 +225,13 @@ export function FilterBar({ filters, onChange, leads, settings }: FilterBarProps
   const motivoLabel = filters.lostReason ? rotuloDoMotivo(filters.lostReason) : t("Todos");
   const categoriaLabel = filters.lostCategory ?? t("Todas");
 
+  const camposDoQuadro = useMemo(() => camposDoFunil(settings ?? null), [settings]);
+  const ativos = contarFiltrosAtivos(filters);
+  const limpar = () => {
+    setSearchInput("");
+    onChange({ status: "all" });
+  };
+
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-surface p-2">
       <Input
@@ -215,25 +242,66 @@ export function FilterBar({ filters, onChange, leads, settings }: FilterBarProps
         className="h-9 w-full sm:w-64"
       />
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm">
-            {t("Responsável")}: {ownerLabel}
+      {/*
+        TODOS OS FILTROS NUM BOTÃO SÓ. A barra crescia um gatilho por filtro e,
+        com os de data e de campo, não caberia nem no desktop. O número no botão
+        diz quantos estão ligados — sem ele, filtro escondido seria filtro
+        esquecido, e o quadro "sumiria" com cards sem explicação.
+      */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            data-testid="botao-filtros"
+            className={cn(ativos > 0 && "border-accent text-accent")}
+          >
+            <FadersHorizontal size={14} className="mr-1.5" aria-hidden />
+            {t("Filtros")}
+            {ativos > 0 && (
+              <span
+                className="ml-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-accent-foreground"
+                data-testid="filtros-ativos"
+              >
+                {ativos}
+              </span>
+            )}
           </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuLabel>{t("Responsável")}</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => onChange({ ...filters, owner: "any" })}>
-            {t("Todos")}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onChange({ ...filters, owner: "unassigned" })}>
-            {t("Sem responsável")}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onChange({ ...filters, owner: user.id })}>
-            {t("Eu")}
-          </DropdownMenuItem>
-          {/*
+        </PopoverTrigger>
+        <PopoverContent
+          align="start"
+          className="max-h-[min(75dvh,640px)] w-[min(92vw,380px)] space-y-4 overflow-y-auto"
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold">{t("Filtros")}</p>
+            {ativos > 0 && (
+              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={limpar}>
+                {t("Limpar filtros")}
+              </Button>
+            )}
+          </div>
+
+          {/* Na largura do painel: cada gatilho ocupa a linha inteira. */}
+          <div className="flex flex-col gap-2 [&>button]:w-full [&>button]:justify-between">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  {t("Responsável")}: {ownerLabel}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuLabel>{t("Responsável")}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onChange({ ...filters, owner: "any" })}>
+                  {t("Todos")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onChange({ ...filters, owner: "unassigned" })}>
+                  {t("Sem responsável")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onChange({ ...filters, owner: user.id })}>
+                  {t("Eu")}
+                </DropdownMenuItem>
+                {/*
             Humanos e agentes numa lista SÓ, ordenados juntos por nome. Não existe
             separador entre eles: separador agrupa, e agrupar comunica "as pessoas,
             e depois também os bots" — segregação por posição, que é a mesma ideia
@@ -243,198 +311,234 @@ export function FilterBar({ filters, onChange, leads, settings }: FilterBarProps
             O separador ACIMA (linha do "Eu") fica: ele divide as opções meta
             (Todos / Sem responsável / Eu) das pessoas, e ali agrupar está certo.
           */}
-          {assignees.length > 0 && (
-            <>
-              <DropdownMenuSeparator />
-              {assignees.map((a) => (
-                <DropdownMenuItem key={a.key} onClick={() => onChange({ ...filters, owner: a.owner })}>
-                  <OwnerBadge
-                    ownerKind={a.kind}
-                    ownerName={a.name}
-                    agentVersion={a.version}
-                  />
-                </DropdownMenuItem>
-              ))}
-            </>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+                {assignees.length > 0 && (
+                  <>
+                    <DropdownMenuSeparator />
+                    {assignees.map((a) => (
+                      <DropdownMenuItem
+                        key={a.key}
+                        onClick={() => onChange({ ...filters, owner: a.owner })}
+                      >
+                        <OwnerBadge
+                          ownerKind={a.kind}
+                          ownerName={a.name}
+                          agentVersion={a.version}
+                        />
+                      </DropdownMenuItem>
+                    ))}
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm">
-            {t("Status")}: {statusLabel}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          {STATUS_OPTIONS.map((o) => (
-            <DropdownMenuItem
-              key={o.value}
-              onClick={() => onChange({ ...filters, status: o.value })}
-            >
-              {t(o.label)}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      {mostraPerda ? (
-        <>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                {t("Motivo")}: {motivoLabel}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem onClick={() => onChange({ ...filters, lostReason: undefined })}>
-                {t("Todos")}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              {motivosPerdidos.map((motivo) => (
-                <DropdownMenuItem
-                  key={motivo}
-                  onClick={() => onChange({ ...filters, lostReason: motivo })}
-                >
-                  {rotuloDoMotivo(motivo)}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {categoriasPerdidas.length > 0 ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
-                  {t("Categoria")}: {categoriaLabel}
+                  {t("Status")}: {statusLabel}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
-                <DropdownMenuItem
-                  onClick={() => onChange({ ...filters, lostCategory: undefined })}
-                >
-                  {t("Todas")}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                {categoriasPerdidas.map((categoria) => (
+                {STATUS_OPTIONS.map((o) => (
                   <DropdownMenuItem
-                    key={categoria}
-                    onClick={() => onChange({ ...filters, lostCategory: categoria })}
+                    key={o.value}
+                    onClick={() => onChange({ ...filters, status: o.value })}
                   >
-                    {categoria}
+                    {t(o.label)}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-          ) : null}
-        </>
-      ) : null}
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" disabled={tagOptions.length === 0}>
-            {marcadoresEscolhidos[0] ? (
-              <PontoDaEtiqueta tag={marcadoresEscolhidos[0]} className="mr-2" />
+            {mostraPerda ? (
+              <>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      {t("Motivo")}: {motivoLabel}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem
+                      onClick={() => onChange({ ...filters, lostReason: undefined })}
+                    >
+                      {t("Todos")}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    {motivosPerdidos.map((motivo) => (
+                      <DropdownMenuItem
+                        key={motivo}
+                        onClick={() => onChange({ ...filters, lostReason: motivo })}
+                      >
+                        {rotuloDoMotivo(motivo)}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {categoriasPerdidas.length > 0 ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        {t("Categoria")}: {categoriaLabel}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      <DropdownMenuItem
+                        onClick={() => onChange({ ...filters, lostCategory: undefined })}
+                      >
+                        {t("Todas")}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      {categoriasPerdidas.map((categoria) => (
+                        <DropdownMenuItem
+                          key={categoria}
+                          onClick={() => onChange({ ...filters, lostCategory: categoria })}
+                        >
+                          {categoria}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : null}
+              </>
             ) : null}
-            {tagLabel}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuItem
-            onClick={() => onChange({ ...filters, tag: undefined, tagMode: undefined })}
-          >
-            {t("Todas")}
-          </DropdownMenuItem>
-          {/* O E/OU só aparece com DUAS etiquetas. Com uma só o parâmetro não
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" disabled={tagOptions.length === 0}>
+                  {marcadoresEscolhidos[0] ? (
+                    <PontoDaEtiqueta tag={marcadoresEscolhidos[0]} className="mr-2" />
+                  ) : null}
+                  {tagLabel}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem
+                  onClick={() => onChange({ ...filters, tag: undefined, tagMode: undefined })}
+                >
+                  {t("Todas")}
+                </DropdownMenuItem>
+                {/* O E/OU só aparece com DUAS etiquetas. Com uma só o parâmetro não
               muda o resultado — e um controle que não muda nada é pior do que
               nenhum. */}
-          {marcadoresEscolhidos.length > 1 && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuRadioGroup
-                value={filters.tagMode === "ou" ? "ou" : "e"}
-                onValueChange={(modo) =>
-                  onChange({ ...filters, tagMode: modo === "ou" ? "ou" : undefined })
-                }
-              >
-                <DropdownMenuRadioItem value="e">{t("Todas (E)")}</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="ou">{t("Qualquer uma (OU)")}</DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
-            </>
-          )}
-          <DropdownMenuSeparator />
-          {/* Checkbox, e não item comum: `DropdownMenuCheckboxItem` marca e NÃO
+                {marcadoresEscolhidos.length > 1 && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuRadioGroup
+                      value={filters.tagMode === "ou" ? "ou" : "e"}
+                      onValueChange={(modo) =>
+                        onChange({ ...filters, tagMode: modo === "ou" ? "ou" : undefined })
+                      }
+                    >
+                      <DropdownMenuRadioItem value="e">{t("Todas (E)")}</DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="ou">
+                        {t("Qualquer uma (OU)")}
+                      </DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                  </>
+                )}
+                <DropdownMenuSeparator />
+                {/* Checkbox, e não item comum: `DropdownMenuCheckboxItem` marca e NÃO
               fecha o menu, que é o que permite escolher a segunda etiqueta sem
               reabrir o menu. O `onSelect` com `preventDefault` trava esse
               comportamento, porque o item de checkbox fecha por padrão. */}
-          {tagOptions.map((tag) => (
-            <DropdownMenuCheckboxItem
-              key={tag}
-              checked={marcadoresEscolhidos.includes(tag)}
-              onCheckedChange={() => alternaEtiqueta(tag)}
-              onSelect={(e) => e.preventDefault()}
+                {tagOptions.map((tag) => (
+                  <DropdownMenuCheckboxItem
+                    key={tag}
+                    checked={marcadoresEscolhidos.includes(tag)}
+                    onCheckedChange={() => alternaEtiqueta(tag)}
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    <PontoDaEtiqueta tag={tag} className="mr-2" />
+                    {tag}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={produtoOptions.length === 0 && !filters.produto}
+                  data-testid="filtro-produto"
+                >
+                  {t("Produto")}: {produtoLabel}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => onChange({ ...filters, produto: undefined })}>
+                  {t("Todos")}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {produtoOptions.map((p) => (
+                  <DropdownMenuItem
+                    key={p.id}
+                    onClick={() => onChange({ ...filters, produto: p.id })}
+                  >
+                    {p.nome}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <label
+              className={cn(
+                "flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm select-none",
+                filters.overdueOnly && "border-accent bg-accent/10",
+              )}
             >
-              <PontoDaEtiqueta tag={tag} className="mr-2" />
-              {tag}
-            </DropdownMenuCheckboxItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+              <input
+                type="checkbox"
+                checked={!!filters.overdueOnly}
+                onChange={(e) => onChange({ ...filters, overdueOnly: e.target.checked })}
+              />
+              {t("Apenas atrasados")}
+            </label>
+          </div>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={produtoOptions.length === 0 && !filters.produto}
-            data-testid="filtro-produto"
-          >
-            {t("Produto")}: {produtoLabel}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => onChange({ ...filters, produto: undefined })}>
-            {t("Todos")}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          {produtoOptions.map((p) => (
-            <DropdownMenuItem key={p.id} onClick={() => onChange({ ...filters, produto: p.id })}>
-              {p.nome}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+          <SecaoDeFiltro titulo={t("Data de criação")}>
+            <IntervaloDeDatas
+              rotulo={t("Data de criação")}
+              de={filters.criadoDe}
+              ate={filters.criadoAte}
+              onChange={(de, ate) => onChange({ ...filters, criadoDe: de, criadoAte: ate })}
+              testId="filtro-criacao"
+            />
+          </SecaoDeFiltro>
+          <SecaoDeFiltro titulo={t("Data prevista de fechamento")}>
+            <IntervaloDeDatas
+              rotulo={t("Data prevista de fechamento")}
+              de={filters.previsaoDe}
+              ate={filters.previsaoAte}
+              onChange={(de, ate) => onChange({ ...filters, previsaoDe: de, previsaoAte: ate })}
+              testId="filtro-previsao"
+            />
+          </SecaoDeFiltro>
+          <SecaoDeFiltro titulo={t("Data de fechamento")}>
+            <IntervaloDeDatas
+              rotulo={t("Data de fechamento")}
+              de={filters.fechadoDe}
+              ate={filters.fechadoAte}
+              onChange={(de, ate) => onChange({ ...filters, fechadoDe: de, fechadoAte: ate })}
+              testId="filtro-fechamento"
+            />
+          </SecaoDeFiltro>
+          <SecaoDeFiltro titulo={t("Campos personalizados")}>
+            <FiltroDeCamposPersonalizados
+              campos={camposDoQuadro}
+              filters={filters}
+              onChange={onChange}
+            />
+          </SecaoDeFiltro>
+        </PopoverContent>
+      </Popover>
 
-      <label
-        className={cn(
-          "flex cursor-pointer select-none items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm",
-          filters.overdueOnly && "border-accent bg-accent/10",
-        )}
-      >
-        <input
-          type="checkbox"
-          checked={!!filters.overdueOnly}
-          onChange={(e) => onChange({ ...filters, overdueOnly: e.target.checked })}
-        />
-        {t("Apenas atrasados")}
-      </label>
+      {onOrdenacao && <MenuDeOrdenacao ordem={ordenacao} onChange={onOrdenacao} />}
 
-      {(filters.search ||
-        filters.owner ||
-        marcadoresEscolhidos.length > 0 ||
-        filters.overdueOnly ||
-        filters.lostReason ||
-        filters.lostCategory ||
-        filters.produto ||
-        (filters.status && filters.status !== "all")) && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            setSearchInput("");
-            onChange({ status: "all" });
-          }}
-        >
+      {(filters.search || ativos > 0) && (
+        <Button variant="ghost" size="sm" onClick={limpar}>
           {t("Limpar filtros")}
         </Button>
       )}

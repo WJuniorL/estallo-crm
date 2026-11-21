@@ -65,6 +65,7 @@ export {
   Eraser,
   PushPinSlash,
   FadersHorizontal,
+  ArrowsDownUp,
   SidebarSimple,
   ArrowsLeftRight,
   PencilSimple,

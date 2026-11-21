@@ -374,7 +374,7 @@ export function MessageBubble({
             {senderLabel && t(senderLabel)}
           </div>
         )}
-        {/* Encaminhada (metadata gravado pela ingestão do WAHA), como no app. */}
+        {/* Encaminhada (metadata gravado pela ingestão do canal), como no app. */}
         {message.metadata?.forwarded === true && (
           <div data-testid="selo-encaminhada" className="ibx-encaminhada">
             {message.metadata?.forwarded_many === true ? (

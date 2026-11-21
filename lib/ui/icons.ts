@@ -146,6 +146,8 @@ export {
   BookOpen,
   Key,
   UserCircle,
+  SortAscending,
+  SortDescending,
   ClockCounterClockwise,
   // inbox no celular: voltar para a lista e abrir a ficha do contato
   IdentificationCard,

@@ -479,8 +479,9 @@ test.describe("Quadro do funil — agir em vários cards de uma vez", () => {
   /**
    * O QUADRO CABE NA TELA. A página rolava com a janela: com uma etapa cheia, a
    * barra de rolagem lateral só aparecia no pé da coluna mais comprida, e o nome
-   * da etapa sumia do alto no caminho (pedido de quem opera, 25/09/2026). Agora
-   * quem rola é o quadro, nos dois eixos, e o cabeçalho da etapa fica preso.
+   * da etapa sumia do alto no caminho (pedido de quem opera, 25/09/2026). Desde
+   * 21/11/2026 o quadro rola só de lado e CADA ETAPA rola os próprios cards:
+   * o cabeçalho é fixo e as outras etapas não se mexem.
    *
    * 820×600 de propósito: com a barra lateral do app aberta, duas etapas de
    * 20rem não cabem lado a lado, e a etapa de origem tem mais cards do que a
@@ -496,23 +497,35 @@ test.describe("Quadro do funil — agir em vários cards de uma vez", () => {
       await expect(page.getByText(TITULO(1), { exact: true })).toBeVisible({ timeout: 30_000 });
 
       const quadro = page.locator("[data-quadro-do-funil]");
+      const rolagemDaOrigem = coluna(page, etapaOrigemId).locator("[data-rolagem-da-etapa]");
       const medida = await quadro.evaluate((el) => ({
         pe: el.getBoundingClientRect().bottom,
         janela: window.innerHeight,
         rolaDeLado: el.scrollWidth > el.clientWidth,
-        rolaParaBaixo: el.scrollHeight > el.clientHeight,
+        quadroRolaParaBaixo: el.scrollHeight > el.clientHeight,
         paginaRola: document.documentElement.scrollHeight - document.documentElement.clientHeight,
       }));
       expect(medida.rolaDeLado, "fixture: em 820px as duas etapas não cabem lado a lado").toBe(true);
-      expect(medida.rolaParaBaixo, "fixture: a etapa de origem passa da altura do quadro").toBe(true);
+      expect(medida.quadroRolaParaBaixo, "o quadro não rola na vertical: quem rola é a etapa").toBe(false);
+      expect(
+        await rolagemDaOrigem.evaluate((el) => el.scrollHeight > el.clientHeight),
+        "fixture: a etapa de origem passa da altura do quadro",
+      ).toBe(true);
       expect(medida.pe, "o pé do quadro — onde mora a barra lateral — está dentro da tela").toBeLessThanOrEqual(
         medida.janela,
       );
       expect(medida.paginaRola, "quem rola é o quadro, não a página").toBeLessThanOrEqual(2);
 
-      await quadro.evaluate((el) => {
+      const outras = page.locator("[data-rolagem-da-etapa]");
+      const topoDasOutrasAntes = await outras.evaluateAll((els) => els.map((e) => e.getBoundingClientRect().top));
+      await rolagemDaOrigem.evaluate((el) => {
         el.scrollTop = el.scrollHeight;
       });
+      expect(await rolagemDaOrigem.evaluate((el) => el.scrollTop), "a etapa rolou").toBeGreaterThan(0);
+      expect(
+        await outras.evaluateAll((els) => els.map((e) => e.getBoundingClientRect().top)),
+        "rolar uma etapa não move as molduras das outras",
+      ).toEqual(topoDasOutrasAntes);
       const cabecalho = coluna(page, etapaOrigemId).locator("[data-cabecalho-da-etapa]");
       // Quem entra aqui é manager: para ele o nome da etapa é o campo
       // editável do cabeçalho (#1738), não um <h2>. É o nome que tem de
@@ -524,7 +537,7 @@ test.describe("Quadro do funil — agir em vários cards de uma vez", () => {
       const topoDoQuadro = (await quadro.boundingBox())!.y;
       expect(
         Math.abs(topoDoCabecalho - topoDoQuadro),
-        "rolado até o fim, o cabeçalho continua preso no alto do quadro",
+        "rolada a etapa até o fim, o cabeçalho continua no alto do quadro",
       ).toBeLessThanOrEqual(2);
       await captura(page, "08-quadro-cabe-na-tela");
     });

@@ -156,6 +156,7 @@ export const StageColumn = memo(function StageColumn({
   // Total, contagem e "selecionar todos" seguem contando a etapa inteira.
   const [limite, setLimite] = useState(LOTE_DE_CARDS);
   const fimDaLista = useRef<HTMLDivElement | null>(null);
+  const rolagem = useRef<HTMLDivElement | null>(null);
   const temMais = leads.length > limite;
   useEffect(() => {
     const alvo = fimDaLista.current;
@@ -164,7 +165,9 @@ export const StageColumn = memo(function StageColumn({
       (entradas) => {
         if (entradas.some((e) => e.isIntersecting)) setLimite((n) => n + LOTE_DE_CARDS);
       },
-      { rootMargin: "800px 0px" },
+      // A raiz é a rolagem da etapa: sem ela a margem valeria para a janela, e
+      // o próximo lote só viria com o fim da lista já à vista.
+      { root: rolagem.current, rootMargin: "800px 0px" },
     );
     observador.observe(alvo);
     return () => observador.disconnect();
@@ -185,7 +188,7 @@ export const StageColumn = memo(function StageColumn({
         anuncia, e `snap-center` para a rolagem nela. Do `md` para cima, 320px
         (era 360): em tela pequena cabia uma etapa e meia.
       */
-      className="flex min-h-full w-[85vw] max-w-[320px] shrink-0 snap-center flex-col md:w-[320px]"
+      className="flex h-full min-h-0 w-[85vw] max-w-[320px] shrink-0 snap-center flex-col md:w-[320px]"
       data-etapa-do-quadro={stage.id}
     >
       {/*
@@ -198,7 +201,7 @@ export const StageColumn = memo(function StageColumn({
         O texto da pílula sai de `estiloDoChip`, a mesma régua das etiquetas:
         preto ou branco pelo contraste com a cor, nunca branco fixo.
       */}
-      <div className="sticky top-0 z-10 bg-background pb-2" data-cabecalho-da-etapa>
+      <div className="shrink-0 bg-background pb-2" data-cabecalho-da-etapa>
         <div className="group/etapa flex items-center gap-2 px-0.5 pt-0.5">
           {/* "Selecionar a etapa inteira": fica no cabeçalho porque é ali que a
               etapa é um objeto. Indeterminado quando a seleção é parcial. */}
@@ -258,14 +261,20 @@ export const StageColumn = memo(function StageColumn({
       </div>
 
       {/* A MOLDURA da etapa — neutra; a cor mora no título. */}
-      <div className="flex flex-1 flex-col rounded-2xl border border-border bg-background">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-background">
       <Droppable droppableId={stage.id} type="LEAD">
         {(provided, snapshot) => (
           <div
-            ref={provided.innerRef}
+            ref={(el) => {
+              provided.innerRef(el);
+              rolagem.current = el;
+            }}
             {...provided.droppableProps}
+            // A área de soltar É a rolagem da etapa: o dnd a reconhece como o
+            // contêiner rolável do Droppable e a rola sozinho no arraste.
+            data-rolagem-da-etapa
             className={cn(
-              "flex flex-1 flex-col gap-2.5 p-2 transition-colors",
+              "flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain p-2 transition-colors",
               snapshot.isDraggingOver && "bg-accent/5",
             )}
           >

@@ -366,31 +366,20 @@ export function KanbanBoard({
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      {/* UM contêiner de rolagem só, nos dois eixos. Rolar cada coluna por
-          conta própria seria o desenho "Trello", mas o @hello-pangea/dnd não
-          suporta Droppable rolável dentro de outro contêiner rolável ("nested
-          scroll containers are currently not supported") — o arraste perderia
-          a rolagem automática. Com o quadro como único pai rolável, o arraste
-          continua inteiro, e o cabeçalho de cada etapa fica preso em cima
-          (`sticky` em StageColumn).
-          TODAS AS ETAPAS TÊM A ALTURA DA MAIOR. Antes era `items-start` e cada
-          coluna tinha a altura dos próprios cards: rolando até o fim de uma
-          etapa comprida, as curtas saíam da tela — título e moldura juntos,
-          porque o `sticky` só prende enquanto o pai está visível — e não havia
-          onde soltar o card. Agora a linha interna (`w-max min-h-full`) cresce
-          com a coluna mais alta e as demais esticam (`stretch`, o padrão do
-          flex) até ela: o cabeçalho fica preso até o fim da rolagem e o vazio
-          embaixo do último card é área de soltar.
-          Sem padding no ALTO, e é de propósito: o `sticky` prende o cabeçalho
-          na borda do conteúdo do contêiner, então um `pt-4` deixava uma faixa
-          de 16px acima dele por onde os cards apareciam rolando (medido no e2e
-          "o quadro cabe na tela"). O respiro até os filtros vem do `gap-4` da
-          página. */}
-      {/* `items-start` no rolador: a LINHA interna precisa da altura do próprio
-          conteúdo (a coluna mais alta). Esticada, ela teria a altura da tela e
-          a coluna comprida vazaria da moldura. */}
-      <div className="flex min-h-0 flex-1 items-start overflow-auto px-4 pb-4" data-quadro-do-funil>
-        <div className="flex min-h-full w-max gap-3">
+      {/* ROLAGEM POR ETAPA (pedido do dono, 21/11/2026): o quadro só rola de
+          LADO e cada etapa rola os próprios cards — título fixo, as outras
+          etapas paradas, a página sem rolagem. As colunas têm a altura do
+          quadro (`h-full`) e quem rola é a área de soltar (StageColumn).
+          ponytail: o @hello-pangea/dnd não suporta rolável dentro de rolável
+          ("nested scroll container"): durante o arraste ele rola a ETAPA
+          sozinho, mas não desliza o quadro para o lado — soltar numa etapa
+          fora da tela pede rolar o quadro antes. Rolagem lateral própria no
+          arraste só se isso pesar no uso. */}
+      <div
+        className="flex min-h-0 flex-1 overflow-x-auto overflow-y-hidden px-4 pb-4"
+        data-quadro-do-funil
+      >
+        <div className="flex h-full w-max gap-3">
           {data.stages.map((stage) => (
             <StageColumn
               key={stage.id}

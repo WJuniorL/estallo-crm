@@ -136,7 +136,7 @@ const SelectItem = React.forwardRef<
     </span>
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
     {descricao && (
-      <span className="text-xs text-muted-foreground group-focus:text-accent-foreground/80">
+      <span className="text-xs text-muted-foreground group-focus:text-accent-foreground">
         {descricao}
       </span>
     )}

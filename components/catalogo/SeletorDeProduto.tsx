@@ -81,7 +81,10 @@ export function SeletorDeProduto({
     const timer = window.setTimeout(() => setTermoNoServidor(termo.trim()), 250);
     return () => window.clearTimeout(timer);
   }, [termo]);
-  const cortado = (catalogo.data?.length ?? 0) >= TETO_DO_CATALOGO;
+  // Só lista vale: resposta fora do formato não derruba a tela (como fazia o
+  // `Array.isArray` do Novo Lead antes deste componente).
+  const doCache = Array.isArray(catalogo.data) ? catalogo.data : [];
+  const cortado = doCache.length >= TETO_DO_CATALOGO;
   const doServidor = useQuery({
     queryKey: ["catalogo-de-produtos", "busca", termoNoServidor],
     queryFn: async () =>
@@ -94,8 +97,8 @@ export function SeletorDeProduto({
     staleTime: 60_000,
   });
 
-  const todos = [...(catalogo.data ?? [])];
-  for (const p of doServidor.data ?? []) if (!todos.some((x) => x.id === p.id)) todos.push(p);
+  const todos = [...doCache];
+  for (const p of Array.isArray(doServidor.data) ? doServidor.data : []) if (!todos.some((x) => x.id === p.id)) todos.push(p);
   const encontrados = filtrarProdutos(todos.filter(aceita), termo);
   const visiveis = encontrados.slice(0, LIMITE_NA_LISTA);
 

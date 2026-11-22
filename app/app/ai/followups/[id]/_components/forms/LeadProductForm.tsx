@@ -3,7 +3,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCatalogoDeProdutos } from "@/hooks/leads/useProdutosDoNegocio";
+import { SeletorDeProduto } from "@/components/catalogo/SeletorDeProduto";
 import { useT } from "@/hooks/i18n/useT";
 
 import type { ConfigOf } from "./shared";
@@ -20,7 +20,6 @@ export function LeadProductForm({
   onChange: (c: ConfigOf<"lead_product">) => void;
 }) {
   const t = useT();
-  const { data: catalogo } = useCatalogoDeProdutos();
   return (
     <div className="space-y-2">
       <Label htmlFor="lead-product-acao">{t("O que fazer")}</Label>
@@ -34,18 +33,15 @@ export function LeadProductForm({
         </SelectContent>
       </Select>
       <Label htmlFor="lead-product-id">{t("Produto do catálogo")}</Label>
-      <Select value={config.product_id || undefined} onValueChange={(v) => onChange({ ...config, product_id: v })}>
-        <SelectTrigger id="lead-product-id" aria-invalid={!config.product_id}>
-          <SelectValue placeholder={t("Escolha um produto")} />
-        </SelectTrigger>
-        <SelectContent>
-          {(catalogo ?? []).map((p) => (
-            <SelectItem key={p.id} value={p.id} descricao={p.categoria || undefined}>
-              {p.nome}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <SeletorDeProduto
+        id="lead-product-id"
+        valor={config.product_id || null}
+        onEscolher={(p) => onChange({ ...config, product_id: p.id })}
+        // Tirar vale para produto desativado também: o negócio pode tê-lo.
+        aceita={() => true}
+        placeholder={t("Escolha um produto")}
+        invalido={!config.product_id}
+      />
       {config.acao === "add" && (
         <>
           <Label htmlFor="lead-product-qtd">{t("Quantidade")}</Label>

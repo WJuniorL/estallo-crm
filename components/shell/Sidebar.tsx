@@ -374,8 +374,8 @@ export function SidebarContent({
                   })}
                   {group.hub && (
                     // As CENTRAIS (CRM, IA, dados): opção complementar ao grupo —
-                    // recuo à esquerda e ↗ (abre a página com tudo do módulo).
-                    <li className={cn(ICONE_DA_CENTRAL[group.id] && !collapsed && "pl-3")}>
+                    // ícone próprio e ↗ (abre a página com tudo do módulo).
+                    <li>
                       <ItemDoMenu
                         href={group.hub.href}
                         rotulo={t(group.hub.label)}

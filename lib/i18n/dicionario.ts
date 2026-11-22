@@ -11450,6 +11450,8 @@ export const DICIONARIO: Traducoes = {
   "Desafixar do menu": { es: "Desfijar del menú" },
   "Você já fixou {n} funis. Desafixe um para fixar este.": { es: "Ya fijaste {n} embudos. Desfija uno para fijar este." },
   "Funis fixados": { es: "Embudos fijados" },
+  "Nenhum produto encontrado": { es: "Ningún producto encontrado" },
+  "Digite para refinar a busca": { es: "Escriba para refinar la búsqueda" },
   "Nenhum produto no catálogo": { es: "Ningún producto en el catálogo" },
   cada: { es: "cada uno" },
   "Remover produto": { es: "Quitar producto" },

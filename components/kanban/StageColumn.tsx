@@ -275,9 +275,12 @@ export const StageColumn = memo(function StageColumn({
             // `*:shrink-0`: o card tem `overflow-hidden`, e item flex com
             // overflow encolhe até zero numa coluna de altura fixa — os cards
             // se espremiam em vez de a etapa rolar (21/11/2026).
+            // `overscroll-y-contain`, só no eixo vertical: o gesto LATERAL do
+            // touchpad sobre a etapa tem de seguir para o quadro (com
+            // `overscroll-contain` ele morria na etapa).
             data-rolagem-da-etapa
             className={cn(
-              "flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain p-2 transition-colors *:shrink-0",
+              "flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto overscroll-y-contain p-2 transition-colors *:shrink-0",
               snapshot.isDraggingOver && "bg-accent/5",
             )}
           >

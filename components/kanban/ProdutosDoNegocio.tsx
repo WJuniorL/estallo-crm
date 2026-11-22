@@ -95,7 +95,7 @@ export function ProdutosDoNegocio({
           </SelectTrigger>
           <SelectContent>
             {ativos.map((p) => (
-              <SelectItem key={p.id} value={p.id}>
+              <SelectItem key={p.id} value={p.id} descricao={p.categoria || undefined}>
                 {p.nome} — {formatCents(p.preco_cents, moeda)}
               </SelectItem>
             ))}

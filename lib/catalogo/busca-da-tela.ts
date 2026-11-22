@@ -92,10 +92,11 @@ export function ultimaPagina(total: number, porPagina = PRODUTOS_POR_PAGINA): nu
   return Math.max(1, Math.ceil(total / porPagina));
 }
 
-/** A query string da tela: busca vazia e página 1 ficam de fora. */
-export function queryDaTela(busca: string, pagina: number): string {
+/** A query string da tela: busca vazia, categoria nenhuma e página 1 ficam de fora. */
+export function queryDaTela(busca: string, pagina: number, categoria = ""): string {
   const qs = new URLSearchParams();
   if (busca.trim() !== "") qs.set("busca", busca.trim());
+  if (categoria.trim() !== "") qs.set("categoria", categoria.trim());
   if (pagina > 1) qs.set("pagina", String(pagina));
   const s = qs.toString();
   return s ? `?${s}` : "";

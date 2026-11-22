@@ -14,6 +14,8 @@ export interface ProdutoDoCatalogo {
   nome: string;
   preco_cents: number;
   ativo: boolean;
+  /** Mostrada abaixo do nome nos seletores (a rota já devolve a coluna). */
+  categoria?: string | null;
 }
 
 /**

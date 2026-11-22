@@ -9,6 +9,8 @@ import { useT } from "@/hooks/i18n/useT";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api/client";
 import { queryDaTela } from "@/lib/catalogo/busca-da-tela";
+import { useCategoriasDeProduto } from "@/hooks/catalogo/useCategoriasDeProduto";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MAXIMO_DE_FOTOS } from "@/lib/catalogo/fotos";
 import { formatCents } from "@/lib/money";
 import { precoParaCentavos, type Produto } from "@/lib/schemas/produtos";
@@ -211,6 +213,7 @@ export function ProdutosClient({
   pagina,
   porPagina,
   buscaInicial,
+  categoria = "",
   urlsDasFotos,
   podeEditar,
   textos,
@@ -222,6 +225,8 @@ export function ProdutosClient({
   pagina: number;
   porPagina: number;
   buscaInicial: string;
+  /** Categoria filtrada (vem da URL); "" é todas. */
+  categoria?: string;
   urlsDasFotos: Record<string, string>;
   podeEditar: boolean;
   textos: Textos;
@@ -256,10 +261,10 @@ export function ProdutosClient({
   // Antes ela filtrava no navegador só os 500 que a página tinha trazido.
   const irPara = React.useCallback(
     (termo: string, novaPagina: number) => {
-      const destino = queryDaTela(termo, novaPagina) || "?";
+      const destino = queryDaTela(termo, novaPagina, categoria) || "?";
       iniciarNavegacao(() => router.replace(destino, { scroll: false }));
     },
-    [router],
+    [router, categoria],
   );
 
   React.useEffect(() => {
@@ -268,6 +273,13 @@ export function ProdutosClient({
     const timer = window.setTimeout(() => irPara(busca, 1), 350);
     return () => window.clearTimeout(timer);
   }, [busca, buscaInicial, irPara]);
+
+  const categorias = useCategoriasDeProduto();
+  const TODAS = "__todas__"; // o Radix não aceita item de valor vazio
+  const filtrarCategoria = (valor: string) => {
+    const destino = queryDaTela(busca, 1, valor === TODAS ? "" : valor) || "?";
+    iniciarNavegacao(() => router.replace(destino, { scroll: false }));
+  };
 
   const primeiro = total === 0 ? 0 : (pagina - 1) * porPagina + 1;
   const ultimo = Math.min(pagina * porPagina, total);
@@ -344,6 +356,23 @@ export function ProdutosClient({
           className="h-9 w-full max-w-sm rounded-md border px-3 text-sm"
           data-testid="busca-produto"
         />
+        <Select value={categoria || TODAS} onValueChange={filtrarCategoria}>
+          <SelectTrigger className="h-9 w-48 shrink-0" aria-label={t("Categoria")} data-testid="filtro-categoria">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={TODAS}>{t("Todas as categorias")}</SelectItem>
+            {(categorias.data ?? []).map((c) => (
+              <SelectItem key={c.id} value={c.nome}>
+                {c.nome}
+              </SelectItem>
+            ))}
+            {/* Categoria da URL que não está (mais) no cadastro: segue escolhível. */}
+            {categoria && !(categorias.data ?? []).some((c) => c.nome === categoria) && (
+              <SelectItem value={categoria}>{categoria}</SelectItem>
+            )}
+          </SelectContent>
+        </Select>
         {podeEditar ? (
           <>
             <Button onClick={() => setCriando((v) => !v)} data-testid="novo-produto">
@@ -503,7 +532,7 @@ export function ProdutosClient({
         </div>
       ) : null}
 
-      {inicial.length === 0 && buscaInicial !== "" ? (
+      {inicial.length === 0 && (buscaInicial !== "" || categoria !== "") ? (
         <div className="rounded-lg border border-dashed p-8 text-center" data-testid="produtos-busca-vazia">
           <p className="font-medium">{t("Nenhum produto encontrado para essa busca")}</p>
         </div>

@@ -103,4 +103,11 @@ describe("voltar a uma página que existe", () => {
     expect(queryDaTela("g17", 3)).toBe("?busca=g17&pagina=3");
     expect(queryDaTela("", 2)).toBe("?pagina=2");
   });
+
+  it("a categoria vai à URL e volta pela mesma chave; vazia fica de fora", () => {
+    expect(queryDaTela("", 1, "Cursos")).toBe("?categoria=Cursos");
+    expect(queryDaTela("g17", 2, " Cursos ")).toBe("?busca=g17&categoria=Cursos&pagina=2");
+    expect(queryDaTela("", 1, "  ")).toBe("");
+    expect(new URLSearchParams(queryDaTela("", 1, "Pele & Estética")).get("categoria")).toBe("Pele & Estética");
+  });
 });

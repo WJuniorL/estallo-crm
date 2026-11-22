@@ -2,7 +2,7 @@
  * O CASO ABERTO APARECE NA CENTRAL NA HORA — e sai quando fecha.
  *
  * Um caso é a IA esperando uma pessoa destravar algo, com um cliente do outro
- * lado. Até aqui ele só aparecia na tela de Casos, atrás de "Ver tudo em IA":
+ * lado. Até aqui ele só aparecia na tela de Casos, atrás de "Central IA":
  * o sino não mostrava nada, e a cobrança da Central (`case-stale-watcher`) só
  * chega depois de 24 horas. Medido numa loja que vende pelo WhatsApp: a IA
  * abriu o caso "cliente pergunta a transportadora" e o dono só o viu porque foi

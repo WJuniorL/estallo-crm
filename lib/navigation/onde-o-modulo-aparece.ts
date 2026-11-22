@@ -42,7 +42,7 @@ export interface PortaDoModulo {
   grupo: string;
   /**
    * Passo DO MEIO, quando a porta não sobe ao menu lateral e só se alcança pelo hub do grupo
-   * ("Ver tudo em CRM"). Ausente = o grupo leva direto à porta.
+   * ("Central CRM"). Ausente = o grupo leva direto à porta.
    *
    * Os campos são separados, e não um array de passos, por causa da catraca do espanhol: ela
    * resolve `t(porta.campo)` sobre o parâmetro de iteração e NÃO resolve `t(passo)` sobre elemento
@@ -77,7 +77,7 @@ const GRUPO: ReadonlyMap<string, string> = new Map(
  *
  * Existe porque eu escrevi um à mão e errei: o texto de `login_codex` dizia
  * "Agente de IA › Credenciais", e `/app/ai/credentials` também é só-no-hub, então o caminho real
- * tem o passo "Ver tudo em IA". Era o mesmo defeito que esta feature conserta, reproduzido na
+ * tem o passo "Central IA". Era o mesmo defeito que esta feature conserta, reproduzido na
  * prosa, e nenhuma guarda lia aquele campo. Hoje `foraDoMenu` é proibido de conter `›`
  * (`tests/unit/porta-do-modulo-ligado.test.tsx`) e quem precisa de caminho chama isto.
  *
@@ -96,7 +96,7 @@ function caminhoDe(d: NavMetadata): PortaDoModulo {
        * ⚠️ O PASSO DO HUB. `sidebar` ausente significa "só no hub"
        * (`NavMetadata.sidebar`), e o filtro do menu lateral é
        * `d.sidebar || (!group.hub && settings?.destinos)` — então porta de módulo não aparece no
-       * menu diário, só dentro de "Ver tudo em CRM". Era exatamente essa a causa do relato
+       * menu diário, só dentro de "Central CRM". Era exatamente essa a causa do relato
        * "liguei e não aparece no CRM", e o texto anterior ("CRM › Empresas") mandava procurar no
        * menu lateral, onde ela não está.
        *

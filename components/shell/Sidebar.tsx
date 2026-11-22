@@ -5,6 +5,10 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState, useTransition, type ReactNode } from "react";
 import {
   ArrowRight,
+  ArrowUpRight,
+  ChartPieSlice,
+  Sparkle,
+  SquaresFour,
   CaretDoubleLeft,
   CaretDoubleRight,
   CaretDown,
@@ -252,7 +256,7 @@ export function SidebarContent({
 
         ⚠️ Isto é remendo de densidade, não conserto estrutural. O menu vai
         estourar de novo: a saída existente é o HUB (o grupo IA já a usa — nove
-        das treze telas dele moram atrás do "Ver tudo em IA"), e o CRM ainda não
+        das treze telas dele moram atrás do "Central IA"), e o CRM ainda não
         tem um. Quando o quinto destino de CRM aparecer, é hub que se cria, não
         mais 4px que se raspa.
 
@@ -369,15 +373,21 @@ export function SidebarContent({
                     );
                   })}
                   {group.hub && (
-                    <li>
+                    // As CENTRAIS (CRM, IA, dados): opção complementar ao grupo —
+                    // recuo à esquerda e ↗ (abre a página com tudo do módulo).
+                    <li className={cn(ICONE_DA_CENTRAL[group.id] && !collapsed && "pl-3")}>
                       <ItemDoMenu
                         href={group.hub.href}
                         rotulo={t(group.hub.label)}
                         ativo={pathname === group.hub.href}
                         collapsed={collapsed}
                         onNavigate={onNavigate}
-                        icone={<ArrowRight size={19} aria-hidden />}
-                      />
+                        icone={ICONE_DA_CENTRAL[group.id] ?? <ArrowRight size={19} aria-hidden />}
+                      >
+                        {ICONE_DA_CENTRAL[group.id] && !collapsed && (
+                          <ArrowUpRight size={14} aria-hidden className="shrink-0 opacity-70" />
+                        )}
+                      </ItemDoMenu>
                     </li>
                   )}
                 </ul>
@@ -423,6 +433,13 @@ function FragmentoDoItem({ children }: { children: ReactNode }) {
  * `app/globals.css`. Recolhido (trilho de 64px), só o suporte do ícone aparece,
  * e o nome vira `title`/`aria-label`.
  */
+/** Ícone de cada Central (o atalho "tudo do módulo" no pé do grupo). */
+const ICONE_DA_CENTRAL: Partial<Record<string, ReactNode>> = {
+  crm: <SquaresFour size={19} aria-hidden />,
+  ia: <Sparkle size={19} aria-hidden />,
+  analise: <ChartPieSlice size={19} aria-hidden />,
+};
+
 function ItemDoMenu({
   href,
   rotulo,
@@ -558,7 +575,7 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
         // número, mas vindo de `--duration-base`. A Lei de movimento fecha a
         // tabela de durações, e número solto é o que a faz apodrecer.
         "estallo-navigation sticky top-0 z-30 flex h-dvh shrink-0 flex-col border-r transition-[width] duration-base",
-        collapsed ? "w-16" : "w-64",
+        collapsed ? "w-16" : "w-60",
       )}
     >
       <SidebarContent collapsed={collapsed} />

@@ -170,7 +170,7 @@ describe("o grupo é o que está NA TELA, não o rótulo do modelo de dados", ()
    * As nove portas de módulo têm `sidebar` ausente no catálogo, e isso significa "só no hub"
    * (`NavMetadata.sidebar`: "Ausente = só no hub"). O filtro do menu lateral é
    * `d.sidebar || (!group.hub && settings?.destinos)` — então elas NÃO aparecem no menu diário:
-   * só dentro de "Ver tudo em CRM".
+   * só dentro de "Central CRM".
    *
    * Era essa a causa do relato "liguei e não aparece no CRM": a pessoa ligou, olhou o menu
    * lateral, e a porta está um clique adentro. E o meu texto dizia "CRM › Empresas", que sugere
@@ -182,7 +182,7 @@ describe("o grupo é o que está NA TELA, não o rótulo do modelo de dados", ()
   it("⭐ porta que mora no hub declara o passo do hub", () => {
     const onde = ondeOModuloAparece("crm_b2b");
     expect(onde[0]!.grupo).toBe("CRM");
-    expect(onde[0]!.hub).toBe("Ver tudo em CRM");
+    expect(onde[0]!.hub).toBe("Central CRM");
     expect(onde[0]!.label).toBe("Empresas");
   });
 
@@ -294,7 +294,7 @@ describe("a exceção da porta de módulo sobrevive ao caminho de produção", (
  *
  * A spec de e2e afirma o texto do caminho (`^Ao ligar, aparece no menu em: CRM › Ver tudo em
  * CRM › Empresas`). Quando a opção B acrescentou o passo do hub, eu mudei a tela e ESQUECI a spec:
- * ela cobrava "CRM › Empresas", a tela dizia "CRM › Ver tudo em CRM › Empresas", e o único aviso
+ * ela cobrava "CRM › Empresas", a tela dizia "CRM › Central CRM › Empresas", e o único aviso
  * foi uma rodada de e2e de 16 minutos — a quinta seguida vermelha no mesmo arquivo.
  *
  * Este caso compara a spec com a FONTE (`ondeOModuloAparece`), que é o que a tela renderiza. Ele é
@@ -333,8 +333,8 @@ describe("a spec de e2e cita o caminho que a fonte produz", () => {
     expect(afirmados.length).toBeGreaterThanOrEqual(2);
     //
     // ⚠️ ANCORADO EM ": ", e não no caminho solto. Sem a âncora a sabotagem PASSA por coincidência
-    // de rótulo: o hub do CRM se chama "Ver tudo em CRM", então
-    // "…: CRM › Ver tudo em CRM › Empresas" contém "CRM › Empresas" como substring. A guarda
+    // de rótulo: o hub do CRM se chama "Central CRM", então
+    // "…: CRM › Central CRM › Empresas" contém "CRM › Empresas" como substring. A guarda
     // cobriria a classe e deixaria passar justamente o módulo que ela nasceu para vigiar.
     for (const afirmado of afirmados) expect(afirmado).toContain(`: ${esperado}`);
   });
@@ -345,7 +345,7 @@ describe("a spec de e2e cita o caminho que a fonte produz", () => {
  *
  * O texto de `login_codex` dizia "libera um painel em Agente de IA › Credenciais". Está errado:
  * `/app/ai/credentials` não tem `sidebar` no catálogo, então ela também é só-no-hub, e o caminho
- * real é "Agente de IA › Ver tudo em IA › Credenciais". É EXATAMENTE o defeito que a opção B
+ * real é "Agente de IA › Central IA › Credenciais". É EXATAMENTE o defeito que a opção B
  * conserta, reproduzido por mim num texto livre — e nenhuma guarda lia esse campo.
  *
  * A lição não é "corrigir a frase": é que caminho escrito à mão envelhece e ninguém percebe. Então
@@ -356,7 +356,7 @@ describe("nenhum caminho de menu é escrito à mão", () => {
     const onde = caminhoDaPorta("/app/ai/credentials");
     expect(onde).not.toBeNull();
     expect(onde!.grupo).toBe("Agente de IA");
-    expect(onde!.hub).toBe("Ver tudo em IA");
+    expect(onde!.hub).toBe("Central IA");
     expect(onde!.label).toBe("Credenciais");
   });
 

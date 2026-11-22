@@ -476,8 +476,10 @@ export function FilterBar({
                   <DropdownMenuItem
                     key={p.id}
                     onClick={() => onChange({ ...filters, produto: p.id })}
+                    className={cn(p.categoria && "flex-col items-start gap-0.5 py-2")}
                   >
-                    {p.nome}
+                    <span>{p.nome}</span>
+                    {p.categoria && <span className="text-xs text-muted-foreground">{p.categoria}</span>}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>

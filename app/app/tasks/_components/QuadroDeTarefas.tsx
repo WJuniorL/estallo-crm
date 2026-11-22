@@ -200,7 +200,7 @@ export function QuadroDeTarefas({
                         ref={provided.innerRef}
                         {...provided.droppableProps}
                         className={cn(
-                          "flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain rounded-2xl p-2 transition-colors",
+                          "flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-y-contain rounded-2xl p-2 transition-colors *:shrink-0",
                           snapshot.isDraggingOver && "bg-accent-soft ring-2 ring-accent/40",
                         )}
                       >

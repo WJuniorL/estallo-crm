@@ -114,22 +114,32 @@ SelectLabel.displayName = SelectPrimitive.Label.displayName;
 
 const SelectItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
->(({ className, children, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item> & {
+    /** Segunda linha, menor, só na lista aberta: fica FORA do `ItemText`, então
+     *  o campo fechado mostra só o rótulo (ex.: a categoria do produto). */
+    descricao?: React.ReactNode;
+  }
+>(({ className, children, descricao, ...props }, ref) => (
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-default items-center rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent dark:focus:bg-accent-700 focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "group relative flex w-full cursor-default items-center rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent dark:focus:bg-accent-700 focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      descricao && "flex-col items-start gap-0.5 py-2",
       className,
     )}
     {...props}
   >
-    <span className="absolute right-2 flex h-3.5 w-3.5 items-center justify-center">
+    <span className="absolute top-2.5 right-2 flex h-3.5 w-3.5 items-center justify-center">
       <SelectPrimitive.ItemIndicator>
         <Check className="h-4 w-4" />
       </SelectPrimitive.ItemIndicator>
     </span>
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+    {descricao && (
+      <span className="text-xs text-muted-foreground group-focus:text-accent-foreground/80">
+        {descricao}
+      </span>
+    )}
   </SelectPrimitive.Item>
 ));
 SelectItem.displayName = SelectPrimitive.Item.displayName;

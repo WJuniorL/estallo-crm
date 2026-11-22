@@ -93,7 +93,7 @@ describe("sidebarGroups", () => {
     // ⚠️ ESTA ASSERÇÃO MUDOU DE SUPERFÍCIE, e a propriedade guardada é a mesma.
     // Ela cobrava presença no SIDEBAR, que era só o jeito de a tela deixar de
     // ser "um card perdido em Configurações". Com o hub do CRM (`/app/crm`),
-    // ela mora atrás de "Ver tudo em CRM" — continua sendo CRM, continua fora
+    // ela mora atrás de "Central CRM" — continua sendo CRM, continua fora
     // de Configurações, e o caminho tem um clique a mais porque desenhar as
     // colunas do funil é trabalho de montagem, não de todo dia.
     //

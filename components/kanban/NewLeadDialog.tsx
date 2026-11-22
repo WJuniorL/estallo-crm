@@ -456,7 +456,7 @@ export function NewLeadDialog({
                 {(catalogo ?? [])
                   .filter((c) => c.ativo && !produtos.some((x) => x.product_id === c.id))
                   .map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
+                    <SelectItem key={c.id} value={c.id} descricao={c.categoria || undefined}>
                       {c.nome} · {formatCents(c.preco_cents, moedaDoValor)}
                     </SelectItem>
                   ))}

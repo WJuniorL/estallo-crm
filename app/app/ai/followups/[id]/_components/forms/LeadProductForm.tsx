@@ -40,7 +40,7 @@ export function LeadProductForm({
         </SelectTrigger>
         <SelectContent>
           {(catalogo ?? []).map((p) => (
-            <SelectItem key={p.id} value={p.id}>
+            <SelectItem key={p.id} value={p.id} descricao={p.categoria || undefined}>
               {p.nome}
             </SelectItem>
           ))}

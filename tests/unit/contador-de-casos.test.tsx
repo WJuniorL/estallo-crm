@@ -2,7 +2,7 @@
  * O número ao lado de "Casos" no menu: quantos casos esperam uma PESSOA.
  *
  * Medido numa loja que vende pelo WhatsApp: a IA abriu um caso e ele só
- * existia atrás de "Ver tudo em IA" — ninguém viu. Caso esperando o CLIENTE
+ * existia atrás de "Central IA" — ninguém viu. Caso esperando o CLIENTE
  * não conta: não pede nada de quem opera.
  */
 import { describe, expect, it, vi } from "vitest";

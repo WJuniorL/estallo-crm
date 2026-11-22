@@ -59,6 +59,9 @@ export default async function ProdutosPage({
   const busca = (parametros.busca ?? "").trim();
   const pagina = paginaDaUrl(parametros.pagina);
   const filtro = filtroDaBuscaDoCatalogo(busca);
+  // Categoria: igualdade pelo NOME, que é o que o produto guarda (0721 mantém
+  // produto e cadastro em sincronia ao renomear).
+  const categoria = (parametros.categoria ?? "").trim();
 
   const supabase = await createClient();
   const consultaDoCatalogo = (soContar: boolean) => {
@@ -66,7 +69,8 @@ export default async function ProdutosPage({
       .from("catalog_products")
       .select(soContar ? "id" : COLUNAS_DO_PRODUTO, { count: "exact", head: soContar })
       .eq("organization_id", activeOrg.orgId);
-    return filtro ? q.or(filtro) : q;
+    const naCategoria = categoria ? q.eq("categoria", categoria) : q;
+    return filtro ? naCategoria.or(filtro) : naCategoria;
   };
 
   let produtos: Produto[] = [];
@@ -88,7 +92,7 @@ export default async function ProdutosPage({
     const alemDoFim = error?.code === FAIXA_ALEM_DO_FIM || (!error && pagina > 1 && (data ?? []).length === 0);
     if (alemDoFim) {
       const agora = error ? (await consultaDoCatalogo(true)).count : count;
-      redirect(`/app/products${queryDaTela(busca, ultimaPagina(agora ?? 0))}`);
+      redirect(`/app/products${queryDaTela(busca, ultimaPagina(agora ?? 0), categoria)}`);
     }
     // Erro do banco não vira "nenhum produto cadastrado": a tela de erro do app
     // diz que algo falhou, em vez de afirmar que o catálogo está vazio.
@@ -120,6 +124,7 @@ export default async function ProdutosPage({
       pagina={pagina}
       porPagina={PRODUTOS_POR_PAGINA}
       buscaInicial={busca}
+      categoria={categoria}
       urlsDasFotos={urlsDasFotos}
       podeEditar={podeEditar}
       textos={{

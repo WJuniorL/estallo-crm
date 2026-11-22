@@ -118,10 +118,10 @@ test.describe("navegação agrupada", () => {
     // ⚠️ E O CAMINHO MUDOU: com Tarefas (PR #546), o CRM chegou a cinco telas e
     // o menu passou a rolar em 900px. A resposta foi o hub do grupo, como o
     // comentário de densidade do `Sidebar.tsx` já mandava — então esta tela
-    // agora mora atrás de "Ver tudo em CRM". Este teste percorre o caminho
+    // agora mora atrás de "Central CRM". Este teste percorre o caminho
     // INTEIRO em vez de checar um link: hub → tela. Que a porta existe no grupo
     // certo do sidebar é o unitário `sidebar-grupos` que prende.
-    await sidebar(page).getByRole("link", { name: "Ver tudo em CRM" }).click();
+    await sidebar(page).getByRole("link", { name: "Central CRM" }).click();
     await page.waitForURL(/\/app\/crm$/);
     await expect(page.getByRole("heading", { name: "O dia a dia da venda" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Preparar a venda" })).toBeVisible();
@@ -141,7 +141,7 @@ test.describe("navegação agrupada", () => {
 
     await expect(sidebar(page).getByRole("link", { name: "Produtos" })).toHaveCount(0);
 
-    await sidebar(page).getByRole("link", { name: "Ver tudo em CRM" }).click();
+    await sidebar(page).getByRole("link", { name: "Central CRM" }).click();
     await page.waitForURL(/\/app\/crm$/);
     await page.getByRole("link", { name: /Produtos/ }).click();
     await page.waitForURL(/\/app\/products/);
@@ -157,7 +157,7 @@ test.describe("navegação agrupada", () => {
   test("chega em Conhecimento, que só existia atrás das abas de IA", async ({ page }) => {
     await loginAdmin(page);
 
-    await sidebar(page).getByRole("link", { name: "Ver tudo em IA" }).click();
+    await sidebar(page).getByRole("link", { name: "Central IA" }).click();
     await page.waitForURL(/\/app\/ai$/);
 
     // O hub organiza por jornada, não numa grade solta.

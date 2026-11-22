@@ -24,7 +24,7 @@ export interface NavGroup {
   label: string;
   /**
    * Hub do grupo, quando ele tem telas demais para caber no sidebar.
-   * O rótulo é declarado junto do href porque não é derivável: "Ver tudo em IA"
+   * O rótulo é declarado junto do href porque não é derivável: "Central IA"
    * é útil, "Ver tudo em Organização" seria gratuito quando a tela já se chama
    * Configurações e o usuário a conhece por esse nome.
    */
@@ -88,10 +88,10 @@ export interface NavMetadata {
  */
 export const NAV_GROUPS: NavGroup[] = [
   { id: "atendimento", label: "Atendimento" },
-  { id: "crm", label: "CRM", hub: { href: "/app/crm", label: "Ver tudo em CRM" } },
-  { id: "ia", label: "Agente de IA", hub: { href: "/app/ai", label: "Ver tudo em IA" } },
+  { id: "crm", label: "CRM", hub: { href: "/app/crm", label: "Central CRM" } },
+  { id: "ia", label: "Agente de IA", hub: { href: "/app/ai", label: "Central IA" } },
   { id: "canais", label: "Canais" },
-  { id: "analise", label: "Análise", hub: { href: "/app/analise", label: "Ver tudo em Análise" } },
+  { id: "analise", label: "Análise", hub: { href: "/app/analise", label: "Central de dados" } },
   {
     id: "organizacao",
     label: "Organização",
@@ -152,7 +152,7 @@ export const NAV_CATALOG = [
     // antecipava o número: "Trocar '17 itens sem hierarquia' por '20 itens que
     // não cabem' seria recriar o problema em outra forma."
     //
-    // A porta NÃO sumiu: ela vive no hub do grupo CRM ("Ver tudo em CRM") e no
+    // A porta NÃO sumiu: ela vive no hub do grupo CRM ("Central CRM") e no
     // ⌘K — o mesmo caminho das outras entradas do grupo.
     // CONDIÇÃO QUE ENCERRA ESTA EXCEÇÃO: quando o menu couber mais uma porta
     // (ver doc 47), este item volta ao sidebar — é o primeiro da fila, porque
@@ -294,7 +294,7 @@ export const NAV_CATALOG = [
     group: "crm",
     section: "O dia a dia da venda",
     // SEM sidebar: o CRM já tem Funis/Contatos/Tarefas no menu diário; este trio
-    // mora no hub "Ver tudo em CRM" para não reabrir a corrida por pixel.
+    // mora no hub "Central CRM" para não reabrir a corrida por pixel.
     minRole: "viewer",
     // Módulo opcional da instalação, desligado por padrão (doc 68, #1621).
     modulo: "crm_b2b",
@@ -359,7 +359,7 @@ export const NAV_CATALOG = [
     // `voip_trunk_settings`, ou `phone_numbers` ativo) custariam uma consulta
     // em todo render. Está desenhado na issue do `sidebarSe`.
     //
-    // A porta NÃO sumiu: ela vive no hub do grupo CRM ("Ver tudo em CRM") e no
+    // A porta NÃO sumiu: ela vive no hub do grupo CRM ("Central CRM") e no
     // ⌘K, que é o mesmo caminho das outras dez entradas de "organizacao".
     // CONDIÇÃO QUE ENCERRA ESTA EXCEÇÃO: no dia em que o app souber que o
     // módulo está ligado, o item volta ao sidebar para quem ligou.
@@ -391,7 +391,7 @@ export const NAV_CATALOG = [
     icon: "Storefront",
     group: "crm",
     section: "Preparar a venda",
-    // SEM `sidebar`: mora atrás de "Ver tudo em CRM".
+    // SEM `sidebar`: mora atrás de "Central CRM".
     //
     // O critério é QUEM CONSOME a tela, e a descrição acima já o entrega: o
     // preço quem responde é o atendente de IA, dentro da conversa. Esta tela é
@@ -491,7 +491,7 @@ export const NAV_CATALOG = [
     // Tarefas (PR #546), e raspar 4px de densidade de novo só adiaria a mesma
     // conversa para a próxima tela.
     //
-    // O balcão continua a um clique: CRM › Ver tudo em CRM › "O dia a dia da
+    // O balcão continua a um clique: CRM › Central CRM › "O dia a dia da
     // venda", e pelo ⌘K digitando "comanda".
     minRole: "viewer",
     // Módulo de tabela (ADR-0002, #1907): as cinco tabelas da comanda nascem na
@@ -538,12 +538,12 @@ export const NAV_CATALOG = [
     group: "crm",
     section: "Preparar a venda",
     minRole: "manager",
-    // SEM `sidebar`: mora atrás de "Ver tudo em CRM".
+    // SEM `sidebar`: mora atrás de "Central CRM".
     //
     // ⚠️ O ACHADO ORIGINAL NÃO FOI DESFEITO. Ele era "esta tela está enterrada
     // em CONFIGURAÇÕES e ninguém sabe que existe" — o problema era o GRUPO
     // errado, não a profundidade. Ela continua sendo CRM: aparece no hub do
-    // CRM, no ⌘K, e o caminho é "CRM › Ver tudo em CRM", nunca mais
+    // CRM, no ⌘K, e o caminho é "CRM › Central CRM", nunca mais
     // "Configurações". O que muda é a frequência: desenhar as colunas do funil
     // e escrever os motivos de perda é trabalho de montagem, feito uma vez e
     // revisitado por `manager` de vez em quando — enquanto Funis, Contatos e
@@ -634,7 +634,7 @@ export const NAV_CATALOG = [
     // duas telas novas à sidebar estourou a dobra em 900px — medido pelo e2e
     // `navegacao.spec.ts`, que existe justamente porque agrupar o menu o faz
     // crescer. Configurar provedor é tarefa de poucas vezes; o caminho é o hub
-    // "Ver tudo em IA", igual a Credenciais, Conhecimento, Memória e Skills.
+    // "Central IA", igual a Credenciais, Conhecimento, Memória e Skills.
   },
   {
     href: "/app/ai/knowledge/sources",
@@ -702,7 +702,7 @@ export const NAV_CATALOG = [
     minRole: "admin",
     // SEM `sidebar`: o grupo IA já tem treze telas e o e2e de navegação exige
     // que o menu inteiro caiba em 900px de altura. Configurar isto é tarefa de
-    // poucas vezes; o caminho é o hub "Ver tudo em IA".
+    // poucas vezes; o caminho é o hub "Central IA".
   },
   {
     // Órfã: nenhum lugar do app linkava para cá. O flywheel gerava propostas de

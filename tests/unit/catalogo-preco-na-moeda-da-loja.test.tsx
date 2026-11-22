@@ -30,6 +30,11 @@ vi.mock("@/lib/api/client", () => ({
   apiClient: { post: vi.fn(), patch: vi.fn() },
 }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+// O filtro de categoria lê o cadastro; a tela não depende disto para o que se mede aqui.
+vi.mock("@/hooks/catalogo/useCategoriasDeProduto", () => ({
+  useCategoriasDeProduto: () => ({ data: [] }),
+  useAlterarCategorias: () => ({ criar: { mutate: vi.fn(), isPending: false } }),
+}));
 vi.mock("@/components/feedback/ApiErrorToast", () => ({ showApiError: vi.fn() }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),

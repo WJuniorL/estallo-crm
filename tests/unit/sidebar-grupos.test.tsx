@@ -80,13 +80,13 @@ describe("Sidebar agrupado", () => {
     render(<Sidebar collapsed={false} />);
     // ⚠️ O CAMINHO MUDOU, A PROPRIEDADE NÃO. Etapas do funil saiu do menu para
     // dentro do hub do CRM quando Tarefas virou o quinto destino do grupo e o
-    // menu passou a rolar. A porta continua sendo CRM — "Ver tudo em CRM" leva
+    // menu passou a rolar. A porta continua sendo CRM — "Central CRM" leva
     // a `/app/crm`, e é lá que a tela aparece —, nunca Configurações, que é o
     // enterro que originou toda esta reorganização.
     //
     // O que este teste prende é a porta EXISTIR no grupo certo do sidebar; que
     // ela desemboca na tela é o e2e `navegacao.spec.ts` que percorre, clicando.
-    const hub = screen.getByRole("link", { name: /Ver tudo em CRM/ });
+    const hub = screen.getByRole("link", { name: /Central CRM/ });
     expect(hub).toHaveAttribute("href", "/app/crm");
     expect(screen.queryByRole("link", { name: "Etapas do funil" })).toBeNull();
   });
@@ -124,14 +124,14 @@ describe("Sidebar agrupado", () => {
     // Quando Atividades (PR #583) virou o quinto destino do grupo Análise e o
     // menu passou a rolar em 900px, a resposta foi o hub do grupo — como o
     // comentário de densidade do `Sidebar.tsx` já mandava. Audit Log foi para
-    // dentro dele: a porta agora é "Ver tudo em Análise", nunca Configurações.
+    // dentro dele: a porta agora é "Central de dados", nunca Configurações.
     //
     // Que a porta desemboca na tela é o e2e `navegacao.spec.ts` que percorre,
     // clicando; aqui prende-se que ela EXISTE, no grupo certo do sidebar.
     //
     // Canal oficial não está aqui de propósito: virou aba de Conexões no PR
     // #105, e Conexões é a porta.
-    const hubAnalise = screen.getByRole("link", { name: /Ver tudo em Análise/ });
+    const hubAnalise = screen.getByRole("link", { name: /Central de dados/ });
     expect(hubAnalise).toHaveAttribute("href", "/app/analise");
     expect(screen.queryByRole("link", { name: /Audit Log/ })).toBeNull();
 
@@ -168,7 +168,7 @@ describe("Sidebar agrupado", () => {
   it("oferece o hub dos grupos que têm um", () => {
     comoPapel("admin");
     render(<Sidebar collapsed={false} />);
-    expect(screen.getByRole("link", { name: /Ver tudo em IA/ })).toHaveAttribute("href", "/app/ai");
+    expect(screen.getByRole("link", { name: /Central IA/ })).toHaveAttribute("href", "/app/ai");
   });
 
   it("colapsado esconde os títulos mas mantém os links", () => {
@@ -193,7 +193,7 @@ describe("Sidebar agrupado", () => {
     render(<Sidebar collapsed />);
     expect(screen.getByRole("link", { name: /Inbox/ })).toBeTruthy();
     expect(screen.getByRole("link", { name: /Funis/ })).toBeTruthy();
-    expect(screen.queryByRole("link", { name: /Ver tudo em IA/ })).toBeNull();
+    expect(screen.queryByRole("link", { name: /Central IA/ })).toBeNull();
   });
 
   it("marca a rota atual com aria-current", () => {

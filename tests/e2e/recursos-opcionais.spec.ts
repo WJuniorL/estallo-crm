@@ -144,9 +144,9 @@ test("liga um módulo, a tela diz onde ele aparece, e a porta está lá no CRM",
     await esperarModuloNoBanco(false);
     // A frase é o conserto: sem ela o operador liga e não sabe para onde olhar.
     //
-    // ⚠️ O CAMINHO INCLUI O PASSO DO HUB ("Ver tudo em CRM"), e é isso que a opção B entrega. Este
+    // ⚠️ O CAMINHO INCLUI O PASSO DO HUB ("Central CRM"), e é isso que a opção B entrega. Este
     // regex já ficou velho uma vez: eu mudei o texto da tela e esqueci a spec, então ela cobrava
-    // "CRM › Empresas" e a tela dizia "CRM › Ver tudo em CRM › Empresas". Teste que afirma texto
+    // "CRM › Empresas" e a tela dizia "CRM › Central CRM › Empresas". Teste que afirma texto
     // de tela envelhece junto com a tela.
     //
     // ⚠️ ANCORADA NO MÓDULO, e com `^`. A primeira versão só procurava "Ao ligar,
@@ -156,7 +156,7 @@ test("liga um módulo, a tela diz onde ele aparece, e a porta está lá no CRM",
     // inclusive "Configurações › Dados externos", que é a exceção do grupo do
     // rodapé. Mas asserção que casa com quatro linhas não diz qual delas mediu.
     await expect(
-      page.getByText(/^Ao ligar, aparece no menu em: CRM › Ver tudo em CRM › Empresas/),
+      page.getByText(/^Ao ligar, aparece no menu em: CRM › Central CRM › Empresas/),
     ).toBeVisible();
     await page.screenshot({ path: evidencia("modulo-desligado-diz-onde.png"), fullPage: true });
   });
@@ -168,12 +168,12 @@ test("liga um módulo, a tela diz onde ele aparece, e a porta está lá no CRM",
     // `^` separa os dois estados: "Ao ligar, aparece…" CONTÉM "aparece no menu
     // em:", e sem a âncora o caso de ligado passaria com a frase de desligado.
     await expect(
-      page.getByText(/^Aparece no menu em: CRM › Ver tudo em CRM › Empresas/),
+      page.getByText(/^Aparece no menu em: CRM › Central CRM › Empresas/),
     ).toBeVisible();
     await page.screenshot({ path: evidencia("modulo-ligado-diz-onde.png"), fullPage: true });
   });
 
-  await test.step("⭐ a porta ESTÁ no hub do CRM (\"Ver tudo em CRM\")", async () => {
+  await test.step("⭐ a porta ESTÁ no hub do CRM (\"Central CRM\")", async () => {
     // Navegação normal, como o operador faz. ⚠️ Este passo NÃO vigia a revalidação do layout:
     // `page.goto` é carregamento completo, e o hub lê `modulosLigados()` a cada request — ele
     // ficaria verde com ou sem o `revalidatePath("/app", "layout")`. O que ele mede é o recorte
@@ -192,7 +192,7 @@ test("liga um módulo, a tela diz onde ele aparece, e a porta está lá no CRM",
     // esta jornada precisa provar é "a porta passou a ser oferecida a esta empresa",
     // e o hub do grupo é a superfície que responde exatamente isso — ele recebe o
     // mesmo `modulosLigados` que o menu lateral (`app/app/crm/page.tsx` → `NavHub`),
-    // é caminho real de usuário ("Ver tudo em CRM") e não depende de viewport, de
+    // é caminho real de usuário ("Central CRM") e não depende de viewport, de
     // grupo aberto nem de barra inferior. A rota segue conferida logo abaixo.
     await page.goto("/app/crm");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();

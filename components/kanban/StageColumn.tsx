@@ -272,9 +272,12 @@ export const StageColumn = memo(function StageColumn({
             {...provided.droppableProps}
             // A área de soltar É a rolagem da etapa: o dnd a reconhece como o
             // contêiner rolável do Droppable e a rola sozinho no arraste.
+            // `*:shrink-0`: o card tem `overflow-hidden`, e item flex com
+            // overflow encolhe até zero numa coluna de altura fixa — os cards
+            // se espremiam em vez de a etapa rolar (21/11/2026).
             data-rolagem-da-etapa
             className={cn(
-              "flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain p-2 transition-colors",
+              "flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain p-2 transition-colors *:shrink-0",
               snapshot.isDraggingOver && "bg-accent/5",
             )}
           >

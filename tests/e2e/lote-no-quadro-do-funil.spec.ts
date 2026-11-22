@@ -511,6 +511,13 @@ test.describe("Quadro do funil — agir em vários cards de uma vez", () => {
         await rolagemDaOrigem.evaluate((el) => el.scrollHeight > el.clientHeight),
         "fixture: a etapa de origem passa da altura do quadro",
       ).toBe(true);
+      // O defeito de 21/11/2026: os cards se ESPREMIAM para caber na etapa (o
+      // card tem overflow-hidden), e o vão entre eles bastava para a etapa
+      // "rolar". Card inteiro = a altura dele cobre o próprio conteúdo.
+      const espremidos = await rolagemDaOrigem.evaluate((el) =>
+        Array.from(el.children).filter((c) => c.scrollHeight - c.clientHeight > 1).length,
+      );
+      expect(espremidos, "nenhum card da etapa é espremido para caber").toBe(0);
       expect(medida.pe, "o pé do quadro — onde mora a barra lateral — está dentro da tela").toBeLessThanOrEqual(
         medida.janela,
       );

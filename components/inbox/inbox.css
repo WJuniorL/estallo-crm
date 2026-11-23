@@ -45,9 +45,11 @@
 }
 
 /* ─── A GRADE E AS FAIXAS ───────────────────────────────────────────────────
- * ≥1600: lista 360 + ficha 320 aberta · 1280–1599: lista 336, ficha fechada
- * (o botão a abre fixa em 296) · 1101–1279: 336, ficha em gaveta · 851–1100:
- * 300 · ≤850: uma coluna por vez. A largura arrastada entra por cima (inline). */
+ * Espelho de `FAIXAS` (lib/inbox/larguras-do-inbox.ts); o espaço vai para a
+ * conversa. ≥1600: lista 340 + ficha 320 aberta · 1280–1599: lista 296, ficha
+ * fechada (o botão a abre em 296) · 1101–1279: 296, ficha em gaveta ·
+ * 851–1100: 280 · ≤850: uma coluna por vez. A largura arrastada entra por cima
+ * (inline). */
 .ibx-grade {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -64,17 +66,17 @@
 }
 @media (min-width: 851px) {
   .ibx-grade {
-    grid-template-columns: 420px minmax(0, 1fr);
+    grid-template-columns: 280px minmax(0, 1fr);
   }
 }
 @media (min-width: 1101px) {
   .ibx-grade {
-    grid-template-columns: 420px minmax(0, 1fr);
+    grid-template-columns: 296px minmax(0, 1fr);
   }
 }
 @media (min-width: 1280px) {
   .ibx-grade.ibx-ficha-aberta {
-    grid-template-columns: 420px minmax(0, 1fr) 296px;
+    grid-template-columns: 296px minmax(0, 1fr) 296px;
   }
   .ibx-grade.ibx-ficha-aberta .ibx-coluna-ficha {
     display: block;
@@ -82,13 +84,13 @@
 }
 @media (min-width: 1600px) {
   .ibx-grade {
-    grid-template-columns: 420px minmax(0, 1fr) 320px;
+    grid-template-columns: 340px minmax(0, 1fr) 320px;
   }
   .ibx-grade .ibx-coluna-ficha {
     display: block;
   }
   .ibx-grade.ibx-ficha-fechada {
-    grid-template-columns: 420px minmax(0, 1fr);
+    grid-template-columns: 340px minmax(0, 1fr);
   }
   .ibx-grade.ibx-ficha-fechada .ibx-coluna-ficha {
     display: none;
@@ -145,36 +147,58 @@
   letter-spacing: -0.4px;
   font-weight: 700;
 }
+/* AS CATEGORIAS — uma linha de chips que ROLA de lado.
+ * A coluna da lista é compacta de propósito; os cinco chips não cabem nela e
+ * não são espremidos: cada um mantém a largura natural e a faixa rola (mouse
+ * pela roda, trackpad e toque). O degradê na ponta direita é FIXO — fica à vista
+ * em qualquer resolução e diz "tem mais para o lado"; `pointer-events: none`
+ * deixa o clique atravessar até o chip de baixo. */
+.ibx-categories-wrap {
+  position: relative;
+  min-width: 0;
+  /* -3px compensa o respiro da faixa (o anel de foco do chip cabe nele). */
+  margin-left: -3px;
+  padding-bottom: 7px;
+}
+.ibx-categories-wrap::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 7px;
+  width: 36px;
+  pointer-events: none;
+  background: linear-gradient(to right, transparent, var(--ibx-panel) 85%);
+}
 .ibx-categories {
-  align-self: stretch;
   display: flex;
-  align-items: stretch;
+  align-items: center;
   justify-content: flex-start;
   width: 100%;
-  gap: 4px;
+  height: auto;
   min-width: 0;
-  height: 64px;
-  overflow: auto;
+  gap: 6px;
+  padding: 3px 32px 3px 3px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
   scrollbar-width: none;
   background: transparent;
-  padding: 0;
   border-radius: 0;
 }
 .ibx-categories::-webkit-scrollbar {
   display: none;
 }
 .ibx-category {
-  position: relative;
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  flex: 1 0 auto;
-  min-width: max-content;
-  gap: 3px;
-  padding: 4px 8px 8px;
-  border: 0;
-  border-radius: 0;
+  flex: none;
+  height: 28px;
+  gap: 6px;
+  padding: 0 5px 0 10px;
+  border: 1px solid var(--ibx-line);
+  border-radius: 999px;
   background: none;
   color: var(--ibx-muted);
   font-size: 12px;
@@ -189,34 +213,25 @@
 .ibx-category[data-state="active"] {
   color: var(--ibx-blue-text);
   font-weight: 700;
-  background: none;
+  background: var(--ibx-pale);
+  border-color: var(--ibx-pale-line);
   box-shadow: none;
-}
-.ibx-category[data-state="active"]::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  height: 2px;
-  border-radius: 2px 2px 0 0;
-  background: var(--ibx-blue);
-  left: 4px;
-  right: 4px;
 }
 .ibx-category-count {
   display: grid;
   place-items: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 4px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   background: var(--color-surface-elevated);
   color: var(--ibx-muted);
 }
 .ibx-category[data-state="active"] .ibx-category-count {
-  background: var(--ibx-pale);
+  background: var(--color-surface);
   color: var(--ibx-blue-text);
 }
 
@@ -492,6 +507,10 @@
   font-weight: 600;
   letter-spacing: -0.2px;
 }
+.ibx-archived-indicator {
+  flex: none;
+  color: var(--ibx-muted);
+}
 .ibx-pin-indicator {
   flex: none;
   color: var(--ibx-blue-text);
@@ -660,9 +679,11 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  /* Espaço para a barra de rolagem não colar nos checkboxes. */
-  margin-right: -8px;
-  padding-right: 8px;
+  /* Folga dos DOIS lados: `overflow-y: auto` também recorta na horizontal,
+     e sem folga à esquerda o anel de foco dos selects era cortado ali.
+     À direita, além disso, a barra de rolagem não cola nos checkboxes. */
+  margin-inline: -8px;
+  padding-inline: 8px;
 }
 .ibx-filter-apply {
   margin-top: 12px;

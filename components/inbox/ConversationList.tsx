@@ -111,6 +111,9 @@ export function ConversationList({
    * já é robô, e repetir o ícone em cada uma vira ruído. Nas outras abas a
    * lista é mista (ou pode ser), então o ícone segue dizendo algo.
    */
+  // Na aba "Fechadas" o próprio filtro já diz que a conversa está encerrada;
+  // nas outras, a encerrada que ficou retida ganha o ícone de arquivo.
+  const abaFechadas = [filters.status ?? []].flat().includes("closed");
   const mostrarAutomatico = !(filters.comando?.length === 1 && filters.comando[0] === "automatico");
 
   useEffect(() => {
@@ -198,6 +201,7 @@ export function ConversationList({
             mostrarAtendente={mostrarAtendente}
             mostrarAutomatico={mostrarAutomatico}
             automaticoDaOrg={automaticoDaOrg.data}
+            mostrarArquivada={!abaFechadas}
           />
         ))}
         {q.hasNextPage && (

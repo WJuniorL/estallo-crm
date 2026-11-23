@@ -14,16 +14,14 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useT } from "@/hooks/i18n/useT";
 import { useEditLead } from "@/hooks/kanban/useUpdateLead";
-import { useCatalogoDeProdutos, useProdutosDoNegocio } from "@/hooks/leads/useProdutosDoNegocio";
+import { SeletorDeProduto } from "@/components/catalogo/SeletorDeProduto";
+import {
+  useCatalogoDeProdutos,
+  useProdutosDoNegocio,
+  type ProdutoDoCatalogo,
+} from "@/hooks/leads/useProdutosDoNegocio";
 import { formatCents, MOEDA_PADRAO, parseReaisToCents } from "@/lib/money";
 import { produtoDoNegocioCreateSchema, totalDoItem } from "@/lib/schemas/produtos-do-negocio";
 
@@ -65,14 +63,15 @@ export function AdicionarProdutoDialog({
   const editar = useEditLead(lead.pipeline_id);
 
   const fechamentoInicial = lead.expected_close_date ?? "";
-  const [produtoId, setProdutoId] = useState("");
+  // O PRODUTO escolhido, inteiro: pela busca no servidor ele pode não estar nos
+  // 500 que o catálogo em cache traz.
+  const [produto, setProduto] = useState<ProdutoDoCatalogo | null>(null);
   const [quantidade, setQuantidade] = useState("1");
   const [desconto, setDesconto] = useState("");
   const [fechamento, setFechamento] = useState(fechamentoInicial);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
-  const produto = ativos.find((p) => p.id === produtoId);
   const qtd = Number(quantidade);
   const qtdValida = Number.isInteger(qtd) && qtd >= 1 && qtd <= 100_000;
   const descontoCents = desconto.trim() === "" ? 0 : parseReaisToCents(desconto);
@@ -88,7 +87,7 @@ export function AdicionarProdutoDialog({
   async function salvar() {
     setErro(null);
     const corpo = produtoDoNegocioCreateSchema.safeParse({
-      product_id: produtoId,
+      product_id: produto?.id,
       quantidade: qtd,
       desconto_cents: descontoCents ?? -1,
     });
@@ -153,30 +152,17 @@ export function AdicionarProdutoDialog({
         >
           <div className="space-y-2">
             <Label htmlFor="adicionar-produto-produto">{t("Produto")}</Label>
-            <Select
-              value={produtoId}
-              onValueChange={setProdutoId}
-              disabled={salvando || ativos.length === 0}
-            >
-              <SelectTrigger id="adicionar-produto-produto" data-testid="adicionar-produto-produto">
-                <SelectValue
-                  placeholder={
-                    catalogo.isLoading
-                      ? t("Carregando…")
-                      : ativos.length === 0
-                        ? t("Nenhum produto no catálogo")
-                        : t("Escolha um produto")
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {ativos.map((p) => (
-                  <SelectItem key={p.id} value={p.id} descricao={p.categoria || undefined}>
-                    {p.nome} — {formatCents(p.preco_cents, moeda)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SeletorDeProduto
+              id="adicionar-produto-produto"
+              testId="adicionar-produto-produto"
+              valor={produto?.id ?? null}
+              onEscolher={setProduto}
+              moeda={moeda}
+              disabled={salvando || (catalogo.isSuccess && ativos.length === 0)}
+              placeholder={
+                catalogo.isSuccess && ativos.length === 0 ? t("Nenhum produto no catálogo") : t("Escolha um produto")
+              }
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-3">

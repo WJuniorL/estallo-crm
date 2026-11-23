@@ -54,13 +54,9 @@ function abrir(aoAdicionar = vi.fn(), aoMudarAbertura = vi.fn()) {
 }
 
 async function escolherProduto() {
-  // O Select do Radix não abre no jsdom; o <select> nativo escondido recebe a escolha.
-  const nativo = await waitFor(() => {
-    const el = document.querySelector("select");
-    if (!el || el.options.length < 2) throw new Error("catálogo ainda não chegou");
-    return el;
-  });
-  fireEvent.change(nativo, { target: { value: PRODUTO } });
+  // O campo é um combobox: focar abre a lista, a opção escolhe.
+  fireEvent.focus(screen.getByTestId("adicionar-produto-produto"));
+  fireEvent.click(await screen.findByRole("option", { name: /Consulta/ }));
 }
 
 describe("AdicionarProdutoDialog", () => {

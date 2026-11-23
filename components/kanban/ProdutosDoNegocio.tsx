@@ -7,15 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CampoDeDinheiro } from "@/components/ui/campo-de-dinheiro";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useT } from "@/hooks/i18n/useT";
-import { useCatalogoDeProdutos } from "@/hooks/leads/useProdutosDoNegocio";
+import { SeletorDeProduto } from "@/components/catalogo/SeletorDeProduto";
+import { useCatalogoDeProdutos, type ProdutoDoCatalogo } from "@/hooks/leads/useProdutosDoNegocio";
 import { centavosParaCampo, formatCents, parseReaisToCents } from "@/lib/money";
 import { ehNovoNoRascunho, type ItemDoRascunho } from "@/lib/leads/rascunho-de-produtos";
 import { totalDoItem } from "@/lib/schemas/produtos-do-negocio";
@@ -55,11 +49,9 @@ export function ProdutosDoNegocio({
   // Id da linha enquanto o POST está em voo — único dentro da lista.
   const proximoId = useRef(0);
 
-  function adicionar(productId: string) {
-    const p = ativos.find((c) => c.id === productId);
-    if (!p) return;
+  function adicionar(p: ProdutoDoCatalogo) {
     onAdicionar({
-      id: `novo-${productId}-${(proximoId.current += 1)}`,
+      id: `novo-${p.id}-${(proximoId.current += 1)}`,
       product_id: p.id,
       nome: p.nome,
       quantidade: 1,
@@ -85,22 +77,16 @@ export function ProdutosDoNegocio({
         </ul>
       )}
       {podeEditar && (
-        <Select value="" onValueChange={adicionar} disabled={ativos.length === 0}>
-          <SelectTrigger aria-label={t("Adicionar produto")} data-testid="adicionar-produto">
-            <SelectValue
-              placeholder={
-                ativos.length === 0 ? t("Nenhum produto no catálogo") : t("Adicionar produto")
-              }
-            />
-          </SelectTrigger>
-          <SelectContent>
-            {ativos.map((p) => (
-              <SelectItem key={p.id} value={p.id} descricao={p.categoria || undefined}>
-                {p.nome} — {formatCents(p.preco_cents, moeda)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <SeletorDeProduto
+          onEscolher={adicionar}
+          moeda={moeda}
+          disabled={catalogo.isSuccess && ativos.length === 0}
+          placeholder={
+            catalogo.isSuccess && ativos.length === 0 ? t("Nenhum produto no catálogo") : t("Adicionar produto")
+          }
+          ariaLabel={t("Adicionar produto")}
+          testId="adicionar-produto"
+        />
       )}
     </div>
   );

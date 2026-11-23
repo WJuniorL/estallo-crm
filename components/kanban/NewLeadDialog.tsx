@@ -2,7 +2,8 @@
 
 import { useActiveOrg, useUser } from "@/hooks/auth/AuthProvider";
 import { useAssignableMembers } from "@/hooks/inbox/useAssignableMembers";
-import { useCatalogoDeProdutos } from "@/hooks/leads/useProdutosDoNegocio";
+import { SeletorDeProduto } from "@/components/catalogo/SeletorDeProduto";
+import { useCatalogoDeProdutos, type ProdutoDoCatalogo } from "@/hooks/leads/useProdutosDoNegocio";
 import { useQueryClient } from "@tanstack/react-query";
 import { SeletorDeTags } from "@/components/tags/SeletorDeTags";
 import { chaveDoQuadro } from "@/hooks/kanban/useBoard";
@@ -132,13 +133,16 @@ export function NewLeadDialog({
   const { data: catalogoBruto } = useCatalogoDeProdutos(open);
   const catalogo = Array.isArray(catalogoBruto) ? catalogoBruto : undefined;
   const [produtos, setProdutos] = useState<ProdutoEscolhido[]>([]);
+  // Os escolhidos pela busca no servidor (fora dos 500 em cache) — para o nome e a soma.
+  const [conhecidos, setConhecidos] = useState<Record<string, ProdutoDoCatalogo>>({});
+  const produtoDe = (id: string) => catalogo?.find((c) => c.id === id) ?? conhecidos[id];
   // Etiquetas de OPORTUNIDADE: o mesmo seletor do dossiê (cadastradas + criar).
   const [tags, setTags] = useState<string[]>([]);
   const qc = useQueryClient();
   // Com produtos, o valor É a soma deles (já com os descontos) — a mesma conta
   // da trigger, mostrada na hora em que o produto entra.
   const somaDosProdutos = produtos.reduce((soma, escolhido) => {
-    const p = catalogo?.find((c) => c.id === escolhido.product_id);
+    const p = produtoDe(escolhido.product_id);
     if (!p) return soma;
     return (
       soma +
@@ -411,7 +415,7 @@ export function NewLeadDialog({
                 {produtos.map((escolhido) => (
                   <LinhaDoProdutoEscolhido
                     key={escolhido.product_id}
-                    produto={catalogo?.find((c) => c.id === escolhido.product_id)}
+                    produto={produtoDe(escolhido.product_id)}
                     escolhido={escolhido}
                     moeda={moedaDoValor}
                     onDesconto={(desconto_cents) =>
@@ -432,36 +436,23 @@ export function NewLeadDialog({
             )}
             {/* `value=""` mantém o seletor como AÇÃO ("adicionar"), não como
                 estado: cada escolha entra na lista acima e o gatilho volta vazio. */}
-            <Select
-              value=""
-              onValueChange={(id) =>
+            <SeletorDeProduto
+              onEscolher={(p) => {
+                setConhecidos((atual) => ({ ...atual, [p.id]: p }));
                 setProdutos((atual) =>
-                  atual.some((x) => x.product_id === id)
+                  atual.some((x) => x.product_id === p.id)
                     ? atual
-                    : [...atual, { product_id: id, desconto_cents: 0 }],
-                )
+                    : [...atual, { product_id: p.id, desconto_cents: 0 }],
+                );
+              }}
+              aceita={(c) => c.ativo && !produtos.some((x) => x.product_id === c.id)}
+              moeda={moedaDoValor}
+              disabled={!!catalogo && catalogo.length === 0}
+              placeholder={
+                catalogo && catalogo.length === 0 ? t("Nenhum produto no catálogo") : t("Adicionar produto")
               }
-              disabled={!catalogo || catalogo.length === 0}
-            >
-              <SelectTrigger data-testid="novo-lead-adicionar-produto">
-                <SelectValue
-                  placeholder={
-                    catalogo && catalogo.length === 0
-                      ? t("Nenhum produto no catálogo")
-                      : t("Adicionar produto")
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {(catalogo ?? [])
-                  .filter((c) => c.ativo && !produtos.some((x) => x.product_id === c.id))
-                  .map((c) => (
-                    <SelectItem key={c.id} value={c.id} descricao={c.categoria || undefined}>
-                      {c.nome} · {formatCents(c.preco_cents, moedaDoValor)}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+              testId="novo-lead-adicionar-produto"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-3">

@@ -1,10 +1,23 @@
 "use client";
-import { useMutation, useQueryClient, type InfiniteData, type QueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  type InfiniteData,
+  type QueryClient,
+} from "@tanstack/react-query";
 import { apiClient } from "@/lib/api/client";
 import { showApiError } from "@/components/feedback/ApiErrorToast";
 import { contagensDepoisDe, type ConversaParaAba } from "@/lib/inbox/aba-da-conversa";
 import type { Conversation } from "@/lib/types/messaging";
 import type { ConversationCounts } from "@/hooks/inbox/useConversationCounts";
+
+/**
+ * Chave das ações que mudam o status/dono da conversa (fechar, reabrir,
+ * assumir). O Inbox a escuta para RETER a linha na lista à vista
+ * (`lib/inbox/lista-com-retidas.ts`): a conversa muda de aba no banco e nas
+ * contagens, mas não some debaixo do cursor de quem agiu.
+ */
+export const CHAVE_DE_STATUS = ["conversation-status"] as const;
 
 interface CloseArgs {
   conversation_id: string;
@@ -13,10 +26,15 @@ interface CloseArgs {
 
 /** A conversa como está no cache (lista ou aberta) — de onde sai a aba atual. */
 function conversaEmCache(qc: QueryClient, id: string): ConversaParaAba | null {
-  const aberta = qc.getQueryData<{ data?: ConversaParaAba } | ConversaParaAba>(["conversation", id]);
+  const aberta = qc.getQueryData<{ data?: ConversaParaAba } | ConversaParaAba>([
+    "conversation",
+    id,
+  ]);
   if (aberta && "data" in aberta && aberta.data) return aberta.data;
   if (aberta && "status" in aberta) return aberta;
-  for (const [, lista] of qc.getQueriesData<InfiniteData<{ data: Array<ConversaParaAba & { id: string }> }>>({
+  for (const [, lista] of qc.getQueriesData<
+    InfiniteData<{ data: Array<ConversaParaAba & { id: string }> }>
+  >({
     queryKey: ["conversations"],
   })) {
     const achada = lista?.pages?.flatMap((p) => p.data).find((c) => c.id === id);
@@ -48,6 +66,7 @@ export function useCloseConversation() {
   const qc = useQueryClient();
 
   return useMutation({
+    mutationKey: CHAVE_DE_STATUS,
     mutationFn: async (args: CloseArgs) =>
       apiClient.post<{ data: Conversation }>(
         `/api/v1/conversations/${args.conversation_id}/close`,
@@ -71,10 +90,12 @@ export function useCloseConversation() {
 export function useReopenConversation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (args: CloseArgs) => apiClient.patch<{ data: Conversation }>(
-      `/api/v1/conversations/${args.conversation_id}`,
-      { status: "open", expected_revision: args.expected_revision },
-    ),
+    mutationKey: CHAVE_DE_STATUS,
+    mutationFn: (args: CloseArgs) =>
+      apiClient.patch<{ data: Conversation }>(`/api/v1/conversations/${args.conversation_id}`, {
+        status: "open",
+        expected_revision: args.expected_revision,
+      }),
     onMutate: async (args) => {
       await qc.cancelQueries({ queryKey: ["conversation-counts"] });
       ajustarContagens(qc, args.conversation_id, "open");

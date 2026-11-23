@@ -5,7 +5,7 @@ import { useLocaleDeData } from "@/hooks/i18n/useLocaleDeData";
 import type { Locale } from "date-fns";
 import { format, formatDistanceToNowStrict } from "date-fns";
 import { useT } from "@/hooks/i18n/useT";
-import { PushPin, Robot } from "@/lib/ui/icons";
+import { Archive, PushPin, Robot } from "@/lib/ui/icons";
 import { AckIndicator } from "@/components/inbox/AckIndicator";
 import { ChannelLogo } from "@/components/inbox/ChannelLogo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -64,6 +64,8 @@ interface Props {
    * afirme nada".
    */
   automaticoDaOrg?: boolean;
+  /** Ícone de arquivo na conversa ENCERRADA — a lista o desliga na aba "Fechadas". */
+  mostrarArquivada?: boolean;
   /** Fecha a conversa aberta (o menu da linha pede ao marcar como não lida ou apagar). */
   onFecharConversa?: () => void;
 }
@@ -147,6 +149,7 @@ export function ConversationListItem({
   mostrarAutomatico = true,
   automaticoDaOrg,
   onFecharConversa,
+  mostrarArquivada = false,
 }: Props) {
   const localeDaData = useLocaleDeData();
   const t = useT();
@@ -298,6 +301,13 @@ export function ConversationListItem({
             >
               {displayName}
             </span>
+            {mostrarArquivada && STATUS_ENCERRADOS.has(conversation.status) && (
+              <Archive
+                size={13}
+                className="ibx-archived-indicator"
+                aria-label={t("Conversa fechada")}
+              />
+            )}
             {conversation.fixada && (
               <PushPin
                 size={11}

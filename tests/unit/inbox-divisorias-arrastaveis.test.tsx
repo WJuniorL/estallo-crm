@@ -92,7 +92,7 @@ import {
   type StorageLeve,
 } from "@/lib/inbox/larguras-do-inbox";
 
-const CHAVE_2XL = "inbox:divisorias:2xl";
+const CHAVE_2XL = "inbox:divisorias:v2:2xl";
 
 /** Storage em memória: mesma semântica, sem depender do jsdom. */
 function storageFalso(inicial: Record<string, string> = {}): StorageLeve & {
@@ -136,10 +136,10 @@ describe("a regra pura — limites, piso da conversa e memória por faixa", () =
       larguraContainer: 1040,
       temFicha: true,
     });
-    expect(apertado).toEqual({ lista: 420, ficha: 260 });
-    expect(1040 - apertado.lista - apertado.ficha).toBe(360);
+    expect(apertado).toEqual({ lista: 324, ficha: 296 });
+    expect(1040 - apertado.lista - apertado.ficha).toBe(CONVERSA_MINIMA);
 
-    // Mesmo cedendo, a lista não passa do próprio piso de 420.
+    // Mesmo cedendo, a lista não passa do próprio piso.
     const estreita = resolverLarguras({
       lista: 520,
       ficha: 300,
@@ -171,7 +171,7 @@ describe("a regra pura — limites, piso da conversa e memória por faixa", () =
     gravarLarguras(storage, "md", { lista: 500, ficha: 300 });
     gravarLarguras(storage, "2xl", { lista: 460, ficha: 400 });
 
-    expect(chaveDaFaixa("md")).toBe("inbox:divisorias:md");
+    expect(chaveDaFaixa("md")).toBe("inbox:divisorias:v2:md");
     expect(lerLarguras(storage, "md")).toEqual({ lista: 500, ficha: 300 });
     expect(lerLarguras(storage, "2xl")).toEqual({ lista: 460, ficha: 400 });
     // A faixa sem nada salvo devolve `null` — o layout interpreta como CSS.
@@ -181,12 +181,12 @@ describe("a regra pura — limites, piso da conversa e memória por faixa", () =
   });
 
   it("chave corrompida, tipo errado ou fora dos limites não entra sem tratamento", () => {
-    expect(lerLarguras(storageFalso({ "inbox:divisorias:xl": "{quebrado" }), "xl")).toBeNull();
+    expect(lerLarguras(storageFalso({ "inbox:divisorias:v2:xl": "{quebrado" }), "xl")).toBeNull();
     expect(
-      lerLarguras(storageFalso({ "inbox:divisorias:xl": '{"lista":"500","ficha":300}' }), "xl"),
+      lerLarguras(storageFalso({ "inbox:divisorias:v2:xl": '{"lista":"500","ficha":300}' }), "xl"),
     ).toBeNull();
     expect(
-      lerLarguras(storageFalso({ "inbox:divisorias:xl": '{"lista":100,"ficha":50}' }), "xl"),
+      lerLarguras(storageFalso({ "inbox:divisorias:v2:xl": '{"lista":100,"ficha":50}' }), "xl"),
     ).toEqual({ lista: LIMITES_LISTA.min, ficha: LIMITES_FICHA.min });
     expect(lerLarguras(null, "xl")).toBeNull();
   });
@@ -325,8 +325,8 @@ describe("no layout — duas divisorias arrastáveis (#2579)", () => {
     const lista = await alca(0);
     const ficha = await alca(1);
     expect(lista).toHaveAttribute("aria-orientation", "vertical");
-    expect(lista).toHaveAttribute("aria-valuenow", "420");
-    expect(lista).toHaveAttribute("aria-valuemin", "420");
+    expect(lista).toHaveAttribute("aria-valuenow", "340");
+    expect(lista).toHaveAttribute("aria-valuemin", "260");
     expect(lista).toHaveAttribute("aria-valuemax", "520");
     expect(lista).toHaveAttribute("tabindex", "0");
     expect(ficha).toHaveAttribute("aria-valuenow", "320");
@@ -340,18 +340,18 @@ describe("no layout — duas divisorias arrastáveis (#2579)", () => {
     montar();
     const lista = await alca(0);
     fireEvent.keyDown(lista, { key: "ArrowRight" });
-    expect(lista).toHaveAttribute("aria-valuenow", String(420 + PASSO_TECLADO));
+    expect(lista).toHaveAttribute("aria-valuenow", String(340 + PASSO_TECLADO));
     fireEvent.keyDown(lista, { key: "ArrowRight" });
-    expect(lista).toHaveAttribute("aria-valuenow", String(420 + 2 * PASSO_TECLADO));
+    expect(lista).toHaveAttribute("aria-valuenow", String(340 + 2 * PASSO_TECLADO));
     // A tecla que não ajusta largura não muda nada.
     fireEvent.keyDown(lista, { key: "Enter" });
-    expect(lista).toHaveAttribute("aria-valuenow", String(420 + 2 * PASSO_TECLADO));
+    expect(lista).toHaveAttribute("aria-valuenow", String(340 + 2 * PASSO_TECLADO));
 
     expect(JSON.parse(window.localStorage.getItem(CHAVE_2XL) ?? "null")).toEqual({
-      lista: 420 + 2 * PASSO_TECLADO,
+      lista: 340 + 2 * PASSO_TECLADO,
       ficha: 320,
     });
-    expect(grade().style.gridTemplateColumns).toBe("452px minmax(0,1fr) 320px");
+    expect(grade().style.gridTemplateColumns).toBe("372px minmax(0,1fr) 320px");
   });
 
   it("arrastar prende no limite e no piso da conversa, e persiste no pointerup", async () => {
@@ -369,14 +369,14 @@ describe("no layout — duas divisorias arrastáveis (#2579)", () => {
     fireEvent.pointerMove(window, { clientX: 40 });
     expect(lista).toHaveAttribute("aria-valuenow", String(LIMITES_LISTA.min));
 
-    // Para uma largura que cabe: 300px, deixando 444px de conversa.
+    // Para uma largura que cabe: 300px, deixando 420px de conversa.
     fireEvent.pointerMove(window, { clientX: 300 });
-    expect(lista).toHaveAttribute("aria-valuenow", "420");
+    expect(lista).toHaveAttribute("aria-valuenow", "300");
     fireEvent.pointerUp(window);
     larguraGrade = 1400;
 
     expect(JSON.parse(window.localStorage.getItem(CHAVE_2XL) ?? "null")).toEqual({
-      lista: 420,
+      lista: 300,
       ficha: 320,
     });
   });
@@ -413,7 +413,7 @@ describe("no layout — duas divisorias arrastáveis (#2579)", () => {
     expect(window.localStorage.getItem(CHAVE_2XL)).not.toBeNull();
 
     fireEvent.doubleClick(lista);
-    expect(lista).toHaveAttribute("aria-valuenow", "420");
+    expect(lista).toHaveAttribute("aria-valuenow", "340");
     expect(window.localStorage.getItem(CHAVE_2XL)).toBeNull();
     expect(grade().style.gridTemplateColumns).toBe("");
   });
@@ -431,10 +431,10 @@ describe("no layout — duas divisorias arrastáveis (#2579)", () => {
 
   it("a faixa errada não rouba a largura da outra: 2xl salvo não mexe no md", async () => {
     window.localStorage.setItem(CHAVE_2XL, JSON.stringify({ lista: 500, ficha: 400 }));
-    janelaEm(1024); // faixa md: padrão da lista é 300, e sem ficha nenhuma
+    janelaEm(1024); // faixa md: padrão da lista é 280, e sem ficha nenhuma
     montar();
     const lista = await alca(0);
-    expect(lista).toHaveAttribute("aria-valuenow", "420");
+    expect(lista).toHaveAttribute("aria-valuenow", "280");
     expect(screen.getAllByRole("separator")).toHaveLength(1);
     expect(grade().style.gridTemplateColumns).toBe("");
   });
@@ -463,9 +463,9 @@ describe("no layout — duas divisorias arrastáveis (#2579)", () => {
       expect(await screen.findByText("Selecione uma conversa")).toBeInTheDocument();
       const lista = await alca(0);
       fireEvent.keyDown(lista, { key: "ArrowRight" });
-      expect(lista).toHaveAttribute("aria-valuenow", String(420 + PASSO_TECLADO));
+      expect(lista).toHaveAttribute("aria-valuenow", String(340 + PASSO_TECLADO));
       fireEvent.doubleClick(lista);
-      expect(lista).toHaveAttribute("aria-valuenow", "420");
+      expect(lista).toHaveAttribute("aria-valuenow", "340");
     } finally {
       if (original) Object.defineProperty(window, "localStorage", original);
     }

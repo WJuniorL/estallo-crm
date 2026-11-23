@@ -18,6 +18,7 @@ import {
 import { useConversation, isNotFound, buscarConversa } from "@/hooks/inbox/useConversation";
 import { useMutationState, useQueries } from "@tanstack/react-query";
 import { CHAVE_DO_ENVIO } from "@/hooks/inbox/useSendMessage";
+import { CHAVE_DE_STATUS } from "@/hooks/inbox/useCloseConversation";
 import type { Retida } from "@/lib/inbox/lista-com-retidas";
 import { ConversationList } from "./ConversationList";
 import { InboxFilters, type InboxFiltersValue, type InboxTab } from "./InboxFilters";
@@ -338,7 +339,8 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
     vivo ?? (ultimaConhecida?.id === selectedId ? ultimaConhecida : null);
 
   /**
-   * AS CONVERSAS EM QUE O USUÁRIO RESPONDEU FICAM NA LISTA (ver
+   * AS CONVERSAS EM QUE O USUÁRIO RESPONDEU — OU CUJO STATUS ELE MUDOU
+   * (fechar, reabrir, assumir) — FICAM NA LISTA (ver
    * `lib/inbox/lista-com-retidas.ts`). A retenção pertence aos filtros em que
    * nasceu: trocar de aba ou de filtro (ou recarregar) devolve a lista do
    * servidor. O dado da retida vem fresco de `["conversation", id]`.
@@ -349,7 +351,12 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
   );
   if (retencao.chave !== chaveDosFiltros) setRetencao({ chave: chaveDosFiltros, itens: [] });
   const envios = useMutationState({
-    filters: { mutationKey: CHAVE_DO_ENVIO },
+    filters: {
+      predicate: (m) => {
+        const chave = m.options.mutationKey?.[0];
+        return chave === CHAVE_DO_ENVIO[0] || chave === CHAVE_DE_STATUS[0];
+      },
+    },
     select: (m) => `${(m.state.variables as { conversation_id?: string } | undefined)?.conversation_id ?? ""}|${m.state.submittedAt}`,
   });
   const ultimoEnvio = envios.at(-1) ?? null;

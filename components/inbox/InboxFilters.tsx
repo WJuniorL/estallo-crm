@@ -459,10 +459,21 @@ export function InboxFilters({ value, onChange, onAbrirAtalhos }: Props) {
             sublinhado na ativa e rolagem lateral (sem barra) quando aperta. A
             contagem aparece também quando é zero — "0" é informação. As setas
             de antes continuam para quem navega pelo teclado (moveTab). */}
-        <Tabs value={value.tab} onValueChange={(v) => onChange({ ...value, tab: v as InboxTab })}>
+        <Tabs
+          value={value.tab}
+          onValueChange={(v) => onChange({ ...value, tab: v as InboxTab })}
+          className="ibx-categories-wrap"
+        >
           <TabsList
             ref={tabsListRef}
             onScroll={updateMoreTabs}
+            // Roda do mouse comum (só vertical) também anda a faixa de lado.
+            onWheel={(e) => {
+              const faixa = e.currentTarget;
+              if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && faixa.scrollWidth > faixa.clientWidth) {
+                faixa.scrollLeft += e.deltaY;
+              }
+            }}
             aria-label={t("Categorias de conversas")}
             className="ibx-categories"
             onKeyDown={(e) => {

@@ -223,7 +223,7 @@ describe("reprodução com os handlers nativos", () => {
     ]);
   });
 
-  it("id do contato traduzido e id do negócio compartilham a mesma fila", async () => {
+  it("id do contato traduzido e id do lead compartilham a mesma fila", async () => {
     const sb = banco();
     dublês.banco = sb;
     const tools = montar(sb, CONTATO);
@@ -324,7 +324,7 @@ describe("reprodução com os handlers nativos", () => {
   });
 });
 
-describe("fila por negócio do turno", () => {
+describe("fila por lead do turno", () => {
   it("espera até a primeira operação completar, não só até seu primeiro update", async () => {
     const fila = criarFilaDeEscritasDoNegocio();
     const bloqueio = porta();
@@ -343,7 +343,7 @@ describe("fila por negócio do turno", () => {
     await Promise.all([a, b]);
     expect(ordem).toEqual(["update", "atividade", "move"]);
   });
-  it("negócios independentes e leituras não aguardam a escrita pendente", async () => {
+  it("leads independentes e leituras não aguardam a escrita pendente", async () => {
     const fila = criarFilaDeEscritasDoNegocio();
     const bloqueio = porta();
     const a = fila("org/card-a", () => bloqueio.espera);

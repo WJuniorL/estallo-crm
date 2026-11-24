@@ -67,11 +67,11 @@ const KIND = "followup_sem_agente";
 /** O gatilho em português — o aviso não mostra `stage_change` a ninguém. */
 const COMO_DISPARA: Record<string, string> = {
   silence: "depois de um tempo sem o contato responder",
-  stage_change: "quando um negócio entra numa etapa do funil",
+  stage_change: "quando um lead entra numa etapa do funil",
   case_opened: "quando um atendimento é aberto",
   appointment_no_show: "quando alguém confirma que o contato não compareceu",
   inbound_after_silence: "quando o contato volta a escrever depois de um tempo sem falar",
-  lead_created: "quando um negócio nasce",
+  lead_created: "quando um lead nasce",
 };
 
 interface PonteiroDesarmado {

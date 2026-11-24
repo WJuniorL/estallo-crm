@@ -69,7 +69,7 @@ async function main(): Promise<void> {
   const aberto = await sheet.isVisible();
   const depois = await linhasDaTimeline(page);
   const novas = depois.filter((l) => !antes.includes(l));
-  const edicao = depois.find((l) => l.includes("Dados do negócio alterados"));
+  const edicao = depois.find((l) => l.includes("Dados do lead alterados"));
   console.info(`D20.1 Sheet continua aberto ........ ${aberto}`);
   console.info(`D20.2 linhas: ${antes.length} → ${depois.length} (${novas.length} nova(s))`);
   console.info(`D20.3 linha da edição .............. ${edicao ? JSON.stringify(edicao) : "AUSENTE"}`);

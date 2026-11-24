@@ -87,7 +87,7 @@ describe("aviso na Central ao entrar numa etapa marcada", () => {
     expect(avisoDeEtapaHandler.events).toContain("lead.stage_changed");
   });
 
-  it("etapa marcada: abre um aviso que aponta para o negócio, no idioma da organização", async () => {
+  it("etapa marcada: abre um aviso que aponta para o lead, no idioma da organização", async () => {
     vi.mocked(createAdminClient).mockReturnValue(fakeAdmin({ avisar: true }) as never);
 
     const r = await avisoDeEtapaHandler.handle(evento({ from_stage_id: "outra", to_stage_id: ETAPA }));
@@ -120,7 +120,7 @@ describe("aviso na Central ao entrar numa etapa marcada", () => {
     const texto = JSON.stringify(inseridos[0]);
     expect(texto).not.toContain("Maria");
     expect(texto).not.toContain("99999");
-    expect(inseridos[0]!.title).toBe("Negócio entrou em «Pedido confirmado»");
+    expect(inseridos[0]!.title).toBe("Lead entrou em «Pedido confirmado»");
   });
 
   it("etapa sem a marca não avisa", async () => {
@@ -130,7 +130,7 @@ describe("aviso na Central ao entrar numa etapa marcada", () => {
     expect(inseridos).toHaveLength(0);
   });
 
-  it("aviso já aberto para o mesmo negócio e etapa não empilha", async () => {
+  it("aviso já aberto para o mesmo lead e etapa não empilha", async () => {
     vi.mocked(createAdminClient).mockReturnValue(fakeAdmin({ avisar: true, jaAberto: true }) as never);
     const r = await avisoDeEtapaHandler.handle(evento({ to_stage_id: ETAPA }));
     expect(r.detail).toBe("aviso_ja_aberto");

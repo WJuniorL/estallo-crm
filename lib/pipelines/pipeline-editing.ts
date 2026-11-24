@@ -140,7 +140,7 @@ export function validarArquivamento(
       ok: false,
       erro:
         `«${funil.name}» é o único funil ativo. Sem nenhum funil não há quadro para abrir nem para onde ` +
-        `mandar negócio novo — crie outro funil antes de arquivar este.`,
+        `mandar lead novo — crie outro funil antes de arquivar este.`,
     };
   }
 
@@ -148,7 +148,7 @@ export function validarArquivamento(
     return {
       ok: false,
       erro:
-        `«${funil.name}» é o funil padrão: é para ele que vai o negócio criado sem funil escolhido. ` +
+        `«${funil.name}» é o funil padrão: é para ele que vai o lead criado sem funil escolhido. ` +
         `Marque OUTRO funil como padrão antes de arquivar este.`,
     };
   }
@@ -226,7 +226,7 @@ export function podeExcluirDeVez(
     const funil = funis.find((f) => f.id === funilId)!;
     const n = deps.negocios;
     const um = n === 1;
-    const negocio = um ? "negócio" : "negócios";
+    const negocio = um ? "lead" : "leads";
     const historico = um ? "dele" : "deles";
     /**
      * ⚠️ O CONSELHO MUDA CONFORME DE ONDE O CLIQUE VEIO (#979).
@@ -241,7 +241,7 @@ export function podeExcluirDeVez(
      */
     const conselho = funil.is_archived
       ? `Ele já está no arquivo, então arquivar de novo não resolve: tire-o do arquivo e ` +
-        `resolva ${um ? "o negócio" : "os negócios"} antes de excluir.`
+        `resolva ${um ? "o lead" : "os leads"} antes de excluir.`
       : `Arquive em vez de excluir — o funil sai da lista e nada se perde.`;
 
     return {

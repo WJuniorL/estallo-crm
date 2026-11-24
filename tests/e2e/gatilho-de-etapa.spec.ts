@@ -137,7 +137,7 @@ test.describe("gatilho de etapa do funil", () => {
     });
   });
 
-  test("o negócio movido no quadro para a etapa escolhida arma o follow-up sozinho", async ({ page }) => {
+  test("o lead movido no quadro para a etapa escolhida arma o follow-up sozinho", async ({ page }) => {
     test.setTimeout(180_000);
     expect(creds.admin_totp?.secret, "seed deve gravar admin_totp").toBeTruthy();
     expect(creds.followup_agent_fixtures, "seed-e2e-followup-agent.ts deve gravar as fixtures").toBeTruthy();
@@ -183,14 +183,14 @@ test.describe("gatilho de etapa do funil", () => {
         data: { contact: { id: string; display_name: string } };
       };
       const contato = respostaDoContato.contact;
-      expect(contato.id, "o contato precisa nascer com id — sem ele o negócio fica sem contato").toBeTruthy();
+      expect(contato.id, "o contato precisa nascer com id — sem ele o lead fica sem contato").toBeTruthy();
 
       const negocioRes = await page.request.post("/api/v1/leads", {
         data: {
           pipeline_id: funil.id,
           stage_id: etapaOrigem.id,
           contact_id: contato.id,
-          title: `Negócio Gatilho ${marca}`,
+          title: `Lead Gatilho ${marca}`,
         },
       });
       expect(negocioRes.status()).toBe(201);

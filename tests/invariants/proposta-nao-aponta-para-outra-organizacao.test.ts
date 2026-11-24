@@ -38,13 +38,13 @@ beforeAll(() => {
 });
 
 describe("a proposta não atravessa a organização", () => {
-  it("controle positivo: negócio e contato da própria organização gravam", () => {
+  it("controle positivo: lead e contato da própria organização gravam", () => {
     const id = lastLine(inserir(GOV_ORG, GOV_LEAD, GOV_CONTACT_1));
     expect(id).toMatch(/^[0-9a-f-]{36}$/);
     sql(`delete from public.crm_proposals where id = '${id}';`);
   });
 
-  it("negócio de outra organização: recusado", () => {
+  it("lead de outra organização: recusado", () => {
     expect(() => inserir(ORG_VIZINHA, GOV_LEAD, CONTATO_VIZINHO)).toThrow(/crm_proposal_lead_org_mismatch/);
   });
 
@@ -52,7 +52,7 @@ describe("a proposta não atravessa a organização", () => {
     expect(() => inserir(GOV_ORG, GOV_LEAD, CONTATO_VIZINHO)).toThrow(/crm_proposal_contact_org_mismatch/);
   });
 
-  it("UPDATE que troca o negócio por um de outra organização: recusado", () => {
+  it("UPDATE que troca o lead por um de outra organização: recusado", () => {
     const id = lastLine(inserir(GOV_ORG, GOV_LEAD, GOV_CONTACT_1));
     try {
       expect(() =>

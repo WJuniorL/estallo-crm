@@ -69,10 +69,10 @@ export function FunisDoAgente({ funis, value, onChange, cobertura, disabled = fa
   return (
     <Card className="space-y-3 p-4">
       <div>
-        <h3 className="text-sm font-medium">{t("Em que negócios ele pode mexer")}</h3>
+        <h3 className="text-sm font-medium">{t("Em que leads ele pode mexer")}</h3>
         <p className="text-xs text-muted-foreground">
           {t(
-            "Marque os funis que este assistente cuida. Ele conversa com qualquer cliente, mas só move, edita ou encerra negócio dos funis marcados aqui.",
+            "Marque os funis que este assistente cuida. Ele conversa com qualquer cliente, mas só move, edita ou encerra lead dos funis marcados aqui.",
           )}
         </p>
       </div>
@@ -125,7 +125,7 @@ export function FunisDoAgente({ funis, value, onChange, cobertura, disabled = fa
       {value.length === 0 ? (
         <p data-testid="agente-sem-funil" className="text-xs text-muted-foreground">
           {t(
-            "Sem nenhum funil marcado, ele conversa com os clientes normalmente, mas não mexe em negócio nenhum — nem move, nem encerra, nem marca.",
+            "Sem nenhum funil marcado, ele conversa com os clientes normalmente, mas não mexe em lead nenhum — nem move, nem encerra, nem marca.",
           )}
         </p>
       ) : null}
@@ -133,16 +133,16 @@ export function FunisDoAgente({ funis, value, onChange, cobertura, disabled = fa
       {mudosMarcados.length > 0 ? (
         <p data-testid="agente-funis-mudos" className="text-xs text-warning-fg">
           {mudosMarcados.length === 1
-            ? `${t("Você marcou")} ${mudosMarcados[0]}${t(", mas ninguém disse ao assistente o que cada etapa desse funil significa — ele vai atender e deixar os negócios parados onde estão.")}`
-            : `${t("Você marcou")} ${mudosMarcados.length} ${t("funis em que ninguém disse ao assistente o que cada etapa significa — ele vai atender e deixar os negócios parados onde estão.")}`}{" "}
+            ? `${t("Você marcou")} ${mudosMarcados[0]}${t(", mas ninguém disse ao assistente o que cada etapa desse funil significa — ele vai atender e deixar os leads parados onde estão.")}`
+            : `${t("Você marcou")} ${mudosMarcados.length} ${t("funis em que ninguém disse ao assistente o que cada etapa significa — ele vai atender e deixar os leads parados onde estão.")}`}{" "}
           {t(" Isso se configura em Configurações › Funis.")}
         </p>
       ) : null}
 
       {entradaDeFora ? (
         <p data-testid="agente-entrada-de-fora" className="text-xs text-warning-fg">
-          {t("As conversas novas viram negócio em")} <strong>{funilDeEntrada?.name}</strong>
-          {t(", que não está marcado. O assistente vai atender e os negócios vão se acumular ali sem que ele possa organizá-los.")}
+          {t("As conversas novas viram lead em")} <strong>{funilDeEntrada?.name}</strong>
+          {t(", que não está marcado. O assistente vai atender e os leads vão se acumular ali sem que ele possa organizá-los.")}
         </p>
       ) : null}
     </Card>

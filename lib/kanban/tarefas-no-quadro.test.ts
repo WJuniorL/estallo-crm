@@ -44,7 +44,7 @@ describe("anexarTarefasAosNegocios — o selo de tarefas do card", () => {
     expect(negocio?.tarefas).toEqual({ abertas: 1, atrasadas: 0 });
   });
 
-  it("negócio só com tarefas encerradas não ganha selo de zero", () => {
+  it("lead só com tarefas encerradas não ganha selo de zero", () => {
     const [negocio] = anexarTarefasAosNegocios(
       [lead("l1")],
       [tarefa("l1", { status: "done" })],
@@ -54,7 +54,7 @@ describe("anexarTarefasAosNegocios — o selo de tarefas do card", () => {
     expect(negocio).not.toHaveProperty("tarefas");
   });
 
-  it("cada negócio conta só as SUAS; tarefa avulsa (sem negócio) não entra em card nenhum", () => {
+  it("cada lead conta só as SUAS; tarefa avulsa (sem lead) não entra em card nenhum", () => {
     const negocios = anexarTarefasAosNegocios(
       [lead("l1"), lead("l2"), lead("l3")],
       [tarefa("l1"), tarefa("l2", { due_date: ONTEM }), tarefa("l2"), tarefa(null)],

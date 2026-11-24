@@ -381,7 +381,7 @@ async function main(): Promise<void> {
       actor_kind: string;
       payload: { passo_do_agente?: string } | null;
     }[];
-    console.info(`\nTIMELINE do negócio (${linhas.length} linhas):`);
+    console.info(`\nTIMELINE do lead (${linhas.length} linhas):`);
     for (const a of linhas)
       console.info(
         `  · ${a.type} · ator=${a.actor_kind} · ${a.reason} · passo=${a.payload?.passo_do_agente}`,

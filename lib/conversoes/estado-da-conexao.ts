@@ -157,7 +157,7 @@ export const MOTIVO_LEGIVEL: Record<string, string> = {
   evento_de_teste:
     "Evento recebido em modo de teste. Desative o teste antes de reportar a venda real.",
   sem_valor:
-    "A venda fechou sem valor preenchido. A Meta exige valor e moeda em uma compra — preencha o valor do negócio e use o botão de reprocessamento. No Google, você também pode escolher enviar a venda sem valor em \"Valor do negócio\".",
+    "A venda fechou sem valor preenchido. A Meta exige valor e moeda em uma compra — preencha o valor do lead e use o botão de reprocessamento. No Google, você também pode escolher enviar a venda sem valor em \"Valor do lead\".",
   sem_conexao:
     "Nenhuma conta de anúncios conectada nesta organização. Preencha o formulário acima.",
   evento_fora_do_canal: `Este evento de etapa não sai pelo canal da conversa. Para esta etapa, escolha ${EVENTOS_QUE_O_CANAL_REPASSA}, ou configure a conexão direta da Meta no formulário acima.`,

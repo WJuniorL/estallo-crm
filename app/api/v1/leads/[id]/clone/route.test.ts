@@ -260,7 +260,7 @@ describe("GET /api/v1/leads/[id]/clone", () => {
 });
 
 describe("POST /api/v1/leads/[id]/clone", () => {
-  it("cria o negócio no funil destino e fecha a origem como perdida", async () => {
+  it("cria o lead no funil destino e fecha a origem como perdida", async () => {
     const { POST } = await import("./route");
 
     const response = await POST(cloneRequest({ pipeline_id: P2 }), params);
@@ -407,7 +407,7 @@ describe("POST /api/v1/leads/[id]/clone", () => {
     expect(body.error.code).toBe("stage_pipeline_mismatch");
   });
 
-  it("recusa negócio já encerrado", async () => {
+  it("recusa lead já encerrado", async () => {
     const { POST } = await import("./route");
     const negocio = (db.tables.crm_leads ?? [])[0];
     if (!negocio) throw new Error("o teste espera um crm_leads semeado neste ponto");
@@ -443,7 +443,7 @@ describe("POST /api/v1/leads/[id]/clone", () => {
     expect(body.error.code).toBe("stage_destino_terminal");
   });
 
-  it("recusa funil de destino sem etapa aberta para receber o negócio", async () => {
+  it("recusa funil de destino sem etapa aberta para receber o lead", async () => {
     db = fakeDb({
       ...seed(),
       crm_stages: (seed().crm_stages ?? []).filter((row) => row.id !== S2_A && row.id !== S2_B),

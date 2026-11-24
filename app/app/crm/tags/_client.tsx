@@ -159,7 +159,7 @@ export function TagsClient() {
             )}
           >
             {e === "lead" ? <Target size={14} aria-hidden /> : <User size={14} aria-hidden />}
-            {e === "lead" ? t("Oportunidade") : t("Contato")}
+            {e === "lead" ? t("Lead") : t("Contato")}
             <span
               className={cn(
                 "rounded-full px-1.5 text-xs",

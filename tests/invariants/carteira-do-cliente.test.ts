@@ -105,7 +105,7 @@ function carteiraDe(contato: string, dono: string): void {
   `);
 }
 
-describe("carteira do cliente (#2591) — dono por contato, aviso e negócio novo", () => {
+describe("carteira do cliente (#2591) — dono por contato, aviso e lead novo", () => {
   beforeAll(() => {
     sql(`
       insert into auth.users (id, email) values
@@ -218,7 +218,7 @@ describe("carteira do cliente (#2591) — dono por contato, aviso e negócio nov
            where organization_id = '${ORG}' and user_id = '${SAIU_DA_EQUIPE}';`);
   });
 
-  it("o negócio novo sem dono nasce com o dono do contato; o resto continua como sempre", () => {
+  it("o lead novo sem dono nasce com o dono do contato; o resto continua como sempre", () => {
     carteiraDe(CONTATO_DA_CARTEIRA, AGENTE_A);
 
     // (a) O alvo: negócio SEM dono para o contato da carteira → nasce com o dono.
@@ -251,7 +251,7 @@ describe("carteira do cliente (#2591) — dono por contato, aviso e negócio nov
     carteiraDe(CONTATO_DA_CARTEIRA, AGENTE_A);
   });
 
-  it("definir a carteira adota, na mesma transação, os negócios abertos SEM dono", () => {
+  it("definir a carteira adota, na mesma transação, os leads abertos SEM dono", () => {
     // O cliente é do A desde sempre, mas só agora virou carteira: os negócios
     // abertos sem dono passam para ele; os que já têm dono ficam.
     sql(`update public.contacts

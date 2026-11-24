@@ -115,7 +115,7 @@ function valoresDoBanco(tabela: string, coluna: string): string[] {
     // com o vocabulário, e adivinhar qual é qual é como o gate passa a mentir.
     throw new Error(
       `INSTRUMENTO: ${tabela}.${coluna} tem ${linhas.length} CHECKs de conjunto. ` +
-        `Deixe UM só de vocabulário e ponha a regra de negócio numa constraint separada.`,
+        `Deixe UM só de vocabulário e ponha a regra de lead numa constraint separada.`,
     );
   }
   // Duas formas, porque o Postgres RENDERIZA diferente conforme o tamanho:

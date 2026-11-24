@@ -208,7 +208,7 @@ describe("encerraDemanda", () => {
     expect(db.updates[0]).toMatchObject({ stage_id: WON_STAGE });
   });
 
-  it("move para o fim da stage, avisa que o negócio ENTROU na etapa (sem repetir lead.won) e fecha como ganho", async () => {
+  it("move para o fim da stage, avisa que o lead ENTROU na etapa (sem repetir lead.won) e fecha como ganho", async () => {
     const db = makeDb({
       leads: [
         baseLead(),

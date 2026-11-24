@@ -159,7 +159,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     // 23503 = lead ou contato de outra organização (ou apagado no meio). A
     // recusa nomeia o campo porque quem lê é quem escolheu na tela.
     if (error.code === "23503") {
-      return fail("validation_failed", t("O negócio ou contato vinculado não existe."), 422, {
+      return fail("validation_failed", t("O lead ou contato vinculado não existe."), 422, {
         requestId,
       });
     }

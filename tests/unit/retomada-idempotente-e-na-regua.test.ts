@@ -82,7 +82,7 @@ describe("retomarLeadHandler", () => {
     expect(inserts).toEqual([]);
   });
 
-  it("etapa que exige campo que o negócio novo não terá: 422 com faltando, nada criado", async () => {
+  it("etapa que exige campo que o lead novo não terá: 422 com faltando, nada criado", async () => {
     const { supabase, inserts } = bancoFalso({
       settings: {
         fields: [

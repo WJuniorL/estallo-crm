@@ -197,13 +197,13 @@ describe("marcar contato como pessoal (spec 21, etapa 3)", () => {
     expect(atividades).toHaveLength(0);
   });
 
-  it("sem negócio aberto: só auditoria, timeline pulada em silêncio (D6)", async () => {
+  it("sem lead aberto: só auditoria, timeline pulada em silêncio (D6)", async () => {
     await POST(req(), contexto());
     expect(audit).toHaveBeenCalledWith(expect.objectContaining({ action: "contact.marked_personal" }));
     expect(atividades).toHaveLength(0);
   });
 
-  it("com negócio aberto: timeline com o tipo novo e o negócio certo", async () => {
+  it("com lead aberto: timeline com o tipo novo e o lead certo", async () => {
     leadsAbertos = [
       { id: NEGOCIO, organization_id: ORG, pipeline_id: FUNIL, status: "open", last_activity_at: null, created_at: "2026-01-01T00:00:00Z" },
     ];

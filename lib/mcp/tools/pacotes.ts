@@ -51,7 +51,7 @@ export const PACOTES: ReadonlyArray<PacoteMeta> = [
     id: "vender",
     rotulo: "Vender e mover o funil",
     explicacao:
-      "O agente registra a oportunidade, atualiza o negócio e move o cliente de etapa conforme a conversa avança.",
+      "O agente registra o lead, atualiza o lead e move o cliente de etapa conforme a conversa avança.",
     ordem: 2,
   },
   {

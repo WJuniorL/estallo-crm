@@ -303,7 +303,7 @@ describe("UM lead por DEMANDA, não um por mensagem", () => {
     const segunda = await garantirLeadDaConversa(db, dados);
     // Sem o filtro `status='open'`, este caso devolveria `ja_existe` — é ele que
     // prova que a regra é "demanda aberta", não "contato já visto".
-    expect(segunda.criado, "negócio fechado não bloqueia negócio novo").toBe(true);
+    expect(segunda.criado, "lead fechado não bloqueia lead novo").toBe(true);
 
     const { rows } = await pool.query<{ n: string }>(
       "select count(*) as n from crm_leads where contact_id = $1",
@@ -314,7 +314,7 @@ describe("UM lead por DEMANDA, não um por mensagem", () => {
 });
 
 describe("quando o lead NÃO nasce — e cada recusa diz por quê", () => {
-  it("quem pediu para sair não vira oportunidade", async () => {
+  it("quem pediu para sair não vira lead", async () => {
     const contato = await criarContato(ORG_VIVA, "Saiu Lima");
     await pool.query(
       "update contacts set is_blocked = true, blocked_reason = 'stop_keyword' where id = $1",
@@ -407,7 +407,7 @@ describe("a etapa de entrada nunca é uma etapa de fechamento", () => {
   });
 });
 
-describe("três mensagens seguidas NÃO viram três negócios", () => {
+describe("três mensagens seguidas NÃO viram três leads", () => {
   /**
    * O defeito que este caso guarda foi medido em produção: um contato mandou
    * três mensagens em sequência ("oi", "tudo bem?", "queria marcar") e nasceram

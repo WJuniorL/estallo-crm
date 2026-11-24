@@ -78,7 +78,7 @@ describe("a âncora do silêncio — quando o relógio zera", () => {
     expect(ancoraDoSilencio(dias(6.9), dias(30), AGORA, 7)).toBeNull();
   });
 
-  it("contato que nunca falou conta do NASCIMENTO do negócio", () => {
+  it("contato que nunca falou conta do NASCIMENTO do lead", () => {
     expect(ancoraDoSilencio(null, dias(8), AGORA, 7)).toBe(dias(8));
     // Lead de ontem sem mensagem não é lead parado há 7 dias.
     expect(ancoraDoSilencio(null, dias(1), AGORA, 7)).toBeNull();
@@ -117,7 +117,7 @@ describe("a trava: uma vez por episódio, e o rearme quando a âncora muda", () 
     expect(naoDisparadosTemporais(candidatos, emitidos, "r2")).toEqual(candidatos);
   });
 
-  it("o mesmo negócio em silêncio continua elegível para OUTRA regra", () => {
+  it("o mesmo lead em silêncio continua elegível para OUTRA regra", () => {
     const emitidos = new Set([chaveDeDisparoTemporal("r1", "l1", dias(7))]);
     const candidatos = [
       { leadId: "l1", ancora: dias(7) },

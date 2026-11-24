@@ -57,8 +57,8 @@ beforeAll(() => {
   criarLead(LEAD_D, "rascunho unico D");
 });
 
-describe("um rascunho aberto por negócio (índice único parcial)", () => {
-  it("segundo rascunho para o MESMO negócio é recusado pelo banco (23505)", async () => {
+describe("um rascunho aberto por lead (índice único parcial)", () => {
+  it("segundo rascunho para o MESMO lead é recusado pelo banco (23505)", async () => {
     sql(`
       insert into public.crm_proposals (id, organization_id, lead_id, contact_id, titulo, status)
         values ('${PROP_A1}', '${GOV_ORG}', '${LEAD_A}', '${GOV_CONTACT_1}', 'Primeiro rascunho', 'rascunho');
@@ -77,7 +77,7 @@ describe("um rascunho aberto por negócio (índice único parcial)", () => {
     sql(`delete from public.crm_proposals where id = '${PROP_A1}';`);
   });
 
-  it("negócios DIFERENTES podem ter rascunho aberto ao mesmo tempo (controle positivo)", async () => {
+  it("leads DIFERENTES podem ter rascunho aberto ao mesmo tempo (controle positivo)", async () => {
     sql(`
       insert into public.crm_proposals (id, organization_id, lead_id, contact_id, titulo, status)
         values ('${PROP_B1}', '${GOV_ORG}', '${LEAD_B}', '${GOV_CONTACT_1}', 'Rascunho B', 'rascunho');

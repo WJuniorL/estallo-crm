@@ -396,7 +396,7 @@ const DA_EMPRESA: RecursoOpcional[] = [
   {
     id: "etapa_move_o_card",
     nome: "Para onde o card vai em cada passo",
-    oQueFaz: "Diz ao agente para qual etapa do funil levar o negócio quando qualifica ou agenda.",
+    oQueFaz: "Diz ao agente para qual etapa do funil levar o lead quando qualifica ou agenda.",
     nivel: "organizacao",
     padrao: "desligado",
     quemDecide: "manager",
@@ -405,7 +405,7 @@ const DA_EMPRESA: RecursoOpcional[] = [
   },
   {
     id: "etapa_avisa_na_central",
-    nome: "Avisar a equipe quando o negócio entra na etapa",
+    nome: "Avisar a equipe quando o lead entra na etapa",
     oQueFaz: "Abre um aviso na Central quando um card entra naquela etapa.",
     nivel: "organizacao",
     padrao: "desligado",

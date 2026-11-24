@@ -82,7 +82,7 @@ export async function GET(_req: NextRequest, ctx: RouteCtx): Promise<Response> {
     .eq("id", leadId)
     .maybeSingle();
   if (leadErr) return fail("internal_error", leadErr.message, 500, { requestId });
-  if (!lead) return fail("not_found", t("Negócio não encontrado."), 404, { requestId });
+  if (!lead) return fail("not_found", t("Lead não encontrado."), 404, { requestId });
   const orgId = (lead as { organization_id: string }).organization_id;
 
   // Filtro de tenant EXPLÍCITO na tabela (doutrina multi-tenancy da CLAUDE.md),

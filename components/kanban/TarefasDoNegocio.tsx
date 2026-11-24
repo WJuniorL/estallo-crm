@@ -116,7 +116,7 @@ export function TarefasDoNegocio({ leadId, contactId, podeEditar, aberto }: Prop
         // Vazio CURTO, e não o quadro tracejado da tela de Tarefas: no painel
         // estreito do dossiê ele empurraria a linha do tempo para baixo da dobra.
         <p className="text-xs text-text-muted">
-          {t("Nenhuma tarefa neste negócio. Anote o próximo passo combinado, com prazo e responsável.")}
+          {t("Nenhuma tarefa neste lead. Anote o próximo passo combinado, com prazo e responsável.")}
         </p>
       ) : (
         // Sem `-mx-3`: ele anulava o `p-3` do card e encostava a caixa de cada

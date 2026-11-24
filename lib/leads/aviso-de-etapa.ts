@@ -15,7 +15,7 @@ import { traduzir } from "@/lib/i18n/dicionario";
 import { IDIOMAS, type Idioma } from "@/lib/i18n/idiomas";
 
 /** A chave do dicionário do começo do título. */
-const INICIO_DO_TITULO = "Negócio entrou em";
+const INICIO_DO_TITULO = "Lead entrou em";
 
 export function tituloDoAvisoDeEtapa(etapa: string, idioma: Idioma): string {
   return `${traduzir(INICIO_DO_TITULO, idioma)} «${etapa}»`;
@@ -23,7 +23,7 @@ export function tituloDoAvisoDeEtapa(etapa: string, idioma: Idioma): string {
 
 export function corpoDoAvisoDeEtapa(idioma: Idioma): string {
   return traduzir(
-    "Abra o negócio para dar o próximo passo. Este aviso foi pedido na configuração da etapa.",
+    "Abra o lead para dar o próximo passo. Este aviso foi pedido na configuração da etapa.",
     idioma,
   );
 }

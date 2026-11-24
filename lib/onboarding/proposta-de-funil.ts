@@ -137,7 +137,7 @@ export function validarProposta(p: PropostaDeFunil): ResultadoDaProposta {
   // Sem etapa de ganho, `/leads/[id]/win` responde 422 `pipeline_no_won_stage` e
   // nenhum negócio deste tenant consegue ser fechado.
   if (!p.etapas.some((e) => e.passo === "won")) {
-    erros.push("Falta a coluna onde o negócio é fechado.");
+    erros.push("Falta a coluna onde o lead é fechado.");
   }
   // Sem etapa de perda, o funcionário não tem para onde mandar quem desistiu — e
   // o card fica para sempre numa coluna do meio, inflando o quadro.

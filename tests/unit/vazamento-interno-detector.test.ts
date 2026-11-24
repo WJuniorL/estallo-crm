@@ -157,7 +157,7 @@ describe("detectarVazamentoInterno — calibração contra fala legítima", () =
       "Seu pedido está em separação e sai hoje.",
       "Está aguardando pagamento — assim que cair, eu te aviso.",
       "Movi você para a etapa de proposta no nosso funil.",
-      "Deixei um marcador na sua oportunidade e o responsável assume amanhã.",
+      "Deixei um marcador na sua lead e o responsável assume amanhã.",
       "Seu orçamento com desconto: R$ 403,00 à vista.",
       // ACHADO por sonda, não por dedução: `role` também é o imperativo de *rolar*.
       // A lista original de termos barrava esta instrução — cliente mudo por uma
@@ -221,7 +221,7 @@ describe("sondas de mecanismo — pares mínimos por correção", () => {
     expect(detectarVazamentoInterno("seu perfil atual e agent").termos).toContain("agent");
   });
 
-  it("CAIXA: código de negócio é MAIÚSCULO, identificador técnico é minúsculo", () => {
+  it("CAIXA: código de lead é MAIÚSCULO, identificador técnico é minúsculo", () => {
     expect(detectarVazamentoInterno("Seu pedido PED_2024_001 saiu").termos).toEqual([]);
     expect(detectarVazamentoInterno("Usa o cupom CUPOM_VERAO10").termos).toEqual([]);
     // o mesmo formato, minúsculo, continua sendo pego — é o que separa os dois mundos.

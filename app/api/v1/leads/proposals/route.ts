@@ -185,7 +185,7 @@ export async function GET(req: NextRequest): Promise<Response> {
   const historico: DecisaoPassada[] = linhas.map((d) => ({
     activity_id: d.id,
     lead_id: d.lead_id ?? "",
-    lead_title: d.crm_leads?.title ?? traduzir("(negócio removido)", user.idioma),
+    lead_title: d.crm_leads?.title ?? traduzir("(lead removido)", user.idioma),
     decision: d.type === "next_action_approved" ? "approve" : "dismiss",
     next_action: d.payload?.next_action ?? "",
     decided_by: d.performed_by_user_id ? (nomes.get(d.performed_by_user_id) ?? null) : null,

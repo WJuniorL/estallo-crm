@@ -84,7 +84,7 @@ const pedir = (body: unknown) =>
 const params = { params: Promise.resolve({ id: LEAD }) };
 
 describe("POST /api/v1/leads/[id]/move-pipeline", () => {
-  it("move o MESMO negócio para a etapa do outro funil, com campos intactos e auditoria", async () => {
+  it("move o MESMO lead para a etapa do outro funil, com campos intactos e auditoria", async () => {
     const { POST } = await import("./route");
     const res = await POST(pedir({ stage_id: S2, expected_updated_at: CARIMBO }), params);
 
@@ -126,7 +126,7 @@ describe("POST /api/v1/leads/[id]/move-pipeline", () => {
     expect(vi.mocked(audit)).not.toHaveBeenCalled();
   });
 
-  it("negócio já fechado não muda de funil", async () => {
+  it("lead já fechado não muda de funil", async () => {
     tables.crm_leads![0]!.status = "won";
     const { POST } = await import("./route");
     const res = await POST(pedir({ stage_id: S2, expected_updated_at: CARIMBO }), params);

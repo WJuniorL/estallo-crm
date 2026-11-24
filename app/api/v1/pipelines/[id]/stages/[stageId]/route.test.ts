@@ -446,7 +446,7 @@ describe("DELETE /api/v1/pipelines/[id]/stages/[stageId]", () => {
     expect(audit).not.toHaveBeenCalled();
   });
 
-  it("com negócios e sem destino → 422 com a CONTAGEM na mensagem, e nenhuma escrita", async () => {
+  it("com leads e sem destino → 422 com a CONTAGEM na mensagem, e nenhuma escrita", async () => {
     authOk();
     const db = makeDb({
       stages: funil(),
@@ -460,7 +460,7 @@ describe("DELETE /api/v1/pipelines/[id]/stages/[stageId]", () => {
       error: { message: string; details?: { negocios?: number; precisa_destino?: boolean } };
     };
     // 2, não 3: o negócio de «Cancelado» não está nesta etapa.
-    expect(body.error.message).toContain("2 negócios");
+    expect(body.error.message).toContain("2 leads");
     expect(body.error.message).toContain("«Proposta»");
     // ⭐ E o MESMO 2 chega em `details`, como número. É o que a tela usa para
     // perguntar "para onde vão os 2 negócios?" sem extrair dígito de frase.
@@ -476,7 +476,7 @@ describe("DELETE /api/v1/pipelines/[id]/stages/[stageId]", () => {
    * ⭐ A ordem inversa deixaria negócio apontando para coluna arquivada se a
    * segunda escrita falhasse.
    */
-  it("com destino → move os negócios ANTES de arquivar a etapa", async () => {
+  it("com destino → move os leads ANTES de arquivar a etapa", async () => {
     authOk();
     // `l3` mora em «Cancelado» e é o detector de dano: sem o `eq("stage_id")` no
     // UPDATE, ele também seria teleportado para o destino — e o teste que só
@@ -523,7 +523,7 @@ describe("DELETE /api/v1/pipelines/[id]/stages/[stageId]", () => {
    * `api_audit_log` registra a ação de configuração, mas nenhuma tela de lead o
    * lê — sem isto o cliente vê o card noutro lugar e a timeline não explica nada.
    */
-  it("com destino → grava a atividade de cada negócio movido, num ÚNICO insert", async () => {
+  it("com destino → grava a atividade de cada lead movido, num ÚNICO insert", async () => {
     authOk();
     const db = makeDb({
       stages: funil(),
@@ -654,7 +654,7 @@ describe("DELETE /api/v1/pipelines/[id]/stages/[stageId]", () => {
    * Se o move dos negócios falha, a etapa NÃO pode ser arquivada: é o inverso
    * exato do defeito que a ordem protege.
    */
-  it("falha ao mover os negócios → 500 e a etapa continua no quadro", async () => {
+  it("falha ao mover os leads → 500 e a etapa continua no quadro", async () => {
     authOk();
     const db = makeDb({
       stages: funil(),

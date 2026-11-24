@@ -16,10 +16,8 @@ import {
   type ConversationWithContact,
 } from "@/hooks/inbox/useConversationsRealtime";
 import { useConversation, isNotFound, buscarConversa } from "@/hooks/inbox/useConversation";
-import { useMutationState, useQueries } from "@tanstack/react-query";
-import { CHAVE_DO_ENVIO } from "@/hooks/inbox/useSendMessage";
-import { CHAVE_DE_STATUS } from "@/hooks/inbox/useCloseConversation";
-import type { Retida } from "@/lib/inbox/lista-com-retidas";
+import { useQueries } from "@tanstack/react-query";
+import { reterQuemSaiu, type Retida } from "@/lib/inbox/lista-com-retidas";
 import { ConversationList } from "./ConversationList";
 import { InboxFilters, type InboxFiltersValue, type InboxTab } from "./InboxFilters";
 import { ChatThread } from "./ChatThread";
@@ -339,39 +337,38 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
     vivo ?? (ultimaConhecida?.id === selectedId ? ultimaConhecida : null);
 
   /**
-   * AS CONVERSAS EM QUE O USUÁRIO RESPONDEU — OU CUJO STATUS ELE MUDOU
-   * (fechar, reabrir, assumir) — FICAM NA LISTA (ver
-   * `lib/inbox/lista-com-retidas.ts`). A retenção pertence aos filtros em que
-   * nasceu: trocar de aba ou de filtro (ou recarregar) devolve a lista do
-   * servidor. O dado da retida vem fresco de `["conversation", id]`.
+   * A LISTA À VISTA É UMA FOTOGRAFIA (ver `reterQuemSaiu` em
+   * `lib/inbox/lista-com-retidas.ts`): conversa que estava na tela e sumiu da
+   * resposta nova do servidor — por ação do vendedor, de outro atendente ou de
+   * regra automática — fica no lugar. Trocar de aba/filtro ou recarregar a
+   * página devolve a lista do servidor. O dado da retida vem fresco de
+   * `["conversation", id]`, que o tempo real também atualiza.
+   *
+   * A comparação só vale entre duas respostas REAIS da mesma chave de filtros:
+   * lista placeholder (a da chave anterior, mantida na troca) ou ainda sem dado
+   * não conta, senão a troca de aba reteria a lista da aba de antes. E compara
+   * pelos IDs, não pela referência: atualização que só muda campos (prévia,
+   * horário) não é saída de ninguém e não precisa de render extra.
    */
   const chaveDosFiltros = JSON.stringify(filters);
   const [retencao, setRetencao] = useState<{ chave: string; itens: Retida<ConversationWithContact>[] }>(
     { chave: chaveDosFiltros, itens: [] },
   );
   if (retencao.chave !== chaveDosFiltros) setRetencao({ chave: chaveDosFiltros, itens: [] });
-  const envios = useMutationState({
-    filters: {
-      predicate: (m) => {
-        const chave = m.options.mutationKey?.[0];
-        return chave === CHAVE_DO_ENVIO[0] || chave === CHAVE_DE_STATUS[0];
-      },
-    },
-    select: (m) => `${(m.state.variables as { conversation_id?: string } | undefined)?.conversation_id ?? ""}|${m.state.submittedAt}`,
-  });
-  const ultimoEnvio = envios.at(-1) ?? null;
-  const [envioVisto, setEnvioVisto] = useState(ultimoEnvio);
-  if (ultimoEnvio !== envioVisto) {
-    setEnvioVisto(ultimoEnvio);
-    const id = ultimoEnvio?.split("|")[0];
-    const lista = listQ.data?.pages.flatMap((p) => p.data) ?? [];
-    const indice = lista.findIndex((c) => c.id === id);
-    if (id && indice >= 0 && !retencao.itens.some((r) => r.conversa.id === id)) {
-      setRetencao({
-        chave: chaveDosFiltros,
-        itens: [...retencao.itens, { conversa: lista[indice]!, indice }],
-      });
+  const listaReal =
+    listQ.data && !listQ.isPlaceholderData ? listQ.data.pages.flatMap((p) => p.data) : null;
+  const idsReais = listaReal?.map((c) => c.id).join(",") ?? null;
+  const [fotografia, setFotografia] = useState<{
+    chave: string;
+    ids: string | null;
+    lista: ConversationWithContact[] | null;
+  }>({ chave: chaveDosFiltros, ids: idsReais, lista: listaReal });
+  if (listaReal && (fotografia.chave !== chaveDosFiltros || fotografia.ids !== idsReais)) {
+    if (fotografia.chave === chaveDosFiltros && fotografia.lista && retencao.chave === chaveDosFiltros) {
+      const itens = reterQuemSaiu(fotografia.lista, listaReal, retencao.itens);
+      if (itens !== retencao.itens) setRetencao({ chave: chaveDosFiltros, itens });
     }
+    setFotografia({ chave: chaveDosFiltros, ids: idsReais, lista: listaReal });
   }
   const frescas = useQueries({
     queries: retencao.itens.map((r) => ({

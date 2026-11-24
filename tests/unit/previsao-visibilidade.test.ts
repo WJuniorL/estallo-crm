@@ -122,7 +122,7 @@ beforeEach(() => {
 });
 
 describe("GET /api/v1/pipelines/[id]/forecast — visibilidade", () => {
-  it("com visibility_mode own, o atendente vê SÓ os próprios negócios", async () => {
+  it("com visibility_mode own, o atendente vê SÓ os próprios leads", async () => {
     authOk();
 
     // A RLS com visibility_mode="own" devolveria só os negócios do atendente.

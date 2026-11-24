@@ -58,7 +58,7 @@ function Bloco({
           <TableHeader>
             <TableRow>
               <TableHead>{t(coluna)}</TableHead>
-              <TableHead className="text-right">{t("Negócios")}</TableHead>
+              <TableHead className="text-right">{t("Leads")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -114,7 +114,7 @@ export function PerdasPanel() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t("Moeda")}</TableHead>
-                <TableHead className="text-right">{t("Negócios")}</TableHead>
+                <TableHead className="text-right">{t("Leads")}</TableHead>
                 <TableHead className="text-right">{t("Valor")}</TableHead>
               </TableRow>
             </TableHeader>

@@ -286,7 +286,7 @@ describe("resolveCardState · proposta de retomada", () => {
     expect(resolveCardState(base).slot.type).toBe("cooling");
   });
 
-  it("proposta viva num negócio que NÃO está frio ainda assim aparece", () => {
+  it("proposta viva num lead que NÃO está frio ainda assim aparece", () => {
     // Acontece na janela entre o negócio reaquecer e o worker vencer a
     // proposta: o botão continua válido, e escondê-lo deixaria uma proposta
     // pendente sem nenhuma superfície para decidir.

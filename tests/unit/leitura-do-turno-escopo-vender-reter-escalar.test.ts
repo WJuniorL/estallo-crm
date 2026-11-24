@@ -167,7 +167,7 @@ const negocio = (id: string, contato: string | null, over: Linha = {}): Linha =>
   id,
   organization_id: ORG,
   contact_id: contato,
-  title: `negócio ${id.slice(0, 4)}`,
+  title: `lead ${id.slice(0, 4)}`,
   status: "open",
   pipeline_id: FUNIL,
   stage_id: null,
@@ -191,14 +191,14 @@ beforeEach(() => {
 // vender
 // ---------------------------------------------------------------------------
 
-describe("crm_list_leads: só os negócios do contato do turno, filtrados antes do limite", () => {
+describe("crm_list_leads: só os leads do contato do turno, filtrados antes do limite", () => {
   // Os negócios de B vêm PRIMEIRO: um filtro depois do limite devolveria a
   // página de B e esconderia o do turno.
   const tabelas = () => ({
     crm_leads: [negocio(NEGOCIO_DE_B, DE_OUTRO_CLIENTE), negocio(NEGOCIO_DE_B_2, DE_OUTRO_CLIENTE), negocio(NEGOCIO_DO_TURNO, DA_CONVERSA)],
   });
 
-  it("⭐ com turno, nenhum negócio de outro cliente sai, e o do turno sai mesmo com limite 1", async () => {
+  it("⭐ com turno, nenhum lead de outro cliente sai, e o do turno sai mesmo com limite 1", async () => {
     supabase = bancoFalso(tabelas());
     const r = await executar("crm_list_leads", { limit: 1 }, DA_CONVERSA);
     const leads = r.leads as Linha[];
@@ -217,7 +217,7 @@ describe("crm_get_lead: uma recusa só para outro cliente e para inexistente", (
     crm_leads: [negocio(NEGOCIO_DE_B, DE_OUTRO_CLIENTE), negocio(NEGOCIO_DO_TURNO, DA_CONVERSA)],
   });
 
-  it("⭐ negócio de outro cliente é recusado, e nada dele sai", async () => {
+  it("⭐ lead de outro cliente é recusado, e nada dele sai", async () => {
     supabase = bancoFalso(tabelas());
     const r = await executar("crm_get_lead", { lead_id: NEGOCIO_DE_B }, DA_CONVERSA);
     expect(recusa(r)).toEqual({ permitido: false, motivo: "fora_da_conversa" });
@@ -231,13 +231,13 @@ describe("crm_get_lead: uma recusa só para outro cliente e para inexistente", (
     expect(JSON.stringify(inexistente)).toBe(JSON.stringify(deOutro));
   });
 
-  it("o negócio do contato do turno abre", async () => {
+  it("o lead do contato do turno abre", async () => {
     supabase = bancoFalso(tabelas());
     const r = await executar("crm_get_lead", { lead_id: NEGOCIO_DO_TURNO }, DA_CONVERSA);
     expect((r.lead as Linha).id).toBe(NEGOCIO_DO_TURNO);
   });
 
-  it("CONTROLE: sem turno, qualquer negócio da organização abre", async () => {
+  it("CONTROLE: sem turno, qualquer lead da organização abre", async () => {
     supabase = bancoFalso(tabelas());
     const r = await executar("crm_get_lead", { lead_id: NEGOCIO_DE_B });
     expect((r.lead as Linha).id).toBe(NEGOCIO_DE_B);
@@ -272,7 +272,7 @@ describe("crm_list_appointments: a agenda, no turno, é a do contato da conversa
     expect(listaAgendamentos).not.toHaveBeenCalled();
   });
 
-  it("o negócio do contato do turno lista, dentro do contato", async () => {
+  it("o lead do contato do turno lista, dentro do contato", async () => {
     supabase = bancoFalso(tabelas());
     await executar("crm_list_appointments", { lead_id: NEGOCIO_DO_TURNO }, DA_CONVERSA);
     expect(vi.mocked(listaAgendamentos).mock.calls[0]![2]).toMatchObject({
@@ -401,7 +401,7 @@ describe("crm_list_at_risk_leads: o radar, no turno, cobre só o contato da conv
     ],
   });
 
-  it("⭐ com turno, nada de outro cliente sai — negócio, demanda ou proposta", async () => {
+  it("⭐ com turno, nada de outro cliente sai — lead, demanda ou proposta", async () => {
     supabase = bancoFalso(tabelas());
     const r = await executar("crm_list_at_risk_leads", { limit: 50 }, DA_CONVERSA);
     const texto = JSON.stringify(r);
@@ -421,7 +421,7 @@ describe("crm_list_at_risk_leads: o radar, no turno, cobre só o contato da conv
     }
   });
 
-  it("⭐ proposta do contato do turno num negócio que passou a outro cliente não sai em revisão", async () => {
+  it("⭐ proposta do contato do turno num lead que passou a outro cliente não sai em revisão", async () => {
     // A proposta guarda o contato de quando foi feita; o negócio mudou de dono
     // depois. O filtro por `crm_proposals.contact_id` deixa a proposta passar,
     // e o `lead_id` dela é um negócio de outro cliente.

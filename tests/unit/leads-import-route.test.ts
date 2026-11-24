@@ -207,7 +207,7 @@ beforeEach(() => {
 });
 
 describe("POST /api/v1/leads/import", () => {
-  it("cria um negócio por linha, com a ORG da sessão", async () => {
+  it("cria um lead por linha, com a ORG da sessão", async () => {
     fazerSupabase(null);
     const { POST } = await import("@/app/api/v1/leads/import/route");
 
@@ -319,7 +319,7 @@ describe("POST /api/v1/leads/import", () => {
     expect(vi.mocked(createLeadHandler)).not.toHaveBeenCalled();
   });
 
-  it("planilha sem coluna que nomeie o negócio é recusada com 422", async () => {
+  it("planilha sem coluna que nomeie o lead é recusada com 422", async () => {
     fazerSupabase(null);
     const { POST } = await import("@/app/api/v1/leads/import/route");
     const res = await POST(pedido("valor,origem\n100,site"));

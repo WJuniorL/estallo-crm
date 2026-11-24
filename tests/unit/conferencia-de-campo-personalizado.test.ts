@@ -259,7 +259,7 @@ describe("os quatro exemplos da issue, em decidindo", () => {
   });
 });
 
-describe("na CRIAÇÃO (crm_create_lead, #2302) — o funil vem do argumento, não do negócio", () => {
+describe("na CRIAÇÃO (crm_create_lead, #2302) — o funil vem do argumento, não do lead", () => {
   it("com pipelineId lê os rótulos do funil SEM ler crm_leads, e confere igual", async () => {
     const f: FalsoBanco = {
       inseridas: {},

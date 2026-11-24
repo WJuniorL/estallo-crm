@@ -147,7 +147,7 @@ export function contagemDeNegocios(
   n: number,
   t: (texto: string) => string = (texto) => texto,
 ): string {
-  return `${n} ${n === 1 ? t("negócio") : t("negócios")}`;
+  return `${n} ${n === 1 ? t("lead") : t("leads")}`;
 }
 
 /**
@@ -228,7 +228,7 @@ export function fraseDaTaxa(
   t: (texto: string) => string = (texto) => texto,
 ): string {
   if (taxa.total === 0 || taxa.percentual === null) {
-    return t("Sem dados no período — nenhum negócio encerrado passou por esta etapa.");
+    return t("Sem dados no período — nenhum lead encerrado passou por esta etapa.");
   }
   const passaram = `${contagemDeNegocios(taxa.total, t)} ${
     taxa.total === 1
@@ -467,7 +467,7 @@ export function StagesSection({
         </p>
         <p className="max-w-3xl text-sm leading-relaxed text-text-muted">
           {t("Duas colunas têm papel especial: a")} <strong>{t("de fechamento")}</strong>{" "}
-          {t("é onde o negócio vira venda, e a")} <strong>{t("de perda")}</strong>{" "}
+          {t("é onde o lead vira venda, e a")} <strong>{t("de perda")}</strong>{" "}
           {t(
             "é onde ele se perde. Cada funil precisa de uma de cada — por isso a marcação se muda de lugar, não se apaga.",
           )}
@@ -578,7 +578,7 @@ export function StagesSection({
                       {/* Este bloco não tem período: o corte é na leitura dos
                           negócios abertos, e a frase diz isso — não a da taxa. */}
                       {corpoDasTaxas?.tempo_na_etapa?.truncado
-                        ? ` ${t("Amostra limitada: este número cobre só parte dos negócios abertos do funil.")}`
+                        ? ` ${t("Amostra limitada: este número cobre só parte dos leads abertos do funil.")}`
                         : ""}
                     </p>
                   ) : null}
@@ -697,10 +697,10 @@ export function StagesSection({
                   checked={etapa.avisar_na_central === true}
                   onCheckedChange={(v) => aplicar(etapa.id, { avisar_na_central: v })}
                   disabled={ocupado}
-                  aria-label={`${t("Avisar a equipe na Central quando um negócio entrar em")} «${etapa.name}»`}
+                  aria-label={`${t("Avisar a equipe na Central quando um lead entrar em")} «${etapa.name}»`}
                   data-testid={`avisar-${etapa.id}`}
                 />
-                {t("Avisar a equipe na Central quando um negócio entrar aqui")}
+                {t("Avisar a equipe na Central quando um lead entrar aqui")}
               </label>
 
               {passo && (
@@ -746,7 +746,7 @@ export function StagesSection({
                     <p className="text-sm leading-relaxed">
                       {t("Arquivar")} «{etapa.name}»?{" "}
                       {t(
-                        "A coluna sai do quadro e para de receber negócios novos. Nada é apagado — o histórico de quem passou por ela continua guardado —, mas",
+                        "A coluna sai do quadro e para de receber leads novos. Nada é apagado — o histórico de quem passou por ela continua guardado —, mas",
                       )}{" "}
                       <strong>{t("não dá para trazer a coluna de volta por aqui")}</strong>.
                     </p>
@@ -778,7 +778,7 @@ export function StagesSection({
                           }
                         >
                           <SelectTrigger
-                            aria-label={`${t("Para onde vão os negócios de")} «${etapa.name}»`}
+                            aria-label={`${t("Para onde vão os leads de")} «${etapa.name}»`}
                             data-testid={`destino-${etapa.id}`}
                           >
                             <SelectValue placeholder={t("Escolha a etapa")} />
@@ -836,7 +836,7 @@ export function StagesSection({
                       >
                         {arquivandoAqui.negocios === null
                           ? t("Arquivar")
-                          : t("Mover os negócios e arquivar")}
+                          : t("Mover os leads e arquivar")}
                       </Button>
                     )}
                     <Button size="sm" variant="ghost" onClick={() => setArquivamento(null)}>

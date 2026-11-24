@@ -318,7 +318,7 @@ describe("devolver o atendimento ao agente", () => {
     if (res.ok) expect(res.continuidade.houveAtendimentoHumano).toBe(false);
   });
 
-  it("a volta aparece na linha do tempo do negócio", async () => {
+  it("a volta aparece na linha do tempo do lead", async () => {
     const cap = novaCaptura();
     await retomar(cenarioComAtendimentoHumano(), cap);
 
@@ -357,7 +357,7 @@ describe("devolver o atendimento ao agente", () => {
     expect(JSON.stringify(atividade?.valores)).toContain("automaticamente após 60 min");
   });
 
-  it("negócio ambíguo não vira atividade no card errado", async () => {
+  it("lead ambíguo não vira atividade no card errado", async () => {
     const cap = novaCaptura();
     // Dois negócios abertos tocados no MESMO instante: adivinhar moveria o card
     // do cliente errado (resolveActiveLeadForContact recusa de propósito).

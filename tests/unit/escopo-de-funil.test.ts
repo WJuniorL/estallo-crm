@@ -214,7 +214,7 @@ describe("a chamada de ferramenta", () => {
     expect(v.permitido).toBe(true);
   });
 
-  it("`funil_vem_do_contato` COM negócio aberto escopa de verdade", async () => {
+  it("`funil_vem_do_contato` COM lead aberto escopa de verdade", async () => {
     // O alvo existe para `crm_book_appointment`, que tem `contact_id` obrigatório e
     // nenhum `lead_id`. Sem ele, ela só poderia ser `sem_funil` — e o escopo não
     // valeria para ela em caso nenhum.
@@ -230,7 +230,7 @@ describe("a chamada de ferramenta", () => {
     expect(v.motivo).toBe("funil_fora_do_escopo");
   });
 
-  it("contato SEM negócio aberto LIBERA — e é decisão, não fall-through", async () => {
+  it("contato SEM lead aberto LIBERA — e é decisão, não fall-through", async () => {
     // O gate responde "pode operar NESTE funil?". Contato sem negócio não está em
     // funil nenhum, e marcar consulta não move card. Recusar mudaria a PERGUNTA do
     // gate, de escopo para triagem — e o caso é o mais comum de uma clínica: contato
@@ -244,7 +244,7 @@ describe("a chamada de ferramenta", () => {
     expect(v.permitido).toBe(true);
   });
 
-  it("contato com VÁRIOS negócios abertos recusa — e o motivo diz quantos", async () => {
+  it("contato com VÁRIOS leads abertos recusa — e o motivo diz quantos", async () => {
     // O terceiro desfecho, que quase passou batido. Não dá para dizer em qual funil o
     // compromisso conta, e um deles pode estar fora do escopo. O precedente do repo é
     // não adivinhar: `resolveActiveLeadForContact` devolve `ambiguous_open_leads` em
@@ -260,7 +260,7 @@ describe("a chamada de ferramenta", () => {
     if (v.permitido) return;
     expect(v.motivo).toBe("indisponivel");
     if (v.motivo !== "indisponivel") return;
-    expect(v.detalhe).toMatch(/2 negócios abertos/);
+    expect(v.detalhe).toMatch(/2 leads abertos/);
   });
 
   it("⚠️ SEM o resolvedor, RECUSA — dependência que falta não vira liberação", async () => {

@@ -82,7 +82,7 @@ export function MoveToOtherPipelineDialog({
           <DialogTitle>{t("Mover de funil")}</DialogTitle>
           <DialogDescription>
             {t(
-              "O negócio muda para o funil e a etapa escolhidos — conversa, tarefas, campos e histórico vão junto.",
+              "O lead muda para o funil e a etapa escolhidos — conversa, tarefas, campos e histórico vão junto.",
             )}
           </DialogDescription>
         </DialogHeader>
@@ -91,7 +91,7 @@ export function MoveToOtherPipelineDialog({
             abriria com uma lista vazia e um botão que nunca habilita. */}
         {destinos.data?.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            {t("Este é o único funil. Crie outro funil para poder levar o negócio até ele.")}
+            {t("Este é o único funil. Crie outro funil para poder levar o lead até ele.")}
           </p>
         ) : (
           <div className="space-y-3">

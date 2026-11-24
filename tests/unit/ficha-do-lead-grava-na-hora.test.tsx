@@ -46,7 +46,7 @@ const GRAVADO: ItemDoRascunho = {
 };
 const NEGOCIO = {
   id: LEAD,
-  title: "Negócio",
+  title: "Lead",
   description: null,
   value_cents: 5000,
   currency: "BRL",
@@ -124,7 +124,7 @@ describe("ficha do lead — cada ação grava na hora", () => {
     await user.tab();
 
     await waitFor(() => expect(api.patch).toHaveBeenCalledTimes(1));
-    expect(api.patch.mock.calls[0]?.[1]).toEqual({ title: "Negócio editado" });
+    expect(api.patch.mock.calls[0]?.[1]).toEqual({ title: "Lead editado" });
   });
 
   it("título que o servidor recusa volta ao valor anterior", async () => {
@@ -136,7 +136,7 @@ describe("ficha do lead — cada ação grava na hora", () => {
     await user.type(screen.getByLabelText("Título"), " editado");
     await user.tab();
 
-    await waitFor(() => expect((screen.getByLabelText("Título") as HTMLInputElement).value).toBe("Negócio"));
+    await waitFor(() => expect((screen.getByLabelText("Título") as HTMLInputElement).value).toBe("Lead"));
   });
 });
 

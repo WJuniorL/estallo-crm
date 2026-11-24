@@ -56,7 +56,7 @@ export function AgentSetupSummary({
         ))}
       </dl>
       <p className="text-xs text-muted-foreground">
-        {t("Permissões: consultar contatos e atualizar negócios no funil escolhido.")}
+        {t("Permissões: consultar contatos e atualizar leads no funil escolhido.")}
       </p>
       {children}
     </section>

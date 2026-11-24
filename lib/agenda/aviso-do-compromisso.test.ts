@@ -99,7 +99,7 @@ describe("payloadDoAviso", () => {
     });
   });
 
-  it("lead_ids não repete o mesmo negócio", () => {
+  it("lead_ids não repete o mesmo lead", () => {
     const id = "eee00000-0000-4000-8000-00000000000e";
     const payload = payloadDoAviso({ ...BASE, leadIds: [id, id] });
     expect(payload.lead_ids).toEqual([id]);

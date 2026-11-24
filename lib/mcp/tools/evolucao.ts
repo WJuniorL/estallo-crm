@@ -163,7 +163,7 @@ export const crmGetOrgMemory: McpToolDefinition<typeof lerMemoriaInputShape> = {
   name: "crm_get_org_memory",
   description:
     "Lê o que a empresa registrou sobre si mesma — políticas, combinados e aprendizados que " +
-    "valem para todo atendimento. Use antes de inventar regra de negócio.",
+    "valem para todo atendimento. Use antes de inventar regra de lead.",
   inputSchema: lerMemoriaInputShape,
   category: "read",
   requiresRole: "agent",

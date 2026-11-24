@@ -67,14 +67,14 @@ export interface EtapaDoFunil {
  * vermelho.
  */
 export const RECUSA_DE_TROCA_DE_FUNIL =
-  "Move cross-pipeline não é permitido. Use POST /api/v1/leads/[id]/clone para levar o negócio a outro funil.";
+  "Move cross-pipeline não é permitido. Use POST /api/v1/leads/[id]/clone para levar o lead a outro funil.";
 
 /** Recusa da rota quando o funil de destino não existe na organização. */
 export const FUNIL_DE_DESTINO_NAO_ENCONTRADO = "Funil de destino não encontrado.";
 
 /** Recusa da rota quando a origem não tem onde fechar (antes de criar o clone). */
 export const ORIGEM_SEM_ETAPA_DE_PERDA =
-  "O funil de origem não tem etapa de perda para encerrar o negócio.";
+  "O funil de origem não tem etapa de perda para encerrar o lead.";
 
 export interface Recusa {
   status: number;
@@ -110,14 +110,14 @@ export function recusaTrocaDeFunil(
     return {
       status: 422,
       code: "pipeline_unchanged",
-      texto: "O negócio já está neste funil. Para trocar de etapa use /api/v1/leads/[id]/move.",
+      texto: "O lead já está neste funil. Para trocar de etapa use /api/v1/leads/[id]/move.",
     };
   }
   if (origem.status !== "open" && modo !== "novo_negocio") {
     return {
       status: 422,
       code: "lead_not_open",
-      texto: "Só um negócio aberto pode ser levado para outro funil.",
+      texto: "Só um lead aberto pode ser levado para outro funil.",
     };
   }
   return null;
@@ -168,7 +168,7 @@ export function escolheEtapaDeDestino(
       ok: false,
       status: 422,
       code: "pipeline_without_initial_stage",
-      texto: "O funil de destino não tem etapa aberta para receber o negócio.",
+      texto: "O funil de destino não tem etapa aberta para receber o lead.",
     };
   }
   return { ok: true, etapa: inicial };

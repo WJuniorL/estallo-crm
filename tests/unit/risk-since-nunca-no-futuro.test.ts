@@ -27,7 +27,7 @@ const AGORA = new Date("2026-09-12T22:00:00Z");
 const TOCADO_HA_UMA_HORA = new Date("2026-09-12T21:00:00Z");
 
 describe("since nunca nasce no futuro", () => {
-  it("⛔ adiamento na agenda, negócio ATIVO", () => {
+  it("⛔ adiamento na agenda, lead ATIVO", () => {
     const r = classifyRisk({
       lastActivityAt: TOCADO_HA_UMA_HORA,
       now: AGORA,
@@ -41,7 +41,7 @@ describe("since nunca nasce no futuro", () => {
     ).toBeLessThanOrEqual(AGORA.getTime());
   });
 
-  it("⛔ presença vencida, negócio ATIVO", () => {
+  it("⛔ presença vencida, lead ATIVO", () => {
     const r = classifyRisk({
       lastActivityAt: TOCADO_HA_UMA_HORA,
       now: AGORA,
@@ -55,7 +55,7 @@ describe("since nunca nasce no futuro", () => {
     ).toBeLessThanOrEqual(AGORA.getTime());
   });
 
-  it("⛔ CONTROLE: negócio realmente frio mantém o instante do CRUZAMENTO", () => {
+  it("⛔ CONTROLE: lead realmente frio mantém o instante do CRUZAMENTO", () => {
     // O par que impede o conserto de virar um `since = now` geral, que apagaria
     // justamente a informação que a coluna existe para dar: há quanto tempo este
     // negócio está NESTE estado.

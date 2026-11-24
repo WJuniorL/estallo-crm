@@ -61,7 +61,7 @@ function fixture() {
 }
 
 describe("alvo explícito do lead da execução", () => {
-  it("mantém o lead original mesmo se outro negócio for mais recente ou estiver no funil de destino", async () => {
+  it("mantém o lead original mesmo se outro lead for mais recente ou estiver no funil de destino", async () => {
     const { admin } = fixture();
     const target = executionLeadTarget({ execution_contract: 1, lead_id: "original" });
     expect(await loadLeadForExecution(admin, "a", "contato", "*", target, "p2")).toMatchObject({
@@ -69,7 +69,7 @@ describe("alvo explícito do lead da execução", () => {
     });
   });
 
-  it("ausência explícita de lead não consulta nem escolhe negócio pelo contato", async () => {
+  it("ausência explícita de lead não consulta nem escolhe lead pelo contato", async () => {
     const f = fixture();
     expect(
       await loadLeadForExecution(

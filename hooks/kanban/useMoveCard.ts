@@ -19,6 +19,8 @@ export interface MoveArgs {
   customFields?: Record<string, unknown>;
   /** O motivo do ganho coletado pelo mesmo diálogo, quando o destino fecha. */
   wonReason?: string;
+  /** O motivo da perda, quando o destino é etapa de perda (arrasto → janela de motivo). */
+  lostReason?: string;
 }
 
 /**
@@ -64,6 +66,7 @@ export function useMoveCard(pipelineId: string, opcoes: OpcoesDeMove = {}) {
         expected_updated_at: args.expectedUpdatedAt,
         ...(args.customFields ? { custom_fields: args.customFields } : {}),
         ...(args.wonReason !== undefined ? { won_reason: args.wonReason } : {}),
+        ...(args.lostReason !== undefined ? { lost_reason: args.lostReason } : {}),
       });
     },
     onMutate: async (args) => {

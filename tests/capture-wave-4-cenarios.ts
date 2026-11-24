@@ -94,7 +94,7 @@ async function montarCasos(): Promise<Record<string, Caso>> {
   const spec: { chave: string; leads: number; acao: string | null }[] = [
     { chave: "A", leads: 1, acao: `Enviar o orçamento do protocolo (${RUN}/A)` },
     { chave: "C", leads: 1, acao: `Ligar para confirmar o horário (${RUN}/C)` },
-    { chave: "D", leads: 2, acao: `Confirmar qual negócio seguir (${RUN}/D)` },
+    { chave: "D", leads: 2, acao: `Confirmar qual lead seguir (${RUN}/D)` },
     { chave: "E", leads: 1, acao: `Mandar o contrato versão UM (${RUN}/E)` },
     { chave: "N", leads: 1, acao: null },
   ];
@@ -112,7 +112,7 @@ async function montarCasos(): Promise<Record<string, Caso>> {
     const leadIds: string[] = [];
     const titulos: string[] = [];
     for (let i = 0; i < s.leads; i++) {
-      const titulo = `${PREFIXO} ${RUN} ${s.chave}${s.leads > 1 ? i + 1 : ""} — negócio de prova`;
+      const titulo = `${PREFIXO} ${RUN} ${s.chave}${s.leads > 1 ? i + 1 : ""} — lead de prova`;
       titulos.push(titulo);
       leadIds.push(
         await inserir("crm_leads", {
@@ -393,7 +393,7 @@ async function main(): Promise<void> {
     "0",
     "DADO REAL: existe caso de demonstração para a próxima ação?",
     Number(v.com_lead) > 0,
-    `${v.com_acao} contatos com next_action · ${v.com_lead} deles com negócio aberto · ` +
+    `${v.com_acao} contatos com next_action · ${v.com_lead} deles com lead aberto · ` +
       `${v.no_board} cards do board têm contato. Interseção ${Number(v.com_lead) > 0 ? "existe" : "VAZIA"}.`,
     Number(v.com_lead) > 0 ? "PASS" : "BLOQUEADO",
   );
@@ -563,10 +563,10 @@ async function main(): Promise<void> {
     }
     record(
       "13.d.1",
-      "a próxima ação do CONTATO aparece em no máximo UM negócio",
+      "a próxima ação do CONTATO aparece em no máximo UM lead",
       featureExiste && ondeAparece.length <= 1,
       featureExiste
-        ? `contato com 2 negócios abertos → a ação aparece em ${ondeAparece.length} card(s)` +
+        ? `contato com 2 leads abertos → a ação aparece em ${ondeAparece.length} card(s)` +
           (ondeAparece.length ? `: ${ondeAparece.join(", ")}` : "") +
           (ondeAparece.length > 1 ? " — o join por contact_id vazou para os dois" : "")
         : "o board não mostra proposta em card nenhum (13.a reprovou) — 'no máximo um' " +
@@ -586,14 +586,14 @@ async function main(): Promise<void> {
       }
       record(
         "13.d.2",
-        "aprovar num negócio não executa pelo outro",
+        "aprovar num lead não executa pelo outro",
         afetados.length === 1,
-        `negócios com atividade de próxima ação: ${afetados.length} (${afetados.join(", ") || "nenhum"})`,
+        `leads com atividade de próxima ação: ${afetados.length} (${afetados.join(", ") || "nenhum"})`,
       );
     } else {
       record(
         "13.d.2",
-        "aprovar num negócio não executa pelo outro",
+        "aprovar num lead não executa pelo outro",
         false,
         `a ação apareceu em ${ondeAparece.length} card(s) — sem alvo único, o teste não decide`,
         "BLOQUEADO",

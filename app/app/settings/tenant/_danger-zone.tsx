@@ -54,7 +54,7 @@ export function ZonaDePerigoDaOrganizacao({ displayName }: Props) {
       if (resultado.ok) {
         const c = resultado.counts;
         toast.success(
-          `${t("Dados apagados")}: ${c.messages} ${t("mensagens")}, ${c.conversations} ${t("conversas")}, ${c.crm_leads} ${t("negócios")}, ${c.contacts} ${t("contatos")}.`,
+          `${t("Dados apagados")}: ${c.messages} ${t("mensagens")}, ${c.conversations} ${t("conversas")}, ${c.crm_leads} ${t("leads")}, ${c.contacts} ${t("contatos")}.`,
         );
         setOpen(false);
         setDigitado("");
@@ -76,7 +76,7 @@ export function ZonaDePerigoDaOrganizacao({ displayName }: Props) {
         </h2>
         <p className="text-sm text-muted-foreground">
           {t(
-            "Apaga de vez as mensagens, conversas, negócios, contatos, agendamentos e pedidos desta organização. Serve para recomeçar os testes do zero antes de atender de verdade.",
+            "Apaga de vez as mensagens, conversas, leads, contatos, agendamentos e pedidos desta organização. Serve para recomeçar os testes do zero antes de atender de verdade.",
           )}
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -104,7 +104,7 @@ export function ZonaDePerigoDaOrganizacao({ displayName }: Props) {
             <AlertDialogTitle>{t("Apagar todos os dados de atendimento?")}</AlertDialogTitle>
             <AlertDialogDescription>
               {t(
-                "Esta ação é irreversível. Mensagens, conversas, negócios, contatos, agendamentos e pedidos de",
+                "Esta ação é irreversível. Mensagens, conversas, leads, contatos, agendamentos e pedidos de",
               )}{" "}
               <strong>{displayName}</strong> {t("serão apagados de vez.")}
             </AlertDialogDescription>

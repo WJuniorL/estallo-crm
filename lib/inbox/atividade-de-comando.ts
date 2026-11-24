@@ -123,7 +123,7 @@ export async function registrarTrocaDeComando(entrada: Entrada): Promise<void> {
     if (!alvo.routed) {
       // Não é erro: é a conversa que ainda não virou negócio. Fica no log para a
       // ausência na timeline ter explicação quando alguém a procurar.
-      logger.info("[inbox.comando] troca de comando sem negócio para pendurar", {
+      logger.info("[inbox.comando] troca de comando sem lead para pendurar", {
         conversation_id: conversationId,
         tipo,
         motivo_sem_rota: alvo.reason,

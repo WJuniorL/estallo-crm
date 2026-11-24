@@ -89,7 +89,7 @@ describe("a troca de funil recusa em espanhol", () => {
     });
   }
 
-  it("a linha do tempo do negócio novo também", () => {
+  it("a linha do tempo do lead novo também", () => {
     const rotulo = ACTIVITY_LABELS.moved_from_pipeline;
     expect(traduzir(rotulo, "es")).not.toBe(rotulo);
     for (const razao of ["Veio de outro funil", "Levado para outro funil"]) {

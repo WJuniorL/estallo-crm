@@ -173,7 +173,7 @@ describe("GET /api/v1/ai/runs", () => {
     expect(estranho.pontoRotulo).toBe("ponto_que_ninguem_conhece");
   });
 
-  it("a conferência de campo do negócio (#2234) chega com nome de gente e o porquê dela, no sucesso e na falha", async () => {
+  it("a conferência de campo do lead (#2234) chega com nome de gente e o porquê dela, no sucesso e na falha", async () => {
     linhas = [
       linha({ purpose: CONFERENCIA_DE_CAMPO.purpose, provider: "typesafe", model: "typesafe/jev-1.13.0", origem_da_escolha: "jev" }),
       linha({

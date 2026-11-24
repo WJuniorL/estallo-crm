@@ -72,7 +72,7 @@ async function criarContatoComNegocio(nome: string, funil: { id: string; primeir
   await pool.query(
     `insert into crm_leads (organization_id, pipeline_id, stage_id, contact_id, title, status)
      values ($1, $2, $3, $4, $5, 'open')`,
-    [ORG, funil.id, funil.primeira, c[0]!.id, `Negócio de ${nome}`],
+    [ORG, funil.id, funil.primeira, c[0]!.id, `Lead de ${nome}`],
   );
   return c[0]!.id;
 }
@@ -96,7 +96,7 @@ afterAll(async () => {
   await pool.end();
 });
 
-describe("o negócio de um funil que o assistente NÃO cuida", () => {
+describe("o lead de um funil que o assistente NÃO cuida", () => {
   it("controle: o cenário tem dois funis com etapas mapeadas", async () => {
     // Sem mapeamento, o motivo seria `sem_mapeamento` e o teste passaria por
     // um caminho que não é o que se quer medir.
@@ -118,7 +118,7 @@ describe("o negócio de um funil que o assistente NÃO cuida", () => {
     expect(r.motivo).toBe("fora_do_escopo");
   });
 
-  it("o motivo NÃO é `sem_negocio` — o negócio existe, o que falta é permissão", async () => {
+  it("o motivo NÃO é `sem_negocio` — o lead existe, o que falta é permissão", async () => {
     // Filtrar os candidatos pelo escopo ANTES de rotear produziria
     // `sem_negocio`, e o dono leria "esse cliente não tem negócio aberto" —
     // falso, e manda procurar no lugar errado.
@@ -148,7 +148,7 @@ describe("o negócio de um funil que o assistente NÃO cuida", () => {
   });
 });
 
-describe("o negócio de um funil que ele CUIDA", () => {
+describe("o lead de um funil que ele CUIDA", () => {
   it("continua sendo movido — senão o gate seria só um jeito caro de desligar a IA", async () => {
     const r = await sincronizaEstagioDoAgente(db, {
       organizationId: ORG,
@@ -185,7 +185,7 @@ describe("migração", () => {
     );
     await pool.query(
       `insert into crm_leads (organization_id, pipeline_id, stage_id, contact_id, title, status)
-       values ($1, $2, $3, $4, 'Negócio legado', 'open')`,
+       values ($1, $2, $3, $4, 'Lead legado', 'open')`,
       [ORG, funilAlheio, s[0]!.id, c[0]!.id],
     );
 

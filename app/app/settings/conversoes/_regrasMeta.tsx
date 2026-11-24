@@ -121,7 +121,7 @@ export function RegrasDeConversaoMeta({
           <h3 className="font-medium">{t("O que cada etapa do funil informa à Meta")}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
             {t(
-              "Além da venda, a Meta pode saber de quem recebeu orçamento ou agendou. Cada etapa ligada envia o seu evento uma vez por negócio, quando ele entra ali, e o anúncio aprende antes de a venda fechar.",
+              "Além da venda, a Meta pode saber de quem recebeu orçamento ou agendou. Cada etapa ligada envia o seu evento uma vez por lead, quando ele entra ali, e o anúncio aprende antes de a venda fechar.",
             )}
           </p>
         </div>
@@ -180,7 +180,7 @@ export function RegrasDeConversaoMeta({
 
       <p className="text-xs text-muted-foreground">
         {t(
-          "Os eventos só saem quando o negócio muda de etapa — pela equipe, pela IA ou por automação — e só para quem veio de anúncio da Meta. Saem sem valor: o valor vai na compra. Movimentos anteriores a ligar a regra não são enviados.",
+          "Os eventos só saem quando o lead muda de etapa — pela equipe, pela IA ou por automação — e só para quem veio de anúncio da Meta. Saem sem valor: o valor vai na compra. Movimentos anteriores a ligar a regra não são enviados.",
         )}
       </p>
       <div>

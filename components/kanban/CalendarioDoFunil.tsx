@@ -355,8 +355,8 @@ export function CalendarioDoFunil({ pipelineId, pipeline: funil, stages, leads }
       {leads.length > 0 && !noPeriodo && (
         <p className="text-sm text-muted-foreground">
           {porDia.size === 0
-            ? t("Nenhum negócio com este campo de data.")
-            : t("Nenhum negócio com este campo de data neste período.")}
+            ? t("Nenhum lead com este campo de data.")
+            : t("Nenhum lead com este campo de data neste período.")}
         </p>
       )}
 

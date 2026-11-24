@@ -154,7 +154,7 @@ describe("arrastar o card para a etapa de perda sem motivo (#917)", () => {
     estado = { updates: [] };
   });
 
-  it("sem motivo: 422 `lost_reason_required` (recusa de negócio), nunca 500", async () => {
+  it("sem motivo: 422 `lost_reason_required` (recusa de lead), nunca 500", async () => {
     sessao(estado);
     const res = await POST(pedido({ stage_id: PERDIDO_ID, position_in_stage: 1000, expected_updated_at: UPDATED_AT }), {
       params: Promise.resolve({ id: LEAD_ID }),

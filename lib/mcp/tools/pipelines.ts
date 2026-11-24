@@ -63,7 +63,7 @@ const forecastInputShape = {
 export const crmGetPipelineForecast: McpToolDefinition<typeof forecastInputShape> = {
   name: "crm_get_pipeline_forecast",
   description:
-    "Devolve a previsão ponderada de um funil: negócios ABERTOS agrupados por moeda e por mês de " +
+    "Devolve a previsão ponderada de um funil: leads ABERTOS agrupados por moeda e por mês de " +
     "expected_close_date, com bruto_cents e ponderado_cents (valor x probabilidade), mais os baldes " +
     "\"sem data\" e \"sem probabilidade\" reportados À PARTE — nunca somados como zero. A fonte da " +
     "probabilidade vem de crm_pipelines.settings.previsao.fonte: \"etapa\" (padrão) ou " +

@@ -469,10 +469,10 @@ function CreateTaskForm({
           }
         >
           <SelectTrigger>
-            <SelectValue placeholder={t("Dono do negócio")} />
+            <SelectValue placeholder={t("Dono do lead")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="dono_do_lead">{t("Dono do negócio")}</SelectItem>
+            <SelectItem value="dono_do_lead">{t("Dono do lead")}</SelectItem>
             {(members ?? []).map((m) => (
               <SelectItem key={m.user_id} value={m.user_id}>
                 {m.full_name ?? m.user_id.slice(0, 8)}

@@ -100,7 +100,7 @@ export function NewProposalClient({
     e.preventDefault();
 
     if (!leadId) {
-      alert(t("Por favor, selecione o negócio associado à proposta."));
+      alert(t("Por favor, selecione o lead associado à proposta."));
       return;
     }
 
@@ -157,11 +157,11 @@ export function NewProposalClient({
                 className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300"
               >
                 <p className="font-medium">
-                  {t("Nenhum negócio elegível encontrado")}
+                  {t("Nenhum lead elegível encontrado")}
                 </p>
                 <p className="mt-1">
                   {t(
-                    "Para criar uma proposta, é necessário ter pelo menos um negócio ativo com um contato vinculado na organização.",
+                    "Para criar uma proposta, é necessário ter pelo menos um lead ativo com um contato vinculado na organização.",
                   )}
                 </p>
               </div>
@@ -170,7 +170,7 @@ export function NewProposalClient({
             {/* Seleção do Negócio (Lead) */}
             <div className="space-y-2">
               <Label htmlFor="lead-select">
-                {t("Negócio (Lead)")} <span className="text-destructive">*</span>
+                {t("Lead (Lead)")} <span className="text-destructive">*</span>
               </Label>
 
               {initialLeads.length > 5 ? (
@@ -178,7 +178,7 @@ export function NewProposalClient({
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="search"
-                    placeholder={t("Filtrar negócio por título, cliente ou telefone…")}
+                    placeholder={t("Filtrar lead por título, cliente ou telefone…")}
                     value={buscaLead}
                     onChange={(e) => setBuscaLead(e.target.value)}
                     className="pl-8 text-sm"
@@ -193,12 +193,12 @@ export function NewProposalClient({
                 disabled={criando || initialLeads.length === 0}
               >
                 <SelectTrigger id="lead-select" className="w-full">
-                  <SelectValue placeholder={t("Selecione o negócio...")} />
+                  <SelectValue placeholder={t("Selecione o lead...")} />
                 </SelectTrigger>
                 <SelectContent className="max-h-60">
                   {leadsFiltrados.length === 0 ? (
                     <div className="p-3 text-center text-sm text-muted-foreground">
-                      {t("Nenhum negócio encontrado com este filtro.")}
+                      {t("Nenhum lead encontrado com este filtro.")}
                     </div>
                   ) : (
                     leadsFiltrados.map((lead) => (
@@ -210,7 +210,7 @@ export function NewProposalClient({
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                {t("A proposta será vinculada ao negócio e ao contato correspondente.")}
+                {t("A proposta será vinculada ao lead e ao contato correspondente.")}
               </p>
             </div>
 

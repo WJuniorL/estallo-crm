@@ -103,7 +103,7 @@ export const CAMPOS_DA_CONDICAO: Record<CampoDaCondicao, CampoDeCondicao> = {
   last_outcome: { rotulo: "Desfecho do passo anterior", tipoDeValor: "texto" },
   // ESCOLHIDO no catálogo, nunca digitado: o motor compara o NOME do item do negócio (copiado do
   // catálogo ao vincular), e um campo livre pedia ao dono que acertasse a grafia à mão.
-  product: { rotulo: "Produto do negócio", tipoDeValor: "produto" },
+  product: { rotulo: "Produto do lead", tipoDeValor: "produto" },
   // Fase 5: a saída de um bloco anterior (um campo do Mapear dados, o id da tarefa criada...).
   variavel: { rotulo: "Dado de um bloco anterior", tipoDeValor: "variavel" },
 };
@@ -303,34 +303,34 @@ const COMPARADORES: Record<CampoDaCondicao, Record<OperadorDaCondicao, Comparado
     },
   },
   product: {
-    ...presenca("O negócio tem algum produto", "O negócio não tem produto nenhum"),
+    ...presenca("O lead tem algum produto", "O lead não tem produto nenhum"),
     // No motor, `product` é lista de nomes (como `tag`), comparada sem diferença de caixa.
     // O valor é ESCOLHIDO no catálogo, então o par que a tela oferece é o exato. `contains` continua
     // entendido pelo motor (fluxo salvo com ele precisa ser lido), mas fica fora do seletor.
     eq: {
       rotulo: "tem o produto",
-      frase: (v) => `O negócio tem o produto ${aspas(v)}`,
+      frase: (v) => `O lead tem o produto ${aspas(v)}`,
       oferecido: true,
     },
     neq: {
       rotulo: "não tem o produto",
-      frase: (v) => `O negócio não tem o produto ${aspas(v)}`,
+      frase: (v) => `O lead não tem o produto ${aspas(v)}`,
       oferecido: true,
     },
     contains: {
       rotulo: "tem um produto com o nome contendo",
-      frase: (v) => `O negócio tem um produto com o nome contendo ${aspas(v)}`,
+      frase: (v) => `O lead tem um produto com o nome contendo ${aspas(v)}`,
       oferecido: false,
     },
     gte: {
       rotulo: "é pelo menos",
-      frase: (v) => `Os produtos do negócio são pelo menos ${aspas(v)}`,
+      frase: (v) => `Os produtos do lead são pelo menos ${aspas(v)}`,
       oferecido: false,
       aviso: AVISO_SO_NUMERO,
     },
     lte: {
       rotulo: "é no máximo",
-      frase: (v) => `Os produtos do negócio são no máximo ${aspas(v)}`,
+      frase: (v) => `Os produtos do lead são no máximo ${aspas(v)}`,
       oferecido: false,
       aviso: AVISO_SO_NUMERO,
     },
@@ -623,20 +623,20 @@ export const ACOES_DA_TAG: Record<"add" | "remove", string> = {
 
 /** Onde o bloco de tag grava — rótulos do formulário. */
 export const DESTINOS_DA_TAG: Record<"card" | "contato", string> = {
-  card: "No negócio",
+  card: "No lead",
   contato: "No contato",
 };
 
 /** O que o bloco Atualizar campo do negócio grava — rótulos do formulário. */
 export const ALVOS_DO_CAMPO_DO_NEGOCIO: Record<"custom_field" | "deal_value" | "contact_field", string> = {
   custom_field: "Campo personalizado",
-  deal_value: "Valor do negócio",
+  deal_value: "Valor do lead",
   contact_field: "Campo do contato",
 };
 
 /** Onde o bloco Nota interna grava — rótulos do formulário. */
 export const DESTINOS_DA_NOTA: Record<"lead_timeline" | "conversation_notes", string> = {
-  lead_timeline: "No negócio (linha do tempo)",
+  lead_timeline: "No lead (linha do tempo)",
   conversation_notes: "Na conversa (notas internas)",
 };
 

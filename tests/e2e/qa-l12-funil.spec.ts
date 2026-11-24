@@ -128,7 +128,9 @@ test.describe("Lote 12 — quadro do funil", () => {
   });
 
   // ══════════════════════════════════════════════════════════════════════════
-  test("#938 caminho 1 — MENU do card: a janela pede o motivo do FUNIL e grava", async ({ page }) => {
+  test("#938 caminho 1 — MENU do card: a janela pede o motivo do FUNIL e grava", async ({
+    page,
+  }) => {
     await login(page, c.users.manager!.email, c.password);
     await abreQuadro(page, pipelineId, `Menu ${SUFIXO}`);
     const card = page.getByRole("group", { name: `Lead: Menu ${SUFIXO}` });
@@ -209,42 +211,79 @@ test.describe("Lote 12 — quadro do funil", () => {
   });
 
   // ══════════════════════════════════════════════════════════════════════════
-  test("#935 caminho 2 — ARRASTO até a etapa de perda: recusa 422 e o card volta", async ({ page }) => {
+  test("#935 caminho 2 — ARRASTO até a etapa de perda: pede o motivo; cancelar devolve, confirmar grava", async ({
+    page,
+  }) => {
     await login(page, c.users.manager!.email, c.password);
     await abreQuadro(page, pipelineId, `Arrasto ${SUFIXO}`);
     const card = page.getByRole("group", { name: `Lead: Arrasto ${SUFIXO}` });
 
+    // Teclado do @hello-pangea/dnd — o MESMO onDragEnd do mouse.
+    const arrasta = async () => {
+      await card.focus();
+      await page.keyboard.press("Space");
+      await page.waitForTimeout(500);
+      await page.keyboard.press("ArrowRight");
+      await page.waitForTimeout(500);
+      await page.keyboard.press("Space");
+    };
+    const moves: number[] = [];
+    page.on("response", (r) => {
+      if (r.url().includes(`/leads/${leads.arrasto}/move`) && r.request().method() === "POST") {
+        moves.push(r.status());
+      }
+    });
+
+    // 1) O arrasto abre a janela do motivo — e nada vai ao servidor antes dela.
+    await arrasta();
+    const dialogo = page.getByRole("dialog");
+    await expect(dialogo).toBeVisible({ timeout: 10_000 });
+    await expect(dialogo.getByText("Marcar como perdido")).toBeVisible();
+    await captura(page, "935-05-arrasto-pede-motivo");
+    expect(moves).toEqual([]);
+
+    // 2) Cancelar devolve o card à etapa de onde saiu; o banco fica intacto.
+    await dialogo.getByRole("button", { name: "Cancelar" }).click();
+    await expect(dialogo).toBeHidden();
+    expect(moves).toEqual([]);
+    const intacto = await admin
+      .from("crm_leads")
+      .select("status, stage_id")
+      .eq("id", leads.arrasto)
+      .single();
+    registra(`#935 arrasto · cancelado, banco INTACTO = ${JSON.stringify(intacto.data)}`);
+    expect(intacto.data).toMatchObject({ status: "open", stage_id: etapas.Entrada });
+
+    // 3) Arrastar de novo e confirmar grava a perda com o motivo, na etapa de perda.
+    await arrasta();
+    await expect(dialogo).toBeVisible({ timeout: 10_000 });
+    await page.locator('input[name="lost-reason"][value="Sem orçamento"]').check();
     const resposta = page.waitForResponse(
       (r) => r.url().includes(`/leads/${leads.arrasto}/move`) && r.request().method() === "POST",
     );
-    // Teclado do @hello-pangea/dnd — o MESMO onDragEnd do mouse.
-    await card.focus();
-    await page.keyboard.press("Space");
-    await page.waitForTimeout(500);
-    await page.keyboard.press("ArrowRight");
-    await page.waitForTimeout(500);
-    await page.keyboard.press("Space");
+    await dialogo.getByRole("button", { name: "Confirmar" }).click();
     const r = await resposta;
-    registra(`#935 arrasto · POST /move = ${r.status()} · corpo = ${await r.text()}`);
-    expect(r.status()).toBe(422);
-    expect(await r.text()).toContain("lost_reason_required");
-
-    // A recusa diz a SAÍDA — o L12.QA.4 falhou exatamente por a tela mostrar só a falta.
-    await expect(page.getByText("use “Marcar como perdido” no menu do card")).toBeVisible({ timeout: 10_000 });
-    await captura(page, "935-05-arrasto-recusado-com-aviso");
-
+    registra(`#935 arrasto · POST /move = ${r.status()}`);
+    expect(r.status()).toBe(200);
+    await expect(dialogo).toBeHidden();
     const { data } = await admin
       .from("crm_leads")
       .select("status, stage_id, lost_reason")
       .eq("id", leads.arrasto)
       .single();
-    registra(`#935 arrasto · banco INTACTO = ${JSON.stringify(data)}`);
-    expect((data as { stage_id: string }).stage_id).toBe(etapas.Entrada);
-    expect((data as { status: string }).status).toBe("open");
+    registra(`#935 arrasto · confirmado, banco = ${JSON.stringify(data)}`);
+    expect(data).toMatchObject({
+      status: "lost",
+      stage_id: etapas.Perdido,
+      lost_reason: "Sem orçamento",
+    });
+    await captura(page, "935-05b-arrasto-perdido-com-motivo");
   });
 
   // ══════════════════════════════════════════════════════════════════════════
-  test("#935 caminho 3 — LOTE até a etapa de perda: recusa 422 nomeando os cards", async ({ page }) => {
+  test("#935 caminho 3 — LOTE até a etapa de perda: recusa 422 nomeando os cards", async ({
+    page,
+  }) => {
     await login(page, c.users.manager!.email, c.password);
     await abreQuadro(page, pipelineId, `LoteA ${SUFIXO}`);
     const a = page.getByRole("group", { name: `Lead: LoteA ${SUFIXO}` });
@@ -273,7 +312,9 @@ test.describe("Lote 12 — quadro do funil", () => {
     // A recusa NOMEIA os cards ofensores, e não só o lote.
     expect(corpo).toContain(leads["lote-a"]);
     expect(corpo).toContain(leads["lote-b"]);
-    await expect(page.getByText("use “Marcar como perdido” no menu do card")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText("use “Marcar como perdido” no menu do card")).toBeVisible({
+      timeout: 10_000,
+    });
     await captura(page, "935-07-lote-recusado");
 
     const { data } = await admin
@@ -310,11 +351,15 @@ test.describe("Lote 12 — quadro do funil", () => {
       .from("crm_leads")
       .select("tags")
       .eq("pipeline_id", pipelineId);
-    const universo = [...new Set(((doQuadro ?? []) as { tags: string[] }[]).flatMap((l) => l.tags))];
+    const universo = [
+      ...new Set(((doQuadro ?? []) as { tags: string[] }[]).flatMap((l) => l.tags)),
+    ];
     registra(
       `#948 · o quadro tem ${universo.length} tags distintas; o menu oferece ${oferecidas.length}: ${JSON.stringify(oferecidas)}`,
     );
-    expect(universo.length, "a J4.39 pede o quadro com ≥12 tags distintas").toBeGreaterThanOrEqual(12);
+    expect(universo.length, "a J4.39 pede o quadro com ≥12 tags distintas").toBeGreaterThanOrEqual(
+      12,
+    );
     expect(oferecidas.length, "o menu mostra no máximo 10").toBeLessThanOrEqual(10);
     await captura(page, "948-08-tags-existentes-no-menu");
 
@@ -459,7 +504,9 @@ test.describe("Lote 12 — #911 no TOQUE (sem hover)", () => {
     await captura(page, "911-14-toque-menu-com-excluir");
 
     const pagina = await transbordoDaPagina(page);
-    registra(`#911 toque · documento 390px: scrollWidth=${pagina.scrollWidth} clientWidth=${pagina.clientWidth} transborda=${pagina.transborda}`);
+    registra(
+      `#911 toque · documento 390px: scrollWidth=${pagina.scrollWidth} clientWidth=${pagina.clientWidth} transborda=${pagina.transborda}`,
+    );
   });
 
   test("no tema ESCURO, em 400 px, o quadro não rola na horizontal", async ({ page }) => {
@@ -468,7 +515,9 @@ test.describe("Lote 12 — #911 no TOQUE (sem hover)", () => {
     await login(page, cc.users.manager!.email, cc.password);
     await abreQuadro(page, pid, `Toque ${ST}`);
     const pagina = await transbordoDaPagina(page);
-    registra(`#911 escuro · quadro 400px tema escuro: scrollWidth=${pagina.scrollWidth} clientWidth=${pagina.clientWidth} transborda=${pagina.transborda}`);
+    registra(
+      `#911 escuro · quadro 400px tema escuro: scrollWidth=${pagina.scrollWidth} clientWidth=${pagina.clientWidth} transborda=${pagina.transborda}`,
+    );
     await captura(page, "911-15-quadro-400px-escuro");
   });
 });

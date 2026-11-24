@@ -187,7 +187,7 @@ async function handle(req: NextRequest): Promise<Response> {
         .limit(TETO_POR_ORGANIZACAO);
 
       if (error) {
-        logger.error("[lead-date-field-due] consulta de negócios falhou", {
+        logger.error("[lead-date-field-due] consulta de leads falhou", {
           organization_id: org,
           rule_id: regra.id,
           error: error.message,

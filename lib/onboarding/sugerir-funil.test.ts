@@ -110,7 +110,7 @@ describe("sugerir", () => {
     expect(s.origem === "pacote" && s.porque).toBeTruthy();
   });
 
-  it("cai no pacote quando a IA devolve um quadro sem onde fechar negócio", async () => {
+  it("cai no pacote quando a IA devolve um quadro sem onde fechar lead", async () => {
     const semGanho = JSON.stringify({
       nome: "Coisas",
       etapas: [

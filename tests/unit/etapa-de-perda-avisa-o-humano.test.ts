@@ -42,10 +42,10 @@ import {
 const ETAPA = "Perdido";
 
 describe("a etapa de perda sem motivo vira AÇÃO para o humano, não incidente", () => {
-  it("o aviso fala em negócio PERDIDO e em informar o motivo", () => {
+  it("o aviso fala em lead PERDIDO e em informar o motivo", () => {
     const aviso = avisoDoEspelhoRecusado({
       motivo: "perda_sem_motivo",
-      detalhe: "a etapa de destino fecha o negócio como perdido",
+      detalhe: "a etapa de destino fecha o lead como perdido",
       etapaDeDestino: ETAPA,
     });
 
@@ -77,7 +77,7 @@ describe("a etapa de perda sem motivo vira AÇÃO para o humano, não incidente"
     expect(menu).toContain(`t("${ACAO}")`);
   });
 
-  it("o aviso NÃO se repete a cada turno — e não engole o irmão do mesmo negócio", () => {
+  it("o aviso NÃO se repete a cada turno — e não engole o irmão do mesmo lead", () => {
     // O assistente reconclui o mesmo passo em todo turno, e sem dedupe nasce uma
     // linha por mensagem do cliente: a queixa da #917 com outra roupa. O modo
     // importa e não é intercambiável — os DOIS avisos do espelho saem com o mesmo
@@ -112,7 +112,7 @@ describe("a etapa de perda sem motivo vira AÇÃO para o humano, não incidente"
   it("e NÃO é o aviso de incidente — nada quebrou, não há o que reconciliar", () => {
     const aviso = avisoDoEspelhoRecusado({
       motivo: "perda_sem_motivo",
-      detalhe: "a etapa de destino fecha o negócio como perdido",
+      detalhe: "a etapa de destino fecha o lead como perdido",
       etapaDeDestino: ETAPA,
     });
 
@@ -121,7 +121,7 @@ describe("a etapa de perda sem motivo vira AÇÃO para o humano, não incidente"
     expect(aviso!.title).not.toContain("inconsistente");
   });
 
-  it("diz para qual etapa o assistente quis levar o negócio", () => {
+  it("diz para qual etapa o assistente quis levar o lead", () => {
     // Sem o nome da etapa o dono não sabe QUAL perda o assistente enxergou, e o
     // aviso vira um pedido genérico de atenção.
     const aviso = avisoDoEspelhoRecusado({

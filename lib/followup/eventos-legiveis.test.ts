@@ -337,11 +337,11 @@ describe("rotuloDaAresta — o ramo nomeado do grafo v2", () => {
     expect(rotuloDaAresta(aresta("b-sumiu"), classify)).toBe("por um caminho sem nome");
   });
 
-  it("regra do negócio não se lê como resposta de ninguém", () => {
+  it("regra do lead não se lê como resposta de ninguém", () => {
     const condicao: FlowNode = {
       id: "c1",
       type: "condition",
-      label: "Confere o negócio",
+      label: "Confere o lead",
       position: { x: 0, y: 0 },
       config: {
         branching: "per_check",
@@ -425,9 +425,9 @@ describe("os eventos que o plano de tempo trouxe", () => {
     expect(r.detalhe).toContain("máximo configurado");
   });
 
-  it("nascimento do negócio é proveniência, não código cru", () => {
+  it("nascimento do lead é proveniência, não código cru", () => {
     const r = descreveEvento(evento({ event_type: "enrolled_by_lead_created" }), nos, "pt-BR");
-    expect(r.titulo).toBe("Começou porque o negócio nasceu");
+    expect(r.titulo).toBe("Começou porque o lead nasceu");
     expect(r.autor).toBe("motor");
   });
 

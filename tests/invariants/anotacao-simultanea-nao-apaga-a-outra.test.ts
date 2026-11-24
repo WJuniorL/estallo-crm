@@ -38,7 +38,7 @@ async function fixture(customFields: Record<string, unknown> = {}) {
     [stage, org, pipeline],
   );
   await pool.query(
-    "insert into crm_leads(id,organization_id,pipeline_id,stage_id,title,custom_fields) values($1,$2,$3,$4,'Negócio',$5)",
+    "insert into crm_leads(id,organization_id,pipeline_id,stage_id,title,custom_fields) values($1,$2,$3,$4,'Lead',$5)",
     [lead, org, pipeline, stage, customFields],
   );
   return { org, lead };

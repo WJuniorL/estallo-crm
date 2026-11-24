@@ -265,7 +265,7 @@ function AcoesDoCard({ lead, pipelineId, onEditar }: KanbanCardActionsProps) {
               {propostaEnviada && (
                 <>
                   {" "}
-                  {t("O negócio some; a proposta")}{" "}
+                  {t("O lead some; a proposta")}{" "}
                   {String(propostaEnviada.numero).padStart(4, "0")}/{propostaEnviada.ano}{" "}
                   {t("continua em Propostas")}.
                 </>

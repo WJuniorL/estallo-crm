@@ -152,7 +152,7 @@ describe("Novo Lead — responsável e produtos", () => {
     abrir();
     expect(screen.queryByText("Tags (separadas por vírgula)")).toBeNull();
 
-    await user.type(screen.getByLabelText("Tags da oportunidade"), "vip{Enter}");
+    await user.type(screen.getByLabelText("Tags do lead"), "vip{Enter}");
     await user.type(screen.getByLabelText("Título"), "Com tag");
     await user.click(screen.getByRole("button", { name: "Criar lead" }));
 

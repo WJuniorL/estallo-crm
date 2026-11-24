@@ -790,7 +790,7 @@ describe("onboarding: o agente nasce no provedor que a instalação escolheu", (
  * de Memória edita depois. Enfiá-las no prompt faria a segunda contratação
  * nascer sem elas.
  */
-describe("onboarding: o que o funcionário sabe sobre o negócio", () => {
+describe("onboarding: o que o funcionário sabe sobre o lead", () => {
   it("as regras escritas no passo viram memória da organização, publicada", async () => {
     const estado = montarBanco();
 
@@ -843,7 +843,7 @@ describe("onboarding: o que o funcionário sabe sobre o negócio", () => {
     expect(redirects).toEqual([]);
   });
 
-  it("o prompt sabe o nome do negócio (e não fala de loja online)", async () => {
+  it("o prompt sabe o nome do lead (e não fala de loja online)", async () => {
     // Dois dos três jeitos de falar diziam "loja online"/"e-commerce" — numa
     // clínica, o atendente se apresentava como sendo de outro negócio.
     const estado = montarBanco();

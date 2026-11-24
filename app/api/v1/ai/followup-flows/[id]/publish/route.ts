@@ -157,7 +157,7 @@ export async function POST(_req: NextRequest, ctx: RouteCtx): Promise<Response> 
     if (stage.is_archived) {
       return fail(
         "trigger_stage_archived",
-        `A etapa «${stage.name}» está arquivada e nunca receberia um negócio — escolha uma etapa ativa.`,
+        `A etapa «${stage.name}» está arquivada e nunca receberia um lead — escolha uma etapa ativa.`,
         422,
         { requestId },
       );

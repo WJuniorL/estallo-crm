@@ -158,7 +158,7 @@ describe("validar", () => {
     expect(validarProposta(OK).ok).toBe(true);
   });
 
-  it("recusa quadro sem onde fechar negócio", () => {
+  it("recusa quadro sem onde fechar lead", () => {
     // Sem `is_won`, `/leads/[id]/win` responde 422 `pipeline_no_won_stage` e
     // nenhum negócio deste tenant consegue ser fechado.
     const r = validarProposta({

@@ -58,7 +58,7 @@ describe("TrilhoDeEtapas", () => {
     );
   });
 
-  it("clicar em Perdido abre o diálogo do motivo e NÃO move o negócio", async () => {
+  it("clicar em Perdido abre o diálogo do motivo e NÃO move o lead", async () => {
     post.mockClear();
     renderTrilho();
     await userEvent.click(screen.getByTestId("trilho-etapa-perdido"));

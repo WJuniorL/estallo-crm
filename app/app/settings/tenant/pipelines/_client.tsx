@@ -388,11 +388,11 @@ function PipelineEditor({
               checked={comandaNoGanho}
               onChange={(e) => setComandaNoGanho(e.target.checked)}
             />
-            {t("Abrir comanda ao ganhar um negócio neste funil")}
+            {t("Abrir comanda ao ganhar um lead neste funil")}
           </label>
           <p className="text-xs text-muted-foreground">
             {t(
-              "Desligado, ganhar não mexe no financeiro: loja com checkout, infoproduto e imobiliária não vivem de conta a receber. Ligado, o arrasto para a etapa de ganho e o botão Ganhar abrem uma comanda com o valor e o contato do negócio.",
+              "Desligado, ganhar não mexe no financeiro: loja com checkout, infoproduto e imobiliária não vivem de conta a receber. Ligado, o arrasto para a etapa de ganho e o botão Ganhar abrem uma comanda com o valor e o contato do lead.",
             )}
           </p>
         </div>

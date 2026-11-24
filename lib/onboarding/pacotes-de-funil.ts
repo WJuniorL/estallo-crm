@@ -59,7 +59,7 @@ export const PACOTES: readonly PacoteDeFunil[] = [
         { nome: "Entendendo o que procura", passo: "qualifying" },
         { nome: "Sei o que oferecer", passo: "qualified" },
         { nome: "Visitando imóveis", passo: "negotiating" },
-        { nome: "Fechou negócio", passo: "won" },
+        { nome: "Fechou lead", passo: "won" },
         { nome: "Desistiu", passo: "lost" },
       ],
     },

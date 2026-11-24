@@ -69,7 +69,7 @@ beforeAll(async () => {
 
     -- Sem is_default: o índice único parcial de funil padrão por organização
     -- transforma um re-seed em erro, e este arquivo não precisa do padrão — há um
-    -- funil só, e o roteamento contato→negócio não fica ambíguo.
+    -- funil só, e o roteamento contato→lead não fica ambíguo.
     insert into crm_pipelines (id, organization_id, name, slug)
     values ('${PIPELINE}', '${ORG_A}', 'Funil 0102', 'funil-0102') on conflict (id) do nothing;
 
@@ -81,7 +81,7 @@ beforeAll(async () => {
     values ('${CONTATO}', '${ORG_A}', 'Cliente 0102') on conflict (id) do nothing;
 
     insert into crm_leads (id, organization_id, pipeline_id, stage_id, contact_id, title, status)
-    values ('${LEAD}', '${ORG_A}', '${PIPELINE}', '${STAGE}', '${CONTATO}', 'Negócio 0102', 'open')
+    values ('${LEAD}', '${ORG_A}', '${PIPELINE}', '${STAGE}', '${CONTATO}', 'Lead 0102', 'open')
     on conflict (id) do nothing;
 
     delete from cron_jobs where organization_id in ('${ORG_A}', '${ORG_B}');
@@ -126,7 +126,7 @@ describe("agendar o retorno — o próximo passo existe e é visível", () => {
     expect(linha).toBe("followup_turn|true|sem-cancelamento");
   });
 
-  it("emite atividade que o banco ACEITA, ancorada no negócio do contato", () => {
+  it("emite atividade que o banco ACEITA, ancorada no lead do contato", () => {
     // A âncora é o ponto: `crm_lead_activities.lead_id` é NOT NULL e o retorno
     // viaja por contato. Se o roteamento contato→negócio falhasse, não haveria
     // linha nenhuma — e o card pararia de esfriar sem nada explicando por quê.

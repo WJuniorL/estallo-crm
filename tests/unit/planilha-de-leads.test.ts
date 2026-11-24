@@ -29,7 +29,7 @@ describe("leitura da planilha de leads", () => {
     expect(lerPlanilhaDeLeads("")).toEqual({ erro: expect.stringContaining("vazia") });
   });
 
-  it("sem coluna que NOMEIE o negócio, recusa ANTES de processar as linhas", () => {
+  it("sem coluna que NOMEIE o lead, recusa ANTES de processar as linhas", () => {
     const r = lerPlanilhaDeLeads("valor,origem\n100,site\n200,indicacao");
     expect(r).toHaveProperty("erro");
     // A mensagem lista o que encontrou: quem vai corrigir precisa saber o que
@@ -69,7 +69,7 @@ describe("leitura da planilha de leads", () => {
     expect(r.erros[0]!.motivo).toContain("sem nome");
   });
 
-  it("telefone com máscara vira E.164; o ilegível NÃO derruba o negócio", () => {
+  it("telefone com máscara vira E.164; o ilegível NÃO derruba o lead", () => {
     const r = ok("nome,telefone\nAna,(11) 98888-7777\nBruno,não tem");
     expect(r.leads).toHaveLength(2);
     expect(r.leads[0]!.telefone).toBe("+5511988887777");

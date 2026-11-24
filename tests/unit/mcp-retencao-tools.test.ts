@@ -154,7 +154,7 @@ function daquiADias(dias: number): string {
 }
 
 describe("crm_schedule_followup", () => {
-  it("agenda, grava o retorno e EMITE atividade na timeline do negócio", async () => {
+  it("agenda, grava o retorno e EMITE atividade na timeline do lead", async () => {
     const cap = novasCapturas();
     const res = (await crmScheduleFollowup.handler(
       {
@@ -451,7 +451,7 @@ describe("crm_schedule_followup", () => {
     expect(res.mensagem.toUpperCase()).toContain("AGORA");
   });
 
-  it("negócio sem cliente vinculado é recusado — não há para quem voltar a falar", async () => {
+  it("lead sem cliente vinculado é recusado — não há para quem voltar a falar", async () => {
     const cap = novasCapturas();
     const semContato: Resolver = (c) =>
       c.table === "crm_leads" && c.terminal === "maybeSingle"
@@ -659,7 +659,7 @@ describe("crm_close_demand", () => {
 });
 
 describe("crm_propose_reactivation", () => {
-  it("recusa negócio já encerrado — não há contato a retomar", async () => {
+  it("recusa lead já encerrado — não há contato a retomar", async () => {
     const cap = novasCapturas();
     const encerrado: Resolver = (c) =>
       c.table === "crm_leads" && c.terminal === "maybeSingle"
@@ -817,7 +817,7 @@ describe("o texto que aparece na linha do tempo", () => {
 });
 
 describe("crm_list_at_risk_leads", () => {
-  it("não vaza negócio de outra organização — toda leitura filtra a org do contexto", async () => {
+  it("não vaza lead de outra organização — toda leitura filtra a org do contexto", async () => {
     const cap = novasCapturas();
     const filtros: Array<Record<string, unknown>> = [];
     // Um lead COM dono-agente, estágio e contato: sem ele o radar retorna cedo e
@@ -833,7 +833,7 @@ describe("crm_list_at_risk_leads", () => {
         data: [
           {
             id: LEAD,
-            title: "Negócio",
+            title: "Lead",
             contact_id: CONTATO,
             owner_user_id: null,
             owner_kind: "ai_agent",

@@ -81,7 +81,7 @@ export const TOOLS_RETENCAO = declararTools([
     category: "read",
     rotulo: "Ver quem esfriou e quem ficou sem próximo passo",
     explicacao:
-      "Lista as oportunidades abertas que passaram do prazo sem movimento, das mais críticas para as menos " +
+      "Lista os leads abertos que passaram do prazo sem movimento, dos mais críticos para os menos " +
       "urgentes — e, junto, as pessoas que estão esperando sem que nada esteja marcado para acontecer.",
     oQueToca: "Radar de risco",
     risco: "seguro",
@@ -90,9 +90,9 @@ export const TOOLS_RETENCAO = declararTools([
   {
     name: "crm_close_demand",
     category: "write",
-    rotulo: "Encerrar o negócio como ganho ou perdido",
+    rotulo: "Encerrar o lead como ganho ou perdido",
     explicacao:
-      "Fecha a oportunidade dizendo se ela foi ganha ou perdida e por quê, para o que já acabou parar de ser cobrado.",
+      "Fecha o lead dizendo se ele foi ganho ou perdido e por quê, para o que já acabou parar de ser cobrado.",
     oQueToca: "Funil de vendas",
     // `critico` porque encerrar é o desfecho: o negócio sai do quadro, some do
     // radar e das cobranças, e voltar atrás é trabalho manual. Nunca entra ligado

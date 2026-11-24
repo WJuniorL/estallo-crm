@@ -61,7 +61,7 @@ const MODO_COPY: Record<RoutingMode, { titulo: string; corpo: string }> = {
 const VISIBILIDADE_COPY: Record<VisibilityMode, { titulo: string; corpo: string }> = {
   all: {
     titulo: "Todos veem tudo",
-    corpo: "Qualquer atendente abre a conversa e o negócio de qualquer colega.",
+    corpo: "Qualquer atendente abre a conversa e o lead de qualquer colega.",
   },
   own_and_unassigned: {
     titulo: "Os seus, mais os que ainda não têm dono",

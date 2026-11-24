@@ -91,7 +91,7 @@ export function ancestrais(graph: Pick<FlowGraph, "edges">, noId: string): Set<s
  */
 export const CAMPOS_DE_SAIDA: Partial<Record<FlowNode["type"], Array<{ caminho: string; rotulo: string }>>> = {
   trigger: [
-    { caminho: "lead_id", rotulo: "Id do negócio" },
+    { caminho: "lead_id", rotulo: "Id do lead" },
     { caminho: "contact_id", rotulo: "Id do contato" },
   ],
   condition: [{ caminho: "branch_id", rotulo: "Saída escolhida" }],
@@ -113,10 +113,10 @@ export const CAMPOS_DE_SAIDA: Partial<Record<FlowNode["type"], Array<{ caminho: 
     { caminho: "criado", rotulo: "Contato foi criado" },
   ],
   find_or_create_lead: [
-    { caminho: "lead_id", rotulo: "Id do negócio" },
-    { caminho: "contact_id", rotulo: "Id do contato do negócio" },
-    { caminho: "encontrado", rotulo: "Negócio já existia" },
-    { caminho: "criado", rotulo: "Negócio foi criado" },
+    { caminho: "lead_id", rotulo: "Id do lead" },
+    { caminho: "contact_id", rotulo: "Id do contato do lead" },
+    { caminho: "encontrado", rotulo: "Lead já existia" },
+    { caminho: "criado", rotulo: "Lead foi criado" },
   ],
   http_request: [
     { caminho: "status", rotulo: "Status da resposta" },

@@ -176,7 +176,7 @@ describe("a tarefa automática entra na linha do tempo do lead", () => {
         lead_id: a.dados.lead_id,
         source_module: a.dados.source_module,
       })),
-      "a tarefa nasce em crm_tasks e some da linha do tempo: o card do negócio fica parado sem sinal de que o sistema marcou um retorno",
+      "a tarefa nasce em crm_tasks e some da linha do tempo: o card do lead fica parado sem sinal de que o sistema marcou um retorno",
     ).toEqual([
       {
         type: "task_created",
@@ -187,7 +187,7 @@ describe("a tarefa automática entra na linha do tempo do lead", () => {
     ]);
     expect(
       atividades[0]!.dados.performed_by_user_id,
-      "quem criou foi a regra, não a pessoa que por acaso é a dona do negócio",
+      "quem criou foi a regra, não a pessoa que por acaso é a dona do lead",
     ).toBeNull();
     expect(atividades[0]!.dados.source_id).toBe(
       resultado.ok ? resultado.tarefa_id : "não deveria chegar aqui",
@@ -195,7 +195,7 @@ describe("a tarefa automática entra na linha do tempo do lead", () => {
     expect(atividades[0]!.dados.reason).toBe("Ligar para Ana Souza");
   });
 
-  it("tarefa solta (sem negócio) não escreve nada — a coluna lead_id é not null", async () => {
+  it("tarefa solta (sem lead) não escreve nada — a coluna lead_id é not null", async () => {
     const db = dbCom();
 
     const resultado = await criarTarefaInterna(db as unknown as SupabaseClient, {

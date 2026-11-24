@@ -77,13 +77,13 @@ describe("montarMensagemDaDecisao: o prompt só leva a lista fixa", () => {
     expect(prompt).not.toContain(valor);
   });
 
-  it("leva o que a decisão precisa: a mensagem, o negócio e as etiquetas", () => {
+  it("leva o que a decisão precisa: a mensagem, o lead e as etiquetas", () => {
     for (const valor of ["Dá para parcelar em 10x?", "parcelado", "120000", "BRL", "cliente"]) {
       expect(prompt).toContain(valor);
     }
   });
 
-  it("não leva o telefone quando ele virou o título do negócio (contato sem nome)", () => {
+  it("não leva o telefone quando ele virou o título do lead (contato sem nome)", () => {
     const telefone = phoneForDisplay(LINHA_DO_CONTATO.phone_number);
     const semNome = montarMensagemDaDecisao({
       instrucao: "Se quer parcelar, quente; senão, frio.",

@@ -288,7 +288,7 @@ test.describe("IA 360 W3 — o agente para, a pessoa continua, o agente retoma s
       // corrida anterior — o seed limpa as atividades do negócio antes de
       // reabrir o episódio, e a igualdade exata é o que prova que a limpeza
       // funcionou E que ESTA corrida emitiu as duas pontas.
-      expect(tipos, "a passagem tem duas pontas e as duas são vida do negócio").toEqual([
+      expect(tipos, "a passagem tem duas pontas e as duas são vida do lead").toEqual([
         "handoff_resolved",
         "handoff_triggered",
       ]);

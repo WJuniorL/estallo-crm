@@ -83,7 +83,7 @@ afterAll(async () => {
 
 describe("três mensagens seguidas do mesmo contato", () => {
   it(
-    `criam UM negócio — ${RODADAS} rodadas de três entradas simultâneas, com o pool aquecido`,
+    `criam UM lead — ${RODADAS} rodadas de três entradas simultâneas, com o pool aquecido`,
     async () => {
       const cardsPorRodada: number[] = [];
       const criadosPorRodada: number[] = [];

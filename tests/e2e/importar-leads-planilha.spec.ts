@@ -80,7 +80,7 @@ async function login(page: Page, email: string): Promise<void> {
   await page.waitForURL(/\/app\//);
 }
 
-test("importa uma planilha sem escolher etapa (não há esse seletor) e o negócio nasce na primeira etapa do funil", async ({
+test("importa uma planilha sem escolher etapa (não há esse seletor) e o lead nasce na primeira etapa do funil", async ({
   page,
 }) => {
   await login(page, creds.users.agent!.email);

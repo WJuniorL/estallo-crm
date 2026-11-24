@@ -108,7 +108,7 @@ const SEM_CONFERENCIA_PERMITIDO: readonly Excecao[] = [
     fn: "fn_colegas_podem_mexer_na_agenda(p_org uuid)",
     razao:
       "Leitor `stable` de UM booleano de configuração da própria organização — " +
-      "não escreve e não devolve dado de negócio. É a fonte única do 'ausente = " +
+      "não escreve e não devolve dado de lead. É a fonte única do 'ausente = " +
       "ligada' para os dois lados: o núcleo (`fn_appointment_change_core`) a " +
       "consulta DEPOIS de conferir o pertencimento, e a rota " +
       "`app/api/v1/agenda/agendamentos/_handler.ts` já resolveu a organização " +

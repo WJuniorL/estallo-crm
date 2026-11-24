@@ -19,7 +19,7 @@ beforeAll(() => {
       const contact = randomUUID(); const owner = i === 0 || i === 3 ? `'${actor}'` : i === 1 ? 'null' : `'${other}'`;
       sql(`insert into contacts (id, organization_id, display_name) values ('${contact}', '${organization}', 'Contato');
         insert into conversations (id, organization_id, contact_id, channel_session_id, assigned_to_user_id) values ('${convs[i]}', '${organization}', '${contact}', '${session}', ${owner});
-        insert into crm_leads (id, organization_id, pipeline_id, stage_id, contact_id, title, owner_user_id) values ('${leads[i]}', '${organization}', '${pipeline}', '${stage}', '${contact}', 'Negócio', ${owner});`);
+        insert into crm_leads (id, organization_id, pipeline_id, stage_id, contact_id, title, owner_user_id) values ('${leads[i]}', '${organization}', '${pipeline}', '${stage}', '${contact}', 'Lead', ${owner});`);
     }
   }
   // Ator tem membership também em B: o filtro explícito da org precisa continuar valendo.

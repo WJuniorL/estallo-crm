@@ -139,7 +139,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx): Promise<Response> 
     return fail(
       "unprocessable_entity",
       `Para arquivar «${alvo.name}», use a opção Arquivar da lista de funis — ela confere antes se algum ` +
-        `formulário ou automação ainda manda negócio para ele. Por aqui só dá para tirar do arquivo.`,
+        `formulário ou automação ainda manda lead para ele. Por aqui só dá para tirar do arquivo.`,
       422,
       { requestId },
     );

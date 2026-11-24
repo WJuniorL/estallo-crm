@@ -103,7 +103,7 @@ describe("o aviso da etapa de perda na Central", () => {
     expect(await abertos(LEAD_A, aviso("perda_sem_motivo").title)).toBe(1);
   });
 
-  it("o aviso de ESCOPO do mesmo negócio continua nascendo — não some atrás do primeiro", async () => {
+  it("o aviso de ESCOPO do mesmo lead continua nascendo — não some atrás do primeiro", async () => {
     await gravar("fora_do_escopo", LEAD_A);
 
     // Dois avisos abertos para o MESMO lead, com o mesmo `kind`: é o que
@@ -112,7 +112,7 @@ describe("o aviso da etapa de perda na Central", () => {
     expect(await abertos(LEAD_A, aviso("fora_do_escopo").title)).toBe(1);
   });
 
-  it("o mesmo problema em OUTRO negócio abre o seu próprio aviso", async () => {
+  it("o mesmo problema em OUTRO lead abre o seu próprio aviso", async () => {
     // O que `kind_e_titulo` sozinho engoliria: o segundo cliente ficaria sem sinal.
     await gravar("perda_sem_motivo", LEAD_B);
 

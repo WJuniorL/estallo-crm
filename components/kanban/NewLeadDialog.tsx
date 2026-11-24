@@ -305,7 +305,7 @@ export function NewLeadDialog({
       const avisos = meta?.avisos ?? [];
       if (!avisoJaMostrado && avisos.includes(AVISO_NEGOCIO_ABERTO_EXISTENTE)) {
         const existente = meta?.negocio_aberto_existente;
-        toast.warning(t("Este contato já tem um negócio aberto neste funil."), {
+        toast.warning(t("Este contato já tem um lead aberto neste funil."), {
           description: existente ? (
             <a
               href={`/app/pipelines/${pipelineId}?lead=${existente.id}`}
@@ -504,7 +504,7 @@ export function NewLeadDialog({
               entidade="lead"
               valor={tags}
               onChange={setTags}
-              rotulo={t("Tags da oportunidade")}
+              rotulo={t("Tags do lead")}
             />
           </div>
 
@@ -541,7 +541,7 @@ export function NewLeadDialog({
               className="rounded-md border border-amber-300 bg-amber-100 p-3 text-sm text-amber-950"
             >
               <p className="font-medium">
-                {t("Este contato já tem um negócio aberto neste funil.")}
+                {t("Este contato já tem um lead aberto neste funil.")}
               </p>
               <p className="mt-1">{t("Abrir mesmo assim?")}</p>
               {/* O link é o próprio título do negócio — dado do banco, não

@@ -25,7 +25,7 @@ const avisoDeEtapa = (idioma: (typeof IDIOMAS)[number]) => ({
 });
 
 describe("qual som cada aviso pede", () => {
-  it("pedido de pessoa → som de pessoa; negócio na etapa que avisa → som da etapa", () => {
+  it("pedido de pessoa → som de pessoa; lead na etapa que avisa → som da etapa", () => {
     expect(somDoAviso({ kind: "handoff", ref_kind: "conversation" })).toBe("pessoa");
     expect(somDoAviso(avisoDeEtapa("pt-BR"))).toBe("venda");
     expect(somDoAviso({ kind: "job_dead", ref_kind: "conversation" })).toBeNull();
@@ -40,7 +40,7 @@ describe("qual som cada aviso pede", () => {
     }
   });
 
-  it("o aviso do espelho recusado (também `other` + negócio) NÃO toca o som da etapa", () => {
+  it("o aviso do espelho recusado (também `other` + lead) NÃO toca o som da etapa", () => {
     // TODOS os motivos: os warn-only devolvem `null` e não entram na conta.
     const motivos: MirrorReason[] = [
       "not_configured",
@@ -64,7 +64,7 @@ describe("qual som cada aviso pede", () => {
     expect(medidos).toBeGreaterThanOrEqual(3);
   });
 
-  it("`other` + negócio sem o título do aviso de etapa não toca nada", () => {
+  it("`other` + lead sem o título do aviso de etapa não toca nada", () => {
     expect(somDoAviso({ kind: "other", ref_kind: "lead", title: "Outro aviso qualquer" })).toBeNull();
     expect(somDoAviso({ kind: "other", ref_kind: "lead" })).toBeNull();
   });

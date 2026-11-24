@@ -347,7 +347,7 @@ describe("POST /api/v1/proposals", () => {
     expect(mundo.propostasCriadas.at(-1)).toMatchObject({ condicoes: "Válido por 15 dias corridos." });
   });
 
-  it("negócio já tem rascunho aberto: 409 com o id do rascunho existente, nada duplicado", async () => {
+  it("lead já tem rascunho aberto: 409 com o id do rascunho existente, nada duplicado", async () => {
     const mundo = montarMundoDeProposta({ rascunhoJaExiste: true });
     const res = await mundo.POST({ lead_id: mundo.leadId, titulo: "Duplicado", itens: [] });
     expect(res.status).toBe(409);
@@ -380,7 +380,7 @@ describe("POST /api/v1/proposals", () => {
     expect(mundo.itensCriados).toHaveLength(0);
   });
 
-  it("falha ao gravar os itens: a proposta recém-criada é APAGADA, não fica rascunho vazio travando o negócio (revisão C3, I2)", async () => {
+  it("falha ao gravar os itens: a proposta recém-criada é APAGADA, não fica rascunho vazio travando o lead (revisão C3, I2)", async () => {
     const mundo = montarMundoDeProposta({ itensFalham: true });
     const res = await mundo.POST({
       lead_id: mundo.leadId,
@@ -400,7 +400,7 @@ describe("GET /api/v1/proposals", () => {
     expect(Array.isArray(res.body.data)).toBe(true);
   });
 
-  it("filtra por lead_id quando informado (D10 — tela de excluir negócio)", async () => {
+  it("filtra por lead_id quando informado (D10 — tela de excluir lead)", async () => {
     const mundo = montarMundoDeProposta();
     await mundo.POST({
       lead_id: mundo.leadId, titulo: "do lead", itens: [

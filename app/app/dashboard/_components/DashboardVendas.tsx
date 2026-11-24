@@ -439,7 +439,7 @@ export function DashboardVendas({ funis, podeComparar }: { funis: Funil[]; podeC
             {metricaPipeline === "valor" ? dinheiro(totalBlocos, moeda) : totalBlocos.toLocaleString(tag)}
             <span className="ml-2 text-sm font-normal text-white/75">
               {(ganhos.quantidade + carteira.quantidade + perdidos.quantidade).toLocaleString(tag)}{" "}
-              {t("negócios")}
+              {t("leads")}
             </span>
           </p>
           <div className="mt-4 flex h-2.5 w-full overflow-hidden rounded-full bg-white/15">
@@ -461,7 +461,7 @@ export function DashboardVendas({ funis, podeComparar }: { funis: Funil[]; podeC
                 </div>
                 <p className="mt-1 text-lg font-semibold">{dinheiro(b.valor, moeda)}</p>
                 <p className="text-xs text-white/75">
-                  {b.qtd.toLocaleString(tag)} {t("negócios")}
+                  {b.qtd.toLocaleString(tag)} {t("leads")}
                 </p>
               </div>
             ))}
@@ -497,7 +497,7 @@ export function DashboardVendas({ funis, podeComparar }: { funis: Funil[]; podeC
             />
             <Indicador
               rotulo={t("Receita ganha")}
-              detalhe={`${ganhos.quantidade} ${t("negócios ganhos")}`}
+              detalhe={`${ganhos.quantidade} ${t("leads ganhos")}`}
               valor={dinheiro(ganhos.valor_cents, moeda)}
               variacao={<Variacao pct={variacao(ganhos.valor_cents, ganhosAntes.valor_cents)} />}
             />
@@ -510,11 +510,11 @@ export function DashboardVendas({ funis, podeComparar }: { funis: Funil[]; podeC
         <Cartao
           className="lg:col-span-2"
           titulo={t("Fluxo do funil")}
-          subtitulo={t("Dos negócios criados no período, quantos chegaram a cada etapa")}
+          subtitulo={t("Dos leads criados no período, quantos chegaram a cada etapa")}
           icone={<Funnel size={16} />}
         >
           {(fluxo[0]?.chegaram ?? 0) === 0 ? (
-            <p className="py-8 text-center text-sm text-text-muted">{t("Nenhum negócio criado no período.")}</p>
+            <p className="py-8 text-center text-sm text-text-muted">{t("Nenhum lead criado no período.")}</p>
           ) : (
             <ol className="flex flex-col gap-4">
               {fluxo.map((e) => {
@@ -562,14 +562,14 @@ export function DashboardVendas({ funis, podeComparar }: { funis: Funil[]; podeC
             </ol>
           )}
           <p className="mt-3 text-xs text-text-subtle">
-            {t("O gargalo só é apontado em etapa com pelo menos")} {MINIMO_DE_CASOS} {t("negócios.")}
+            {t("O gargalo só é apontado em etapa com pelo menos")} {MINIMO_DE_CASOS} {t("leads.")}
           </p>
         </Cartao>
 
         {/* Ranking */}
-        <Cartao titulo={t("Ranking da equipe")} subtitulo={t("Negócios ganhos no período")} icone={<Trophy size={16} />}>
+        <Cartao titulo={t("Ranking da equipe")} subtitulo={t("Leads ganhos no período")} icone={<Trophy size={16} />}>
           {ranking.length === 0 ? (
-            <p className="py-8 text-center text-sm text-text-muted">{t("Nenhum negócio ganho no período.")}</p>
+            <p className="py-8 text-center text-sm text-text-muted">{t("Nenhum lead ganho no período.")}</p>
           ) : (
             <ol className="flex flex-col gap-3">
               {ranking.map((r, i) => (
@@ -586,7 +586,7 @@ export function DashboardVendas({ funis, podeComparar }: { funis: Funil[]; podeC
                   </div>
                   <Barra pct={(r.valor_cents / maiorDoRanking) * 100} />
                   <span className="text-xs text-text-muted">
-                    {r.ganhos} {r.ganhos === 1 ? t("negócio ganho") : t("negócios ganhos")}
+                    {r.ganhos} {r.ganhos === 1 ? t("lead ganho") : t("leads ganhos")}
                   </span>
                 </li>
               ))}
@@ -596,10 +596,10 @@ export function DashboardVendas({ funis, podeComparar }: { funis: Funil[]; podeC
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Cartao titulo={t("Produtos vendidos")} subtitulo={t("Receita dos produtos nos negócios ganhos")} icone={<Package size={16} />}>
+        <Cartao titulo={t("Produtos vendidos")} subtitulo={t("Receita dos produtos nos leads ganhos")} icone={<Package size={16} />}>
           {produtos.length === 0 ? (
             <p className="py-8 text-center text-sm text-text-muted">
-              {t("Nenhum produto nos negócios ganhos do período.")}
+              {t("Nenhum produto nos leads ganhos do período.")}
             </p>
           ) : (
             <ol className="flex flex-col gap-3">
@@ -611,7 +611,7 @@ export function DashboardVendas({ funis, podeComparar }: { funis: Funil[]; podeC
                   </div>
                   <Barra pct={(p.receita_cents / maiorProduto) * 100} cor="bg-brand-green" />
                   <span className="text-xs text-text-muted">
-                    {p.quantidade} {t("un.")} · {p.negocios} {p.negocios === 1 ? t("negócio") : t("negócios")}
+                    {p.quantidade} {t("un.")} · {p.negocios} {p.negocios === 1 ? t("lead") : t("leads")}
                   </span>
                 </li>
               ))}
@@ -619,7 +619,7 @@ export function DashboardVendas({ funis, podeComparar }: { funis: Funil[]; podeC
           )}
         </Cartao>
 
-        <Cartao titulo={t("Motivos de perda")} subtitulo={t("Por que os negócios foram perdidos no período")} icone={<TrendDown size={16} />}>
+        <Cartao titulo={t("Motivos de perda")} subtitulo={t("Por que os leads foram perdidos no período")} icone={<TrendDown size={16} />}>
           {d.perdas.length === 0 ? (
             <p className="py-8 text-center text-sm text-text-muted">{t("Nenhuma perda registrada no período.")}</p>
           ) : (
@@ -642,7 +642,7 @@ export function DashboardVendas({ funis, podeComparar }: { funis: Funil[]; podeC
 
       <Cartao
         titulo={t("Evolução mensal")}
-        subtitulo={t("Negócios criados nos últimos 12 meses, pelo status de hoje")}
+        subtitulo={t("Leads criados nos últimos 12 meses, pelo status de hoje")}
         icone={<ChartLineUp size={16} />}
         acao={
           <Alternador
@@ -690,7 +690,7 @@ export function DashboardVendas({ funis, podeComparar }: { funis: Funil[]; podeC
       </Cartao>
 
       <Cartao
-        titulo={t("Negócios esfriando")}
+        titulo={t("Leads esfriando")}
         subtitulo={t("Os abertos parados há mais tempo na mesma etapa")}
         icone={<Snowflake size={16} />}
         acao={
@@ -700,7 +700,7 @@ export function DashboardVendas({ funis, podeComparar }: { funis: Funil[]; podeC
         }
       >
         {d.parados.length === 0 ? (
-          <p className="py-8 text-center text-sm text-text-muted">{t("Nenhum negócio em aberto neste funil.")}</p>
+          <p className="py-8 text-center text-sm text-text-muted">{t("Nenhum lead em aberto neste funil.")}</p>
         ) : (
           <ul className="divide-y divide-border">
             {d.parados.map((p) => {
@@ -736,12 +736,12 @@ export function DashboardVendas({ funis, podeComparar }: { funis: Funil[]; podeC
         <ul className="mt-3 list-disc space-y-1 pl-5">
           <li>{t("Ganho e perdido contam pela data de fechamento dentro do período. Em aberto é a carteira de agora.")}</li>
           <li>{t("A comparação é contra o período anterior de mesma duração.")}</li>
-          <li>{t("Taxa de conversão é ganhos sobre fechados (ganhos + perdidos). Sem negócio fechado, aparece “—”.")}</li>
-          <li>{t("Ciclo de vendas é a mediana entre a criação e o ganho, para um negócio esquecido não distorcer a conta.")}</li>
-          <li>{t("Fluxo do funil: um negócio conta como tendo chegado a todas as etapas até a atual (ou até aquela em que foi perdido). Quem foi criado no meio do funil conta as anteriores.")}</li>
-          <li>{t("Negócio transferido para outro funil não conta como perda.")}</li>
+          <li>{t("Taxa de conversão é ganhos sobre fechados (ganhos + perdidos). Sem lead fechado, aparece “—”.")}</li>
+          <li>{t("Ciclo de vendas é a mediana entre a criação e o ganho, para um lead esquecido não distorcer a conta.")}</li>
+          <li>{t("Fluxo do funil: um lead conta como tendo chegado a todas as etapas até a atual (ou até aquela em que foi perdido). Quem foi criado no meio do funil conta as anteriores.")}</li>
+          <li>{t("Lead transferido para outro funil não conta como perda.")}</li>
           <li>{t("Valores em moedas diferentes nunca são somados.")}</li>
-          {!podeComparar ? <li>{t("Você vê apenas os negócios que pode ver no CRM.")}</li> : null}
+          {!podeComparar ? <li>{t("Você vê apenas os leads que pode ver no CRM.")}</li> : null}
         </ul>
       </details>
     </div>

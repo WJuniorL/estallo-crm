@@ -38,7 +38,7 @@ let leadA: string;
 async function novoLead(extra: { contact_id?: string | null; owner_user_id?: string | null } = {}): Promise<string> {
   const { rows } = await pool.query(
     `insert into crm_leads (organization_id, pipeline_id, stage_id, title, contact_id, owner_user_id, owner_kind)
-     values ($1, $2, $3, 'Negócio', $4, $5, case when $5::uuid is null then null else 'user' end)
+     values ($1, $2, $3, 'Lead', $4, $5, case when $5::uuid is null then null else 'user' end)
      returning id`,
     [orgA, funilA, etapaA, extra.contact_id ?? null, extra.owner_user_id ?? null],
   );

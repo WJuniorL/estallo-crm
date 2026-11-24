@@ -229,7 +229,7 @@ export function FormularioDeConversoesGoogle({
         </div>
 
         <fieldset className="flex flex-col gap-4 rounded-md border p-4">
-          <legend className="px-1 text-sm font-medium">{t("Venda (negócio ganho)")}</legend>
+          <legend className="px-1 text-sm font-medium">{t("Venda (lead ganho)")}</legend>
           <div className="flex flex-col gap-2">
             <Label htmlFor="google_conversion_action_id">
               {t("Ação de conversão da venda (ID)")}
@@ -253,7 +253,7 @@ export function FormularioDeConversoesGoogle({
             </div>
             <p className="text-xs text-muted-foreground">
               {t(
-                "Recebe a compra quando o negócio é marcado como ganho. Deixe vazio se você só quer enviar etapas do funil.",
+                "Recebe a compra quando o lead é marcado como ganho. Deixe vazio se você só quer enviar etapas do funil.",
               )}
             </p>
           </div>
@@ -273,7 +273,7 @@ export function FormularioDeConversoesGoogle({
             </select>
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="google_purchase_value_mode">{t("Valor do negócio")}</Label>
+            <Label htmlFor="google_purchase_value_mode">{t("Valor do lead")}</Label>
             <select
               id="google_purchase_value_mode"
               className="rounded-md border bg-background p-2 text-sm"

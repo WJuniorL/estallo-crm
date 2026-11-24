@@ -196,9 +196,9 @@ export async function venceReativacoes(
           organization_id: organizationId,
           kind: "reactivation_expired",
           severity: "warn",
-          title: `Decida sobre ${r.vencidas} ${r.vencidas === 1 ? "negócio parado" : "negócios parados"} — a sugestão de retomar venceu`,
+          title: `Decida sobre ${r.vencidas} ${r.vencidas === 1 ? "lead parado" : "leads parados"} — a sugestão de retomar venceu`,
           body:
-            `${r.vencidas === 1 ? "Um negócio esfriou" : `${r.vencidas} negócios esfriaram`} e a sugestão de ` +
+            `${r.vencidas === 1 ? "Um lead esfriou" : `${r.vencidas} leads esfriaram`} e a sugestão de ` +
             `retomar contato ficou sem resposta até o prazo. Eles saíram do quadro para não ` +
             `parecerem em andamento. Retomar ou encerrar — as duas são decisões; deixar como ` +
             `está é a única que não é.`,

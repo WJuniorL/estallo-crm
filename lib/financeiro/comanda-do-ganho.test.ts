@@ -157,7 +157,7 @@ const entrada = (sobrescrita: Partial<Parameters<typeof comandaDoGanho>[1]> = {}
 });
 
 describe("comandaDoGanho", () => {
-  it("ganho com valor e contato: abre a comanda com o valor e o contato do negócio e grava o vínculo", async () => {
+  it("ganho com valor e contato: abre a comanda com o valor e o contato do lead e grava o vínculo", async () => {
     const falso = bancoFalso();
 
     const desfecho = await comandaDoGanho(falso.supabase, entrada());
@@ -233,7 +233,7 @@ describe("comandaDoGanho", () => {
     });
   });
 
-  it("negócio sem valor não lança nada: sem dinheiro não há conta a receber a criar", async () => {
+  it("lead sem valor não lança nada: sem dinheiro não há conta a receber a criar", async () => {
     for (const valorCents of [null, undefined, 0, -100]) {
       const falso = bancoFalso();
       const desfecho = await comandaDoGanho(falso.supabase, entrada({ valorCents: valorCents as number }));

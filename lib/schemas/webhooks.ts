@@ -441,7 +441,7 @@ function exigirConfigDosGatilhosDeTempo(
     ctx.addIssue({
       code: "custom",
       path: ["trigger_config"],
-      message: "Escolha há quantos dias o negócio está parado na mesma etapa.",
+      message: "Escolha há quantos dias o lead está parado na mesma etapa.",
     });
   }
 }

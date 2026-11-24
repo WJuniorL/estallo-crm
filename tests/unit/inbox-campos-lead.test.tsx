@@ -26,7 +26,7 @@ const conversation = {
 
 const LEAD = {
   id: "l-1",
-  title: "Negócio existente",
+  title: "Lead existente",
   status: "open",
   value_cents: 10_000,
   currency: "BRL",

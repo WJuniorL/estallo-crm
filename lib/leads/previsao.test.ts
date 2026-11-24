@@ -176,7 +176,7 @@ describe("previsao — os baldes que nunca viram zero silencioso", () => {
     expect(r.totais).toEqual([]);
   });
 
-  it("negócio fechado não entra: a regra é de abertos", () => {
+  it("lead fechado não entra: a regra é de abertos", () => {
     const r = previsao(
       [leadDe("a", { status: "won", value_cents: 100_000, expected_close_date: "2026-10-01" })],
       ETAPAS,

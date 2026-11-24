@@ -67,7 +67,7 @@ async function main(): Promise<void> {
     const alvo = alvos[0];
     if (!alvo) throw new Error("sem contato elegível — o ataque não se monta");
     console.info(
-      `[alvo] contato ${alvo.contact_id.slice(0, 8)} com ${alvo.abertos} negócio aberto — SEM ambiguidade`,
+      `[alvo] contato ${alvo.contact_id.slice(0, 8)} com ${alvo.abertos} lead aberto — SEM ambiguidade`,
     );
 
     const preexistentes = await pool.query(
@@ -83,8 +83,8 @@ async function main(): Promise<void> {
       `insert into agent_inbox_items
          (organization_id, kind, severity, title, body, ref_kind, ref_id, status)
        values ($1, 'next_action_ambiguous', 'warn',
-               'A IA propôs uma próxima ação, mas o contato tem 2 negócios abertos',
-               'Proposta: "planta do ataque". Escolha a qual negócio ela pertence — o sistema não adivinha para não executar no negócio errado.',
+               'A IA propôs uma próxima ação, mas o contato tem 2 leads abertos',
+               'Proposta: "planta do ataque". Escolha a qual lead ela pertence — o sistema não adivinha para não executar no lead errado.',
                'contact', $2, 'open')
        returning id`,
       [ORG, alvo.contact_id],

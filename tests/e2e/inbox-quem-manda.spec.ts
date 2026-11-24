@@ -213,7 +213,7 @@ test.describe("Inbox — quem manda nesta conversa", () => {
       contact_id: contatoId,
       pipeline_id: funilId,
       stage_id: etapaId,
-      title: `Negócio de ${NOME_DO_CONTATO}`,
+      title: `Lead de ${NOME_DO_CONTATO}`,
     });
     if (erroLead) throw new Error(`crm_leads: ${erroLead.message}`);
   });

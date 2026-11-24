@@ -31,7 +31,7 @@ const base: Lead = {
   pipeline_id: "pil-1",
   stage_id: "st-1",
   contact_id: "c-1",
-  title: "Negócio",
+  title: "Lead",
   description: null,
   status: "open",
   lost_reason: null,
@@ -59,7 +59,7 @@ const base: Lead = {
 const card = (patch: Partial<Lead>): Lead => ({ ...base, ...patch });
 
 describe("marcadoresDoCard — as duas caixas numa lista só", () => {
-  it("une o marcador do negócio com o do contato", () => {
+  it("une o marcador do lead com o do contato", () => {
     expect(marcadoresDoCard(card({ tags: ["recompra"], contact_tags: ["vip"] }))).toEqual([
       "recompra",
       "vip",
@@ -70,7 +70,7 @@ describe("marcadoresDoCard — as duas caixas numa lista só", () => {
     expect(marcadoresDoCard(card({ tags: ["vip"], contact_tags: ["vip"] }))).toEqual(["vip"]);
   });
 
-  it("negócio sem contato não quebra — `contact_tags` é opcional", () => {
+  it("lead sem contato não quebra — `contact_tags` é opcional", () => {
     expect(marcadoresDoCard(card({ tags: ["recompra"], contact_id: null }))).toEqual(["recompra"]);
   });
 });

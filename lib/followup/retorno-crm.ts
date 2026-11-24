@@ -295,7 +295,7 @@ async function registraAtividade(
       // para o alerta não sair mudo sobre QUEM ficou sem rastro.
       leadId: input.alvo.contactId,
       tipo: input.tipo,
-      origem: `${input.origem} (sem negócio aberto para ancorar)`,
+      origem: `${input.origem} (sem lead aberto para ancorar)`,
       erro: undefined,
       ...(input.requestId ? { requestId: input.requestId } : {}),
     });

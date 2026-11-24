@@ -187,7 +187,7 @@ describe("POST /api/v1/tasks", () => {
     );
   });
 
-  it("tarefa presa a um negócio deixa linha na timeline dele", async () => {
+  it("tarefa presa a um lead deixa linha na timeline dele", async () => {
     fazerSupabase([{ data: { ...LINHA, lead_id: LEAD } }]);
     const { POST } = await import("@/app/api/v1/tasks/route");
 

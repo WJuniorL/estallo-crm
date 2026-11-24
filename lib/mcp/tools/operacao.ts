@@ -152,7 +152,7 @@ export const crmUpdateStage: McpToolDefinition<typeof updateStageShape> = {
     "(is_won/is_lost) de uma etapa. " +
     "after_stage_id é o id da etapa VIZINHA DA ESQUERDA (null = primeira coluna), não um número de posição. " +
     "Mover a marcação de ganho/perda para outra etapa é permitido; REMOVÊ-LA sem substituta não é — " +
-    "o pipeline ficaria sem onde fechar negócio.",
+    "o pipeline ficaria sem onde fechar lead.",
   inputSchema: updateStageShape,
   category: "write",
   requiresRole: "manager",
@@ -173,7 +173,7 @@ export const crmUpdateStage: McpToolDefinition<typeof updateStageShape> = {
         "unprocessable_entity",
         undefined,
         ctx.requestId,
-        "Diga o que mudar na etapa: o nome, a ordem, a janela de esfriando ou o papel dela no desfecho do negócio.",
+        "Diga o que mudar na etapa: o nome, a ordem, a janela de esfriando ou o papel dela no desfecho do lead.",
       );
     }
     const { funil } = await atualizarEtapa(deps(ctx), {
@@ -197,7 +197,7 @@ export const crmArchiveStage: McpToolDefinition<typeof archiveStageShape> = {
   description:
     "Arquiva uma etapa (nunca apaga — crm_leads_stage_id_fkey é ON DELETE RESTRICT e o histórico aponta para ela). " +
     "Exige move_leads_to_stage_id quando a etapa tem leads; o destino não pode ser a etapa de ganho nem a de perda " +
-    "(daria os negócios por encerrados). Cada lead movido ganha uma atividade na própria timeline explicando o porquê.",
+    "(daria os leads por encerrados). Cada lead movido ganha uma atividade na própria timeline explicando o porquê.",
   inputSchema: archiveStageShape,
   category: "write",
   requiresRole: "manager",
@@ -223,7 +223,7 @@ const listTagsShape = {
 export const crmListTags: McpToolDefinition<typeof listTagsShape> = {
   name: "crm_list_tags",
   description:
-    "Lista os marcadores (tags) da organização por entidade (lead = oportunidade, contact = contato), com quantos " +
+    "Lista os marcadores (tags) da organização por entidade (lead = lead, contact = contato), com quantos " +
     "registros carregam cada um e se ele está no cadastro oficial (tela Tags). Chame ANTES de crm_manage_tags: aplicar " +
     "'cliente-vip' quando já existe 'vip' quebra os filtros de quem opera. Ordenado pelos mais usados.",
   inputSchema: listTagsShape,
@@ -275,7 +275,7 @@ const renderTemplateShape = {
     )
     .optional()
     .describe(
-      "Valores para as marcações que NÃO saem do contato nem do negócio — link do formulário, valor " +
+      "Valores para as marcações que NÃO saem do contato nem do lead — link do formulário, valor " +
         "em aberto, número de protocolo: { link_formulario: \"https://…\" }. As chaves são as marcações " +
         "que o modelo usa (veja `variaveis` em crm_list_message_templates).",
     ),
@@ -293,7 +293,7 @@ export const crmRenderMessageTemplate: McpToolDefinition<typeof renderTemplateSh
   description:
     "Preenche uma resposta pronta com os dados do contato/lead informados e devolve o TEXTO — não envia nada. " +
     "`valores` preenche o que só quem chama sabe (link, valor, protocolo); variável fora do formato, " +
-    "do contato/negócio ou que o modelo não usa é RECUSADA com o nome dela. Devolve também `lacunas`: as " +
+    "do contato/lead ou que o modelo não usa é RECUSADA com o nome dela. Devolve também `lacunas`: as " +
     "marcações que ficaram sem valor. Se vier lacuna, NÃO mande o texto como está: 'Olá , tudo bem?' chega " +
     "assim no cliente." +
     " Em conversa de atendimento, preenche apenas com os dados do contato desta conversa (sem " +

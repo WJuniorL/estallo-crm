@@ -113,7 +113,7 @@ function blocoVazio(): BlocoDeTempo {
   return {
     medida: "etapa atual",
     ancora: "crm_leads.stage_changed_at (created_at de reserva)",
-    base: "negócios que estão na etapa AGORA — fora da janela de dias",
+    base: "leads que estão na etapa AGORA — fora da janela de dias",
     amostra: 0,
     limite: LIMITE_DE_NEGOCIOS,
     truncado: false,
@@ -226,7 +226,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx): Promise<Response> {
         .limit(LIMITE_DE_NEGOCIOS)
     : { data: [], error: null };
   if (erroNegocios) {
-    return fail("internal_error", t("Falha ao ler os negócios das etapas."), 500, { requestId });
+    return fail("internal_error", t("Falha ao ler os leads das etapas."), 500, { requestId });
   }
 
   const idsDasEtapas = new Set(etapasDeEspera);

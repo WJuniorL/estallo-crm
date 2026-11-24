@@ -65,7 +65,7 @@ export function PrevisaoPanel() {
       <CardContent className="space-y-4">
         {vazia ? (
           <p className="text-sm text-muted-foreground">
-            {t("Nenhum negócio aberto com valor neste funil.")}
+            {t("Nenhum lead aberto com valor neste funil.")}
           </p>
         ) : null}
 
@@ -77,7 +77,7 @@ export function PrevisaoPanel() {
                 <th className="py-1 font-medium">{t("Moeda")}</th>
                 <th className="py-1 text-right font-medium">{t("Ponderado")}</th>
                 <th className="py-1 text-right font-medium">{t("Bruto")}</th>
-                <th className="py-1 text-right font-medium">{t("Negócios")}</th>
+                <th className="py-1 text-right font-medium">{t("Leads")}</th>
               </tr>
             </thead>
             <tbody>
@@ -107,7 +107,7 @@ export function PrevisaoPanel() {
               <p key={`sem-data-${balde.moeda}`} className="tabular-nums">
                 {balde.moeda}: {formatValorDoNegocio(balde.ponderado_cents, balde.moeda)} ·{" "}
                 {t("bruto")} {formatValorDoNegocio(balde.bruto_cents, balde.moeda)} · {balde.n}{" "}
-                {t("negócios")}
+                {t("leads")}
               </p>
             ))}
           </div>
@@ -121,7 +121,7 @@ export function PrevisaoPanel() {
             {data.sem_probabilidade.map((balde) => (
               <p key={`sem-prob-${balde.moeda}`} className="tabular-nums">
                 {balde.moeda}: {formatValorDoNegocio(balde.bruto_cents, balde.moeda)} · {balde.n}{" "}
-                {t("negócios")}
+                {t("leads")}
               </p>
             ))}
           </div>

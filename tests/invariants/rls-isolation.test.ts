@@ -340,7 +340,7 @@ beforeAll(() => {
         end if;
 
         -- crm_tasks (migration 0210): o que o time combinou fazer, com prazo.
-        -- Entra COM o vínculo de lead porque a tarefa presa a um negócio é o
+        -- Entra COM o vínculo de lead porque a tarefa presa a um lead é o
         -- caso que cruza duas tabelas tenant-aware — se a policy vazasse, o
         -- vizinho leria o combinado E o ponteiro para o funil dele.
         -- (sem crase nesta prosa: o bloco inteiro é um template literal de JS.)

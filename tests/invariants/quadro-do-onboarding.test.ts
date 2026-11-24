@@ -112,7 +112,7 @@ describe("0156 · o quadro montado no onboarding", () => {
     ).toBe("8");
   });
 
-  it("recusa funil que já tem negócio — em vez de deixar o RESTRICT estourar", () => {
+  it("recusa funil que já tem lead — em vez de deixar o RESTRICT estourar", () => {
     const { org, pipeline } = criarTenant("inv-0156-com-negocio");
     sql(`
       insert into public.crm_leads (organization_id, pipeline_id, stage_id, title, position_in_stage)

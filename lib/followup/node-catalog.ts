@@ -128,8 +128,8 @@ const NODE_DEFINITIONS = {
     effect: "crm",
   },
   lead_product: {
-    label: "Produto do negócio",
-    description: "Acrescenta ou tira um produto do catálogo no negócio.",
+    label: "Produto do lead",
+    description: "Acrescenta ou tira um produto do catálogo no lead.",
     category: "leads",
     keywords: ["produto", "item", "catálogo", "pedido", "valor"],
     surfaces: CLOCK_SURFACES,
@@ -152,8 +152,8 @@ const NODE_DEFINITIONS = {
     effect: "crm",
   },
   find_or_create_lead: {
-    label: "Buscar ou criar negócio",
-    description: "Acha o negócio aberto de um contato num funil e, se pedido, cria quando não existe.",
+    label: "Buscar ou criar lead",
+    description: "Acha o lead aberto de um contato num funil e, se pedido, cria quando não existe.",
     category: "leads",
     keywords: ["negócio", "lead", "card", "oportunidade", "buscar", "criar", "funil"],
     surfaces: CLOCK_SURFACES,
@@ -168,8 +168,8 @@ const NODE_DEFINITIONS = {
     effect: "external",
   },
   update_lead_field: {
-    label: "Atualizar campo do negócio",
-    description: "Grava um campo personalizado ou o valor do negócio.",
+    label: "Atualizar campo do lead",
+    description: "Grava um campo personalizado ou o valor do lead.",
     category: "leads",
     keywords: ["campo personalizado", "valor", "atualizar", "editar negócio", "preço"],
     surfaces: CLOCK_SURFACES,
@@ -177,7 +177,7 @@ const NODE_DEFINITIONS = {
   },
   add_note: {
     label: "Nota interna",
-    description: "Registra uma nota interna no negócio ou na conversa.",
+    description: "Registra uma nota interna no lead ou na conversa.",
     category: "team",
     keywords: ["anotação", "observação", "comentário", "registro"],
     surfaces: CLOCK_SURFACES,
@@ -185,7 +185,7 @@ const NODE_DEFINITIONS = {
   },
   assign_lead_owner: {
     label: "Atribuir responsável",
-    description: "Troca o responsável pelo negócio (não transfere o atendimento).",
+    description: "Troca o responsável pelo lead (não transfere o atendimento).",
     category: "leads",
     keywords: ["dono", "vendedor", "responsável", "atribuir", "owner"],
     surfaces: CLOCK_SURFACES,

@@ -189,7 +189,7 @@ export function MatchReplyForm({
             <SelectItem value="__contact_name__">{t("Nome do contato")}</SelectItem>
             {camposUnicos.length > 0 && (
               <SelectGroup>
-                <SelectLabel>{t("Oportunidade")}</SelectLabel>
+                <SelectLabel>{t("Lead")}</SelectLabel>
                 {camposUnicos.map((c) => (
                   <SelectItem key={`lead:${c.key}`} value={`lead:${c.key}`}>
                     {c.label} ({c.key})

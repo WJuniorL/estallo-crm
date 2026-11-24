@@ -416,7 +416,7 @@ describe("o ramo em frase — o registro do dossiê", () => {
     }
   });
 
-  it("classe da IA e regra do negócio têm moldes DIFERENTES — um só mentiria em metade dos casos", () => {
+  it("classe da IA e regra do lead têm moldes DIFERENTES — um só mentiria em metade dos casos", () => {
     // "quando a resposta é “Tem a etiqueta VIP”" não é resposta de ninguém: é
     // regra do negócio. O molde único obrigaria um dos dois lados a mentir.
     expect(fraseDaClasse("interessado")).toBe("quando a IA classifica a resposta como “interessado”");

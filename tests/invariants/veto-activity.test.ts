@@ -70,12 +70,12 @@ beforeAll(async () => {
     values ('${SESSION}', '${ORG}', 'sessao-0072', 'WORKING', '\\x00'::bytea) on conflict (id) do nothing;
 
     insert into contacts (id, organization_id, name, display_name) values
-      ('${CONTATO_COM_LEAD}', '${ORG}', 'Com negócio', 'Com negócio'),
-      ('${CONTATO_SEM_LEAD}', '${ORG}', 'Sem negócio', 'Sem negócio')
+      ('${CONTATO_COM_LEAD}', '${ORG}', 'Com lead', 'Com lead'),
+      ('${CONTATO_SEM_LEAD}', '${ORG}', 'Sem lead', 'Sem lead')
     on conflict (id) do nothing;
 
     insert into crm_leads (id, organization_id, pipeline_id, stage_id, title, contact_id, status)
-    values ('${LEAD}', '${ORG}', '${PIPE}', '${STAGE}', 'Negócio do veto', '${CONTATO_COM_LEAD}', 'open')
+    values ('${LEAD}', '${ORG}', '${PIPE}', '${STAGE}', 'Lead do veto', '${CONTATO_COM_LEAD}', 'open')
     on conflict (id) do nothing;
   `);
 });
@@ -84,7 +84,7 @@ afterAll(async () => {
   await pool.end();
 });
 
-describe("veto vira atividade no negócio certo", () => {
+describe("veto vira atividade no lead certo", () => {
   it("com agente identificado: actor 'ai' com o trace como lastro", async () => {
     const traceId = await novoTrace(CONTATO_COM_LEAD, "stop", "opted_out");
     const r = await emitVetoActivity({
@@ -141,7 +141,7 @@ describe("veto vira atividade no negócio certo", () => {
   });
 });
 
-describe("veto sem negócio para pendurar", () => {
+describe("veto sem lead para pendurar", () => {
   it("vai para o event_log, NÃO para o card de outra pessoa", async () => {
     const traceId = await novoTrace(CONTATO_SEM_LEAD, "pacing", "rate_limited");
     const r = await emitVetoActivity({

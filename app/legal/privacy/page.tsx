@@ -59,7 +59,7 @@ export default async function PrivacyPage() {
           <li>
             <strong>{t("De quem é atendido:")}</strong>{" "}
             {t(
-              "nome, telefone, e-mail quando informado, conteúdo das conversas, arquivos enviados (imagens, áudios, documentos) e o histórico de negócios.",
+              "nome, telefone, e-mail quando informado, conteúdo das conversas, arquivos enviados (imagens, áudios, documentos) e o histórico de leads.",
             )}
           </li>
           <li>

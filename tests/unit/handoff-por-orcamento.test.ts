@@ -419,7 +419,7 @@ describe("o call site — AST separa prévia sem job do turno operacional escolt
   });
 });
 
-describe("a fila trata veto de negócio como veto, não como incidente", () => {
+describe("a fila trata veto de lead como veto, não como incidente", () => {
   const fonteWorker = readFileSync(WORKER, "utf8").replace(/\s+/gu, " ");
   const fonteDisposicao = readFileSync(DISPOSICAO, "utf8").replace(/\s+/gu, " ");
   const DELEGACAO = "await disporJobAposFalha(pool, job, workerId, err, terminal, log);";

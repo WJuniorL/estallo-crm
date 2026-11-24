@@ -38,7 +38,7 @@ export async function GET(_req: NextRequest, ctx: RouteCtx): Promise<Response> {
     .eq("organization_id", authz.org.orgId)
     .eq("lead_id", leadId)
     .order("created_at", { ascending: true });
-  if (error) return fail("internal_error", "Erro ao listar os produtos do negócio.", 500, { requestId });
+  if (error) return fail("internal_error", "Erro ao listar os produtos do lead.", 500, { requestId });
   return ok(data ?? [], { requestId });
 }
 
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
     .eq("id", leadId)
     .eq("organization_id", orgId)
     .maybeSingle();
-  if (!lead) return fail("not_found", t("Negócio não encontrado."), 404, { requestId });
+  if (!lead) return fail("not_found", t("Lead não encontrado."), 404, { requestId });
 
   const { data: produto } = await supabase
     .from("catalog_products")

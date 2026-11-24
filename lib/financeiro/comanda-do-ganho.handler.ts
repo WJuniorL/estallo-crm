@@ -144,7 +144,7 @@ async function handle(row: EventRow): Promise<HandlerResult> {
   // ser nome/telefone do contato e fica fora da cascata de redact se copiado):
   // "Pedido · Vendas" — o vocabulário do negócio e o nome do funil.
   const vocabulario = linhaDoFunil?.vocabulary as Record<string, unknown> | null | undefined;
-  const descricao = [texto(vocabulario?.deal) ?? "Negócio", texto(linhaDoFunil?.name)]
+  const descricao = [texto(vocabulario?.deal) ?? "Lead", texto(linhaDoFunil?.name)]
     .filter(Boolean)
     .join(" · ");
 

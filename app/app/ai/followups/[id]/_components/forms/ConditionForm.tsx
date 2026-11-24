@@ -439,7 +439,7 @@ function ValorDeProduto({ valor, onEscolher }: { valor: string; onEscolher: (nom
       )}
       {solto && (
         <p className="text-xs text-warning-fg" data-testid="regra-produto-solto">
-          {t("Este produto não está mais no catálogo. A regra só vale para negócios com exatamente este nome — escolha outro da lista se ele foi renomeado.")}
+          {t("Este produto não está mais no catálogo. A regra só vale para leads com exatamente este nome — escolha outro da lista se ele foi renomeado.")}
         </p>
       )}
     </>

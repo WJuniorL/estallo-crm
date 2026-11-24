@@ -273,7 +273,7 @@ function recusaDaGuardaDoBanco(
       undefined,
       ctx.requestId,
       traduzir(
-        "Sem permissão para salvar este negócio: pela visibilidade definida na organização, ele ficaria fora do que você pode ver.",
+        "Sem permissão para salvar este lead: pela visibilidade definida na organização, ele ficaria fora do que você pode ver.",
         ctx.idioma ?? "pt-BR",
       ),
     );
@@ -752,7 +752,7 @@ export async function createLeadHandler(
       sourceModule: "crm",
       sourceId: leadId,
       actor: ctx.actor,
-      reason: "Nasceu sem responsável: quem cuidava do negócio de origem não atende mais nesta empresa",
+      reason: "Nasceu sem responsável: quem cuidava do lead de origem não atende mais nesta empresa",
       payload: { fields: ["owner_user_id", "owner_agent_id"], motivo: "dono_da_origem_inativo" },
     });
     if (!atividade.ok) {
@@ -1392,8 +1392,8 @@ export async function moveLeadHandler(
           actor: ctx.actor,
           reason:
             veredito.tipo === "devolucao"
-              ? "Uma pessoa devolveu o negócio para onde ele estava antes do assistente"
-              : "Uma pessoa levou o negócio para outra etapa, diferente da que o assistente escolheu",
+              ? "Uma pessoa devolveu o lead para onde ele estava antes do assistente"
+              : "Uma pessoa levou o lead para outra etapa, diferente da que o assistente escolheu",
           payload: {
             tipo: veredito.tipo,
             // A etapa da IA é o dado do agregado: é ela que aparece em "o

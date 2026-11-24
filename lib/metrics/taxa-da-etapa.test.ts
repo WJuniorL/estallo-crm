@@ -79,7 +79,7 @@ const nao = (taxas: ReturnType<typeof calcularTaxas>, id: string) =>
   taxas.find((t) => t.etapa_id === id)!;
 
 describe("calcularTaxas — a conta que o gestor lê ao lado do campo", () => {
-  it("20 encerrados passaram pela etapa, 8 ganhos → sugestão 40% com «20 negócios» à vista", () => {
+  it("20 encerrados passaram pela etapa, 8 ganhos → sugestão 40% com «20 leads» à vista", () => {
     const atividades: AtividadeDaEtapa[] = [];
     for (let i = 0; i < 20; i++) {
       const desfecho = i < 8 ? "e3" : "e4";
@@ -115,7 +115,7 @@ describe("calcularTaxas — a conta que o gestor lê ao lado do campo", () => {
     expect(taxa.sugestao).toBeNull();
   });
 
-  it("mover um negócio para ganho muda a contagem (o critério de aceite da issue)", () => {
+  it("mover um lead para ganho muda a contagem (o critério de aceite da issue)", () => {
     const base = [atividade("l1", "e1", "e2", AGORA - 20 * DIA)];
     const antes = nao(calcularTaxas(base, ETAPAS, JANELA), "e2");
     // Ainda aberto: a última mudança aterrissa numa etapa comum.
@@ -130,7 +130,7 @@ describe("calcularTaxas — a conta que o gestor lê ao lado do campo", () => {
     expect(depois.percentual).toBe(100);
   });
 
-  it("o negócio aberto fica de fora da conta", () => {
+  it("o lead aberto fica de fora da conta", () => {
     const atividades = [
       ...trajetoria("l1", "e2", "e3", AGORA - 5 * DIA),
       ...trajetoria("l2", "e2", "e4", AGORA - 5 * DIA),

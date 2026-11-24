@@ -112,7 +112,7 @@ export function FormularioDeTarefa({
   // O negócio vinculado. Quem abre pelo dossiê já traz o `leadId` fixo e não
   // vê o seletor; em /app/tasks ele é escolhido aqui (ou removido).
   const [negocio, setNegocio] = useState<NegocioEscolhido | null>(
-    tarefa?.lead_id ? { id: tarefa.lead_id, title: tarefa.lead?.title ?? t("Oportunidade") } : null,
+    tarefa?.lead_id ? { id: tarefa.lead_id, title: tarefa.lead?.title ?? t("Lead") } : null,
   );
   const [escolhendoNegocio, setEscolhendoNegocio] = useState(false);
   const negocioFixo = Boolean(leadId);
@@ -247,7 +247,7 @@ export function FormularioDeTarefa({
 
           {negocioFixo && tituloDoNegocio ? (
             <div className="space-y-1.5">
-              <Label>{t("Oportunidade")}</Label>
+              <Label>{t("Lead")}</Label>
               <div
                 className="truncate rounded-md border bg-muted/40 px-3 py-2 text-sm"
                 data-testid="tarefa-negocio-fixo"
@@ -258,7 +258,7 @@ export function FormularioDeTarefa({
           ) : null}
           {!negocioFixo && (
             <div className="space-y-1.5">
-              <Label>{t("Oportunidade (opcional)")}</Label>
+              <Label>{t("Lead (opcional)")}</Label>
               {negocio ? (
                 <div className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
                   <span className="truncate" data-testid="tarefa-negocio">{negocio.title}</span>
@@ -267,7 +267,7 @@ export function FormularioDeTarefa({
                     size="icon"
                     variant="ghost"
                     className="h-6 w-6"
-                    aria-label={t("Remover oportunidade")}
+                    aria-label={t("Remover lead")}
                     onClick={() => setNegocio(null)}
                   >
                     <X size={14} aria-hidden />
@@ -281,7 +281,7 @@ export function FormularioDeTarefa({
                   onClick={() => setEscolhendoNegocio(true)}
                   data-testid="tarefa-escolher-negocio"
                 >
-                  {t("Vincular a uma oportunidade")}
+                  {t("Vincular a um lead")}
                 </Button>
               )}
               <SeletorDeNegocio

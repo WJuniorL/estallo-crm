@@ -314,7 +314,7 @@ describe("chamada perdida vira aviso com porta, e o motivo vira frase de gente",
     expect(aviso?.body).toMatch(/não perturbe/i);
   });
 
-  it("chamada perdida NÃO quebra o silêncio do negócio", async () => {
+  it("chamada perdida NÃO quebra o silêncio do lead", async () => {
     // 0079: telefone que tocou sem resposta é constatação de silêncio, não
     // interação. Carimbar `last_activity_at` aqui esfriaria o Radar de Risco
     // por um contato com quem ninguém falou.
@@ -337,7 +337,7 @@ describe("chamada perdida vira aviso com porta, e o motivo vira frase de gente",
 describe("ligação atendida: dono, silêncio quebrado, evento consumido", () => {
   const ATENDIDA = "chamada-de-teste-4";
 
-  it("quem atendeu assina a linha do tempo e o negócio deixa de ser frio", async () => {
+  it("quem atendeu assina a linha do tempo e o lead deixa de ser frio", async () => {
     await pool.query(`delete from public.voice_calls where organization_id = $1`, [GOV_ORG]);
     await despachar({
       type: "call-status",

@@ -56,7 +56,7 @@ export function LegacyRecovery({
       </h2>
       <p className="text-sm">
         {t(
-          "O prompt e o conhecimento serão preservados. Nenhuma permissão para alterar negócios ou agenda será adicionada.",
+          "O prompt e o conhecimento serão preservados. Nenhuma permissão para alterar leads ou agenda será adicionada.",
         )}
       </p>
       {hasVersion ? (

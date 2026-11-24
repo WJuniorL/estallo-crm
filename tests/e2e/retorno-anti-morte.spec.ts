@@ -95,7 +95,7 @@ test("o retorno marcado pelo agente aparece no Radar e na linha do tempo", async
     data: Array<{ type: string; reason: string | null }>;
   };
   const agendado = corpo.data.find((i) => i.type === "followup_scheduled");
-  expect(agendado, "a timeline do negócio não registrou o retorno agendado").toBeTruthy();
+  expect(agendado, "a timeline do lead não registrou o retorno agendado").toBeTruthy();
   expect(agendado!.reason?.toLowerCase()).toContain(creds.retorno.motivo.toLowerCase());
   // ⚠️ E NÃO REPETE O RÓTULO. A linha na tela é "Retorno agendado" + este texto;
   // começar por "Retorno agendado — " fazia o dossiê dizer a mesma frase duas
@@ -104,7 +104,7 @@ test("o retorno marcado pelo agente aparece no Radar e na linha do tempo", async
   expect(agendado!.reason?.toLowerCase().startsWith("retorno agendado")).toBe(false);
 });
 
-test("a linha do tempo do negócio mostra o retorno em português de gente", async ({ page }) => {
+test("a linha do tempo do lead mostra o retorno em português de gente", async ({ page }) => {
   await login(page, creds.users.manager!.email);
   await page.goto(`/app/pipelines/${creds.retorno.pipeline_id}`);
 

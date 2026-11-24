@@ -84,7 +84,7 @@ beforeAll(async () => {
     insert into public.conversations (id, organization_id, contact_id, channel_session_id, status)
       values ('${ESC_CONVERSA}', '${GOV_ORG}', '${ESC_CONTATO}', '${GOV_SESSION}', 'ai_handling')
       on conflict do nothing;
-    -- Um negócio ABERTO ligado a este contato: sem ele a atividade da passagem
+    -- Um lead ABERTO ligado a este contato: sem ele a atividade da passagem
     -- não tem onde pousar e o teste da timeline passaria por vacuidade.
     insert into public.crm_leads (id, organization_id, pipeline_id, stage_id, contact_id, title, status)
       values ('${ESC_NEGOCIO}', '${GOV_ORG}', '${GOV_PIPELINE}', '${GOV_STAGE}', '${ESC_CONTATO}', 'Negocio da escalacao', 'open')

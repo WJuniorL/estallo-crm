@@ -137,7 +137,7 @@ describe("venda sem valor no Google", () => {
       expect.objectContaining({ valorCentavos: 150_00 }),
     );
   });
-  it("modo nunca envia sem valor mesmo quando o negócio tem valor", async () => {
+  it("modo nunca envia sem valor mesmo quando o lead tem valor", async () => {
     mocks.credencial.mockResolvedValue(credencialGoogle("nunca"));
     lead.value_cents = 150_00;
     await conversaoDeVendaHandler.handle(row);

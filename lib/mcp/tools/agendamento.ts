@@ -378,8 +378,8 @@ const listarShape = {
     .uuid()
     .optional()
     .describe(
-      "o id do NEGÓCIO no funil (a oportunidade), não o da pessoa. Só use quando estiver " +
-        "consultando os compromissos vinculados a um negócio específico.",
+      "o id do NEGÓCIO no funil (o lead), não o da pessoa. Só use quando estiver " +
+        "consultando os compromissos vinculados a um lead específico.",
     ),
   dia: z
     .string()

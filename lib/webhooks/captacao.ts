@@ -47,9 +47,9 @@ export const MOTIVO_DA_RECUSA_LABEL: Record<MotivoDaRecusa, string> = {
   erro_ao_criar_lead:
     "Os dados chegaram, mas o lead não pôde ser criado — confira se o funil e a etapa da fonte ainda existem.",
   recusa_da_regra:
-    "Os dados chegaram, mas a régua de campos obrigatórios recusou o negócio: a etapa do funil exige um campo que o formulário não trouxe.",
+    "Os dados chegaram, mas a régua de campos obrigatórios recusou o lead: a etapa do funil exige um campo que o formulário não trouxe.",
   erro_inesperado:
-    "Os dados chegaram, mas a criação do negócio falhou por outro motivo — não é nem o funil nem a etapa da fonte.",
+    "Os dados chegaram, mas a criação do lead falhou por outro motivo — não é nem o funil nem a etapa da fonte.",
   campo_numerico_invalido:
     "Uma resposta numérica não estava no formato aceito pelo formulário. Confira se o campo contém apenas números e use o formato BRL na pergunta de moeda.",
 };

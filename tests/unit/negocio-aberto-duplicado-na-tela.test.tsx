@@ -116,7 +116,7 @@ function paginaCom(contatos: Contact[]) {
 async function preencherEEnviar(user: ReturnType<typeof userEvent.setup>) {
   await user.type(await screen.findByLabelText("Contato"), "Michelle");
   await user.click(await screen.findByRole("button", { name: /Michelle/ }));
-  await user.type(screen.getByLabelText("Título"), "Segundo negócio");
+  await user.type(screen.getByLabelText("Título"), "Segundo lead");
   await user.click(screen.getByRole("button", { name: "Criar lead" }));
 }
 
@@ -145,7 +145,7 @@ beforeEach(() => {
 
 afterEach(cleanup);
 
-describe("Novo Lead — aviso de negócio aberto duplicado, sem bloqueio", () => {
+describe("Novo Lead — aviso de lead aberto duplicado, sem bloqueio", () => {
   it("mesmo funil: mostra o aviso com link para o existente, e cria só se confirmado", async () => {
     const user = userEvent.setup();
     renderizar([negocio()]);
@@ -155,7 +155,7 @@ describe("Novo Lead — aviso de negócio aberto duplicado, sem bloqueio", () =>
     // O aviso aparece ANTES de qualquer chamada de criação.
     expect(criarLead).not.toHaveBeenCalled();
     expect(
-      await screen.findByText("Este contato já tem um negócio aberto neste funil."),
+      await screen.findByText("Este contato já tem um lead aberto neste funil."),
     ).toBeTruthy();
     expect(screen.getByText("Abrir mesmo assim?")).toBeTruthy();
 
@@ -185,7 +185,7 @@ describe("Novo Lead — aviso de negócio aberto duplicado, sem bloqueio", () =>
     expect(toast.success).not.toHaveBeenCalled();
   });
 
-  it("negócio aberto do contato em OUTRO funil → sem aviso, cria direto", async () => {
+  it("lead aberto do contato em OUTRO funil → sem aviso, cria direto", async () => {
     const user = userEvent.setup();
     renderizar([negocio({ pipeline_id: FUNIL_OUTRO })]);
 
@@ -208,7 +208,7 @@ describe("Novo Lead — aviso de negócio aberto duplicado, sem bloqueio", () =>
     const user = userEvent.setup();
     renderizar(undefined, MICHELLE.id);
 
-    await user.type(screen.getByLabelText("Título"), "Segundo negócio");
+    await user.type(screen.getByLabelText("Título"), "Segundo lead");
     await user.click(screen.getByRole("button", { name: "Criar lead" }));
 
     await waitFor(() => expect(criarLead).toHaveBeenCalledTimes(1));

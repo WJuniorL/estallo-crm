@@ -314,7 +314,7 @@ describe("POST /api/v1/proposals/[id]/revise", () => {
     }
   });
 
-  it("negócio já tem OUTRO rascunho aberto (índice único global do §5.3): 409, nada é gravado", async () => {
+  it("lead já tem OUTRO rascunho aberto (índice único global do §5.3): 409, nada é gravado", async () => {
     const mundo = montarMundoDeRevisao({ status: "enviada", criacaoDaV2Colide23505: true });
     const res = await mundo.POST();
     expect(res.status).toBe(409);

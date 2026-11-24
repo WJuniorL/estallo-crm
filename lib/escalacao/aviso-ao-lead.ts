@@ -140,7 +140,7 @@ const FECHOS = {
   sem_equipe: [
     "Seu pedido ficou registrado e a equipe responde assim que possível.",
     "Deixei tudo anotado; retornamos para você assim que der.",
-    "Já registrei aqui, e alguém te responde na primeira oportunidade.",
+    "Já registrei aqui, e alguém te responde na primeira lead.",
   ],
   /** Tem equipe, ninguém elegível agora: nada de prazo curto. */
   fora_de_expediente: [

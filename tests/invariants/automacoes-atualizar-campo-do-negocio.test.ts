@@ -44,7 +44,7 @@ async function rodar(config: { alvo: "custom_field" | "deal_value" | "contact_fi
   await pool.query("insert into crm_pipelines(id,organization_id,name,slug) values($1,$2,'Vendas',$3)", [pipeline, GOV_ORG, `v-${slug}`]);
   await pool.query("insert into crm_stages(id,organization_id,pipeline_id,name,slug,position) values($1,$2,$3,'Novo',$4,1000)", [stage, GOV_ORG, pipeline, `n-${slug}`]);
   await pool.query(
-    "insert into crm_leads(id,organization_id,contact_id,pipeline_id,stage_id,title,position_in_stage) values($1,$2,$3,$4,$5,'Negócio',500)",
+    "insert into crm_leads(id,organization_id,contact_id,pipeline_id,stage_id,title,position_in_stage) values($1,$2,$3,$4,$5,'Lead',500)",
     [lead, GOV_ORG, contact, pipeline, stage],
   );
   const origin = await criarOrigemDeFollowup(pool, GOV_ORG, contact);
@@ -101,7 +101,7 @@ async function rodar(config: { alvo: "custom_field" | "deal_value" | "contact_fi
   return { negocio, atividades, passo, contato };
 }
 
-describe("Atualizar campo do negócio (motor novo, Postgres real)", () => {
+describe("Atualizar campo do lead (motor novo, Postgres real)", () => {
   beforeAll(async () => {
     await pool.query(
       `insert into custom_field_definitions(organization_id,entity,key,label,type,options) values
@@ -113,7 +113,7 @@ describe("Atualizar campo do negócio (motor novo, Postgres real)", () => {
     );
   });
 
-  it("valor do negócio, vindo do Mapear dados, vira centavos; uma atividade só", async () => {
+  it("valor do lead, vindo do Mapear dados, vira centavos; uma atividade só", async () => {
     const { negocio, atividades, passo } = await rodar({ alvo: "deal_value", chave: "", valor: "{{nodes.mapa.fields.total}}" });
     expect(passo.status).toBe("succeeded");
     expect(Number(negocio.value_cents)).toBe(150000); // bigint chega como texto pelo driver pg
@@ -132,7 +132,7 @@ describe("Atualizar campo do negócio (motor novo, Postgres real)", () => {
     expect(negocio.custom_fields?.plano_inv).toBeUndefined();
     expect(atividades).toBe(0);
   });
-  it("campo do CONTATO (catálogo de contato): data convertida e gravada no contato, não no negócio", async () => {
+  it("campo do CONTATO (catálogo de contato): data convertida e gravada no contato, não no lead", async () => {
     const { contato, negocio, passo } = await rodar({ alvo: "contact_field", chave: "aniversario_inv", valor: "15/03/1990" });
     expect(passo.status).toBe("succeeded");
     expect(contato.custom_fields?.aniversario_inv).toBe("1990-03-15");

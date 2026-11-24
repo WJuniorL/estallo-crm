@@ -123,7 +123,7 @@ test.describe("chamada de voz — o estado em que toda instalação começa", ()
     expect(estado.status, "a rota do opt-in não respondeu").toBe(200);
     expect(
       estado.corpo.data?.ligada,
-      "a organização nasceu com a chamada de voz LIGADA — isso decide o risco da conta pelo dono do negócio",
+      "a organização nasceu com a chamada de voz LIGADA — isso decide o risco da conta pelo dono do lead",
     ).toBe(false);
     expect(
       estado.corpo.data?.motivo,

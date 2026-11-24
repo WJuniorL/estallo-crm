@@ -57,7 +57,7 @@ export function SeletorDeNegocio({
     <Dialog open={aberto} onOpenChange={aoMudarAbertura}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("Selecionar Oportunidade")}</DialogTitle>
+          <DialogTitle>{t("Selecionar Lead")}</DialogTitle>
         </DialogHeader>
         <div className="relative">
           <MagnifyingGlass
@@ -69,20 +69,20 @@ export function SeletorDeNegocio({
             autoFocus
             value={termo}
             onChange={(e) => setTermo(e.target.value)}
-            placeholder={t("Buscar por oportunidade...")}
-            aria-label={t("Buscar por oportunidade...")}
+            placeholder={t("Buscar por lead...")}
+            aria-label={t("Buscar por lead...")}
             className="pl-9"
           />
         </div>
         <div className="max-h-80 overflow-y-auto rounded-md border">
           <p className="sticky top-0 bg-muted px-3 py-2 text-xs font-medium text-muted-foreground">
-            {t("Oportunidades")}
+            {t("Leads")}
           </p>
           {lista.isLoading ? (
             <p className="px-3 py-3 text-sm text-muted-foreground">{t("Carregando…")}</p>
           ) : negocios.length === 0 ? (
             <p className="px-3 py-3 text-sm text-muted-foreground">
-              {t("Nenhuma oportunidade encontrada.")}
+              {t("Nenhuma lead encontrada.")}
             </p>
           ) : (
             <ul>

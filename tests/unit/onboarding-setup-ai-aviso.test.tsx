@@ -35,7 +35,7 @@ import { SetupAiForm } from "@/app/onboarding/setup-ai/_form";
 function montar() {
   return (
     <SetupAiForm
-      capacidades={["Ver os clientes", "Mover o negócio no funil"]}
+      capacidades={["Ver os clientes", "Mover o lead no funil"]}
       conferencias={["Respeitar quem pediu para parar"]}
     />
   );

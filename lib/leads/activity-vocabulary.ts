@@ -223,13 +223,13 @@ export const ACTIVITY_LABELS: Record<ActivityType, string> = {
   // Editar campo era INVISÍVEL na timeline: a IA deixava rastro e o humano não.
   // Não era "falta um emissor" — era meia continuidade vendida como
   // continuidade, e o dossiê teria mostrado só metade da vida do lead.
-  lead_edited: "Dados do negócio alterados",
+  lead_edited: "Dados do lead alterados",
   // O NEGÓCIO ESFRIANDO É ACONTECIMENTO, não telemetria: é o sistema dizendo
   // "ninguém falou com esta pessoa dentro do prazo deste estágio". Sem linha na
   // timeline, o card mudaria de cor e o dossiê não teria explicação — e o
   // usuário concluiria que a timeline está incompleta, não que o negócio esfriou.
-  lead_cooled: "Negócio esfriou",
-  lead_reactivated: "Negócio voltou a andar",
+  lead_cooled: "Lead esfriou",
+  lead_reactivated: "Lead voltou a andar",
   // As três decisões sobre a proposta de reativação. VENCER é uma delas: a
   // ausência de decisão humana é informação sobre o negócio, e a proposta some
   // do card justamente para não simular atenção — a timeline é onde isso fica
@@ -307,7 +307,7 @@ export const ACTIVITY_LABELS: Record<ActivityType, string> = {
   proposal_accepted: "Proposta aceita",
   proposal_declined: "Proposta recusada",
   proposal_expired: "Proposta venceu sem decisão",
-  proposal_value_changed: "Valor do negócio atualizado pela proposta",
+  proposal_value_changed: "Valor do lead atualizado pela proposta",
   proposal_followup_skipped: "Follow-up automático não agendado",
   // Rótulos com o veredito, nunca o mecanismo: quem lê a timeline quer saber
   // que o contato saiu da operação (ou voltou), não o nome da coluna.

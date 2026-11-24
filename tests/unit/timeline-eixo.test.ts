@@ -23,7 +23,7 @@ describe("eixoDoDossie", () => {
     expect(eixoDoDossie(LEAD, null)).toBeNull();
   });
 
-  it("ancora no lead — a porta que o negócio sem contato não tinha", () => {
+  it("ancora no lead — a porta que o lead sem contato não tinha", () => {
     expect(eixoDoDossie(LEAD, CONTATO)).toContain(`lead_id.eq.${LEAD}`);
   });
 
@@ -36,7 +36,7 @@ describe("eixoDoDossie", () => {
     expect(eixo).toMatch(/and\([^)]*lead_id\.is\.null[^)]*\)/);
   });
 
-  it("o negócio IRMÃO fica de fora: nenhum lado o nomeia", () => {
+  it("o lead IRMÃO fica de fora: nenhum lado o nomeia", () => {
     expect(eixoDoDossie(LEAD, CONTATO)).not.toContain(IRMAO);
   });
 

@@ -97,4 +97,10 @@ export function gravarNaConversaDaLista(
     });
     return mudou ? { ...old, pages } : old;
   });
+  // A conversa que saiu da lista mas ficou RETIDA na tela (lista-com-retidas)
+  // lê `["conversation", id]`: sem isto a prévia, o horário e o ícone de
+  // fechada dela congelariam no último valor buscado.
+  qc.setQueryData<Record<string, unknown>>(["conversation", conversationId], (old) =>
+    old ? { ...old, ...campos } : old,
+  );
 }

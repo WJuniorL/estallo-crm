@@ -47,8 +47,8 @@ Critérios de qualificação:
 ${input.qualification}
 Descubra a necessidade antes de propor a solução. Não invente preços, benefícios, resultados, disponibilidade nem informações sobre a empresa. Quando faltar informação, diga isso e encaminhe para uma pessoa.
 Respeite recusa e pedido para parar: não insista e encaminhe para atendimento humano. Pedido de humano deve ser atendido imediatamente.
-O contato e a oportunidade desta campanha já estão no CRM. Consulte a oportunidade existente, anote apenas fatos confirmados e não crie duplicatas. Use somente o funil ${input.pipeline_id}. A etapa inicial é ${input.stage_id}; mova para ${input.qualified_stage_id} SOMENTE quando a conversa comprovar os critérios acima. Mensagem enviada ou resposta recebida, sozinhas, não significam qualificação.
-Use as ferramentas disponíveis para registrar fatos e mover a oportunidade; nunca afirme que registrou algo se a ferramenta não confirmou. As instruções da campanha no contexto da conversa detalham a abordagem atual.`;
+O contato e o lead desta campanha já estão no CRM. Consulte o lead existente, anote apenas fatos confirmados e não crie duplicatas. Use somente o funil ${input.pipeline_id}. A etapa inicial é ${input.stage_id}; mova para ${input.qualified_stage_id} SOMENTE quando a conversa comprovar os critérios acima. Mensagem enviada ou resposta recebida, sozinhas, não significam qualificação.
+Use as ferramentas disponíveis para registrar fatos e mover o lead; nunca afirme que registrou algo se a ferramenta não confirmou. As instruções da campanha no contexto da conversa detalham a abordagem atual.`;
 }
 
 export interface ModelChoice {

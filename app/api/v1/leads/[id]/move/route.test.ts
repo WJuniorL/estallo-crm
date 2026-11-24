@@ -313,8 +313,8 @@ describe("POST /api/v1/leads/[id]/move", () => {
 // A escolha "criar novo × mover este" saiu do funil e foi para a tela (o diálogo
 // pergunta ANTES de mover). Quem chega a esta rota já escolheu mover: o funil não
 // recusa mais — nem o que ainda guarda `reabertura: "novo_negocio"` de antes.
-describe("POST /move de negócio encerrado para etapa aberta", () => {
-  it("funil com o valor antigo `novo_negocio` não trava mais: reabre o mesmo negócio", async () => {
+describe("POST /move de lead encerrado para etapa aberta", () => {
+  it("funil com o valor antigo `novo_negocio` não trava mais: reabre o mesmo lead", async () => {
     const falso = bancoFalso({ reabertura: "novo_negocio" }, {}, "lost");
     vi.mocked(createClient).mockResolvedValue(falso as never);
     const { POST } = await import("./route");

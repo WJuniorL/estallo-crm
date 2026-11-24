@@ -374,7 +374,7 @@ async function registraNaTimeline(
         organizationId: deps.orgId,
         leadId: alvo.contact_id,
         tipo,
-        origem: "lib/followup/intervencao (sem negócio aberto para ancorar)",
+        origem: "lib/followup/intervencao (sem lead aberto para ancorar)",
         erro: undefined,
         requestId: deps.requestId,
       });
@@ -403,7 +403,7 @@ async function registraNaTimeline(
       });
     }
   } catch (err) {
-    logger.error("[followup.intervencao] timeline do negócio falhou", {
+    logger.error("[followup.intervencao] timeline do lead falhou", {
       erro: err instanceof Error ? err.message : String(err),
       requestId: deps.requestId,
       enrollmentId: alvo.id,

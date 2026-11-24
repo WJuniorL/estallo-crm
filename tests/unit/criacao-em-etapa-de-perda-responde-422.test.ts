@@ -52,7 +52,7 @@ const ctx = {
 const payload = {
   pipeline_id: FUNIL,
   stage_id: ETAPA_PERDA,
-  title: "Negócio criado na etapa de perda",
+  title: "Lead criado na etapa de perda",
   tags: [],
   source: "manual",
 };

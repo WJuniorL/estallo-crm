@@ -11,14 +11,6 @@ import { contagensDepoisDe, type ConversaParaAba } from "@/lib/inbox/aba-da-conv
 import type { Conversation } from "@/lib/types/messaging";
 import type { ConversationCounts } from "@/hooks/inbox/useConversationCounts";
 
-/**
- * Chave das ações que mudam o status/dono da conversa (fechar, reabrir,
- * assumir). O Inbox a escuta para RETER a linha na lista à vista
- * (`lib/inbox/lista-com-retidas.ts`): a conversa muda de aba no banco e nas
- * contagens, mas não some debaixo do cursor de quem agiu.
- */
-export const CHAVE_DE_STATUS = ["conversation-status"] as const;
-
 interface CloseArgs {
   conversation_id: string;
   expected_revision?: number;
@@ -66,7 +58,6 @@ export function useCloseConversation() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationKey: CHAVE_DE_STATUS,
     mutationFn: async (args: CloseArgs) =>
       apiClient.post<{ data: Conversation }>(
         `/api/v1/conversations/${args.conversation_id}/close`,
@@ -90,7 +81,6 @@ export function useCloseConversation() {
 export function useReopenConversation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationKey: CHAVE_DE_STATUS,
     mutationFn: (args: CloseArgs) =>
       apiClient.patch<{ data: Conversation }>(`/api/v1/conversations/${args.conversation_id}`, {
         status: "open",

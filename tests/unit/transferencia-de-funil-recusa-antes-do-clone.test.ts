@@ -89,7 +89,7 @@ function origem(custom_fields: Record<string, unknown> = {}) {
     id: LEAD_ORIGEM,
     pipeline_id: FUNIL_A,
     status: "open",
-    title: "Negócio no funil A",
+    title: "Lead no funil A",
     description: null,
     contact_id: null,
     value_cents: null,

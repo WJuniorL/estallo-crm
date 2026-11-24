@@ -19,7 +19,7 @@ export const REFERENCIAS_DE_AVISO = {
   appointment: {tabela:"calendar_appointments",papel:"agent",rotulo:"Abrir compromisso",href:(id:string)=>`/app/agenda?compromisso=${id}`},
   conversation: { tabela: "conversations", papel: "agent", rotulo: "Abrir conversa", href: (id: string) => `/app/inbox/${id}` },
   contact: { tabela: "contacts", papel: "agent", rotulo: "Ver contato", href: (id: string) => `/app/contacts/${id}` },
-  lead: { tabela: "crm_leads", papel: "agent", rotulo: "Abrir negócio", href: (id: string, pipelineId?: string) => `/app/pipelines/${pipelineId}?lead=${id}` },
+  lead: { tabela: "crm_leads", papel: "agent", rotulo: "Abrir lead", href: (id: string, pipelineId?: string) => `/app/pipelines/${pipelineId}?lead=${id}` },
   followup_enrollment: { tabela: "followup_enrollments", papel: "viewer", rotulo: "Abrir acompanhamento", href: (id: string) => `/app/ai/followups/enrollments/${id}` },
   channel_session: { tabela: "channel_sessions", papel: "admin", rotulo: "Revisar conexão", href: () => "/app/connections", ativo: true },
   ai_knowledge_source: { tabela: "ai_knowledge_sources", papel: "manager", rotulo: "Abrir base de conhecimento", href: () => "/app/ai/knowledge/sources" },
@@ -71,9 +71,9 @@ export const POLITICAS_DE_AVISO = {
   judge_unaligned: { refs: [], orientacao: "Na evolução do assistente, confira a avaliação de qualidade. Este aviso não identifica uma avaliação específica.", geral: EVOLUCAO },
   followup_dead: { refs: ["followup_enrollment"], orientacao: "Peça ao gestor para revisar o acompanhamento que parou." },
   snooze_expired: { refs: ["conversation"], orientacao: "Confira se cabe retomar o atendimento descrito neste aviso." },
-  next_action_ambiguous: { refs: ["contact"], orientacao: "Confira os negócios do contato e escolha a qual deles pertence a próxima ação." },
-  risk_backlog_seeded: { refs: ["organization"], orientacao: "Revise os negócios parados no Radar e defina o próximo passo." },
-  reactivation_expired: { refs: ["organization"], orientacao: "Revise no Radar se ainda cabe retomar os negócios indicados." },
+  next_action_ambiguous: { refs: ["contact"], orientacao: "Confira os leads do contato e escolha a qual deles pertence a próxima ação." },
+  risk_backlog_seeded: { refs: ["organization"], orientacao: "Revise os leads parados no Radar e defina o próximo passo." },
+  reactivation_expired: { refs: ["organization"], orientacao: "Revise no Radar se ainda cabe retomar os leads indicados." },
   capabilities_missing: { refs: ["conversation"], orientacao: "Peça ao gestor para revisar as ferramentas habilitadas para o assistente deste atendimento." },
   message_send_stuck: { refs: ["conversation"], orientacao: "Confira a resposta que não chegou antes de decidir se precisa enviar novamente." },
   midia_nao_lida: { refs: [], orientacao: "Peça ao gestor para revisar o provedor e as credenciais de leitura de fotos e áudios.", geral: { papel: "manager", href: "/app/ai/providers", rotulo: "Revisar provedores de IA" } },
@@ -115,7 +115,7 @@ export const POLITICAS_DE_AVISO = {
   },
   proposal_promised_not_created: {
     refs: ["lead"],
-    orientacao: "Uma promessa de proposta venceu sem que a proposta tenha sido criada. Abra o negócio e monte o rascunho.",
+    orientacao: "Uma promessa de proposta venceu sem que a proposta tenha sido criada. Abra o lead e monte o rascunho.",
   },
   // Leva AO CASO (`REFERENCIAS_DE_AVISO.agent_case` já aponta para
   // `/app/ai/cases?caso=<id>`), e não a uma tela genérica de conexões: o que

@@ -12,12 +12,12 @@ describe("troca de funil pelo bloco Mover (Fase 5)", () => {
       codigo: "pipeline_immutable_use_clone",
     });
   });
-  it("com a opção, negócio aberto vai para etapa aberta de outro funil", () => {
+  it("com a opção, lead aberto vai para etapa aberta de outro funil", () => {
     expect(prepararMovimentacaoDeLead({ lead, etapa: etapaOutroFunil, settings: null, permitirTrocaDeFunil: true })).toMatchObject({
       ok: true,
     });
   });
-  it("negócio fechado não muda de funil; etapa de ganho/perda de outro funil é recusada", () => {
+  it("lead fechado não muda de funil; etapa de ganho/perda de outro funil é recusada", () => {
     expect(
       prepararMovimentacaoDeLead({ lead: { ...lead, status: "won" }, etapa: etapaOutroFunil, settings: null, permitirTrocaDeFunil: true }),
     ).toMatchObject({ ok: false, codigo: "lead_not_open" });

@@ -76,7 +76,7 @@ describe("formulários de conversão", () => {
         falta={[]}
       />,
     );
-    fireEvent.change(screen.getByLabelText("Valor do negócio"), {
+    fireEvent.change(screen.getByLabelText("Valor do lead"), {
       target: { value: "quando_houver" },
     });
     fireEvent.click(screen.getByLabelText("Enviar o telefone do contato criptografado"));

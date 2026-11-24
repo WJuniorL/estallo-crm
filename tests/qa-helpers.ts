@@ -633,7 +633,7 @@ export function carimbar(dependencias: string[]): string {
   if (semDesfazer.length > 0) {
     console.info(
       `[carimbo] DÍVIDA DE LIMPEZA: ${semDesfazer.length} sonda(s) inserem atividade e NÃO ` +
-        `devolvem last_activity_at — apagam a linha e deixam o negócio parecendo mais ativo do ` +
+        `devolvem last_activity_at — apagam a linha e deixam o lead parecendo mais ativo do ` +
         `que está: ${semDesfazer.join(", ")}`,
     );
   }

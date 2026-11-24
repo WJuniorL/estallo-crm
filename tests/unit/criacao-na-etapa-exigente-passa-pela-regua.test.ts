@@ -77,7 +77,7 @@ const ctx = {
 const payloadBase = {
   pipeline_id: FUNIL_A,
   stage_id: ETAPA,
-  title: "Negócio criado direto",
+  title: "Lead criado direto",
   tags: [],
   source: "manual",
 };
@@ -157,7 +157,7 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe("createLeadHandler — a etapa em que o negócio NASCE", () => {
+describe("createLeadHandler — a etapa em que o lead NASCE", () => {
   it("recusa a criação direta na etapa exigente sem o campo, com o MESMO erro da régua", async () => {
     const { cliente, inseridos } = criacao(EXIGENTE);
 
@@ -215,7 +215,7 @@ describe("crm_create_lead (MCP) — o mesmo escritor", () => {
 
     const erro = await crmCreateLead
       .handler(
-        { pipeline_id: FUNIL_A, stage_id: ETAPA, title: "Negócio aberto pelo agente" },
+        { pipeline_id: FUNIL_A, stage_id: ETAPA, title: "Lead aberto pelo agente" },
         {
           supabase: cliente,
           organizationId: ORG,
@@ -239,7 +239,7 @@ describe("crm_create_lead (MCP) — o mesmo escritor", () => {
     const argumento = z.object(crmCreateLead.inputSchema).parse({
       pipeline_id: FUNIL_A,
       stage_id: ETAPA,
-      title: "Negócio aberto pelo agente",
+      title: "Lead aberto pelo agente",
       custom_fields: { concorrente: "ACME" },
     });
 
@@ -301,7 +301,7 @@ describe("transfereParaOFunil — a troca de funil da automação (create_or_mov
       id: LEAD_ORIGEM,
       pipeline_id: FUNIL_A,
       status: "open",
-      title: "Negócio no funil A",
+      title: "Lead no funil A",
       tags: [],
       custom_fields: {},
     };
@@ -359,7 +359,7 @@ describe("ator `webhook_source` da automação continua na régua (#2295)", () =
         id: LEAD_ORIGEM,
         pipeline_id: FUNIL_A,
         status: "open",
-        title: "Negócio no funil A",
+        title: "Lead no funil A",
         tags: [],
         custom_fields: {},
       },

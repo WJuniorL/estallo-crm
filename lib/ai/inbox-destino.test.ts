@@ -66,7 +66,7 @@ describe("destinos da Central", () => {
     await resolverDestinosDosAvisos(l.client, ORG, "agent", [...Array.from({ length: 150 }, () => aviso()), aviso("handoff", "contact")]);
     expect(l.queries).toEqual([{ table: "conversations", org: ORG, ids: [ID] }, { table: "contacts", org: ORG, ids: [ID] }]);
   });
-  it("negócio sem funil visível não abre coleção genérica ou outro tenant", async () => {
+  it("lead sem funil visível não abre coleção genérica ou outro tenant", async () => {
     const l = leitor([ID], false, false);
     const [item] = await resolverDestinosDosAvisos(l.client, ORG, "agent", [aviso("other", "lead")]);
     expect(item?.destination.estado).toBe("indisponivel");

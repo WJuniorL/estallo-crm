@@ -143,6 +143,6 @@ describe("a ferramenta distingue os dois parâmetros", () => {
   it("⭐ lead_id diz que é o NEGÓCIO do funil, não a pessoa", () => {
     const d = shape.lead_id?.description ?? "";
     expect(d, "lead_id não tem descrição").not.toBe("");
-    expect(/negóci|funil|oportunidade/i.test(d)).toBe(true);
+    expect(/negóci|funil|lead/i.test(d)).toBe(true);
   });
 });

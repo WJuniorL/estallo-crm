@@ -244,7 +244,7 @@ export default async function ConversoesPage({
         <h1 className="text-2xl font-semibold tracking-tight">{t("Conversões")}</h1>
         <p className="max-w-2xl text-sm text-muted-foreground">
           {t(
-            "Quando um negócio que veio de anúncio é marcado como ganho, o valor da venda volta para a plataforma que trouxe o cliente. É esse retorno que ensina o anúncio a procurar mais gente parecida com quem comprou.",
+            "Quando um lead que veio de anúncio é marcado como ganho, o valor da venda volta para a plataforma que trouxe o cliente. É esse retorno que ensina o anúncio a procurar mais gente parecida com quem comprou.",
           )}
         </p>
       </header>
@@ -408,7 +408,7 @@ export default async function ConversoesPage({
                 <table className="w-full text-sm">
                   <thead className="bg-muted/50 text-left">
                     <tr>
-                      <th className="p-3 font-medium">{t("Negócio")}</th>
+                      <th className="p-3 font-medium">{t("Lead")}</th>
                       <th className="p-3 font-medium">{t("Evento")}</th>
                       <th className="p-3 font-medium">{t("Origem")}</th>
                       <th className="p-3 font-medium">{t("Valor")}</th>

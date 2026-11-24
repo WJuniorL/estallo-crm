@@ -142,12 +142,12 @@ const TIPO_DO_NO: Record<FlowNode["type"], string> = {
   map_data: "Mapear dados",
   assign_lead_owner: "Atribuir responsável",
   add_note: "Nota interna",
-  update_lead_field: "Atualizar campo do negócio",
-  lead_product: "Produto do negócio",
+  update_lead_field: "Atualizar campo do lead",
+  lead_product: "Produto do lead",
   http_request: "Requisição HTTP",
   ai_extract: "Extrair dados por IA",
   find_or_create_contact: "Buscar ou criar contato",
-  find_or_create_lead: "Buscar ou criar negócio",
+  find_or_create_lead: "Buscar ou criar lead",
   end: "Fim",
 };
 
@@ -185,7 +185,7 @@ export function resumoDoNo(node: FlowNode): NoDoDossie {
     case "condition":
       return {
         ...base,
-        resumo: `confere ${node.config.checks.length} ${node.config.checks.length === 1 ? "critério" : "critérios"} do negócio`,
+        resumo: `confere ${node.config.checks.length} ${node.config.checks.length === 1 ? "critério" : "critérios"} do lead`,
       };
     case "ai_classify":
       return { ...base, resumo: `classifica a resposta em: ${node.config.classes.join(", ")}` };
@@ -246,7 +246,7 @@ export function resumoDoNo(node: FlowNode): NoDoDossie {
     case "find_or_create_lead":
       return {
         ...base,
-        resumo: `procura o negócio aberto do contato no funil escolhido${node.config.criar ? " e cria se não achar" : ""} — sem mensagem ao cliente`,
+        resumo: `procura o lead aberto do contato no funil escolhido${node.config.criar ? " e cria se não achar" : ""} — sem mensagem ao cliente`,
       };
     case "http_request":
       return {
@@ -258,18 +258,18 @@ export function resumoDoNo(node: FlowNode): NoDoDossie {
         ...base,
         resumo:
           node.config.acao === "remove"
-            ? "tira um produto do negócio — sem mensagem ao cliente"
-            : `acrescenta ${node.config.quantidade} unidade(s) de um produto do catálogo ao negócio — sem mensagem ao cliente`,
+            ? "tira um produto do lead — sem mensagem ao cliente"
+            : `acrescenta ${node.config.quantidade} unidade(s) de um produto do catálogo ao lead — sem mensagem ao cliente`,
       };
     case "update_lead_field":
       return {
         ...base,
         resumo:
           node.config.alvo === "deal_value"
-            ? "atualiza o valor do negócio — sem mensagem ao cliente"
+            ? "atualiza o valor do lead — sem mensagem ao cliente"
             : node.config.alvo === "contact_field"
               ? `atualiza o campo «${node.config.chave || "a escolher"}» do contato — sem mensagem ao cliente`
-            : `atualiza o campo «${node.config.chave || "a escolher"}» do negócio — sem mensagem ao cliente`,
+            : `atualiza o campo «${node.config.chave || "a escolher"}» do lead — sem mensagem ao cliente`,
       };
     case "add_note":
       return {
@@ -277,14 +277,14 @@ export function resumoDoNo(node: FlowNode): NoDoDossie {
         resumo:
           node.config.destino === "conversation_notes"
             ? "registra uma nota interna na conversa — o cliente não vê"
-            : "registra uma nota na linha do tempo do negócio — o cliente não vê",
+            : "registra uma nota na linha do tempo do lead — o cliente não vê",
       };
     case "assign_lead_owner":
       return {
         ...base,
         resumo: node.config.usuario_id
-          ? "troca o responsável do negócio — sem mensagem ao cliente"
-          : "troca o responsável do negócio, ainda sem pessoa escolhida — sem mensagem ao cliente",
+          ? "troca o responsável do lead — sem mensagem ao cliente"
+          : "troca o responsável do lead, ainda sem pessoa escolhida — sem mensagem ao cliente",
       };
     case "map_data":
       return {
@@ -637,7 +637,7 @@ export function descreveEvento(
     // existia e a tela mostrava o nome da variável.
     case "enrolled_by_stage_change":
       return {
-        titulo: "Começou porque o negócio entrou numa etapa",
+        titulo: "Começou porque o lead entrou numa etapa",
         detalhe: "a etapa escolhida no gatilho deste fluxo",
         ...motor,
       };
@@ -655,7 +655,7 @@ export function descreveEvento(
       };
     case "enrolled_by_lead_created":
       return {
-        titulo: "Começou porque o negócio nasceu",
+        titulo: "Começou porque o lead nasceu",
         detalhe: "o card acabou de ser criado",
         ...motor,
       };

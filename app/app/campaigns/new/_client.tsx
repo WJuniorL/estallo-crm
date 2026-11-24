@@ -264,7 +264,7 @@ export function NovaCampanha() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="pub-funil">{t("Com negócio no funil")}</Label>
+            <Label htmlFor="pub-funil">{t("Com lead no funil")}</Label>
             <select
               id="pub-funil"
               className="h-9 w-full rounded-md border border-border bg-surface px-2 text-sm"
@@ -343,7 +343,7 @@ export function NovaCampanha() {
         {previa.data?.truncado && (
           <p className="text-sm text-amber-600">
             {t(
-              "O recorte bateu o teto de 20.000 negócios desta prévia — a lista pode estar incompleta. Refine o filtro para ver o todo.",
+              "O recorte bateu o teto de 20.000 leads desta prévia — a lista pode estar incompleta. Refine o filtro para ver o todo.",
             )}
           </p>
         )}

@@ -44,7 +44,7 @@ const usd = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "USD" 
  * mãos. Prometer a mais é o defeito que esta fase passou o dia consertando.
  */
 const DESCRICAO_RESULTADO =
-  "O que aconteceu com os seus negócios neste período. Para saber se melhorou, mude as datas acima e compare com o mês anterior.";
+  "O que aconteceu com os seus leads neste período. Para saber se melhorou, mude as datas acima e compare com o mês anterior.";
 
 /**
  * Os três primeiros números deste bloco vêm de `lead_state_transitions`, e o
@@ -60,7 +60,7 @@ const DESCRICAO_RESULTADO =
  * andaram e que os cartões não andam.
  */
 const SIGNIFICA_GANHOS =
-  "Clientes que o agente marcou como fechados. Negócio que a sua equipe fechou na mão, movendo o cartão no quadro, não entra aqui.";
+  "Clientes que o agente marcou como fechados. Lead que a sua equipe fechou na mão, movendo o cartão no quadro, não entra aqui.";
 const SIGNIFICA_PERDIDOS =
   "Clientes que o agente marcou como perdidos — contraponto necessário, porque ganhos sem perdidos ao lado enganam. Também não conta o que a sua equipe marcou na mão.";
 /**
@@ -579,12 +579,12 @@ function Conteudo({ payload }: { payload: NonNullable<ReturnType<typeof useEvolu
       >
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <StatCard
-            rotulo={t("Negócios fechados pelo agente")}
+            rotulo={t("Leads fechados pelo agente")}
             valor={num(outcome.won)}
             significa={t(SIGNIFICA_GANHOS)}
           />
           <StatCard
-            rotulo={t("Negócios perdidos pelo agente")}
+            rotulo={t("Leads perdidos pelo agente")}
             valor={num(outcome.lost)}
             significa={t(SIGNIFICA_PERDIDOS)}
           />

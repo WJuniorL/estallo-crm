@@ -42,7 +42,7 @@ describe("0082 · proposta de reativação chega ao clone", () => {
     ).toBe("NO");
   });
 
-  it("uma proposta VIVA por negócio — e as decididas não bloqueiam a próxima", () => {
+  it("uma proposta VIVA por lead — e as decididas não bloqueiam a próxima", () => {
     const idx = sql(`select indexdef from pg_indexes
                       where indexname='uq_crm_lead_reactivations_uma_viva'`);
     expect(idx).toContain("UNIQUE");

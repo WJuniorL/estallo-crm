@@ -68,7 +68,7 @@ export function ContatoDoNegocio({ contactId, pipelineId, leadId, lead = null }:
       {contactId ? (
         <ContatoVinculado contactId={contactId} pipelineId={pipelineId} lead={lead} />
       ) : (
-        <p className="text-xs text-text-muted">{t("Este negócio não tem contato vinculado.")}</p>
+        <p className="text-xs text-text-muted">{t("Este lead não tem contato vinculado.")}</p>
       )}
       <PessoasRelacionadas leadId={leadId ?? null} />
     </>

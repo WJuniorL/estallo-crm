@@ -69,7 +69,7 @@ function banco(contato: { id: string; name: string | null; display_name: string 
     crm_pipelines: [{ id: "funil-ativo", organization_id: ORG, is_archived: false }],
     crm_leads: [
       {
-        id: "lead-frio", organization_id: ORG, status: "open", title: "Negócio parado",
+        id: "lead-frio", organization_id: ORG, status: "open", title: "Lead parado",
         pipeline_id: "funil-ativo", contact_id: contato.id, owner_user_id: null, owner_kind: null,
         owner_agent_id: null, stage_id: null, last_activity_at: HA_MUITO, created_at: HA_MUITO,
       },

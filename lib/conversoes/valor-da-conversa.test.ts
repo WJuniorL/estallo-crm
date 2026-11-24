@@ -124,7 +124,7 @@ describe("lerValorDaConversa", () => {
     expect(r.ok === false && r.motivo).toContain("orçamento mensal de IA atingido");
   });
 
-  it("moeda que não é ISO-4217 cai na moeda do negócio", async () => {
+  it("moeda que não é ISO-4217 cai na moeda do lead", async () => {
     const { admin } = adminCom(CONVERSA);
     const chamarModelo = vi.fn().mockResolvedValue({
       houve_valor: true,

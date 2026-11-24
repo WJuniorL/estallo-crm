@@ -72,11 +72,11 @@ function actorAudit(ctx: McpContext): {
 /** Texto de ENSINO para os alvos que não existem — o modelo corrige e segue. */
 const ENSINO_DE_ALVO: Record<string, string> = {
   negocio_nao_encontrado:
-    "não existe oportunidade com esse identificador nesta organização — confira com a capacidade de listar oportunidades antes de tentar de novo.",
+    "não existe lead com esse identificador nesta organização — confira com a capacidade de listar leads antes de tentar de novo.",
   negocio_sem_contato:
-    "esta oportunidade não tem cliente vinculado, então não há para quem voltar a falar. Vincule um cliente antes de marcar um retorno.",
+    "este lead não tem cliente vinculado, então não há para quem voltar a falar. Vincule um cliente antes de marcar um retorno.",
   cliente_nao_encontrado:
-    "informe o identificador da oportunidade (lead_id) ou do cliente (contact_id) — um dos dois é obrigatório e precisa existir nesta organização.",
+    "informe o identificador do lead (lead_id) ou do cliente (contact_id) — um dos dois é obrigatório e precisa existir nesta organização.",
 };
 
 // ---------------------------------------------------------------------------
@@ -420,7 +420,7 @@ const radarShape = {
 export const crmListAtRiskLeads: McpToolDefinition<typeof radarShape> = {
   name: "crm_list_at_risk_leads",
   description:
-    "Radar de risco: as oportunidades ABERTAS que passaram da janela de esfriamento do próprio " +
+    "Radar de risco: os leads ABERTAS que passaram da janela de esfriamento do próprio " +
     "estágio. Cada item traz risk='critico'|'em_risco'|'em_voo' (em_voo = já há retorno agendado, " +
     "o sistema mantém viva), horas sem movimento, dono e a conversa. Ordenado por urgência. " +
     "Traz TAMBÉM `sem_proximo_passo`: demandas abertas para as quais nada está marcado para " +
@@ -460,7 +460,7 @@ const encerrarShape = {
 export const crmCloseDemand: McpToolDefinition<typeof encerrarShape> = {
   name: "crm_close_demand",
   description:
-    "Encerra a demanda: move a oportunidade para o estágio terminal do funil como ganha " +
+    "Encerra a demanda: move o lead para o estágio terminal do funil como ganha " +
     "(outcome='won') ou perdida (outcome='lost', com reason obrigatório). É o outro lado do " +
     "acompanhamento: demanda aberta precisa de próximo passo OU de desfecho registrado. " +
     "Idempotente — encerrar de novo devolve o estado atual sem alterar nada.",
@@ -508,9 +508,9 @@ const reativacaoShape = {
 export const crmProposeReactivation: McpToolDefinition<typeof reativacaoShape> = {
   name: "crm_propose_reactivation",
   description:
-    "Cria uma proposta de retomada de contato para uma oportunidade que esfriou. A proposta aparece " +
-    "no cartão do negócio para um humano aprovar; NADA é enviado ao cliente por conta dela, e ela " +
-    "vence sozinha se ninguém decidir. Recusa se já houver proposta viva ou se o negócio não tiver " +
+    "Cria uma proposta de retomada de contato para um lead que esfriou. A proposta aparece " +
+    "no cartão do lead para um humano aprovar; NADA é enviado ao cliente por conta dela, e ela " +
+    "vence sozinha se ninguém decidir. Recusa se já houver proposta viva ou se o lead não tiver " +
     "cliente vinculado.",
   inputSchema: reativacaoShape,
   category: "write",
@@ -536,7 +536,7 @@ export const crmProposeReactivation: McpToolDefinition<typeof reativacaoShape> =
       return {
         proposta_criada: false,
         motivo: "negocio_encerrado",
-        mensagem: "este negócio já foi encerrado — não há contato a retomar.",
+        mensagem: "este lead já foi encerrado — não há contato a retomar.",
       };
     }
     if (!alvo.contact_id) {
@@ -573,7 +573,7 @@ export const crmProposeReactivation: McpToolDefinition<typeof reativacaoShape> =
         proposta_criada: false,
         motivo: "ja_existe_proposta",
         mensagem:
-          "este negócio já tem uma sugestão de retomada aguardando decisão de uma pessoa — não crie outra.",
+          "este lead já tem uma sugestão de retomada aguardando decisão de uma pessoa — não crie outra.",
       };
     }
 

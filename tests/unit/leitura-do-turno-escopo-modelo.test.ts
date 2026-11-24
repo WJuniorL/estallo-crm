@@ -91,7 +91,7 @@ describe("crm_render_message_template com contato do turno", () => {
     expect(JSON.stringify(r)).not.toContain("+5511900000002");
   });
 
-  it("⭐ lead_id de negócio de outro contato é recusado", async () => {
+  it("⭐ lead_id de lead de outro contato é recusado", async () => {
     const r = await preencher({ lead_id: NEGOCIO_DO_OUTRO }, DO_TURNO);
 
     expect(r).toMatchObject({ permitido: false, motivo: "fora_da_conversa" });
@@ -104,7 +104,7 @@ describe("crm_render_message_template com contato do turno", () => {
     expect(r).toMatchObject({ permitido: false, motivo: "fora_da_conversa" });
   });
 
-  it("negócio inexistente e negócio sem contato dão a MESMA recusa do negócio alheio", async () => {
+  it("lead inexistente e lead sem contato dão a MESMA recusa do lead alheio", async () => {
     const alheio = await preencher({ lead_id: NEGOCIO_DO_OUTRO }, DO_TURNO);
     const inexistente = await preencher({ lead_id: NEGOCIO_INEXISTENTE }, DO_TURNO);
     const semContato = await preencher({ lead_id: NEGOCIO_SEM_CONTATO }, DO_TURNO);
@@ -125,13 +125,13 @@ describe("crm_render_message_template com contato do turno", () => {
     expect(r.texto).toBe("Olá Ana, seu telefone é +5511900000001");
   });
 
-  it("lead_id igual ao contato do turno é a confusão contato × negócio: preenche com o contato", async () => {
+  it("lead_id igual ao contato do turno é a confusão contato × lead: preenche com o contato", async () => {
     const r = await preencher({ lead_id: DO_TURNO }, DO_TURNO);
 
     expect(r.texto).toBe("Olá Ana, seu telefone é +5511900000001");
   });
 
-  it("lead_id de negócio do turno preenche com o contato dele", async () => {
+  it("lead_id de lead do turno preenche com o contato dele", async () => {
     const r = await preencher({ lead_id: NEGOCIO_DO_TURNO }, DO_TURNO);
 
     expect(r.texto).toBe("Olá Ana, seu telefone é +5511900000001");
@@ -145,7 +145,7 @@ describe("crm_render_message_template fora do turno — nada muda", () => {
     expect(r.texto).toBe("Olá Bruno, seu telefone é +5511900000002");
   });
 
-  it("e com qualquer negócio da organização", async () => {
+  it("e com qualquer lead da organização", async () => {
     const r = await preencher({ lead_id: NEGOCIO_DO_OUTRO });
 
     expect(r.texto).toBe("Olá Bruno, seu telefone é +5511900000002");

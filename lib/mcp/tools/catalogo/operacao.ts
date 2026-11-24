@@ -60,7 +60,7 @@ export const TOOLS_OPERACAO = declararTools([
     category: "read",
     rotulo: "Ver as etapas de um funil",
     explicacao:
-      "Mostra as colunas de um funil na ordem em que aparecem no quadro, com a chance de fechamento e a janela de esfriando de cada uma, para o agente saber onde pode colocar cada negócio e quanto tempo sem movimento ainda é normal.",
+      "Mostra as colunas de um funil na ordem em que aparecem no quadro, com a chance de fechamento e a janela de esfriando de cada uma, para o agente saber onde pode colocar cada lead e quanto tempo sem movimento ainda é normal.",
     oQueToca: "Funil de vendas",
     risco: "seguro",
     pacotes: ["organizar", "vender"],
@@ -81,7 +81,7 @@ export const TOOLS_OPERACAO = declararTools([
     category: "write",
     rotulo: "Renomear ou reordenar uma etapa",
     explicacao:
-      "Troca o nome de uma coluna do funil, muda o lugar dela na ordem, define em qual delas o negócio é dado como fechado ou perdido, ajusta a chance de fechamento que a previsão do funil usa e define há quanto tempo sem movimento a etapa é considerada esfriando.",
+      "Troca o nome de uma coluna do funil, muda o lugar dela na ordem, define em qual delas o lead é dado como fechado ou perdido, ajusta a chance de fechamento que a previsão do funil usa e define há quanto tempo sem movimento a etapa é considerada esfriando.",
     oQueToca: "Funil de vendas",
     risco: "atencao",
     pacotes: ["organizar"],
@@ -92,7 +92,7 @@ export const TOOLS_OPERACAO = declararTools([
     category: "write",
     rotulo: "Arquivar uma etapa do funil",
     explicacao:
-      "Tira uma coluna do quadro e leva os negócios que estavam nela para outra coluna que você escolher. O histórico continua guardado.",
+      "Tira uma coluna do quadro e leva os leads que estavam nela para outra coluna que você escolher. O histórico continua guardado.",
     oQueToca: "Funil de vendas",
     risco: "critico",
     pacotes: ["organizar"],

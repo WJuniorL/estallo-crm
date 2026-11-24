@@ -86,7 +86,7 @@ const PLANO_COM_DONO_DEPOIS = {
     },
     {
       ordem: 2,
-      titulo: "Passo do dono do negócio",
+      titulo: "Passo do dono do lead",
       vence_em_dias: 1,
       atribuir_a: "dono_do_lead",
     },
@@ -247,7 +247,7 @@ describe("aplicarPlanoDeTarefas", () => {
     expect(tarefas.map((t) => t.priority)).toEqual(["high", "medium", "low"]);
   });
 
-  it("⭐ reaplicar o mesmo plano ao mesmo negócio não duplica", async () => {
+  it("⭐ reaplicar o mesmo plano ao mesmo lead não duplica", async () => {
     const db = dbCom({
       aplicacoes: [
         {
@@ -265,7 +265,7 @@ describe("aplicarPlanoDeTarefas", () => {
     expect(db.tarefasInseridas()).toHaveLength(0);
   });
 
-  it("grava a aplicação na linha do tempo do negócio (a prova que a 2ª leitura usa)", async () => {
+  it("grava a aplicação na linha do tempo do lead (a prova que a 2ª leitura usa)", async () => {
     const db = dbCom();
 
     await aplicar(db);
@@ -292,7 +292,7 @@ describe("aplicarPlanoDeTarefas", () => {
     expect(db.tarefasInseridas()).toHaveLength(0);
   });
 
-  it("sem negócio não há onde aplicar — `sem_alvo`, sem INSERT", async () => {
+  it("sem lead não há onde aplicar — `sem_alvo`, sem INSERT", async () => {
     const db = dbCom();
 
     const resultado = await aplicarPlanoDeTarefas(db as unknown as SupabaseClient, {
@@ -350,7 +350,7 @@ describe("aplicarPlanoDeTarefas", () => {
     expect(db.tarefasInseridas(), "o passo 1 passaria — mas o plano inteiro foi recusado").toHaveLength(0);
     expect(db.escritas).toHaveLength(0);
   });
-  it("negócio de OUTRA organização é `sem_alvo` e não escreve nada, mesmo com o plano igual lá", async () => {
+  it("lead de OUTRA organização é `sem_alvo` e não escreve nada, mesmo com o plano igual lá", async () => {
     const OUTRA_ORG = "dddddddd-0000-4000-8000-00000000000d";
     const db = new DbFalso({
       organizations: [{ id: OUTRA_ORG, settings: { task_plans: [PLANO_3_PASSOS] } }],

@@ -46,7 +46,7 @@ import { precoParaCentavos } from "@/lib/schemas/produtos";
  */
 const COLUNAS: Record<string, readonly string[]> = {
   titulo: [
-    "nome", "titulo", "título", "lead", "negocio", "negócio", "oportunidade", "empresa", "assunto",
+    "nome", "titulo", "título", "lead", "negocio", "lead", "lead", "empresa", "assunto",
     "nombre", "oportunidad", "asunto",
   ],
   contato: [
@@ -133,7 +133,7 @@ export function lerPlanilhaDeLeads(
   if (!campos.has("titulo") && !campos.has("contato")) {
     return {
       erro:
-        _t("A planilha precisa de uma coluna com o nome do negócio ou do contato. Encontrei: ") +
+        _t("A planilha precisa de uma coluna com o nome do lead ou do contato. Encontrei: ") +
         (cabecalho.filter((c) => c.trim()).join(", ") || _t("nenhuma coluna")) +
         ".",
     };
@@ -156,7 +156,7 @@ export function lerPlanilhaDeLeads(
     // com o mesmo título — indistinguíveis no funil, que é onde eles vivem.
     const title = (valor("titulo").replace(/\s+/g, " ") || nomeDoContato).slice(0, 200);
     if (title.length < 2) {
-      erros.push({ linha: numeroNaPlanilha, motivo: _t("sem nome do negócio nem do contato") });
+      erros.push({ linha: numeroNaPlanilha, motivo: _t("sem nome do lead nem do contato") });
       continue;
     }
 
@@ -184,7 +184,7 @@ export function lerPlanilhaDeLeads(
           _t("telefone não reconhecido (") +
           `"${telefoneTexto}"` +
           ")" +
-          _t(" — o negócio entrou sem contato"),
+          _t(" — o lead entrou sem contato"),
       });
     }
 

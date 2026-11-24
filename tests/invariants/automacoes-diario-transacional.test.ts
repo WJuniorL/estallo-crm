@@ -641,7 +641,7 @@ describe("diário transacional do motor existente — Postgres real", () => {
     expect(lead.rows[0].stage_id).toBe(f.sourceStage);
   });
 
-  it("movimentação para etapa ABERTA de outro funil troca o mesmo negócio de funil (Fase 5)", async () => {
+  it("movimentação para etapa ABERTA de outro funil troca o mesmo lead de funil (Fase 5)", async () => {
     // Funil de destino PRÓPRIO, sem regras: o funil compartilhado do seed pode ganhar obrigatórios de outros testes.
     const outroFunil = randomUUID(),
       etapaAberta = randomUUID();

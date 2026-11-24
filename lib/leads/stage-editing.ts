@@ -369,7 +369,7 @@ export function validarArquivamento(
       ok: false,
       erro:
         `«${etapa.name}» é a única etapa deste funil. Um funil sem etapa nenhuma some do quadro e não ` +
-        `recebe negócio novo — crie outra etapa antes de arquivar esta.`,
+        `recebe lead novo — crie outra etapa antes de arquivar esta.`,
     };
   }
 
@@ -380,7 +380,7 @@ export function validarArquivamento(
         ok: false,
         erro:
           `«${etapa.name}» é a etapa ${desfecho} deste funil. Marque OUTRA etapa como ${desfecho} antes ` +
-          `de arquivar esta — senão os negócios continuariam indo parar numa coluna fora do quadro.`,
+          `de arquivar esta — senão os leads continuariam indo parar numa coluna fora do quadro.`,
       };
     }
   }
@@ -388,7 +388,7 @@ export function validarArquivamento(
   if (destinoId === etapaId) {
     return {
       ok: false,
-      erro: `Os negócios de «${etapa.name}» precisam ir para outra etapa, não para ela mesma.`,
+      erro: `Os leads de «${etapa.name}» precisam ir para outra etapa, não para ela mesma.`,
     };
   }
 
@@ -397,7 +397,7 @@ export function validarArquivamento(
       return {
         ok: false,
         erro:
-          `A etapa «${etapa.name}» tem ${negocios} ${negocios === 1 ? "negócio" : "negócios"}. ` +
+          `A etapa «${etapa.name}» tem ${negocios} ${negocios === 1 ? "lead" : "leads"}. ` +
           `Escolha para qual etapa eles vão antes de arquivá-la.`,
         // A ÚNICA recusa que a tela troca por uma pergunta em vez de mostrar.
         precisaDestino: true,
@@ -407,7 +407,7 @@ export function validarArquivamento(
     if (!destino) {
       return {
         ok: false,
-        erro: `A etapa escolhida para receber os negócios de «${etapa.name}» não está mais no funil. Recarregue a página.`,
+        erro: `A etapa escolhida para receber os leads de «${etapa.name}» não está mais no funil. Recarregue a página.`,
       };
     }
 
@@ -424,7 +424,7 @@ export function validarArquivamento(
         return {
           ok: false,
           erro:
-            `«${destino.name}» é a etapa ${desfecho} deste funil: mandar os negócios de «${etapa.name}» ` +
+            `«${destino.name}» é a etapa ${desfecho} deste funil: mandar os leads de «${etapa.name}» ` +
             `para lá os daria por encerrados. Escolha uma etapa em aberto.`,
         };
       }

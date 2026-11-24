@@ -75,7 +75,7 @@ async function main(): Promise<void> {
       [ORG],
     );
     const alvo = alvos[0];
-    if (!alvo) throw new Error("sem contato com próxima ação e um único negócio aberto");
+    if (!alvo) throw new Error("sem contato com próxima ação e um único lead aberto");
 
     // O empate precisa ser GENUÍNO: mesmo pipeline (senão o default desempata)
     // e mesmo instante de atividade (senão a ordenação escolhe um vencedor).
@@ -88,7 +88,7 @@ async function main(): Promise<void> {
       [ORG, alvo.pipeline_id, alvo.stage_id, alvo.contact_id, `[sonda ${marca}]`, alvo.atividade],
     );
     leadFantasma = criados[0]!.id as string;
-    console.info(`empate criado: negócio fantasma ${leadFantasma} ao lado de ${alvo.lead_id}`);
+    console.info(`empate criado: lead fantasma ${leadFantasma} ao lado de ${alvo.lead_id}`);
 
     // LEITURA "ANTES" — a procedência do item, não só a existência dele.
     //
@@ -176,7 +176,7 @@ async function main(): Promise<void> {
             avisosDesteRun,
           ])
         : { rowCount: 0 };
-      console.info(`limpeza: negócio fantasma removido, ${rowCount} aviso(s) desta execução`);
+      console.info(`limpeza: lead fantasma removido, ${rowCount} aviso(s) desta execução`);
     }
     await pool.end();
   }

@@ -397,7 +397,7 @@ describe("(a) qualquer caminho para `won` abre a comanda, com a opção ligada",
     expect(banco.escritasDe("sales")[0]?.dados).toMatchObject({ attendant_user_id: null });
   });
 
-  it("negócio sem valor: skipped sem inventar dinheiro", async () => {
+  it("lead sem valor: skipped sem inventar dinheiro", async () => {
     const banco = montarBanco({ funil: { comanda_no_ganho: true }, lead: { value_cents: null } });
 
     await fecharPeloBotaoGanhar(banco);
@@ -415,7 +415,7 @@ describe("(a) qualquer caminho para `won` abre a comanda, com a opção ligada",
 });
 
 describe("(b) opção desligada — o padrão de toda organização", () => {
-  it("funil sem a chave: o arrasto fecha o negócio e NADA é escrito no financeiro", async () => {
+  it("funil sem a chave: o arrasto fecha o lead e NADA é escrito no financeiro", async () => {
     const banco = montarBanco({ funil: {} });
 
     await fecharPeloArrasto(banco);
@@ -517,7 +517,7 @@ describe("(d) o evento forjado não abre comanda nem dita o valor", () => {
     };
   }
 
-  it("negócio ganho com valor inventado no payload: a comanda leva o valor DO BANCO", async () => {
+  it("lead ganho com valor inventado no payload: a comanda leva o valor DO BANCO", async () => {
     const banco = montarBanco({ funil: { comanda_no_ganho: true }, lead: { status: "won" } });
     estado.banco = banco.banco;
 
@@ -532,7 +532,7 @@ describe("(d) o evento forjado não abre comanda nem dita o valor", () => {
     });
   });
 
-  it("negócio ABERTO: `lead.won` forjado é ignorado e nada vai ao financeiro", async () => {
+  it("lead ABERTO: `lead.won` forjado é ignorado e nada vai ao financeiro", async () => {
     const banco = montarBanco({ funil: { comanda_no_ganho: true } });
     estado.banco = banco.banco;
 
@@ -548,7 +548,7 @@ describe("(d) o evento forjado não abre comanda nem dita o valor", () => {
     expect(banco.escritasFinanceiras()).toHaveLength(0);
   });
 
-  it("evento de OUTRA organização apontando para este negócio: não acha o negócio e não escreve", async () => {
+  it("evento de OUTRA organização apontando para este lead: não acha o lead e não escreve", async () => {
     // O falso filtra por toda coluna de `.eq` — o negócio existe, ganho, mas
     // na organização ORG. Sem o filtro de tenant na leitura ele seria achado.
     const banco = montarBanco({ funil: { comanda_no_ganho: true }, lead: { status: "won" } });
@@ -575,7 +575,7 @@ describe("(d) o evento forjado não abre comanda nem dita o valor", () => {
  * `nomeDoContato(contact) ?? phone_number`), e `fn_lgpd_cascade_redact_contact`
  * anonimiza `crm_leads.title` mas não toca `sale_items` nem `crm_lead_links`.
  */
-describe("(e) o título do negócio não é copiado para o financeiro", () => {
+describe("(e) o título do lead não é copiado para o financeiro", () => {
   it("nenhuma escrita em comanda, item ou vínculo carrega o título — o item leva o vocabulário do funil", async () => {
     const PESSOAL = "Maria Aparecida 11 98888-7777";
     const banco = montarBanco({ funil: { comanda_no_ganho: true }, lead: { title: PESSOAL } });
@@ -596,7 +596,7 @@ describe("(e) o título do negócio não é copiado para o financeiro", () => {
  * (f) Item 1 da #2475: a moeda do negócio contra a da organização, e o audit
  * da comanda que antes nascia invisível no painel.
  */
-describe("(f) moeda do negócio x moeda da organização + audit da comanda", () => {
+describe("(f) moeda do lead x moeda da organização + audit da comanda", () => {
   it("moeda diferente da da organização: a comanda é PULADA e nada vai ao financeiro", async () => {
     // Negócio em USD numa organização em BRL: abrir a comanda misturaria
     // centavos de duas moedas no mesmo relatório, sem ninguém perceber.

@@ -60,7 +60,7 @@ async function tituloCriadoPara(contato: {
   return db.tabelas.crm_leads[0]?.title;
 }
 
-describe("a automação titula o negócio pelo nome escolhido", () => {
+describe("a automação titula o lead pelo nome escolhido", () => {
   it("o nome da ficha vence o do perfil do WhatsApp", async () => {
     expect(await tituloCriadoPara({ name: "Kaio Gomes", display_name: "🌸 Kaio", phone_number: "+5531988887777" })).toBe(
       "Kaio Gomes",

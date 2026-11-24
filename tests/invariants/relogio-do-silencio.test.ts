@@ -33,9 +33,9 @@ import { sql } from "./gov-helpers";
 /** `true` = quebra o silêncio; `false` = é observação e o relógio segue correndo. */
 const TIPOS: Array<[tipo: string, quebraOSilencio: boolean, porque: string]> = [
   ["ai_turn", true, "a IA falou com o cliente"],
-  ["note", true, "alguém registrou trabalho no negócio"],
+  ["note", true, "alguém registrou trabalho no lead"],
   ["lead_edited", true, "humano mexeu nos dados"],
-  ["stage_changed", true, "humano moveu o negócio"],
+  ["stage_changed", true, "humano moveu o lead"],
   ["next_action_approved", true, "humano decidiu agir"],
   ["send_vetoed", false, "o envio não chegou ao cliente"],
   ["handoff_triggered", false, "passar para humano é promessa, não atendimento"],

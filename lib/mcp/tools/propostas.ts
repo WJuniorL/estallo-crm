@@ -46,7 +46,7 @@ const draftProposalInputShape = {
   lead_id: z
     .string()
     .uuid()
-    .describe("O negócio (lead) desta conversa — vem do contexto do turno."),
+    .describe("O lead (lead) desta conversa — vem do contexto do turno."),
   conversation_id: z
     .string()
     .uuid()
@@ -171,9 +171,9 @@ export const crmDraftProposal: McpToolDefinition<typeof draftProposalInputShape>
   requiresRole: "agent",
   requiresScope: "mcp:write",
   description:
-    "Rascunha uma proposta comercial para o negócio desta conversa. NUNCA envia — só cria o " +
+    "Rascunha uma proposta comercial para o lead desta conversa. NUNCA envia — só cria o " +
     "rascunho para uma pessoa revisar e enviar depois. Use quando o cliente pedir orçamento ou " +
-    "proposta e você já souber o que oferecer. Um negócio só pode ter UM rascunho aberto por vez.",
+    "proposta e você já souber o que oferecer. Um lead só pode ter UM rascunho aberto por vez.",
   inputSchema: draftProposalInputShape,
   handler: async (input, ctx: McpContext) => {
     if (!(await capacidadesDaOrganizacao(ctx.supabase, ctx.organizationId)).includes("propostas")) {
@@ -185,8 +185,8 @@ export const crmDraftProposal: McpToolDefinition<typeof draftProposalInputShape>
       .eq("organization_id", ctx.organizationId)
       .eq("id", input.lead_id)
       .maybeSingle();
-    if (leadErr) return { error: "Não foi possível verificar o negócio agora." };
-    if (!lead) return { error: "Negócio não encontrado nesta organização." };
+    if (leadErr) return { error: "Não foi possível verificar o lead agora." };
+    if (!lead) return { error: "Lead não encontrado nesta organização." };
 
     // §5.3 — um rascunho aberto por negócio. O índice único (migration 0402)
     // é a trava de verdade sob corrida; esta pré-checagem só dá o retorno
@@ -200,7 +200,7 @@ export const crmDraftProposal: McpToolDefinition<typeof draftProposalInputShape>
       .maybeSingle();
     if (rascunhoExistente) {
       return {
-        error: "Este negócio já tem um rascunho de proposta aberto — retome-o em vez de criar outro.",
+        error: "Este lead já tem um rascunho de proposta aberto — retome-o em vez de criar outro.",
         motivo: "rascunho_aberto_existe",
         rascunho_id: rascunhoExistente.id,
       };
@@ -220,7 +220,7 @@ export const crmDraftProposal: McpToolDefinition<typeof draftProposalInputShape>
       .eq("contact_id", lead.contact_id)
       .maybeSingle();
     if (!conversa) {
-      return { error: "Esta conversa não pertence ao contato deste negócio." };
+      return { error: "Esta conversa não pertence ao contato deste lead." };
     }
 
     // C5 — o briefing universal trava no código: sem as 7 categorias e sem a
@@ -339,7 +339,7 @@ export const crmDraftProposal: McpToolDefinition<typeof draftProposalInputShape>
       .single();
     if (error) {
       if ((error as { code?: string }).code === "23505") {
-        return { error: "Este negócio já tem um rascunho de proposta aberto.", motivo: "rascunho_aberto_existe" };
+        return { error: "Este lead já tem um rascunho de proposta aberto.", motivo: "rascunho_aberto_existe" };
       }
       return { error: "Não foi possível criar o rascunho agora." };
     }

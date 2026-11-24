@@ -307,7 +307,7 @@ describe("o funil: E e OU dão listas DIFERENTES", () => {
     expect(applyFilters(leia, { tag: ["vip", "orcamento"] }).map((l) => l.id)).toEqual(["a"]);
   });
 
-  it("o funil casa as DUAS caixas do card (negócio e contato; conversa não tem tag desde a 0659)", () => {
+  it("o funil casa as DUAS caixas do card (lead e contato; conversa não tem tag desde a 0659)", () => {
     const porContato = lead("e", { contact_tags: ["vip", "orcamento"] });
     const porNegocio = lead("f", { tags: ["vip", "orcamento"] });
     expect(applyFilters([porContato, porNegocio], { tag: ["vip", "orcamento"] })).toHaveLength(2);

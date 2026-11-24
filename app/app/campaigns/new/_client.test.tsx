@@ -42,7 +42,7 @@ vi.mock("@/hooks/campanhas/useDestinoDaCampanha", () => ({
   useAgentesPublicados: () => ({ data: [], isLoading: false }),
 }));
 
-const AVISO = /bateu o teto de 20\.000 negócios desta prévia/;
+const AVISO = /bateu o teto de 20\.000 leads desta prévia/;
 
 describe("prévia da nova campanha: o aviso do teto de 20.000", () => {
   beforeEach(() => {

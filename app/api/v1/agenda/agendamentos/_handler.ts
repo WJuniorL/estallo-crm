@@ -1086,7 +1086,7 @@ async function fecharOLaco(
         // do id para o alerta não sair mudo sobre QUEM ficou sem rastro.
         leadId: args.contactId,
         tipo: args.atividade,
-        origem: "agenda (sem negócio aberto para ancorar)",
+        origem: "agenda (sem lead aberto para ancorar)",
         erro: undefined,
       });
     }

@@ -83,7 +83,7 @@ beforeEach(() => {
   vi.mocked(updateLeadHandler).mockReset().mockResolvedValue({ id: NEGOCIO } as never);
 });
 
-describe("a ponte traduz o contato do turno para o negócio aberto", () => {
+describe("a ponte traduz o contato do turno para o lead aberto", () => {
   it("id do contato do turno chega ao handler como o id do NEGÓCIO", async () => {
     const { supabase } = banco([negocio(NEGOCIO)]);
     await executar(supabase, CONTATO, CONTATO);
@@ -94,7 +94,7 @@ describe("a ponte traduz o contato do turno para o negócio aberto", () => {
   // negócio é DESTE contato (`negocioDaEscritaDoTurno`). Sem ela, um id real de
   // outro cliente, no mesmo funil, chegava ao handler e gravava na ficha errada.
   // Ver `tests/unit/escrita-do-agente-mira-o-negocio-do-contato.test.ts`.
-  it("id de negócio DESTE contato passa intacto, conferido pelo contato", async () => {
+  it("id de lead DESTE contato passa intacto, conferido pelo contato", async () => {
     const b = banco([negocio(NEGOCIO)]);
     await executar(b.supabase, CONTATO, NEGOCIO);
     expect(vi.mocked(updateLeadHandler).mock.calls[0]![2]).toBe(NEGOCIO);
@@ -107,14 +107,14 @@ describe("a ponte traduz o contato do turno para o negócio aberto", () => {
 });
 
 describe("quando a tradução não é dela, devolve o id como veio", () => {
-  it("dois negócios abertos: a escolha não é do runtime", async () => {
+  it("dois leads abertos: a escolha não é do runtime", async () => {
     const { supabase } = banco([negocio(NEGOCIO), negocio(OUTRO)]);
     expect(await leadIdDoContatoDoTurno(supabase as never, ORG, CONTATO, CONTATO)).toBeNull();
   });
 
   // Sem empate, `resolveActiveLeadForContact` escolhe o mais recente (OUTRO).
   // A tradução não pode escolher: a escrita cairia num cartão por palpite.
-  it("dois negócios abertos com atividades diferentes: também não escolhe o mais recente", async () => {
+  it("dois leads abertos com atividades diferentes: também não escolhe o mais recente", async () => {
     const { supabase } = banco([negocio(NEGOCIO), negocio(OUTRO, "open", "2026-09-24T02:39:00.000Z")]);
     expect(await leadIdDoContatoDoTurno(supabase as never, ORG, CONTATO, CONTATO)).toBeNull();
   });
@@ -124,7 +124,7 @@ describe("quando a tradução não é dela, devolve o id como veio", () => {
     expect(await leadIdDoContatoDoTurno(supabase as never, ORG, CONTATO, CONTATO)).toBeNull();
   });
 
-  it("contato sem negócio aberto: nada a traduzir", async () => {
+  it("contato sem lead aberto: nada a traduzir", async () => {
     const { supabase } = banco([negocio(NEGOCIO, "won")]);
     expect(await leadIdDoContatoDoTurno(supabase as never, ORG, CONTATO, CONTATO)).toBeNull();
   });

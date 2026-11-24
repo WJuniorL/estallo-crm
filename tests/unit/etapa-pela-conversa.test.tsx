@@ -62,7 +62,7 @@ function bancoFalso(tabelas: Record<string, Linha[]>) {
   return { auth: { getUser: async () => ({ data: { user: { id: "u-1" } }, error: null }) }, from, selects };
 }
 
-describe("crm-summary: a etapa do negócio e as etapas do funil", () => {
+describe("crm-summary: a etapa do lead e as etapas do funil", () => {
   it("devolve stage_id e as etapas ativas na ordem do quadro", async () => {
     const banco = bancoFalso({
       contacts: [{ id: CONTATO, organization_id: ORG }],

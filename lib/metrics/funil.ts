@@ -487,14 +487,14 @@ export function montarRelatorioDeFunil(entrada: {
 
   return {
     janela,
-    base: "Negócios criados OU encerrados na janela; passagens de etapa registradas na janela.",
+    base: "Leads criados OU encerrados na janela; passagens de etapa registradas na janela.",
     conversao,
     dias_ate_fechar: calcularDiasAteFechar(leads, janela, funis),
     origem: { linhas: calcularOrigem(leads, janela), valor_por_moeda: true },
     vazio: semDado
       ? {
           motivo:
-            "Nenhum negócio lido na janela: sem passagem de etapa, sem ganho, perda ou aberto no período. Isto é 'sem dado', não 'conversão zero' — a taxa fica nula até chegar amostra.",
+            "Nenhum lead lido na janela: sem passagem de etapa, sem ganho, perda ou aberto no período. Isto é 'sem dado', não 'conversão zero' — a taxa fica nula até chegar amostra.",
         }
       : null,
   };

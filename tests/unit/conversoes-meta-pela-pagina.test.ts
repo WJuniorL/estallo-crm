@@ -248,7 +248,7 @@ describe("a venda ganha sem valor, de ponta a ponta no handler", () => {
     expect(linha?.detail).toBe("A IA não encontrou o valor da venda dito na conversa.");
   });
 
-  it("valor preenchido no negócio vence: a conversa nem é lida", async () => {
+  it("valor preenchido no lead vence: a conversa nem é lida", async () => {
     vi.mocked(createAdminClient).mockReturnValue(
       fakeAdmin({
         crm_leads: { ...leadGanhoSemValor, value_cents: 250_00 },

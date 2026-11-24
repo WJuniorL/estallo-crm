@@ -63,7 +63,7 @@ describe("a porta para a conversa", () => {
     expect(screen.getByRole("link")).toHaveAttribute("href", "/app/inbox?id=conv-1");
   });
 
-  it("negócio SEM conversa não renderiza nada", () => {
+  it("lead SEM conversa não renderiza nada", () => {
     // Criado à mão ou por webhook: estado normal, não erro. Um "sem conversa"
     // cinza ocuparia o mesmo espaço para não dizer nada.
     const { container } = render(<ConversaNoDossie conversa={null} />);

@@ -70,7 +70,7 @@ beforeAll(async () => {
   const b = await semear(ORG_B, "tool-b");
   const { rows } = await pool.query<{ id: string }>(
     `insert into crm_leads (organization_id, pipeline_id, stage_id, title)
-     values ($1, $2, $3, 'Negócio SECRETO da vítima') returning id`,
+     values ($1, $2, $3, 'Lead SECRETO da vítima') returning id`,
     [ORG_B, b.pipeline, b.stage],
   );
   leadDaVitima = rows[0]!.id;
@@ -90,17 +90,17 @@ describe("a FERRAMENTA que o agente invoca", () => {
     expect(rows[0]!.organization_id).toBe(ORG_B);
   });
 
-  it("`crm_get_lead` NÃO devolve o negócio da outra organização", async () => {
+  it("`crm_get_lead` NÃO devolve o lead da outra organização", async () => {
     const r = await crmGetLead
       .handler({ lead_id: leadDaVitima } as never, ctxDeA())
       .catch(() => null);
     if (r) {
       const lead = (r as { lead?: { organization_id?: string } }).lead;
-      expect(lead?.organization_id, "a ferramenta entregou o negócio de B").not.toBe(ORG_B);
+      expect(lead?.organization_id, "a ferramenta entregou o lead de B").not.toBe(ORG_B);
     }
   });
 
-  it("`crm_update_lead` NÃO reescreve o negócio da outra organização", async () => {
+  it("`crm_update_lead` NÃO reescreve o lead da outra organização", async () => {
     await crmUpdateLead
       .handler(
         { lead_id: leadDaVitima, title: "INVADIDO pela ferramenta" } as never,
@@ -111,8 +111,8 @@ describe("a FERRAMENTA que o agente invoca", () => {
       "select title from crm_leads where id = $1",
       [leadDaVitima],
     );
-    expect(rows[0]!.title, "a ferramenta reescreveu o negócio de B").toBe(
-      "Negócio SECRETO da vítima",
+    expect(rows[0]!.title, "a ferramenta reescreveu o lead de B").toBe(
+      "Lead SECRETO da vítima",
     );
   });
 });

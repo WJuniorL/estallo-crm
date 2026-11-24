@@ -241,7 +241,7 @@ describe("qualificação por etapa", () => {
     });
     expect(mocks.enviar).not.toHaveBeenCalled();
   });
-  it("filtro de canal: só WhatsApp não envia negócio sem conversa vinculada", async () => {
+  it("filtro de canal: só WhatsApp não envia lead sem conversa vinculada", async () => {
     config = { ...config!, channel: "whatsapp" };
     expect(await conversaoDeQualificacaoHandler.handle(row)).toMatchObject({
       detail: "canal_fora_da_regra",

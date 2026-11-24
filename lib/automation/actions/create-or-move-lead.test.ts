@@ -263,7 +263,7 @@ describe("create_or_move_lead — gatilho de contato (#958)", () => {
     };
   }
 
-  it("contato que já tem negócio aberto no funil de destino: MOVE, não duplica", async () => {
+  it("contato que já tem lead aberto no funil de destino: MOVE, não duplica", async () => {
     const db = makeDb({ contacts: [{ id: "contato-1", organization_id: ORG_ID }],
       pipelines: [funilRow({ id: PIPE, name: "Funil" })],
       stages: [ETAPA_ORIGEM, ETAPA_DESTINO],
@@ -282,7 +282,7 @@ describe("create_or_move_lead — gatilho de contato (#958)", () => {
     expect(db.tabelas.crm_leads[0]?.stage_id).toBe("triagem");
   });
 
-  it("contato SEM negócio no funil de destino: cria, como antes", async () => {
+  it("contato SEM lead no funil de destino: cria, como antes", async () => {
     const db = makeDb({ contacts: [{ id: "contato-1", organization_id: ORG_ID }],
       pipelines: [funilRow({ id: PIPE, name: "Funil" })],
       stages: [ETAPA_ORIGEM, ETAPA_DESTINO],
@@ -330,7 +330,7 @@ describe("create_or_move_lead — gatilho de contato (#958)", () => {
  * 2 vermelhos, os dois casos abaixo.
  */
 describe("create_or_move_lead — o contexto publicado é a linha inteira", () => {
-  it("move: as tags do negócio sobrevivem no contexto para a ação seguinte", async () => {
+  it("move: as tags do lead sobrevivem no contexto para a ação seguinte", async () => {
     const db = makeDb({ contacts: [{ id: "contato-1", organization_id: ORG_ID }],
       pipelines: [funilRow({ id: PIPE, name: "Funil" })],
       stages: [ETAPA_ORIGEM, ETAPA_DESTINO],

@@ -33,7 +33,7 @@ describe("converterValorDoCampo — pelo tipo da definição, sem corrigir em si
     expect(converterValorDoCampo(def("text"), "   ").ok).toBe(false);
   });
 
-  it("valor do negócio vira centavos; negativo ou texto não", () => {
+  it("valor do lead vira centavos; negativo ou texto não", () => {
     expect(centavosDoValor("1.500,00")).toBe(150000);
     expect(centavosDoValor("-3")).toBeNull();
     expect(centavosDoValor("abc")).toBeNull();

@@ -105,7 +105,7 @@ describe("o espelho do funil traduz o não-movimento em AÇÃO para o humano (#9
     expect(r.detail).toContain("motivo");
   });
 
-  it("a recusa de negócio NÃO é incidente: não vira `crm_error`", async () => {
+  it("a recusa de lead NÃO é incidente: não vira `crm_error`", async () => {
     const sync = vi.fn(async () => ({ moveu: false as const, motivo: "perda_sem_motivo" as const }));
     const r = await mirrorLeadStageToCrm(
       {} as never,
@@ -135,7 +135,7 @@ describe("o espelho do funil traduz o não-movimento em AÇÃO para o humano (#9
  * linha do banco: prender só o resolvedor deixaria verde quem voltasse a
  * repassar o `lost_reason` lido.
  */
-describe("o negócio reaberto que conserva o motivo antigo (#917)", () => {
+describe("o lead reaberto que conserva o motivo antigo (#917)", () => {
   const LEAD_REABERTO = {
     id: "lead-reaberto",
     organization_id: "org-1",

@@ -72,7 +72,7 @@ export const PAPEIS: Record<PapelDeIa, { rotulo: string; explicacao: string }> =
   },
   entender: {
     rotulo: "Entender a conversa",
-    explicacao: "Ler o que chegou e decidir o que aquilo significa para o negócio.",
+    explicacao: "Ler o que chegou e decidir o que aquilo significa para o lead.",
   },
   proteger: {
     rotulo: "Proteger a operação",
@@ -433,12 +433,12 @@ export const PONTOS_DE_IA: readonly PontoDeIa[] = [
     id: "conversion_value_from_conversation",
     rotulo: "Ler o valor da venda na conversa",
     oQueFaz:
-      "Quando um negócio vindo de anúncio da Meta é ganho sem valor preenchido, lê a conversa e acha o valor e o produto vendidos, para a compra ser reportada à Meta. Só aceita valor que aparece escrito na conversa.",
+      "Quando um lead vindo de anúncio da Meta é ganho sem valor preenchido, lê a conversa e acha o valor e o produto vendidos, para a compra ser reportada à Meta. Só aceita valor que aparece escrito na conversa.",
     papel: "entender",
     exige: { tools: true },
     emissor: "lib/conversoes/valor-da-conversa.ts",
     sintomaDeFalha:
-      "A venda vinda de anúncio fica como pendência 'sem valor' em Configurações › Conversões, e a Meta não recebe a compra até alguém preencher o valor do negócio.",
+      "A venda vinda de anúncio fica como pendência 'sem valor' em Configurações › Conversões, e a Meta não recebe a compra até alguém preencher o valor do lead.",
     registraEm: "llm_calls",
   },
 
@@ -480,7 +480,7 @@ export const PONTOS_DE_IA: readonly PontoDeIa[] = [
     id: "afirmacao_de_fato",
     rotulo: "Conferir afirmações de fato na resposta",
     oQueFaz:
-      "Lê a resposta que o assistente vai enviar e confere, nas evidências consultadas neste turno, se o que ele afirma sobre o negócio está escrito ali — ou se o material diz o contrário.",
+      "Lê a resposta que o assistente vai enviar e confere, nas evidências consultadas neste turno, se o que ele afirma sobre o lead está escrito ali — ou se o material diz o contrário.",
     papel: "proteger",
     exige: {},
     emissor: "lib/ai/decisao/afirmacao-de-fato.ts",
@@ -490,7 +490,7 @@ export const PONTOS_DE_IA: readonly PontoDeIa[] = [
     decisaoRapida: {
       primitiva: "noul",
       oQueOJevFaz:
-        "Lê a resposta que o assistente vai enviar e confere, nas evidências consultadas neste turno, se o que ele afirma sobre o negócio está escrito ali — ou se o material diz o contrário.",
+        "Lê a resposta que o assistente vai enviar e confere, nas evidências consultadas neste turno, se o que ele afirma sobre o lead está escrito ali — ou se o material diz o contrário.",
     },
   },
 

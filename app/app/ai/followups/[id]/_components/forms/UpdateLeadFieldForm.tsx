@@ -46,13 +46,13 @@ export function UpdateLeadFieldForm({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="custom_field">{t("Campo personalizado")}</SelectItem>
-          <SelectItem value="deal_value">{t("Valor do negócio")}</SelectItem>
+          <SelectItem value="deal_value">{t("Valor do lead")}</SelectItem>
           <SelectItem value="contact_field">{t("Campo do contato")}</SelectItem>
         </SelectContent>
       </Select>
       {config.alvo !== "deal_value" && (
         <>
-          <Label htmlFor="update-field-chave">{doContato ? t("Campo do contato") : t("Campo do negócio")}</Label>
+          <Label htmlFor="update-field-chave">{doContato ? t("Campo do contato") : t("Campo do lead")}</Label>
           <Select value={config.chave || undefined} onValueChange={(v) => onChange({ ...config, chave: v })}>
             <SelectTrigger id="update-field-chave" aria-invalid={!config.chave}>
               <SelectValue placeholder={t("Escolha um campo")} />

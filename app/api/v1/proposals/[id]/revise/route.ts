@@ -118,7 +118,7 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
     .single();
   if (novaErr) {
     if ((novaErr as { code?: string }).code === "23505") {
-      return fail("validation_failed", t("Este negócio já tem um rascunho de proposta aberto."), 409, { requestId });
+      return fail("validation_failed", t("Este lead já tem um rascunho de proposta aberto."), 409, { requestId });
     }
     return fail("internal_error", t("Falha ao criar a revisão."), 500, { requestId });
   }

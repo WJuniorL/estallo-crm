@@ -303,7 +303,7 @@ export async function conferirCamposDoNegocio(
   if (!r.ok) {
     registrarFalha(alvo, r.motivo, Date.now(), r.retryAfterMs);
     if (r.motivo !== "sem_credencial") {
-      logger.warn("Jev não respondeu sobre os campos do negócio; o valor foi gravado como antes", {
+      logger.warn("Jev não respondeu sobre os campos do lead; o valor foi gravado como antes", {
         organization_id: e.organizationId,
         motivo: r.motivo,
       });
@@ -319,7 +319,7 @@ export async function conferirCamposDoNegocio(
   });
   if (pareados.some((p) => p.dito === null || p.contrario === null)) {
     registrarFalha(alvo, "resposta_ilegivel", Date.now());
-    logger.warn("Jev respondeu a um campo do negócio fora de uma probabilidade", {
+    logger.warn("Jev respondeu a um campo do lead fora de uma probabilidade", {
       organization_id: e.organizationId,
     });
     await gravarFalha(admin, e, {

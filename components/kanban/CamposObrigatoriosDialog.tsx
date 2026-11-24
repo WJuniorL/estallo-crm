@@ -150,7 +150,7 @@ export function CamposObrigatoriosDialog({
           <DialogTitle>{t("Campos obrigatórios")}</DialogTitle>
           <DialogDescription>
             {t(
-              "Este funil exige alguns dados antes de mover o negócio. Preencha o que falta para continuar.",
+              "Este funil exige alguns dados antes de mover o lead. Preencha o que falta para continuar.",
             )}
           </DialogDescription>
         </DialogHeader>

@@ -603,7 +603,7 @@ async function main(): Promise<void> {
         ["D25", "âncora sem alvo vira TEXTO, não link nem exceção (LGPD, e não é defeito)"],
         ["D26", "lead SEM contato mostra as PRÓPRIAS atividades na timeline"],
         ["D20.pii", "o registro diz QUAL campo mudou e NÃO carrega o valor"],
-        ["D27", "o dossiê de um negócio NÃO mostra as atividades do negócio irmão"],
+        ["D27", "o dossiê de um lead NÃO mostra as atividades do lead irmão"],
         ["D20", "CENÁRIO 20: editar campo salva E aparece na timeline com ator humano"],
         ["D21", "CENÁRIO 21: ação do agente na outra aba entra na timeline ao vivo"],
         ["D23", "o Sheet DESASSINA ao fechar — abrir e fechar N vezes não acumula canal"],
@@ -827,18 +827,18 @@ async function main(): Promise<void> {
     const vazouIrmao = porTexto || porContagem;
     record(
       "D27",
-      "o dossiê de um negócio NÃO mostra as atividades do negócio IRMÃO",
+      "o dossiê de um lead NÃO mostra as atividades do lead IRMÃO",
       timelineCarregou && !vazouIrmao,
       !timelineCarregou
         ? "INCONCLUSIVO: a timeline não carregou nesta rodada"
         : vazouIrmao
-          ? `a atividade do OUTRO negócio do mesmo contato entrou neste dossiê, detectada ` +
+          ? `a atividade do OUTRO lead do mesmo contato entrou neste dossiê, detectada ` +
             `${porTexto ? "pelo TEXTO (apareceu como linha individual)" : ""}` +
             `${porTexto && porContagem ? " e " : ""}` +
             `${porContagem ? `pela CONTAGEM (bloco do time anuncia ${quantasDoTime}, esperado 3)` : ""}` +
             ` — sem marcador dizendo de onde veio. Vazio se lê como "nada aconteceu"; isto se lê ` +
             `como "aconteceu AQUI"`
-          : `só as atividades deste negócio (bloco do time anuncia ${quantasDoTime}, que é o certo)`,
+          : `só as atividades deste lead (bloco do time anuncia ${quantasDoTime}, que é o certo)`,
       timelineCarregou ? undefined : "INCONCLUSIVO",
     );
 

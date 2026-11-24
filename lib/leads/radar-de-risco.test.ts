@@ -103,7 +103,7 @@ function montarAdmin(
 describe("carregaRadarDeRisco — propostas vencidas sem retomada (N3)", () => {
   beforeEach(() => vi.restoreAllMocks());
 
-  it("negócio com proposta VENCIDA e SEM proposta mais nova: entra em propostas_vencidas_sem_retomada", async () => {
+  it("lead com proposta VENCIDA e SEM proposta mais nova: entra em propostas_vencidas_sem_retomada", async () => {
     const { admin } = montarAdmin([
       { id: "prop-1", lead_id: "lead-1", status: "vencida", numero: 1, ano: 2026, valid_until: "2026-01-01", versao: 1, created_at: "2026-01-01T00:00:00Z" },
     ]);
@@ -112,7 +112,7 @@ describe("carregaRadarDeRisco — propostas vencidas sem retomada (N3)", () => {
     expect(radar.propostas_vencidas_sem_retomada[0]).toMatchObject({ proposal_id: "prop-1", numero: 1, ano: 2026 });
   });
 
-  it("negócio com proposta vencida MAS já tem proposta mais nova enviada/aceita: NÃO entra", async () => {
+  it("lead com proposta vencida MAS já tem proposta mais nova enviada/aceita: NÃO entra", async () => {
     const { admin } = montarAdmin([
       { id: "prop-v1", lead_id: "lead-1", status: "vencida", numero: 1, ano: 2026, valid_until: "2026-01-01", versao: 1, created_at: "2026-01-01T00:00:00Z" },
       { id: "prop-v2", lead_id: "lead-1", status: "enviada", numero: 1, ano: 2026, valid_until: "2026-06-01", versao: 2, created_at: "2026-02-01T00:00:00Z" },
@@ -121,7 +121,7 @@ describe("carregaRadarDeRisco — propostas vencidas sem retomada (N3)", () => {
     expect(radar.propostas_vencidas_sem_retomada.map((p) => p.lead_id)).not.toContain("lead-1");
   });
 
-  it("proposta órfã (lead_id nulo): fora da lista — sem negócio, sem linha no radar", async () => {
+  it("proposta órfã (lead_id nulo): fora da lista — sem lead, sem linha no radar", async () => {
     const { admin } = montarAdmin([
       { id: "prop-orfa", lead_id: null, status: "vencida", numero: 1, ano: 2026, valid_until: "2026-01-01", versao: 1, created_at: "2026-01-01T00:00:00Z" },
     ]);
@@ -129,7 +129,7 @@ describe("carregaRadarDeRisco — propostas vencidas sem retomada (N3)", () => {
     expect(radar.propostas_vencidas_sem_retomada).toEqual([]);
   });
 
-  it("negócio com DUAS cadeias (uma vencida antiga, outra em voo mais nova): a cadeia NOVA vence — não entra na lista", async () => {
+  it("lead com DUAS cadeias (uma vencida antiga, outra em voo mais nova): a cadeia NOVA vence — não entra na lista", async () => {
     const { admin } = montarAdmin([
       // Cadeia antiga: chegou a v2, vencida, numero 5 — versao alta mas ANTIGA.
       { id: "prop-cadeia-velha-v2", lead_id: "lead-1", status: "vencida", numero: 5, ano: 2026, valid_until: "2026-01-01", versao: 2, created_at: "2026-01-15T00:00:00Z" },
@@ -140,7 +140,7 @@ describe("carregaRadarDeRisco — propostas vencidas sem retomada (N3)", () => {
     expect(radar.propostas_vencidas_sem_retomada.map((p) => p.lead_id)).not.toContain("lead-1");
   });
 
-  it("negócio FECHADO (fora de crm_leads.status='open') com proposta vencida: NÃO entra", async () => {
+  it("lead FECHADO (fora de crm_leads.status='open') com proposta vencida: NÃO entra", async () => {
     const { admin } = montarAdmin(
       [{ id: "prop-1", lead_id: "lead-fechado", status: "vencida", numero: 1, ano: 2026, valid_until: "2026-01-01", versao: 1, created_at: "2026-01-01T00:00:00Z" }],
       [], // nenhum lead aberto — lead-fechado não está na lista
@@ -209,7 +209,7 @@ describe("carregaRadarDeRisco — propostas esperando revisão (C6)", () => {
     expect(radar.propostas_esperando_revisao).toEqual([]);
   });
 
-  it("órfã sem lead_id com aviso aberto: fora da lista — sem negócio, sem linha no radar", async () => {
+  it("órfã sem lead_id com aviso aberto: fora da lista — sem lead, sem linha no radar", async () => {
     const { admin } = montarAdmin(
       [{ ...RASCUNHO, lead_id: null }],
       [],

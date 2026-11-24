@@ -339,7 +339,7 @@ describe("varredura: a retomada acontece sem ninguém clicar", () => {
         id: `crm_leads:${i}`,
         organization_id: ORG,
         contact_id: `contacts:${i}`,
-        title: `Negócio ${i} com PII`,
+        title: `Lead ${i} com PII`,
       });
     }
     alvo = banco(linhas);

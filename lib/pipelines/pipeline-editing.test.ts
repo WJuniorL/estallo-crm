@@ -87,7 +87,7 @@ describe('validarArquivamento', () => {
     expect(r.ok === false && r.erro).toMatch(/Lead do site/);
   });
 
-  it('permite arquivar funil COM negócios — o histórico continua de pé', () => {
+  it('permite arquivar funil COM leads — o histórico continua de pé', () => {
     expect(validarArquivamento(funis, 'f2', { ...semDependencia, negocios: 42 }).ok).toBe(true);
   });
 
@@ -150,13 +150,13 @@ describe('nomeOcupadoPorAtivo', () => {
 });
 
 describe('podeExcluirDeVez', () => {
-  it('recusa excluir funil com negócios, oferecendo arquivar', () => {
+  it('recusa excluir funil com leads, oferecendo arquivar', () => {
     const r = podeExcluirDeVez(funis, 'f2', { ...semDependencia, negocios: 3 });
     expect(r.ok).toBe(false);
     expect(r.ok === false && r.erro).toMatch(/arquiv/i);
   });
 
-  it('funil ATIVO com negócios → segue mandando arquivar, que é a porta certa de quem tem lista viva', () => {
+  it('funil ATIVO com leads → segue mandando arquivar, que é a porta certa de quem tem lista viva', () => {
     const r = podeExcluirDeVez(funis, 'f2', { ...semDependencia, negocios: 3 });
     expect(r.ok).toBe(false);
     expect(r.ok === false && r.erro).toMatch(/Arquive em vez de excluir/);
@@ -168,7 +168,7 @@ describe('podeExcluirDeVez', () => {
    * mandar "arquive em vez de excluir" para quem está olhando um funil que já
    * está arquivado é o mesmo beco sem saída de onde a issue nasceu.
    */
-  it('funil JÁ arquivado com negócios → a recusa não manda arquivar de novo', () => {
+  it('funil JÁ arquivado com leads → a recusa não manda arquivar de novo', () => {
     const arquivados = funis.map((f) => (f.id === 'f2' ? { ...f, is_archived: true } : f));
     const r = podeExcluirDeVez(arquivados, 'f2', { ...semDependencia, negocios: 3 });
     expect(r.ok).toBe(false);
@@ -176,7 +176,7 @@ describe('podeExcluirDeVez', () => {
     expect(erro).not.toMatch(/Arquive em vez de excluir/);
     expect(erro).toMatch(/já está no arquivo/i);
     expect(erro).toMatch(/tire-o do arquivo/i);
-    expect(erro).toMatch(/3 negócios/);
+    expect(erro).toMatch(/3 leads/);
   });
 
   it('permite excluir o funil criado por engano — zero de tudo', () => {

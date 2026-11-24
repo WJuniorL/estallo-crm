@@ -64,7 +64,7 @@ describe("a escrita entrega a hora local sem alterar instantes ou estado", () =>
       fim_quando: "quarta-feira 03/07 às 17:30",
     });
   });
-  it("uma recusa de negócio não ganha horário nem sucesso fictício", async () => {
+  it("uma recusa de lead não ganha horário nem sucesso fictício", async () => {
     const { ApiError } = await import("@/lib/api/types");
     vi.mocked(h.alterarAgendamentoHandler).mockRejectedValue(
       new ApiError(422, "agenda_horario_indisponivel", undefined, "test"),

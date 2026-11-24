@@ -163,7 +163,7 @@ describe("0071 — o banco exige lastro de quem afirma ser a IA", () => {
     ).toBe("6"); // 4 novas + as 2 legadas degradadas/backfilladas
   });
 
-  it("'lead' não é ator: o negócio não fala, a pessoa fala ('contact')", () => {
+  it("'lead' não é ator: o lead não fala, a pessoa fala ('contact')", () => {
     expect(constraintViolada(insere("lead", "null"))).toBe("crm_lead_activities_actor_kind_check");
   });
 });
@@ -209,7 +209,7 @@ describe("0071 — LGPD: o porquê morre junto, o lastro fica", () => {
       on conflict (id) do nothing;
 
       insert into crm_leads (id, organization_id, pipeline_id, stage_id, title, contact_id)
-      values ('${LEAD_PII}', '${ORG}', '${PIPELINE}', '${STAGE_A}', 'Negócio do Fulano', '${CONTATO}')
+      values ('${LEAD_PII}', '${ORG}', '${PIPELINE}', '${STAGE_A}', 'Lead do Fulano', '${CONTATO}')
       on conflict (id) do nothing;
 
       -- reason com PII (é texto livre exibido na timeline) e evidence com ids.

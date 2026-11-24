@@ -98,7 +98,7 @@ async function moverParaOutroFunil(): Promise<ApiError> {
   throw new Error("esperava a recusa de fronteira de funil, e o handler não recusou");
 }
 
-describe("mover um negócio para etapa de OUTRO funil, pelo handler", () => {
+describe("mover um lead para etapa de OUTRO funil, pelo handler", () => {
   it("recusa com 422 `pipeline_immutable_use_clone`", async () => {
     const err = await moverParaOutroFunil();
     expect(err.status).toBe(422);

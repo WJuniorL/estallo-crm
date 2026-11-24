@@ -139,7 +139,7 @@ describe("patchDePapel — só o que muda viaja", () => {
   });
 });
 
-describe("destinosPossiveis — para onde os negócios podem ir", () => {
+describe("destinosPossiveis — para onde os leads podem ir", () => {
   it("exclui a própria etapa, a de fechamento e a de perda", () => {
     expect(destinosPossiveis(ETAPAS, "e1").map((e) => e.id)).toEqual(["e2"]);
   });
@@ -168,13 +168,13 @@ describe("destinosPossiveis — para onde os negócios podem ir", () => {
 });
 
 describe("contagemDeNegocios — a tela recompõe a frase, então pluraliza", () => {
-  it("um negócio não vira «1 negócios»", () => {
-    expect(contagemDeNegocios(1)).toBe("1 negócio");
+  it("um lead não vira «1 leads»", () => {
+    expect(contagemDeNegocios(1)).toBe("1 lead");
   });
 
   it("zero e muitos ficam no plural", () => {
-    expect(contagemDeNegocios(0)).toBe("0 negócios");
-    expect(contagemDeNegocios(38)).toBe("38 negócios");
+    expect(contagemDeNegocios(0)).toBe("0 leads");
+    expect(contagemDeNegocios(38)).toBe("38 leads");
   });
 });
 
@@ -431,7 +431,7 @@ describe("StagesSection — arquivar", () => {
     );
   });
 
-  it("com negócios: pergunta o destino com a CONTAGEM do servidor e não deixa arquivar sem ele", async () => {
+  it("com leads: pergunta o destino com a CONTAGEM do servidor e não deixa arquivar sem ele", async () => {
     const user = userEvent.setup();
     vi.mocked(apiClient.delete).mockRejectedValueOnce(
       new ApiError(
@@ -439,7 +439,7 @@ describe("StagesSection — arquivar", () => {
         "unprocessable_entity",
         { negocios: 38, precisa_destino: true },
         "r",
-        "A etapa «Carrinho abandonado» tem 38 negócios. Escolha para qual etapa eles vão antes de arquivá-la.",
+        "A etapa «Carrinho abandonado» tem 38 leads. Escolha para qual etapa eles vão antes de arquivá-la.",
       ),
     );
     montar();
@@ -449,7 +449,7 @@ describe("StagesSection — arquivar", () => {
     await user.click(screen.getByTestId("arquivar-confirmar-e1"));
 
     expect(await screen.findByTestId("arquivar-pergunta-e1")).toHaveTextContent(
-      "38 negócios estão nesta etapa. Para onde eles vão?",
+      "38 leads estão nesta etapa. Para onde eles vão?",
     );
     // ⭐ Sem destino escolhido, arquivar NÃO é oferecido: perder o rastro de 38
     // negócios não pode ser um clique de distância.
@@ -470,12 +470,12 @@ describe("StagesSection — arquivar", () => {
     );
   });
 
-  it("com negócios e SEM destino possível: diz o beco em vez de oferecer um seletor vazio", async () => {
+  it("com leads e SEM destino possível: diz o beco em vez de oferecer um seletor vazio", async () => {
     const user = userEvent.setup();
     const soDesfecho: EtapaDoFunil[] = [ETAPAS[0]!, ETAPAS[2]!, ETAPAS[3]!];
     vi.mocked(apiClient.get).mockResolvedValue({ data: estado({}, soDesfecho) });
     vi.mocked(apiClient.delete).mockRejectedValue(
-      new ApiError(422, "unprocessable_entity", { negocios: 4, precisa_destino: true }, "r", "…tem 4 negócios…"),
+      new ApiError(422, "unprocessable_entity", { negocios: 4, precisa_destino: true }, "r", "…tem 4 leads…"),
     );
     montar();
     await screen.findByTestId("nome-e1");
@@ -501,7 +501,7 @@ describe("StagesSection — arquivar", () => {
    * oferece mover 12 negócios fechados para outra coluna — operação que a API
    * recusaria de novo, deixando o usuário num laço sem explicação.
    */
-  it("arquivar a etapa de fechamento COM negócios: explica, e não pergunta destino nenhum", async () => {
+  it("arquivar a etapa de fechamento COM leads: explica, e não pergunta destino nenhum", async () => {
     const user = userEvent.setup();
     vi.mocked(apiClient.delete).mockRejectedValue(
       new ApiError(
@@ -509,7 +509,7 @@ describe("StagesSection — arquivar", () => {
         "unprocessable_entity",
         { negocios: 12, precisa_destino: false },
         "r",
-        "«Pago» é a etapa de ganho deste funil. Marque OUTRA etapa como de ganho antes de arquivar esta — senão os negócios continuariam indo parar numa coluna fora do quadro.",
+        "«Pago» é a etapa de ganho deste funil. Marque OUTRA etapa como de ganho antes de arquivar esta — senão os leads continuariam indo parar numa coluna fora do quadro.",
       ),
     );
     montar();
@@ -554,10 +554,10 @@ describe("StagesSection — arquivar", () => {
     expect(screen.queryByTestId("arquivar-perde-passo-e1")).not.toBeInTheDocument();
   });
 
-  it("com UM negócio a frase não vira «1 negócios estão»", async () => {
+  it("com UM lead a frase não vira «1 leads estão»", async () => {
     const user = userEvent.setup();
     vi.mocked(apiClient.delete).mockRejectedValue(
-      new ApiError(422, "unprocessable_entity", { negocios: 1, precisa_destino: true }, "r", "…tem 1 negócio…"),
+      new ApiError(422, "unprocessable_entity", { negocios: 1, precisa_destino: true }, "r", "…tem 1 lead…"),
     );
     montar();
     await screen.findByTestId("nome-e1");
@@ -565,8 +565,8 @@ describe("StagesSection — arquivar", () => {
     await user.click(screen.getByTestId("arquivar-e1"));
     await user.click(screen.getByTestId("arquivar-confirmar-e1"));
     const pergunta = await screen.findByTestId("arquivar-pergunta-e1");
-    expect(pergunta).toHaveTextContent("1 negócio está nesta etapa. Para onde ele vai?");
-    expect(pergunta).not.toHaveTextContent("1 negócios");
+    expect(pergunta).toHaveTextContent("1 lead está nesta etapa. Para onde ele vai?");
+    expect(pergunta).not.toHaveTextContent("1 leads");
   });
 
   /**
@@ -575,7 +575,7 @@ describe("StagesSection — arquivar", () => {
    * chegar ao usuário inteira — a versão anterior a trocava por "para onde eles
    * vão?" e o motivo real só aparecia um passo depois.
    */
-  it("recusa que NÃO pede destino chega inteira, mesmo com negócios na etapa", async () => {
+  it("recusa que NÃO pede destino chega inteira, mesmo com leads na etapa", async () => {
     const user = userEvent.setup();
     vi.mocked(apiClient.delete).mockRejectedValue(
       new ApiError(
@@ -829,7 +829,7 @@ describe("taxa histórica por etapa — a contagem ao lado do campo (#1753)", ()
     tempo_na_etapa: {
       medida: "etapa atual",
       ancora: "crm_leads.stage_changed_at (created_at de reserva)",
-      base: "negócios que estão na etapa AGORA — fora da janela de dias",
+      base: "leads que estão na etapa AGORA — fora da janela de dias",
       amostra: 3,
       limite: 1000,
       truncado: false,
@@ -874,19 +874,19 @@ describe("taxa histórica por etapa — a contagem ao lado do campo (#1753)", ()
     montarTaxa();
     const linha = await screen.findByTestId("taxa-e1");
     expect(linha).toHaveTextContent(
-      "20 negócios encerrados passaram por esta etapa; 8 foram ganhos (40%).",
+      "20 leads encerrados passaram por esta etapa; 8 foram ganhos (40%).",
     );
     expect(linha).toHaveTextContent("Período: de 03/10/2025 a 03/10/2026");
     // A etapa certa: a de Proposta (e2) tem a conta DELA, não esta.
-    expect(screen.getByTestId("taxa-e2")).toHaveTextContent("7 negócios");
-    expect(screen.getByTestId("taxa-e2")).not.toHaveTextContent("20 negócios");
+    expect(screen.getByTestId("taxa-e2")).toHaveTextContent("7 leads");
+    expect(screen.getByTestId("taxa-e2")).not.toHaveTextContent("20 leads");
   });
 
   it("abaixo da amostra a contagem fica e o convite some", async () => {
     montarTaxa();
     const linha = await screen.findByTestId("taxa-e2");
     expect(linha).toHaveTextContent(
-      "7 negócios encerrados passaram por esta etapa; 3 foram ganhos (43%). Poucos casos para sugerir.",
+      "7 leads encerrados passaram por esta etapa; 3 foram ganhos (43%). Poucos casos para sugerir.",
     );
     expect(screen.queryByTestId("usar-taxa-e2")).not.toBeInTheDocument();
     expect(screen.getByTestId("usar-taxa-e1")).toBeInTheDocument();
@@ -896,7 +896,7 @@ describe("taxa histórica por etapa — a contagem ao lado do campo (#1753)", ()
     montarTaxa();
     const semDados = await screen.findByTestId("taxa-e5");
     expect(semDados).toHaveTextContent(
-      "Sem dados no período — nenhum negócio encerrado passou por esta etapa.",
+      "Sem dados no período — nenhum lead encerrado passou por esta etapa.",
     );
     expect(semDados).not.toHaveTextContent("0%");
     expect(screen.queryByTestId("usar-taxa-e5")).not.toBeInTheDocument();
@@ -918,24 +918,24 @@ describe("taxa histórica por etapa — a contagem ao lado do campo (#1753)", ()
     montarTaxa();
     const linha = await screen.findByTestId("tempo-etapa-e1");
     expect(linha).toHaveTextContent(
-      "2 negócios nesta etapa agora — mediana de 216 h desde a entrada (stage_changed_at).",
+      "2 leads nesta etapa agora — mediana de 216 h desde a entrada (stage_changed_at).",
     );
     // Etapa vazia: sem frase, e nunca «0 h».
     expect(screen.queryByTestId("tempo-etapa-e2")).not.toBeInTheDocument();
     // Ganho/perda não esperam: a coluna não segura trabalho em curso.
     expect(screen.queryByTestId("tempo-etapa-e3")).not.toBeInTheDocument();
     // E nada disso muda a taxa histórica da mesma etapa.
-    expect(screen.getByTestId("taxa-e1")).toHaveTextContent("20 negócios encerrados passaram");
+    expect(screen.getByTestId("taxa-e1")).toHaveTextContent("20 leads encerrados passaram");
   });
 
   /**
    * O bloco bateu o teto de leitura: a frase avisa que é amostra — com a frase
    * DELE, sem «período», porque esta medida não tem janela.
    */
-  it("bloco truncado avisa que cobre só parte dos negócios abertos, sem falar em período", async () => {
+  it("bloco truncado avisa que cobre só parte dos leads abertos, sem falar em período", async () => {
     montarTaxa({ ...RESPOSTA, tempo_na_etapa: { ...RESPOSTA.tempo_na_etapa, truncado: true } });
     const linha = await screen.findByTestId("tempo-etapa-e1");
-    expect(linha).toHaveTextContent("Amostra limitada: este número cobre só parte dos negócios abertos do funil.");
+    expect(linha).toHaveTextContent("Amostra limitada: este número cobre só parte dos leads abertos do funil.");
     expect(linha).not.toHaveTextContent("período");
   });
 

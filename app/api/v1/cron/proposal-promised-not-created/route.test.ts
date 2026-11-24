@@ -42,7 +42,7 @@ describe("encontrarPromessasSemProposta", () => {
     expect(r).toHaveLength(0);
   });
 
-  it("tarefa sem lead_id (negócio ambíguo na hora de criar): não sinaliza — não há onde apontar o aviso", () => {
+  it("tarefa sem lead_id (lead ambíguo na hora de criar): não sinaliza — não há onde apontar o aviso", () => {
     const r = encontrarPromessasSemProposta(
       { tarefas: [{ id: "t1", organization_id: "org-1", lead_id: null, source_kind: "promised_proposal", due_date: "2026-09-01T00:00:00Z", status: "pending", created_at: "2026-08-25T00:00:00Z" }], propostas: [], orgsLigadas: new Set(["org-1"]) },
       new Date("2026-09-17"),

@@ -13,7 +13,7 @@ const CONTATO_DE_EXEMPLO: Record<string, string> = {
   primeiro_nome: "Maria",
   telefone: "+55 11 99999-0000",
   email: "maria@exemplo.com",
-  "lead.title": "Negócio de exemplo",
+  "lead.title": "Lead de exemplo",
   volta: "1",
   voltas: "3",
 };

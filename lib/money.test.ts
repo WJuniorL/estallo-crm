@@ -170,10 +170,10 @@ describe("MOEDAS_SERVIDAS — a lista que a tela oferece", () => {
   });
 });
 
-describe("formatValorDoNegocio — a régua do negócio é ×100 em qualquer moeda", () => {
+describe("formatValorDoNegocio — a régua do lead é ×100 em qualquer moeda", () => {
   const semNbsp = (t: string) => t.replace(/[\u00a0\u202f]/g, " ");
 
-  it("⭐ guarani: 12.500.000 no negócio é ₲125.000, não cem vezes mais", () => {
+  it("⭐ guarani: 12.500.000 no lead é ₲125.000, não cem vezes mais", () => {
     expect(semNbsp(formatValorDoNegocio(12_500_000, "PYG"))).toBe("Gs. 125.000");
     expect(semNbsp(formatValorDoNegocio(25_000_000, "PYG"))).toBe("Gs. 250.000");
   });

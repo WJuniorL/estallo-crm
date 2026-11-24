@@ -128,7 +128,7 @@ function novaExcecao(quem: string, dono: string, dia: number): boolean {
   );
 }
 
-describe("tipos de agendamento — configuração do negócio, escreve manager+", () => {
+describe("tipos de agendamento — configuração do lead, escreve manager+", () => {
   it("o agent NÃO cria um tipo de agendamento", () => {
     expect(novoTipo(AGENT, "tipo-do-agent")).toBe(false);
   });

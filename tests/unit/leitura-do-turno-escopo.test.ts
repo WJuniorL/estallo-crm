@@ -220,7 +220,7 @@ describe("sem contato do turno, nada muda", () => {
 
 // Controle 2: a proteção de ESCRITA (#1758) continua funcionando — esta mudança
 // não toca em `negocioDaEscritaDoTurno`.
-describe("a escrita continua mirando só o negócio do contato da conversa", () => {
+describe("a escrita continua mirando só o lead do contato da conversa", () => {
   type Negocio = { id: string; status: string };
 
   /** `crm_leads` responde por CONTATO (a conferência) e por ID (o escopo). */
@@ -261,19 +261,19 @@ describe("a escrita continua mirando só o negócio do contato da conversa", () 
     );
   }
 
-  it("escrita com lead que não é deste contato e este contato sem negócio: recusa, sem chegar ao handler", async () => {
+  it("escrita com lead que não é deste contato e este contato sem lead: recusa, sem chegar ao handler", async () => {
     const r = await escrever(banco([]), NEGOCIO_DE_OUTRO);
     expect(updateLeadHandler).not.toHaveBeenCalled();
     expect(r).toMatchObject({ permitido: false, motivo: "sem_negocio" });
   });
 
-  it("lead de OUTRO cliente num contato com um negócio aberto: trocado pelo negócio DESTE contato", async () => {
+  it("lead de OUTRO cliente num contato com um lead aberto: trocado pelo lead DESTE contato", async () => {
     const r = await escrever(banco([{ id: NEGOCIO_DA_CONVERSA, status: "open" }]), NEGOCIO_DE_OUTRO);
     expect(vi.mocked(updateLeadHandler).mock.calls[0]![2]).toBe(NEGOCIO_DA_CONVERSA);
     expect(r).toMatchObject({ lead: { id: NEGOCIO_DA_CONVERSA } });
   });
 
-  it("lead_id que é o contato do turno ainda vira o negócio aberto dele", async () => {
+  it("lead_id que é o contato do turno ainda vira o lead aberto dele", async () => {
     const r = await escrever(banco([{ id: NEGOCIO_DA_CONVERSA, status: "open" }]), DA_CONVERSA);
     expect(vi.mocked(updateLeadHandler).mock.calls[0]![2]).toBe(NEGOCIO_DA_CONVERSA);
     expect(r).toMatchObject({ lead: { id: NEGOCIO_DA_CONVERSA } });

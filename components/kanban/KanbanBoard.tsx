@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@/hooks/i18n/useT";
@@ -24,6 +24,8 @@ import type { BoardData, Pipeline, Stage } from "@/lib/kanban/types";
 import { StageColumn } from "./StageColumn";
 import { LeadDossier } from "./LeadDossier";
 import { RetomarComoNovoNegocioDialog } from "./RetomarComoNovoNegocioDialog";
+import { LoseLeadDialog } from "./LoseLeadDialog";
+import type { MoveArgs } from "@/hooks/kanban/useMoveCard";
 import { camposDoFunil } from "@/lib/leads/campos-do-funil";
 import { ordenarLeads, type OrdenacaoDoFunil } from "@/lib/kanban/ordenacao";
 
@@ -121,6 +123,62 @@ export function KanbanBoard({
   const moveCard = useMoveCard(pipelineId, {
     onCamposFaltando: setRecusaDeCampos,
   });
+
+  /**
+   * ARRASTAR PARA A ETAPA DE PERDA PEDE O MOTIVO NA HORA.
+   *
+   * O servidor exige motivo para perder, e o arrasto não tinha onde pedi-lo:
+   * o card voltava com um toast mandando usar o menu. Agora o card cai na
+   * etapa de perda (só na tela), a janela de motivo abre, e:
+   *   - Confirmar → o MESMO move do arrasto, com o motivo junto;
+   *   - Cancelar  → o card volta para a etapa e a posição de onde saiu.
+   * Nada é gravado antes do Confirmar.
+   */
+  const [perdaPendente, setPerdaPendente] = useState<{
+    args: MoveArgs;
+    origem: { stageId: string; posicao: number };
+  } | null>(null);
+  const perdaConfirmada = useRef(false);
+  const pedirMotivoDaPerda = useCallback(
+    (lead: Lead, args: MoveArgs) => {
+      perdaConfirmada.current = false;
+      qc.setQueryData<BoardData>(["board", pipelineId], (atual) =>
+        atual
+          ? {
+              ...atual,
+              leads: atual.leads.map((l) =>
+                l.id === lead.id
+                  ? { ...l, stage_id: args.stageId, position_in_stage: args.positionInStage }
+                  : l,
+              ),
+            }
+          : atual,
+      );
+      setPerdaPendente({
+        args,
+        origem: { stageId: lead.stage_id, posicao: lead.position_in_stage },
+      });
+    },
+    [qc, pipelineId],
+  );
+  const cancelarPerda = useCallback(() => {
+    if (perdaPendente && !perdaConfirmada.current) {
+      const { args, origem } = perdaPendente;
+      qc.setQueryData<BoardData>(["board", pipelineId], (atual) =>
+        atual
+          ? {
+              ...atual,
+              leads: atual.leads.map((l) =>
+                l.id === args.leadId
+                  ? { ...l, stage_id: origem.stageId, position_in_stage: origem.posicao }
+                  : l,
+              ),
+            }
+          : atual,
+      );
+    }
+    setPerdaPendente(null);
+  }, [perdaPendente, qc, pipelineId]);
   const { data: members } = useAssignableMembers(true);
   const ownerNames = useMemo(
     () => new Map((members ?? []).map((m) => [m.user_id, m.full_name])),
@@ -236,6 +294,24 @@ export function KanbanBoard({
     [data?.stages, renomear],
   );
 
+  // O destino do arrasto decide o caminho: reabrir pede escolha, perder pede
+  // motivo, o resto move direto.
+  const mover = useCallback(
+    (lead: Lead, args: MoveArgs) => {
+      const destino = data?.stages.find((s) => s.id === args.stageId);
+      if (pedeEscolhaDeReabertura(lead.status, destino)) {
+        setRetomada({ leadId: lead.id, stageId: args.stageId, args });
+        return;
+      }
+      if (destino?.is_lost && lead.status !== "lost") {
+        pedirMotivoDaPerda(lead, args);
+        return;
+      }
+      moveCard.mutate(args);
+    },
+    [data?.stages, moveCard, pedirMotivoDaPerda],
+  );
+
   const handleDragEnd = useCallback(
     (result: DropResult) => {
       if (!data || !grouped) return;
@@ -271,16 +347,7 @@ export function KanbanBoard({
           positionInStage: midpoint(ultima, null),
           expectedUpdatedAt: lead.updated_at,
         };
-        if (
-          pedeEscolhaDeReabertura(
-            lead.status,
-            data.stages.find((s) => s.id === destStageId),
-          )
-        ) {
-          setRetomada({ leadId: lead.id, stageId: destStageId, args });
-          return;
-        }
-        moveCard.mutate(args);
+        mover(lead, args);
         return;
       }
 
@@ -325,18 +392,9 @@ export function KanbanBoard({
       };
       // Ganho/perdido solto numa etapa aberta: o card não sai do lugar até a
       // escolha "Criar novo lead × Mover lead existente" (30/10/2026).
-      if (
-        pedeEscolhaDeReabertura(
-          lead.status,
-          data.stages.find((s) => s.id === destStageId),
-        )
-      ) {
-        setRetomada({ leadId: lead.id, stageId: destStageId, args });
-        return;
-      }
-      moveCard.mutate(args);
+      mover(lead, args);
     },
-    [data, grouped, moveCard, qc, pipelineId, ordenacao],
+    [data, grouped, qc, pipelineId, ordenacao, mover],
   );
 
   if (isLoading) {
@@ -433,6 +491,18 @@ export function KanbanBoard({
           });
         }}
       />
+      {perdaPendente && (
+        <LoseLeadDialog
+          open
+          onOpenChange={(aberto) => !aberto && cancelarPerda()}
+          leadId={perdaPendente.args.leadId}
+          pipelineId={pipelineId}
+          aoConfirmar={async (motivo) => {
+            await moveCard.mutateAsync({ ...perdaPendente.args, lostReason: motivo });
+            perdaConfirmada.current = true;
+          }}
+        />
+      )}
       {retomada && (
         <RetomarComoNovoNegocioDialog
           open

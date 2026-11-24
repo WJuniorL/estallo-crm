@@ -3,7 +3,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api/client";
 import { showApiError } from "@/components/feedback/ApiErrorToast";
 import type { Conversation } from "@/lib/types/messaging";
-import { CHAVE_DE_STATUS } from "@/hooks/inbox/useCloseConversation";
 
 interface ClaimArgs {
   conversation_id: string;
@@ -14,7 +13,6 @@ export function useClaimConversation() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationKey: CHAVE_DE_STATUS,
     mutationFn: async (args: ClaimArgs) =>
       apiClient.post<{ data: Conversation }>(
         `/api/v1/conversations/${args.conversation_id}/claim`,

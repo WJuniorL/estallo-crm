@@ -22,6 +22,12 @@ interface LoseLeadDialogProps {
   onOpenChange: (open: boolean) => void;
   leadId: string;
   pipelineId: string;
+  /**
+   * Quem já tem o destino em mãos (o arrasto para uma etapa de perda) grava o
+   * motivo pelo próprio caminho — o move, na etapa exata em que o card caiu.
+   * Sem isto, a janela fecha o negócio por `/lose`.
+   */
+  aoConfirmar?: (motivo: string) => Promise<unknown>;
 }
 
 const MAX_LEN = 500;
@@ -31,11 +37,14 @@ export function LoseLeadDialog({
   onOpenChange,
   leadId,
   pipelineId,
+  aoConfirmar,
 }: LoseLeadDialogProps) {
   const t = useT();
   const [reasonCode, setReasonCode] = useState<string>("");
   const [otherText, setOtherText] = useState("");
   const mutation = useLoseLead(pipelineId);
+  const [confirmando, setConfirmando] = useState(false);
+  const salvando = mutation.isPending || confirmando;
 
   // O funil deste card manda na lista: o que ele tem cadastrado substitui o
   // padrão do produto — ver lib/leads/motivos-de-perda-do-funil.ts.
@@ -83,12 +92,17 @@ export function LoseLeadDialog({
     finalReason.length === 0 ||
     finalReason.length > MAX_LEN ||
     outroRecusado ||
-    mutation.isPending;
+    salvando;
 
   const handleSubmit = async () => {
     if (disabled) return;
     try {
-      await mutation.mutateAsync({ leadId, lostReason: finalReason });
+      if (aoConfirmar) {
+        setConfirmando(true);
+        await aoConfirmar(finalReason).finally(() => setConfirmando(false));
+      } else {
+        await mutation.mutateAsync({ leadId, lostReason: finalReason });
+      }
       setReasonCode("");
       setOtherText("");
       onOpenChange(false);
@@ -179,12 +193,12 @@ export function LoseLeadDialog({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={mutation.isPending}
+            disabled={salvando}
           >
             {t("Cancelar")}
           </Button>
           <Button onClick={handleSubmit} disabled={disabled}>
-            {mutation.isPending ? t("Salvando...") : t("Confirmar")}
+            {salvando ? t("Salvando...") : t("Confirmar")}
           </Button>
         </DialogFooter>
       </DialogContent>

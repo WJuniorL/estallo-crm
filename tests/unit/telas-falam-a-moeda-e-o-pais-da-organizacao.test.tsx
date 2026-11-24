@@ -62,7 +62,7 @@ const XISTAO: PerfilDoPais = {
 
 const NEGOCIO = {
   id: "11111111-1111-4111-8111-111111111111",
-  title: "Negócio",
+  title: "Lead",
   description: null,
   value_cents: 24990,
   currency: "EUR",
@@ -96,8 +96,8 @@ function campoDoValor() {
   return { valor: campo.value, simbolo: campo.parentElement?.textContent ?? "" };
 }
 
-describe("o valor do negócio usa a moeda certa — no rótulo e no símbolo do campo", () => {
-  it("negócio JÁ GRAVADO manda na moeda, mesmo se a empresa trocou depois", () => {
+describe("o valor do lead usa a moeda certa — no rótulo e no símbolo do campo", () => {
+  it("lead JÁ GRAVADO manda na moeda, mesmo se a empresa trocou depois", () => {
     // Trocar a moeda da organização não reescreve o que nasceu antes: o cartão
     // e o dossiê mostram a persistida, e a edição precisa concordar com eles.
     orgAtiva.atual = { currency: "BRL", country: null };
@@ -107,7 +107,7 @@ describe("o valor do negócio usa a moeda certa — no rótulo e no símbolo do 
     expect(screen.queryByText(/R\$/)).toBeNull();
   });
 
-  it("moeda SEM centavos: o campo usa a régua do negócio (×100), não a das unidades menores", () => {
+  it("moeda SEM centavos: o campo usa a régua do lead (×100), não a das unidades menores", () => {
     // `value_cents` guarda ×100 em qualquer moeda; `formatCents` lê unidades
     // menores. Em guarani as duas divergem por cem, e o eco mostraria
     // `Gs. 12.500.000` embaixo de um card que diz `Gs. 125.000`.
@@ -121,7 +121,7 @@ describe("o valor do negócio usa a moeda certa — no rótulo e no símbolo do 
     expect(campoDoValor().valor).toBe("125.000,00");
   });
 
-  it("negócio sem moeda gravada cai na da organização", () => {
+  it("lead sem moeda gravada cai na da organização", () => {
     orgAtiva.atual = { currency: "EUR", country: null };
     render(<LeadFieldsForm lead={{ ...(NEGOCIO as object), currency: null } as never} pipelineId={FUNIL} />);
     expect(screen.getByText(/Valor \(€\)/)).toBeTruthy();
@@ -134,7 +134,7 @@ describe("o valor do negócio usa a moeda certa — no rótulo e no símbolo do 
     expect(campoDoValor()).toEqual({ valor: "249,90", simbolo: "R$" });
   });
 
-  it("negócio NOVO nasce na moeda da organização", () => {
+  it("lead NOVO nasce na moeda da organização", () => {
     orgAtiva.atual = { currency: "EUR", country: null };
     render(
       <NewLeadDialog

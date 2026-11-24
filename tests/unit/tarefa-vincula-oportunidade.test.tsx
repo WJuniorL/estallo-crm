@@ -23,8 +23,8 @@ function renderForm(aoSalvar = vi.fn(async () => undefined), leadId?: string) {
   return aoSalvar;
 }
 
-describe("Tarefa vinculada a uma oportunidade", () => {
-  it("escolhe o negócio pela busca e envia o lead_id", async () => {
+describe("Tarefa vinculada a um lead", () => {
+  it("escolhe o lead pela busca e envia o lead_id", async () => {
     const aoSalvar = renderForm();
     await userEvent.type(screen.getByLabelText("O que precisa ser feito"), "Confirmar pagamento");
     await userEvent.click(screen.getByTestId("tarefa-escolher-negocio"));

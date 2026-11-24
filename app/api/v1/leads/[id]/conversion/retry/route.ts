@@ -9,7 +9,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const requestId = randomUUID();
   const parsed = z.object({ id: z.uuid() }).safeParse(await ctx.params);
-  if (!parsed.success) return fail("validation_failed", "Negócio inválido.", 400, { requestId });
+  if (!parsed.success) return fail("validation_failed", "Lead inválido.", 400, { requestId });
   // Compra, a qualificação legada (0402) e as etapas configuradas do Google
   // (0436) e da Meta (0524).
   const evento = z

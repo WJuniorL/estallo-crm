@@ -44,7 +44,7 @@ async function rodar(config: { destino: "lead_timeline" | "conversation_notes"; 
   await pool.query("insert into crm_pipelines(id,organization_id,name,slug) values($1,$2,'Vendas',$3)", [pipeline, GOV_ORG, `v-${slug}`]);
   await pool.query("insert into crm_stages(id,organization_id,pipeline_id,name,slug,position) values($1,$2,$3,'Novo',$4,1000)", [stage, GOV_ORG, pipeline, `n-${slug}`]);
   await pool.query(
-    "insert into crm_leads(id,organization_id,contact_id,pipeline_id,stage_id,title,position_in_stage) values($1,$2,$3,$4,$5,'Negócio',500)",
+    "insert into crm_leads(id,organization_id,contact_id,pipeline_id,stage_id,title,position_in_stage) values($1,$2,$3,$4,$5,'Lead',500)",
     [lead, GOV_ORG, contact, pipeline, stage],
   );
   const origin = await criarOrigemDeFollowup(pool, GOV_ORG, contact);
@@ -101,14 +101,14 @@ async function rodar(config: { destino: "lead_timeline" | "conversation_notes"; 
 }
 
 describe("Nota interna no diário (motor novo, Postgres real)", () => {
-  it("destino negócio: uma nota na linha do tempo, com a variável resolvida, e nada na conversa", async () => {
+  it("destino lead: uma nota na linha do tempo, com a variável resolvida, e nada na conversa", async () => {
     const { noNegocio, naConversa, passo } = await rodar({ destino: "lead_timeline", texto: "Atenção: {{nodes.mapa.fields.motivo}}" });
     expect(passo.status).toBe("succeeded");
     expect(noNegocio.map((n) => n.reason)).toEqual(["Atenção: orçamento parado"]);
     expect(naConversa).toEqual([]);
   });
 
-  it("destino conversa: uma nota interna na conversa, e nada no negócio", async () => {
+  it("destino conversa: uma nota interna na conversa, e nada no lead", async () => {
     const { noNegocio, naConversa } = await rodar({ destino: "conversation_notes", texto: "Retomar contato" });
     expect(naConversa).toEqual([{ body: "Retomar contato", created_by_name: "Automação" }]);
     expect(noNegocio).toEqual([]);

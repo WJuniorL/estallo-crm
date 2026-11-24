@@ -17,9 +17,9 @@ export const TOOLS_FUNIL = declararTools([
   {
     name: "crm_list_leads",
     category: "read",
-    rotulo: "Listar oportunidades do funil",
+    rotulo: "Listar leads do funil",
     explicacao:
-      "Lista as oportunidades de venda de um funil, com a etapa em que cada uma está e quem é o responsável por ela.",
+      "Lista os leads de um funil, com a etapa em que cada um está e quem é o responsável por ele.",
     oQueToca: "Funil de vendas",
     risco: "seguro",
     pacotes: ["vender"],
@@ -27,9 +27,9 @@ export const TOOLS_FUNIL = declararTools([
   {
     name: "crm_get_lead",
     category: "read",
-    rotulo: "Ver uma oportunidade",
+    rotulo: "Ver um lead",
     explicacao:
-      "Abre os detalhes de uma oportunidade de venda: etapa atual, responsável, marcadores e valor do negócio.",
+      "Abre os detalhes de um lead: etapa atual, responsável, marcadores e valor do lead.",
     oQueToca: "Funil de vendas",
     risco: "seguro",
     pacotes: ["vender"],
@@ -39,7 +39,7 @@ export const TOOLS_FUNIL = declararTools([
     category: "read",
     rotulo: "Listar funis",
     explicacao:
-      "Mostra os funis de venda existentes e suas etapas, para o agente saber onde pode colocar uma oportunidade.",
+      "Mostra os funis de venda existentes e suas etapas, para o agente saber onde pode colocar um lead.",
     oQueToca: "Funil de vendas",
     risco: "seguro",
     pacotes: ["vender", "organizar"],
@@ -49,7 +49,7 @@ export const TOOLS_FUNIL = declararTools([
     category: "read",
     rotulo: "Ver a previsão do funil",
     explicacao:
-      "Mostra quanto deve entrar e quando: os negócios abertos somados por moeda e por mês, com a chance de fechamento que cada etapa tem, e à parte o que ainda não tem data nem chance definida.",
+      "Mostra quanto deve entrar e quando: os leads abertos somados por moeda e por mês, com a chance de fechamento que cada etapa tem, e à parte o que ainda não tem data nem chance definida.",
     oQueToca: "Funil de vendas",
     risco: "seguro",
     // Leitura GERENCIAL (quanto entra e quando), não passo de venda: o agente
@@ -61,9 +61,9 @@ export const TOOLS_FUNIL = declararTools([
   {
     name: "crm_create_lead",
     category: "write",
-    rotulo: "Criar oportunidade no funil",
+    rotulo: "Criar lead no funil",
     explicacao:
-      "Registra uma nova oportunidade de venda no funil, para que o interesse demonstrado pelo cliente não se perca.",
+      "Registra um novo lead no funil, para que o interesse demonstrado pelo cliente não se perca.",
     oQueToca: "Funil de vendas",
     risco: "atencao",
     pacotes: ["vender"],
@@ -71,9 +71,9 @@ export const TOOLS_FUNIL = declararTools([
   {
     name: "crm_update_lead",
     category: "write",
-    rotulo: "Atualizar uma oportunidade",
+    rotulo: "Atualizar um lead",
     explicacao:
-      "Altera dados de uma oportunidade de venda: valor do negócio, responsável e informações colhidas na conversa.",
+      "Altera dados de um lead: valor do lead, responsável e informações colhidas na conversa.",
     oQueToca: "Funil de vendas",
     risco: "atencao",
     pacotes: ["vender"],
@@ -81,9 +81,9 @@ export const TOOLS_FUNIL = declararTools([
   {
     name: "crm_move_lead_stage",
     category: "write",
-    rotulo: "Mover oportunidade de etapa",
+    rotulo: "Mover lead de etapa",
     explicacao:
-      "Move a oportunidade para outra etapa do funil, registrando o avanço da negociação ou a perda do negócio.",
+      "Move o lead para outra etapa do funil, registrando o avanço da negociação ou a perda do lead.",
     oQueToca: "Funil de vendas",
     risco: "atencao",
     pacotes: ["vender"],
@@ -91,9 +91,9 @@ export const TOOLS_FUNIL = declararTools([
   {
     name: "crm_retomar_lead",
     category: "write",
-    rotulo: "Retomar negócio encerrado como novo",
+    rotulo: "Retomar lead encerrado como novo",
     explicacao:
-      "Abre uma nova tentativa para um negócio perdido ou ganho, no mesmo funil e com o mesmo contato, sem alterar o negócio original.",
+      "Abre uma nova tentativa para um lead perdido ou ganho, no mesmo funil e com o mesmo contato, sem alterar o lead original.",
     oQueToca: "Funil de vendas",
     risco: "atencao",
     // "reter", como `crm_propose_reactivation`: é o cliente que voltou depois

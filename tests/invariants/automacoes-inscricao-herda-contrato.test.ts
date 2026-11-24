@@ -52,7 +52,7 @@ async function inscrever(opts: { contrato: boolean; leads?: number; inscricao?: 
       await pool.query(
         `insert into crm_leads(id,organization_id,contact_id,pipeline_id,stage_id,title,position_in_stage,updated_at)
          values($1,$2,$3,$4,$5,$6,500,now() + ($7 || ' seconds')::interval)`,
-        [id, GOV_ORG, contact, pipeline, stage, `Negócio ${i}`, String(i)],
+        [id, GOV_ORG, contact, pipeline, stage, `Lead ${i}`, String(i)],
       );
     }
   }
@@ -75,13 +75,13 @@ async function inscrever(opts: { contrato: boolean; leads?: number; inscricao?: 
 }
 
 describe("a inscrição herda o contrato da versão fixada (migration 0710)", () => {
-  it("versão de contrato 1: a inscrição nasce no contrato 1 com o negócio mais recente do contato", async () => {
+  it("versão de contrato 1: a inscrição nasce no contrato 1 com o lead mais recente do contato", async () => {
     const { row, leads } = await inscrever({ contrato: true, leads: 2 });
     expect(row.execution_contract).toBe(1);
     expect(row.lead_id).toBe(leads[1]); // o de updated_at maior
   });
 
-  it("versão de contrato 1 e contato SEM negócio: contrato 1 com lead nulo (execução sem lead, explícita)", async () => {
+  it("versão de contrato 1 e contato SEM lead: contrato 1 com lead nulo (execução sem lead, explícita)", async () => {
     const { row } = await inscrever({ contrato: true });
     expect(row).toEqual({ execution_contract: 1, lead_id: null });
   });

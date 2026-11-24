@@ -146,11 +146,11 @@ export function HistoricoDeEnvios({
           </select>
         </label>
         <label className="flex min-w-48 flex-1 flex-col gap-1 text-xs">
-          {t("Buscar por negócio")}
+          {t("Buscar por lead")}
           <input
             name="busca"
             defaultValue={filtros.busca}
-            placeholder={t("Nome do negócio")}
+            placeholder={t("Nome do lead")}
             className="rounded-md border bg-background p-2 text-sm"
           />
         </label>
@@ -236,7 +236,7 @@ export function HistoricoDeEnvios({
                         className="underline underline-offset-2"
                         href={`/app/kanban?lead=${l.leadId}`}
                       >
-                        {t("Abrir negócio")}
+                        {t("Abrir lead")}
                       </a>
                       {situacao !== "entregue" && (
                         <ReprocessarConversao leadId={l.leadId} idioma={idioma} evento={l.evento} />

@@ -81,7 +81,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     .eq("organization_id", authz.org.orgId)
     .eq("id", input.lead_id)
     .maybeSingle();
-  if (!lead) return fail("not_found", t("Negócio não encontrado nesta organização."), 404, { requestId });
+  if (!lead) return fail("not_found", t("Lead não encontrado nesta organização."), 404, { requestId });
 
   // crm_proposals.contact_id é NOT NULL (baseline.sql), e crm_leads.contact_id
   // é opcional — um negócio sem contato vinculado quebraria o INSERT com um
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   if (!lead.contact_id) {
     return fail(
       "validation_failed",
-      t("Este negócio não tem um contato vinculado. Vincule um contato antes de criar a proposta."),
+      t("Este lead não tem um contato vinculado. Vincule um contato antes de criar a proposta."),
       422,
       { requestId },
     );
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   if (rascunhoExistente) {
     return fail(
       "validation_failed",
-      t("Este negócio já tem um rascunho de proposta aberto. Abra-o e continue por lá."),
+      t("Este lead já tem um rascunho de proposta aberto. Abra-o e continue por lá."),
       409,
       { requestId, details: { rascunho_aberto_id: rascunhoExistente.id } },
     );
@@ -152,7 +152,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     // 23505 = a corrida que a pré-checagem acima não pegou (dois cliques
     // quase simultâneos) — o índice único do banco é quem decide de verdade.
     if ((propErr as { code?: string }).code === "23505") {
-      return fail("validation_failed", t("Este negócio já tem um rascunho de proposta aberto."), 409, { requestId });
+      return fail("validation_failed", t("Este lead já tem um rascunho de proposta aberto."), 409, { requestId });
     }
     return fail("internal_error", t("Falha ao criar a proposta."), 500, { requestId });
   }

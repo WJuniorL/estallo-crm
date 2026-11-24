@@ -31,7 +31,7 @@ let etapaDePerda = "";
 async function perderCom(motivo: string): Promise<{ status: string; lost_reason: string }> {
   const { rows } = await pool.query<{ id: string }>(
     `insert into crm_leads (organization_id, pipeline_id, stage_id, title, status)
-     values ($1, $2, $3, 'Negócio', 'open') returning id`,
+     values ($1, $2, $3, 'Lead', 'open') returning id`,
     [ORG, funil, etapaAberta],
   );
   const { rows: depois } = await pool.query<{ status: string; lost_reason: string }>(
@@ -72,7 +72,7 @@ afterAll(async () => {
 });
 
 describe("motivo de perda de quem pediu para não receber mensagens", () => {
-  it("`opted_out_of_messages` fecha o negócio como perdido", async () => {
+  it("`opted_out_of_messages` fecha o lead como perdido", async () => {
     expect(await perderCom("opted_out_of_messages")).toEqual({
       status: "lost",
       lost_reason: "opted_out_of_messages",

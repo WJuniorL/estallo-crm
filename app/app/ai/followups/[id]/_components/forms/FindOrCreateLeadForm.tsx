@@ -44,7 +44,7 @@ export function FindOrCreateLeadForm({
         </SelectContent>
       </Select>
       <div className="flex items-center justify-between gap-2">
-        <Label htmlFor="fol-criar">{t("Criar o negócio se não achar")}</Label>
+        <Label htmlFor="fol-criar">{t("Criar o lead se não achar")}</Label>
         <Switch id="fol-criar" checked={config.criar} onCheckedChange={(criar) => onChange({ ...config, criar })} />
       </div>
       {config.criar && (
@@ -65,7 +65,7 @@ export function FindOrCreateLeadForm({
             </SelectContent>
           </Select>
           <div className="flex items-center justify-between gap-2">
-            <Label htmlFor="fol-titulo">{t("Título do negócio novo")}</Label>
+            <Label htmlFor="fol-titulo">{t("Título do lead novo")}</Label>
             <InserirVariavel
               soBlocos
               onInserir={(m) => onChange({ ...config, titulo: inserirNoCursor(titulo.current, config.titulo, m) })}
@@ -81,7 +81,7 @@ export function FindOrCreateLeadForm({
           />
         </>
       )}
-      <p className="text-xs text-text-muted">{t("Os blocos seguintes podem agir sobre este negócio pela opção «Aplicar em».")}</p>
+      <p className="text-xs text-text-muted">{t("Os blocos seguintes podem agir sobre este lead pela opção «Aplicar em».")}</p>
     </div>
   );
 }

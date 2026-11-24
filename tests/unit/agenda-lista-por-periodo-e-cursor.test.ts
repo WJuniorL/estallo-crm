@@ -372,7 +372,7 @@ describe("o que a resposta traz para um calendário desenhar (issue #1744)", () 
     expect(r.agendamentos[0]!.local).toEqual({ tipo: null, descricao: null });
   });
 
-  it("⭐ o vínculo com o negócio vem quando PEDIDO, e a consulta extra acontece", async () => {
+  it("⭐ o vínculo com o lead vem quando PEDIDO, e a consulta extra acontece", async () => {
     const { supabase, consultas } = db({
       linhas: [linha],
       vinculos: [{ lead_id: "33333333-3333-4333-8333-333333333333", target_id: linha.id }],

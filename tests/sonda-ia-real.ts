@@ -118,7 +118,7 @@ async function main(): Promise<void> {
   const nome = `Recepcao IA Real ${Date.now()}`;
   await p.locator("#name").fill(nome);
   await p.locator("textarea").first().fill(
-    "Voce e a recepcao de uma clinica. Quando perguntarem sobre oportunidades, negocios ou clientes em aberto, USE as ferramentas disponiveis para consultar antes de responder. Responda em portugues, curto.",
+    "Voce e a recepcao de uma clinica. Quando perguntarem sobre leads, negocios ou clientes em aberto, USE as ferramentas disponiveis para consultar antes de responder. Responda em portugues, curto.",
   );
   await escolher(p, "provider", /openai/i);
   await p.waitForTimeout(1200);
@@ -142,7 +142,7 @@ async function main(): Promise<void> {
   await p.getByRole("tab", { name: /teste/i }).click();
   await p.waitForTimeout(1200);
   const mensagem = p.locator("textarea").first();
-  await mensagem.fill("Oi! Quais oportunidades estao abertas no funil hoje?");
+  await mensagem.fill("Oi! Quais leads estao abertas no funil hoje?");
   await p.screenshot({ path: `${DIR}/w1-ia-04-teste-antes.png`, fullPage: true });
   await p.getByRole("button", { name: /executar|rodar|testar|enviar/i }).first().click();
 

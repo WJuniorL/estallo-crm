@@ -183,7 +183,7 @@ describe("D6 — reaplicar é explícito e falha alto", () => {
 // D7 — as funções do módulo existem mesmo sem as tabelas
 // ---------------------------------------------------------------------------
 describe("D7 — a cadeia de funções do módulo não depende das tabelas", () => {
-  it("a função de negócio existe nas DUAS origens (migration e baseline)", () => {
+  it("a função de lead existe nas DUAS origens (migration e baseline)", () => {
     const nome = "fn_honorarios_parcela_pagar";
     expect(MIG_0480).toContain(`create or replace function public.${nome}(`);
     expect(BASELINE).toContain(`create or replace function public.${nome}(`);

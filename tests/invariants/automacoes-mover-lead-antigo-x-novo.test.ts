@@ -105,7 +105,7 @@ async function negocio(
     `insert into crm_leads(id,organization_id,contact_id,pipeline_id,stage_id,title,position_in_stage${
       opts.motivoPerda ? ",lost_reason" : ""
     })
-     values($1,$2,$3,$4,$5,'Negócio',500${opts.motivoPerda ? ",$6" : ""})`,
+     values($1,$2,$3,$4,$5,'Lead',500${opts.motivoPerda ? ",$6" : ""})`,
     [lead, GOV_ORG, contact, m.funil, m.etapas[etapa], ...(opts.motivoPerda ? [opts.motivoPerda] : [])],
   );
   return { contact, lead };
@@ -251,7 +251,7 @@ async function cenario(
   };
 }
 
-suite("mover lead: motor antigo × motor novo (mesmo cenário, dois negócios idênticos)", () => {
+suite("mover lead: motor antigo × motor novo (mesmo cenário, dois leads idênticos)", () => {
   let m: Mundo;
   beforeAll(async () => {
     m = await mundo();
@@ -309,14 +309,14 @@ suite("mover lead: motor antigo × motor novo (mesmo cenário, dois negócios id
     expect(novo.lead).toEqual(antigo.lead);
   });
 
-  it("negócio perdido movido para etapa aberta (reabrir): mesmo resultado", async () => {
+  it("lead perdido movido para etapa aberta (reabrir): mesmo resultado", async () => {
     const { antigo, novo } = await cenario(m, { etapa: "perdida", motivoPerda: "price" }, "aberta");
     nota("[reabrir] antigo:", JSON.stringify(antigo.lead), antigo.recusa, "| novo:", JSON.stringify(novo.lead), novo.recusa);
     expect(novo.recusa).toBe(antigo.recusa);
     expect(novo.lead).toEqual(antigo.lead);
   });
 
-  it("negócio que já está na etapa de destino: mesmo resultado", async () => {
+  it("lead que já está na etapa de destino: mesmo resultado", async () => {
     const { antigo, novo } = await cenario(m, {}, "aberta");
     nota("[mesma etapa] antigo:", JSON.stringify(antigo.lead), antigo.recusa, antigo.atividades.length, "| novo:", JSON.stringify(novo.lead), novo.recusa, novo.atividades.length);
     expect(novo.recusa).toBe(antigo.recusa);

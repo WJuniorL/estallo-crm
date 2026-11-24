@@ -58,7 +58,7 @@ function reiniciaBanco() {
       owner_user_id: DESLIGADO_A,
       owner_agent_id: null,
       owner_kind: "user",
-      title: "Negócio",
+      title: "Lead",
       tags: [],
       custom_fields: {},
     },
@@ -219,10 +219,10 @@ describe("updateLeadHandler", () => {
 
   it("reenviar o responsável que o lead JÁ tem (mesmo desligado) não trava a edição", async () => {
     await updateLeadHandler(banco as never, ctx, LEAD, {
-      title: "Negócio renomeado",
+      title: "Lead renomeado",
       owner_user_id: DESLIGADO_A,
     } as never);
-    expect(primeiroLead().valores).toMatchObject({ title: "Negócio renomeado" });
+    expect(primeiroLead().valores).toMatchObject({ title: "Lead renomeado" });
   });
 });
 
@@ -274,7 +274,7 @@ describe("a recusa da RLS de crm_leads (42501) vira 403, não 500", () => {
     message: 'new row violates row-level security policy for table "crm_leads"',
   };
 
-  it("no INSERT (Atendente no modo 'own', negócio sem responsável) → 403 forbidden", async () => {
+  it("no INSERT (Atendente no modo 'own', lead sem responsável) → 403 forbidden", async () => {
     recusaDoGatilho = recusaDaRls;
     await expect(createLeadHandler(banco as never, ctx, novo())).rejects.toMatchObject({
       status: 403,
@@ -321,7 +321,7 @@ describe("clone para outro funil: o dono vem da ORIGEM", () => {
       id: LEAD,
       pipeline_id: "ffffffff-ffff-4fff-8fff-ffffffffffff",
       status: "open",
-      title: "Negócio",
+      title: "Lead",
       contact_id: CONTATO_A,
       owner_user_id: dono,
       owner_agent_id: null,

@@ -58,7 +58,7 @@ const ARQUIVADO: FunilDaLista = {
 };
 
 /** A recusa que a rota escreve — a frase que explica POR QUE não dá. */
-const RECUSA = "Este funil tem 3 negócios: excluir levaria as etapas junto.";
+const RECUSA = "Este funil tem 3 leads: excluir levaria as etapas junto.";
 
 function comQuery(ui: ReactNode) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });

@@ -382,7 +382,7 @@ describe("crm_draft_proposal", () => {
     expect(mundo.propostaCriada?.pricing_status).toBe("missing");
   });
 
-  it("negócio já tem rascunho aberto: devolve o id do rascunho existente, não cria outro (§5.3)", async () => {
+  it("lead já tem rascunho aberto: devolve o id do rascunho existente, não cria outro (§5.3)", async () => {
     const mundo = montarMundoDeFerramenta({ rascunhoJaExiste: true });
     const r = await crmDraftProposal.handler(
       { lead_id: mundo.leadId, titulo: "Duplicado", conversation_id: mundo.conversationId, itens: [{ descricao: "x", quantidade: 1, preco_unitario_cents: 100 }] },
@@ -439,7 +439,7 @@ describe("crm_draft_proposal", () => {
     expect(res.motivo).toBe("rascunho_aberto_existe");
   });
 
-  it("falha ao gravar os itens: a proposta recém-criada é APAGADA, não fica rascunho vazio travando o negócio (revisão C3, I2)", async () => {
+  it("falha ao gravar os itens: a proposta recém-criada é APAGADA, não fica rascunho vazio travando o lead (revisão C3, I2)", async () => {
     const mundo = montarMundoDeFerramenta({ itensFalham: true });
     const r = await crmDraftProposal.handler(
       { lead_id: mundo.leadId, titulo: "x", conversation_id: mundo.conversationId, itens: [{ descricao: "x", quantidade: 1, preco_unitario_cents: 100 }], briefing: briefingCompleto() },

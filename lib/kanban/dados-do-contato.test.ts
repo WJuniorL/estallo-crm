@@ -68,7 +68,7 @@ describe("anexarDadosDoContato — o que o card do funil recebe do contato", () 
     expect(Object.keys(leads[0]!).sort()).toEqual(["contact_email", "contact_id", "id"]);
   });
 
-  it("negócio sem contato passa intacto (o mesmo objeto), ao lado de um que recebe dados", () => {
+  it("lead sem contato passa intacto (o mesmo objeto), ao lado de um que recebe dados", () => {
     const semContato = lead("l1", null);
     const comContato = lead("l2", "c1");
 
@@ -87,7 +87,7 @@ describe("anexarDadosDoContato — o que o card do funil recebe do contato", () 
     expect(anexarDadosDoContato(original, [contato("c1")])).toBe(original);
   });
 
-  it("cada negócio recebe o dado do SEU contato, e dois negócios do mesmo contato recebem o mesmo", () => {
+  it("cada lead recebe o dado do SEU contato, e dois leads do mesmo contato recebem o mesmo", () => {
     const leads = anexarDadosDoContato(
       [lead("l1", "c1"), lead("l2", "c2"), lead("l3", "c1")],
       [

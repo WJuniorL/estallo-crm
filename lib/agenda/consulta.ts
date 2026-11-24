@@ -819,7 +819,7 @@ export async function listaAgendamentos(
           ok: false,
           codigo: "alvo_nao_e_lead",
           motivoParaOperador:
-            `o id ${params.leadId} não é um negócio do funil. No contexto do turno, o campo ` +
+            `o id ${params.leadId} não é um lead do funil. No contexto do turno, o campo ` +
             "`lead_id` carrega o id do CONTATO — para consultar os compromissos de uma pessoa, " +
             "use `contact_id`.",
           motivoParaCliente:

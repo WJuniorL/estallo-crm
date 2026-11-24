@@ -70,8 +70,8 @@ function mover(stage_id: string) {
 
 beforeEach(() => moveLeadHandler.mockClear());
 
-describe("mover lead no funil escolhe o negócio do funil de destino (#2181)", () => {
-  it("move o negócio do funil da etapa, não o mais recente de outro funil", async () => {
+describe("mover lead no funil escolhe o lead do funil de destino (#2181)", () => {
+  it("move o lead do funil da etapa, não o mais recente de outro funil", async () => {
     await mover(ETAPA_B);
     expect(moveLeadHandler).toHaveBeenCalledTimes(1);
     expect(moveLeadHandler.mock.calls[0]).toEqual([expect.anything(), expect.anything(), "lead-b", { to_stage_id: ETAPA_B }]);

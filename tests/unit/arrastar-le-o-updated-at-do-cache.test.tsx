@@ -213,7 +213,7 @@ async function moverOExistente(): Promise<void> {
   await waitFor(() => expect(post.mock.calls.at(-1)?.[0]).toBe(`/api/v1/leads/${LEAD}/move`));
 }
 
-describe("mexer no negócio e arrastar em seguida", () => {
+describe("mexer no lead e arrastar em seguida", () => {
   it("depois de EDITAR, o arrasto manda o updated_at que a edição devolveu", async () => {
     patch.mockResolvedValue({
       data: { id: LEAD, stage_id: "s-1", updated_at: DEPOIS_DA_EDICAO },

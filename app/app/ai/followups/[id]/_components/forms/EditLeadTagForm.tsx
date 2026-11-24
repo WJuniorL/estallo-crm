@@ -82,7 +82,7 @@ export function EditLeadTagForm({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="card">{t("No negócio")}</SelectItem>
+          <SelectItem value="card">{t("No lead")}</SelectItem>
           <SelectItem value="contato">{t("No contato")}</SelectItem>
         </SelectContent>
       </Select>

@@ -167,7 +167,7 @@ function GrupoDeDuplicados({
       <div className="mt-3 flex items-center justify-between gap-3">
         <p className="text-xs text-muted-foreground">
           {t(
-            "Conversas, mensagens, negócios e histórico passam para quem fica. O cadastro antigo não é apagado — vira registro de fusão. Não há como desfazer.",
+            "Conversas, mensagens, leads e histórico passam para quem fica. O cadastro antigo não é apagado — vira registro de fusão. Não há como desfazer.",
           )}
         </p>
         <Button
@@ -190,7 +190,7 @@ function GrupoDeDuplicados({
             <AlertDialogTitle>{t("Juntar estes cadastros?")}</AlertDialogTitle>
             <AlertDialogDescription>
               {`${nomeDeQuemFica} ${t("fica.")} ${nomesAbsorvidos} ${t(
-                "será absorvido e sai da lista de contatos. Mensagens, negócios e histórico passam para quem fica. Não há como desfazer.",
+                "será absorvido e sai da lista de contatos. Mensagens, leads e histórico passam para quem fica. Não há como desfazer.",
               )}`}
             </AlertDialogDescription>
           </AlertDialogHeader>

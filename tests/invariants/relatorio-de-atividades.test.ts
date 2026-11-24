@@ -193,7 +193,7 @@ describe("relatório de atividades — isolamento entre organizações", () => {
     expect(a.atores).not.toContain(USER_MULTI);
   });
 
-  it("a lista da A não traz nenhum negócio da B", () => {
+  it("a lista da A não traz nenhum lead da B", () => {
     const a = relatorioComo(USER_MULTI, ORG_A);
     expect(a.leads).toEqual([LEAD_A]);
   });

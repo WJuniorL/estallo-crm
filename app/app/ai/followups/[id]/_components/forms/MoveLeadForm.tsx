@@ -129,7 +129,7 @@ export function MoveLeadForm({
         </p>
       )}
       <p className="text-xs text-text-muted">
-        {t("O negócio vai para esta etapa. Se ela for de outro funil, o mesmo negócio muda de funil — só negócio aberto, e só para etapa aberta.")}
+        {t("O lead vai para esta etapa. Se ela for de outro funil, o mesmo lead muda de funil — só lead aberto, e só para etapa aberta.")}
       </p>
     </div>
   );

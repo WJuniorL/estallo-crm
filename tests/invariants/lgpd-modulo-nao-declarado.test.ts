@@ -89,7 +89,7 @@ const ALLOWLIST: Record<string, string> = {
   "financeiro.commission_rules":
     "commission_rules não tem ligação nenhuma com a pessoa: guarda a regra de " +
     "comissão (tipo, evento, percentual, atendente/serviço) e a coluna `name` é o " +
-    "rótulo da regra de negócio, não dado de contato. O que derruba a régua é o " +
+    "rótulo da regra de lead, não dado de contato. O que derruba a régua é o " +
     "regex achar a palavra `name`, não o dado — por isso a decisão é não " +
     "declarar seção: declarar faria a anonimização zerar TODAS as regras da " +
     "organização (a ligação seria organization_id, sem contato na tabela).",

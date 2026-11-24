@@ -53,7 +53,7 @@ describe("#2591 — fatia 1: dono por contato", () => {
   it("o contato tem dono no schema (carteira_user_id em contacts)", () => {
     expect(
       textoDoContato(),
-      "sem carteira_user_id em contacts não existe dono por contato — só por negócio e por conversa",
+      "sem carteira_user_id em contacts não existe dono por contato — só por lead e por conversa",
     ).toContain("carteira_user_id");
   });
 
@@ -170,10 +170,10 @@ describe("#2591 — fatia 2: dono que saiu da equipe não recebe aviso (regra 5)
   });
 });
 
-describe("#2591 — fatia 3: o negócio novo nasce com o dono", () => {
-  it("o gatilho de inserção do negócio existe e só age quando o negócio chega sem dono", () => {
+describe("#2591 — fatia 3: o lead novo nasce com o dono", () => {
+  it("o gatilho de inserção do lead existe e só age quando o lead chega sem dono", () => {
     const baseline = arquivo("supabase/baseline.sql");
-    expect(baseline, "sem gatilho, o negócio novo continua nascendo no rodízio").toContain(
+    expect(baseline, "sem gatilho, o lead novo continua nascendo no rodízio").toContain(
       "trg_crm_lead_nasce_na_carteira on public.crm_leads",
     );
     // O corpo da função é o que tem de estar certo (o nome aparece também no
@@ -189,7 +189,7 @@ describe("#2591 — fatia 3: o negócio novo nasce com o dono", () => {
     expect(corpo).toMatch(/if v_dono is null then\s*return new;/);
   });
 
-  it("no modo 'Só os seus', criar negócio para cliente de outro vendedor é recusado com motivo", async () => {
+  it("no modo 'Só os seus', criar lead para cliente de outro vendedor é recusado com motivo", async () => {
     const { recusaNegocioNaCarteiraDeOutro } = await import(/* @vite-ignore */ MODULO_NEGOCIO);
     expect(
       recusaNegocioNaCarteiraDeOutro({

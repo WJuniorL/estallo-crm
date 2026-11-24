@@ -104,15 +104,15 @@ function negocioNovo(): EventRow {
   };
 }
 
-describe("regra de novo negócio limitada a uma fonte de formulário", () => {
-  it("negócio da fonte A roda a regra da fonte A e a regra geral, nunca a da fonte B", async () => {
+describe("regra de novo lead limitada a uma fonte de formulário", () => {
+  it("lead da fonte A roda a regra da fonte A e a regra geral, nunca a da fonte B", async () => {
     regrasQueRodaram.length = 0;
     const r = await runAutomationForEvent(mundo({ webhook_source_id: FONTE_A }), negocioNovo());
     expect(r.status).toBe("ok");
     expect([...regrasQueRodaram].sort()).toEqual([REGRA_A, REGRA_GERAL].sort());
   });
 
-  it("negócio criado à mão (sem fonte) roda só a regra geral", async () => {
+  it("lead criado à mão (sem fonte) roda só a regra geral", async () => {
     regrasQueRodaram.length = 0;
     await runAutomationForEvent(mundo({}), negocioNovo());
     expect(regrasQueRodaram).toEqual([REGRA_GERAL]);

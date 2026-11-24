@@ -100,23 +100,23 @@ beforeEach(() => {
   vi.mocked(auditMcpToolCall).mockClear();
 });
 
-describe("a escrita do agente mira o negócio do contato da conversa", () => {
-  it("o caso medido: id INVENTADO vira o negócio aberto da conversa", async () => {
+describe("a escrita do agente mira o lead do contato da conversa", () => {
+  it("o caso medido: id INVENTADO vira o lead aberto da conversa", async () => {
     await escrever(banco([{ id: DA_CONVERSA, status: "open" }]), INVENTADO);
     expect(chegou()).toBe(DA_CONVERSA);
   });
 
-  it("id real de OUTRO cliente não chega ao handler: vira o negócio da conversa", async () => {
+  it("id real de OUTRO cliente não chega ao handler: vira o lead da conversa", async () => {
     await escrever(banco([{ id: DA_CONVERSA, status: "open" }]), DE_OUTRO_CLIENTE);
     expect(chegou()).toBe(DA_CONVERSA);
   });
 
-  it("negócio fechado DESTE contato passa como veio", async () => {
+  it("lead fechado DESTE contato passa como veio", async () => {
     await escrever(banco([{ id: DA_CONVERSA, status: "won" }]), DA_CONVERSA);
     expect(chegou()).toBe(DA_CONVERSA);
   });
 
-  it("com dois negócios abertos e um id de fora deles, recusa — não escolhe por palpite", async () => {
+  it("com dois leads abertos e um id de fora deles, recusa — não escolhe por palpite", async () => {
     const r = await escrever(
       banco([{ id: DA_CONVERSA, status: "open" }, { id: OUTRO_DA_CONVERSA, status: "open" }]),
       DE_OUTRO_CLIENTE,
@@ -134,7 +134,7 @@ describe("a escrita do agente mira o negócio do contato da conversa", () => {
     expect(chegou()).toBe(OUTRO_DA_CONVERSA);
   });
 
-  it("contato sem negócio aberto: recusa, sem gravar em lugar nenhum", async () => {
+  it("contato sem lead aberto: recusa, sem gravar em lugar nenhum", async () => {
     const r = await escrever(banco([]), DE_OUTRO_CLIENTE);
     expect(updateLeadHandler).not.toHaveBeenCalled();
     expect(r).toMatchObject({ permitido: false, motivo: "sem_negocio" });

@@ -84,7 +84,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
   if (!row.contact_id) {
     return fail(
       "next_action_absent",
-      t("Este negócio não tem contato, então não há proposta do agente."),
+      t("Este lead não tem contato, então não há proposta do agente."),
       409,
       { requestId },
     );
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
   const linha = estado as { next_action: string | null; next_action_seq: number } | null;
   const atual = linha?.next_action?.trim() ?? null;
   if (!atual) {
-    return fail("next_action_absent", t("Não há proposta pendente para este negócio."), 409, {
+    return fail("next_action_absent", t("Não há proposta pendente para este lead."), 409, {
       requestId,
     });
   }

@@ -42,7 +42,7 @@ export default async function DashboardPage() {
         <p className="text-sm text-muted-foreground">
           {podeComparar
             ? t("Funil, conversão e desempenho da equipe no período.")
-            : t("Seu funil, sua conversão e seus negócios no período.")}
+            : t("Seu funil, sua conversão e seus leads no período.")}
         </p>
       </header>
       <DashboardVendas funis={funis} podeComparar={podeComparar} />

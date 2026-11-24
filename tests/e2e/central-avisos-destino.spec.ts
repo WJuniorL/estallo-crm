@@ -63,13 +63,13 @@ test.beforeAll(async () => {
       const contact = await insert("contacts", { organization_id: org, display_name: `Cliente Avisos ${i}`, phone_number: `+551199990000${i}` }); contacts.push(contact);
       const owner = i === 0 ? users[0]!.id : i === 2 ? users[1]!.id : null;
       const conversation = await insert("conversations", { organization_id: org, contact_id: contact, channel_session_id: session, status: "open", assigned_to_user_id: owner }); conversations.push(conversation);
-      leads.push(await insert("crm_leads", { organization_id: org, pipeline_id: pipeline, stage_id: stage, contact_id: contact, title: `Negócio Avisos ${i}`, owner_user_id: owner }));
+      leads.push(await insert("crm_leads", { organization_id: org, pipeline_id: pipeline, stage_id: stage, contact_id: contact, title: `Lead Avisos ${i}`, owner_user_id: owner }));
       if (i === 0) await insert("messages", { organization_id: org, conversation_id: conversation, channel_session_id: session, contact_id: contact, direction: "inbound", type: "text", body: "Mensagem de contexto da Central", status: "received", sent_at: new Date().toISOString() });
     }
   }
   const titles = ["própria", "sem responsável", "outro atendente", "outra organização"];
   for (const [i, id] of conversations.entries()) await insert("agent_inbox_items", { organization_id: orgs[0], kind: "handoff", severity: "warn", title: `Conversa ${titles[i]}`, ref_kind: "conversation", ref_id: id });
-  for (const [i, id] of leads.entries()) await insert("agent_inbox_items", { organization_id: orgs[0], kind: "other", severity: "warn", title: `Negócio ${titles[i]}`, ref_kind: "lead", ref_id: id });
+  for (const [i, id] of leads.entries()) await insert("agent_inbox_items", { organization_id: orgs[0], kind: "other", severity: "warn", title: `Lead ${titles[i]}`, ref_kind: "lead", ref_id: id });
   for (const [title, kind, ref_kind, ref_id] of [
     ["Contato para conferir", "handoff", "contact", contacts[0]],
     ["Referência removida", "handoff", "conversation", randomUUID()],
@@ -90,7 +90,7 @@ test("agent abre contexto, volta ainda aberto, resolve e reabre; RLS e menu ocul
   await login(page, "agent"); await central(page);
   const navigation = page.getByRole("navigation", { name: "Navegação principal" });
   await expect(navigation.getByRole("link", { name: "Inbox", exact: true })).toHaveCount(0);
-  for (const prefix of ["Conversa", "Negócio"]) {
+  for (const prefix of ["Conversa", "Lead"]) {
     await expect(row(page, `${prefix} própria`).getByRole("link")).toBeVisible();
     await expect(row(page, `${prefix} sem responsável`).getByRole("link")).toBeVisible();
     for (const suffix of ["outro atendente", "outra organização"]) await expect(row(page, `${prefix} ${suffix}`).getByRole("link")).toHaveCount(0);
@@ -119,14 +119,14 @@ test("agent abre contexto, volta ainda aberto, resolve e reabre; RLS e menu ocul
   await expect(page).toHaveURL(new RegExp(`/app/contacts/${contacts[0]}`));
   await expect(page.getByText("Cliente Avisos 0", { exact: true }).first()).toBeVisible();
   await page.goBack(); await expect(row(page, "Contato para conferir")).toBeVisible();
-  await row(page, "Negócio própria").getByRole("link", { name: "Abrir negócio" }).click();
+  await row(page, "Lead própria").getByRole("link", { name: "Abrir lead" }).click();
   await expect(page).toHaveURL(new RegExp(`/app/pipelines/[^?]+\\?lead=${leads[0]}`));
-  await expect(page.getByRole("dialog").getByText("Negócio Avisos 0", { exact: true }).first()).toBeVisible();
-  await page.goBack(); await expect(row(page, "Negócio própria")).toBeVisible();
+  await expect(page.getByRole("dialog").getByText("Lead Avisos 0", { exact: true }).first()).toBeVisible();
+  await page.goBack(); await expect(row(page, "Lead própria")).toBeVisible();
   // Mudança de política vem do banco, sem implementar cópia no catálogo.
   const changed = await db.from("organizations").update({ settings: { visibility_mode: "own" } }).eq("id", orgs[0]); if (changed.error) throw changed.error;
   await page.reload();
-  for (const prefix of ["Conversa", "Negócio"]) {
+  for (const prefix of ["Conversa", "Lead"]) {
     await expect(row(page, `${prefix} própria`).getByRole("link")).toBeVisible();
     for (const suffix of ["sem responsável", "outro atendente", "outra organização"]) await expect(row(page, `${prefix} ${suffix}`).getByRole("link")).toHaveCount(0);
   }

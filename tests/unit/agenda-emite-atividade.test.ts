@@ -278,7 +278,7 @@ beforeEach(() => {
 });
 
 describe("a agenda grava na timeline", () => {
-  it("marcar nasce como `appointment_scheduled` no negócio do contato", async () => {
+  it("marcar nasce como `appointment_scheduled` no lead do contato", async () => {
     await marcarAgendamentoHandler(cliente(), ctx, {
       event_type_id: TIPO,
       starts_at: HORARIO,
@@ -296,7 +296,7 @@ describe("a agenda grava na timeline", () => {
     ).toBe("appointment_scheduled");
     expect(
       linha.lead_id,
-      "a atividade foi ancorada no negócio errado (ou no id do contato): o rastro da consulta aparece no dossiê de outra pessoa",
+      "a atividade foi ancorada no lead errado (ou no id do contato): o rastro da consulta aparece no dossiê de outra pessoa",
     ).toBe(NEGOCIO);
     expect(
       linha.source_id,
@@ -342,7 +342,7 @@ describe("a agenda grava na timeline", () => {
     ).toBeNull();
   });
 
-  it("o compromisso PERTENCE ao negócio — sem o vínculo o dossiê não acha o que foi marcado", async () => {
+  it("o compromisso PERTENCE ao lead — sem o vínculo o dossiê não acha o que foi marcado", async () => {
     // A atividade e o vínculo respondem perguntas diferentes: uma aparece na
     // TIMELINE, o outro é por onde o dossiê LISTA o compromisso. Sem este caso,
     // apagar o INSERT de `crm_lead_links` deixava o arquivo verde — metade de
@@ -356,11 +356,11 @@ describe("a agenda grava na timeline", () => {
     const vinculos = banco.inserido["crm_lead_links"] ?? [];
     expect(
       vinculos,
-      "o compromisso não foi vinculado ao negócio: a timeline diz que há consulta marcada, mas o dossiê não lista o horário — quem abre o negócio para ligar não acha o que foi combinado",
+      "o compromisso não foi vinculado ao lead: a timeline diz que há consulta marcada, mas o dossiê não lista o horário — quem abre o lead para ligar não acha o que foi combinado",
     ).toHaveLength(1);
     expect(
       vinculos[0],
-      "o vínculo nasceu apontando para outro lugar (negócio errado, alvo errado ou tipo de vínculo errado): o dossiê certo continua vazio e o compromisso pendura no de outra pessoa",
+      "o vínculo nasceu apontando para outro lugar (lead errado, alvo errado ou tipo de vínculo errado): o dossiê certo continua vazio e o compromisso pendura no de outra pessoa",
     ).toMatchObject({
       organization_id: ORG,
       lead_id: NEGOCIO,
@@ -456,7 +456,7 @@ describe("quando a gravação da timeline falha", () => {
     // pendurado. Sem esta linha, um INSERT incondicional passaria nos dois.
     expect(
       banco.inserido["crm_lead_links"] ?? [],
-      "nasceu vínculo mesmo sem negócio para ancorar: o compromisso ficou pendurado num id que não é de negócio nenhum, e o dossiê que o listar mostra o dado de outro",
+      "nasceu vínculo mesmo sem lead para ancorar: o compromisso ficou pendurado num id que não é de lead nenhum, e o dossiê que o listar mostra o dado de outro",
     ).toHaveLength(0);
   });
 

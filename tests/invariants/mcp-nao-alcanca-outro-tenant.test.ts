@@ -91,7 +91,7 @@ beforeAll(async () => {
 
   const { rows } = await pool.query<{ id: string }>(
     `insert into crm_leads (organization_id, pipeline_id, stage_id, title)
-     values ($1, $2, $3, 'Negócio SECRETO da vítima') returning id`,
+     values ($1, $2, $3, 'Lead SECRETO da vítima') returning id`,
     [ORG_B, b.pipeline, b.stage],
   );
   leadDaVitima = rows[0]!.id;
@@ -100,7 +100,7 @@ beforeAll(async () => {
   // por não haver nada, e "não vazou" passaria sem medir nada.
   await pool.query(
     `insert into crm_leads (organization_id, pipeline_id, stage_id, title)
-     values ($1, $2, $3, 'Negócio legítimo de A')`,
+     values ($1, $2, $3, 'Lead legítimo de A')`,
     [ORG_A, a.pipeline, a.stage],
   );
 });
@@ -110,7 +110,7 @@ afterAll(async () => {
   await pool.end();
 });
 
-describe("o negócio da outra organização", () => {
+describe("o lead da outra organização", () => {
   it("o cenário está montado — sem isto, os casos abaixo medem o vazio", async () => {
     // Controle positivo: o lead da vítima precisa existir e ser de ORG_B. Um
     // erro de setup faria todo "não alcançou" passar por ausência de alvo.
@@ -128,7 +128,7 @@ describe("o negócio da outra organização", () => {
     if (lead) {
       expect(
         (lead as { organization_id?: string }).organization_id,
-        "o agente de A recebeu o negócio de B",
+        "o agente de A recebeu o lead de B",
       ).not.toBe(ORG_B);
     }
   });
@@ -158,7 +158,7 @@ describe("o negócio da outra organização", () => {
     const r = await listLeadsHandler(db, ctxDoAgenteDeA(), {} as never);
     expect(
       r.leads.map((x) => (x as { id: string }).id),
-      "a lista do agente de A trouxe o negócio de B",
+      "a lista do agente de A trouxe o lead de B",
     ).not.toContain(leadDaVitima);
   });
 
@@ -173,8 +173,8 @@ describe("o negócio da outra organização", () => {
       "select title from crm_leads where id = $1",
       [leadDaVitima],
     );
-    expect(rows[0]!.title, "o agente de A reescreveu o negócio de B").toBe(
-      "Negócio SECRETO da vítima",
+    expect(rows[0]!.title, "o agente de A reescreveu o lead de B").toBe(
+      "Lead SECRETO da vítima",
     );
   });
 

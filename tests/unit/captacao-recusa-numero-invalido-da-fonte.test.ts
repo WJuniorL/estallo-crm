@@ -72,14 +72,14 @@ async function enviar(corpo: Record<string, unknown>): Promise<Response | Error>
 
 beforeEach(() => {
   h.registrar.mockClear();
-  h.criarLead.mockReset().mockRejectedValue(new Error("chegou à criação do negócio"));
+  h.criarLead.mockReset().mockRejectedValue(new Error("chegou à criação do lead"));
 });
 
 describe("pergunta numérica configurada na fonte de formulário", () => {
-  it("resposta que não é número: 422, nenhum negócio e o motivo na tela", async () => {
+  it("resposta que não é número: 422, nenhum lead e o motivo na tela", async () => {
     const res = await enviar({ nome: "Dora", telefone: "+5511999990000", quantidade: "12x" });
 
-    expect(h.criarLead, "negócio criado com número inválido").not.toHaveBeenCalled();
+    expect(h.criarLead, "lead criado com número inválido").not.toHaveBeenCalled();
     expect(res).toBeInstanceOf(Response);
     expect((res as Response).status).toBe(422);
     expect(h.registrar).toHaveBeenCalledWith(
@@ -88,7 +88,7 @@ describe("pergunta numérica configurada na fonte de formulário", () => {
     );
   });
 
-  it("controle: número e moeda BRL válidos chegam ao negócio já convertidos", async () => {
+  it("controle: número e moeda BRL válidos chegam ao lead já convertidos", async () => {
     await enviar({ nome: "Dora", telefone: "+5511999990000", quantidade: "3", faturamento: "R$ 1.250,00" });
 
     expect(h.registrar).not.toHaveBeenCalledWith(

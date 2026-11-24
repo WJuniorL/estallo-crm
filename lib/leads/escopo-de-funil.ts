@@ -341,7 +341,7 @@ export async function podeChamarFerramenta(entrada: {
         return {
           permitido: false,
           motivo: "indisponivel",
-          detalhe: `contato com ${r.quantos} negócios abertos: confirme qual antes de marcar`,
+          detalhe: `contato com ${r.quantos} leads abertos: confirme qual antes de marcar`,
         };
       }
 
@@ -402,17 +402,17 @@ export function recusaParaOModelo(v: VereditoDoEscopo): string | null {
   switch (v.motivo) {
     case "escopo_vazio":
       return (
-        "este assistente ainda não tem nenhum funil liberado para mexer em negócios. " +
+        "este assistente ainda não tem nenhum funil liberado para mexer em leads. " +
         "Não tente por outro caminho — quem cuida do sistema precisa liberar isso na configuração."
       );
     case "funil_fora_do_escopo":
       return (
-        "este negócio está num funil que não é da sua alçada. Você pode conversar sobre ele, " +
+        "este lead está num funil que não é da sua alçada. Você pode conversar sobre ele, " +
         "mas não alterar o cartão. Não tente por outra ferramenta."
       );
     case "ferramenta_nao_classificada":
-      return "esta capacidade ainda não foi liberada para uso com negócios.";
+      return "esta capacidade ainda não foi liberada para uso com leads.";
     case "indisponivel":
-      return "não consegui confirmar a qual funil este negócio pertence agora. Tente de novo em instantes.";
+      return "não consegui confirmar a qual funil este lead pertence agora. Tente de novo em instantes.";
   }
 }

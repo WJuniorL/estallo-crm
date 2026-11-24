@@ -181,7 +181,7 @@ export function RegrasDeConversaoGoogle({
           <h3 className="font-medium">{t("O que cada etapa do funil informa ao Google Ads")}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
             {t(
-              "Quanto mais cedo você avisa, mais dados a campanha tem para aprender — mas só a venda ensina o Google a buscar quem compra. Cada etapa ligada envia a sua ação de conversão uma vez por negócio, quando ele entra ali.",
+              "Quanto mais cedo você avisa, mais dados a campanha tem para aprender — mas só a venda ensina o Google a buscar quem compra. Cada etapa ligada envia a sua ação de conversão uma vez por lead, quando ele entra ali.",
             )}
           </p>
         </div>
@@ -311,7 +311,7 @@ export function RegrasDeConversaoGoogle({
 
       <p className="text-xs text-muted-foreground">
         {t(
-          "As conversões só saem quando o negócio muda de etapa — pela equipe, pela IA ou por automação — e só para quem veio de anúncio do Google. Movimentos anteriores a ligar a regra não são enviados.",
+          "As conversões só saem quando o lead muda de etapa — pela equipe, pela IA ou por automação — e só para quem veio de anúncio do Google. Movimentos anteriores a ligar a regra não são enviados.",
         )}
       </p>
       <div>

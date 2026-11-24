@@ -220,7 +220,7 @@ test("com o site aberto, o aviso NOVO que pede gente toca; o antigo não", async
 
   // Novo: um negócio entrou numa etapa que avisa → sem arquivo, o bipe do produto.
   const { error: e2 } = await db.from("agent_inbox_items").insert({
-    organization_id: orgId, kind: "other", severity: "info", title: "Negócio entrou em «Pedido confirmado»", ref_kind: "lead", ref_id: randomUUID(),
+    organization_id: orgId, kind: "other", severity: "info", title: "Lead entrou em «Pedido confirmado»", ref_kind: "lead", ref_id: randomUUID(),
   });
   if (e2) throw e2;
   await expect.poll(async () => (await medir()).bipes, { timeout: 75_000, intervals: [2_000] }).toBeGreaterThan(0);

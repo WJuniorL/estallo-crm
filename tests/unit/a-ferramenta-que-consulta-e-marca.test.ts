@@ -143,7 +143,7 @@ describe("crm_find_and_book_appointment", () => {
     expect(r.marcado).toBe(false);
   });
 
-  it("consulta recusada por negócio não derruba o turno: volta como resposta ao modelo", async () => {
+  it("consulta recusada por lead não derruba o turno: volta como resposta ao modelo", async () => {
     vi.mocked(horariosLivresDaOrg).mockResolvedValue({
       ok: false,
       codigo: "tipo_desconhecido",

@@ -92,7 +92,7 @@ export const DICIONARIO: Traducoes = {
 
   // A conferência de fato (#2231): a terceira camada do before_send.
   "Conferir afirmações de fato na resposta": { es: "Verificar las afirmaciones de hecho de la respuesta" },
-  "Lê a resposta que o assistente vai enviar e confere, nas evidências consultadas neste turno, se o que ele afirma sobre o negócio está escrito ali — ou se o material diz o contrário.":
+  "Lê a resposta que o assistente vai enviar e confere, nas evidências consultadas neste turno, se o que ele afirma sobre o lead está escrito ali — ou se o material diz o contrário.":
     { es: "Lee la respuesta que el asistente va a enviar y verifica, en las evidencias consultadas en este turno, si lo que afirma sobre el negocio está escrito allí — o si el material dice lo contrario." },
   "Nesta versão a conferência de fato só observa: ela grava o que teria sido corrigido, mas nenhum envio é barrado. Deixar o Jev decidir sozinho só depois que você vir no cartão quantas mensagens teriam sido corrigidas.":
     { es: "En esta versión la verificación de hechos solo observa: registra lo que se habría corregido, pero no bloquea ningún envío. Dejar que Jev decida solo después de que veas en la tarjeta cuántos mensajes se habrían corregido." },
@@ -101,11 +101,11 @@ export const DICIONARIO: Traducoes = {
     { es: "respuestas — las dos dejaron pasar la misma afirmación." },
   "O agente diz ao cliente um horário, um preço ou um endereço que não está em nenhum material, e a pessoa vai até a loja ou à recepção por algo que não é verdade.":
     { es: "El agente le dice al cliente un horario, un precio o una dirección que no está en ningún material, y la persona va a la tienda o a recepción por algo que no es verdad." },
-  "O Jev foi perguntado se o que a resposta afirma sobre o negócio está escrito nas evidências consultadas neste turno.":
+  "O Jev foi perguntado se o que a resposta afirma sobre o lead está escrito nas evidências consultadas neste turno.":
     { es: "Se le preguntó a Jev si lo que la respuesta afirma sobre el negocio está escrito en las evidencias consultadas en este turno." },
   "O Jev não respondeu: a mensagem foi como estava, sem a conferência de fato.":
     { es: "Jev no respondió: el mensaje salió como estaba, sin la verificación de hechos." },
-  "Confere se o que o assistente afirma sobre o negócio (horário, preço, endereço) está no material que ele consultou para responder.":
+  "Confere se o que o assistente afirma sobre o lead (horário, preço, endereço) está no material que ele consultou para responder.":
     { es: "Verifica si lo que el asistente afirma sobre el negocio (horario, precio, dirección) está en el material que consultó para responder." },
   "Liga-se no cartão do Jev, em Provedores de IA.": { es: "Se activa en la tarjeta de Jev, en Proveedores de IA." },
   "Vem desligada. Nesta versão ela só anota o que encontrou e não barra nenhuma mensagem; ligada, custa +1 consulta ao Jev por resposta.":
@@ -222,7 +222,7 @@ export const DICIONARIO: Traducoes = {
   "Crie um link por campanha ou botão. O código liga o clique à mensagem enviada pelo visitante.": { es: "Crea un enlace por campaña o botón. El código vincula el clic con el mensaje enviado por el visitante." },
   "As métricas estão indisponíveis. Atualize a página para tentar novamente.": { es: "Las métricas no están disponibles. Actualiza la página para volver a intentarlo." },
   "Cliques": { es: "Clics" },
-  "As contagens usam os registros ainda retidos no CRM. Cliques incluem acessos repetidos; contatos e negócios são distintos por link. Não representam pessoas únicas nem o total histórico após o expurgo.": { es: "Los recuentos usan los registros aún conservados en el CRM. Los clics incluyen visitas repetidas; contactos y negocios son distintos por enlace. No representan personas únicas ni el total histórico tras la eliminación por retención." },
+  "As contagens usam os registros ainda retidos no CRM. Cliques incluem acessos repetidos; contatos e leads são distintos por link. Não representam pessoas únicas nem o total histórico após o expurgo.": { es: "Los recuentos usan los registros aún conservados en el CRM. Los clics incluyen visitas repetidas; contactos y negocios son distintos por enlace. No representan personas únicas ni el total histórico tras la eliminación por retención." },
   "Link salvo.": { es: "Enlace guardado." },
   "Não foi possível salvar este link. Atualize a página e tente novamente.": { es: "No se pudo guardar este enlace. Actualiza la página y vuelve a intentarlo." },
   "Editar link": { es: "Editar enlace" },
@@ -261,7 +261,7 @@ export const DICIONARIO: Traducoes = {
   "A conta desta empresa está suspensa.": { es: "La cuenta de esta empresa está suspendida." },
   "Conversões chegando ao Google": { es: "Conversiones llegando a Google" },
   "Nenhuma conversão aceita ainda": { es: "Ninguna conversión aceptada todavía" },
-  "Pode ser falta de negócios vindos de anúncio do Google, ou a captura do clique ainda não configurada no site.": { es: "Puede deberse a que no hay negocios que vengan de anuncios de Google o a que la captura del clic aún no está configurada en el sitio." },
+  "Pode ser falta de leads vindos de anúncio do Google, ou a captura do clique ainda não configurada no site.": { es: "Puede deberse a que no hay negocios que vengan de anuncios de Google o a que la captura del clic aún no está configurada en el sitio." },
   "Sem falhas recentes": { es: "Sin fallos recientes" },
   "Abra o histórico filtrando por Falhas: o detalhe de cada linha é a resposta do Google.": { es: "Abre el historial filtrando por Fallos: el detalle de cada línea es la respuesta de Google." },
   "Nenhum envio foi recusado nos últimos 7 dias.": { es: "Ningún envío fue rechazado en los últimos 7 días." },
@@ -269,7 +269,7 @@ export const DICIONARIO: Traducoes = {
   "A confirmação é consultada sozinha. Passadas 24 horas, vira pendência na aba Configuração.": { es: "La confirmación se consulta sola. Pasadas 24 horas, se convierte en pendiente en la pestaña Configuración." },
   "Todos os envios já têm resposta.": { es: "Todos los envíos ya tienen respuesta." },
   "A venda está configurada. Etapas ligadas dão mais sinal ao Google antes da venda.": { es: "La venta está configurada. Las etapas activadas le dan más señal a Google antes de la venta." },
-  "A venda (negócio ganho) não tem ação de conversão: é ela que ensina o Google a buscar quem compra.": { es: "La venta (negocio ganado) no tiene acción de conversión: es la que le enseña a Google a buscar a quien compra." },
+  "A venda (lead ganho) não tem ação de conversão: é ela que ensina o Google a buscar quem compra.": { es: "La venta (negocio ganado) no tiene acción de conversión: es la que le enseña a Google a buscar a quien compra." },
   "Dê um nome à conversão antes de criar a ação no Google.": {
     es: "Dale un nombre a la conversión antes de crear la acción en Google.",
   },
@@ -286,14 +286,14 @@ export const DICIONARIO: Traducoes = {
   "Criar no Google": { es: "Crear en Google" },
   "Saúde da integração com o Google Ads": { es: "Estado de la integración con Google Ads" },
   Problema: { es: "Problema" },
-  "Venda (negócio ganho)": { es: "Venta (negocio ganado)" },
+  "Venda (lead ganho)": { es: "Venta (negocio ganado)" },
   "Ação de conversão da venda (ID)": { es: "Acción de conversión de la venta (ID)" },
-  "Recebe a compra quando o negócio é marcado como ganho. Deixe vazio se você só quer enviar etapas do funil.":
+  "Recebe a compra quando o lead é marcado como ganho. Deixe vazio se você só quer enviar etapas do funil.":
     {
       es: "Recibe la compra cuando el negocio se marca como ganado. Déjalo vacío si solo quieres enviar etapas del embudo.",
     },
   "Categoria da conversão": { es: "Categoría de la conversión" },
-  "Valor do negócio": { es: "Valor del negocio" },
+  "Valor do lead": { es: "Valor del negocio" },
   "Com o valor, o Google pode otimizar por receita e não só por volume. Venda sem valor vai sem valor — nunca como zero.":
     {
       es: "Con el valor, Google puede optimizar por ingresos y no solo por volumen. Una venta sin valor se envía sin valor, nunca como cero.",
@@ -321,8 +321,7 @@ export const DICIONARIO: Traducoes = {
   "Não enviado": { es: "No enviado" },
   "Todos os eventos": { es: "Todos los eventos" },
   Plataforma: { es: "Plataforma" },
-  "Buscar por negócio": { es: "Buscar por negocio" },
-  "Nome do negócio": { es: "Nombre del negocio" },
+  "Buscar por lead": { es: "Buscar por negocio" },
   Filtrar: { es: "Filtrar" },
   envio: { es: "envío" },
   envios: { es: "envíos" },
@@ -341,7 +340,7 @@ export const DICIONARIO: Traducoes = {
   "O que cada etapa do funil informa ao Google Ads": {
     es: "Qué informa cada etapa del embudo a Google Ads",
   },
-  "Quanto mais cedo você avisa, mais dados a campanha tem para aprender — mas só a venda ensina o Google a buscar quem compra. Cada etapa ligada envia a sua ação de conversão uma vez por negócio, quando ele entra ali.":
+  "Quanto mais cedo você avisa, mais dados a campanha tem para aprender — mas só a venda ensina o Google a buscar quem compra. Cada etapa ligada envia a sua ação de conversão uma vez por lead, quando ele entra ali.":
     {
       es: "Cuanto antes avisas, más datos tiene la campaña para aprender, pero solo la venta le enseña a Google a buscar a quien compra. Cada etapa activada envía su acción de conversión una vez por negocio, cuando este entra en ella.",
     },
@@ -359,7 +358,7 @@ export const DICIONARIO: Traducoes = {
   'Incluir na coluna "Conversões" (os lances otimizam por ela)': {
     es: 'Incluir en la columna "Conversiones" (las pujas optimizan por ella)',
   },
-  "As conversões só saem quando o negócio muda de etapa — pela equipe, pela IA ou por automação — e só para quem veio de anúncio do Google. Movimentos anteriores a ligar a regra não são enviados.":
+  "As conversões só saem quando o lead muda de etapa — pela equipe, pela IA ou por automação — e só para quem veio de anúncio do Google. Movimentos anteriores a ligar a regra não são enviados.":
     {
       es: "Las conversiones solo salen cuando el negocio cambia de etapa, por el equipo, por la IA o por una automatización, y solo para quien llegó desde un anuncio de Google. Los movimientos anteriores a activar la regla no se envían.",
     },
@@ -394,7 +393,7 @@ export const DICIONARIO: Traducoes = {
   "Só fora do WhatsApp": { es: "Solo fuera de WhatsApp" },
   "Histórico de envios": { es: "Historial de envíos" },
   Diagnóstico: { es: "Diagnóstico" },
-  'A venda fechou sem valor preenchido. A Meta exige valor e moeda em uma compra — preencha o valor do negócio e use o botão de reprocessamento. No Google, você também pode escolher enviar a venda sem valor em "Valor do negócio".':
+  'A venda fechou sem valor preenchido. A Meta exige valor e moeda em uma compra — preencha o valor do lead e use o botão de reprocessamento. No Google, você também pode escolher enviar a venda sem valor em "Valor do lead".':
     {
       es: 'La venta se cerró sin importe. Meta exige importe y moneda en una compra: completa el valor del negocio y usa el botón para reprocesar. En Google también puedes elegir enviar la venta sin valor en "Valor del negocio".',
     },
@@ -407,11 +406,11 @@ export const DICIONARIO: Traducoes = {
   "Ao ganhar": { es: "Al ganar" },
   "Ao perder": { es: "Al perder" },
   "arquivada": { es: "archivada" },
-  "Sem marca nenhuma este campo nunca é exigido — é o comportamento de sempre. Marcado, ele precisa estar preenchido para o negócio entrar na etapa escolhida ou ser fechado como ganho/perdido.":
+  "Sem marca nenhuma este campo nunca é exigido — é o comportamento de sempre. Marcado, ele precisa estar preenchido para o lead entrar na etapa escolhida ou ser fechado como ganho/perdido.":
     {
       es: "Sin ninguna marca este campo nunca se exige — es el comportamiento de siempre. Marcado, debe estar completado para que el negocio entre en la etapa elegida o se cierre como ganado/perdido.",
     },
-  "Este funil exige alguns dados antes de mover o negócio. Preencha o que falta para continuar.": {
+  "Este funil exige alguns dados antes de mover o lead. Preencha o que falta para continuar.": {
     es: "Este embudo exige algunos datos antes de mover el negocio. Completa lo que falta para continuar.",
   },
   "Selecione…": { es: "Selecciona…" },
@@ -425,16 +424,16 @@ export const DICIONARIO: Traducoes = {
   "Exigir motivo de ganho ao fechar como ganho": {
     es: "Exigir motivo al cerrar como ganado",
   },
-  "Negócio encerrado que volta abre um negócio novo": {
+  "Lead encerrado que volta abre um lead novo": {
     es: "Un negocio cerrado que vuelve abre un negocio nuevo",
   },
-  "Desligado, arrastar um negócio perdido ou ganho para uma etapa aberta reabre o mesmo negócio. Ligado, o encerrado fica como está e o quadro oferece criar uma nova tentativa com o mesmo contato.": {
+  "Desligado, arrastar um lead perdido ou ganho para uma etapa aberta reabre o mesmo lead. Ligado, o encerrado fica como está e o quadro oferece criar uma nova tentativa com o mesmo contato.": {
     es: "Desactivado, arrastrar un negocio perdido o ganado a una etapa abierta reabre el mismo negocio. Activado, el cerrado queda como está y el tablero ofrece crear un nuevo intento con el mismo contacto.",
   },
-  "Abrir comanda ao ganhar um negócio neste funil": {
+  "Abrir comanda ao ganhar um lead neste funil": {
     es: "Abrir orden de servicio al ganar un negocio en este embudo",
   },
-  "Desligado, ganhar não mexe no financeiro: loja com checkout, infoproduto e imobiliária não vivem de conta a receber. Ligado, o arrasto para a etapa de ganho e o botão Ganhar abrem uma comanda com o valor e o contato do negócio.": {
+  "Desligado, ganhar não mexe no financeiro: loja com checkout, infoproduto e imobiliária não vivem de conta a receber. Ligado, o arrasto para a etapa de ganho e o botão Ganhar abrem uma comanda com o valor e o contato do lead.": {
     es: "Desactivado, ganar no toca el financiero: la tienda con checkout, el infoproducto y la inmobiliaria no viven de cuentas por cobrar. Activado, arrastrar a la etapa de ganado y el botón Ganar abren una orden de servicio con el valor y el contacto del negocio.",
   },
   "Motivo do ganho": { es: "Motivo del negocio ganado" },
@@ -463,7 +462,7 @@ export const DICIONARIO: Traducoes = {
   "Lead qualificado": { es: "Lead calificado" },
   Compra: { es: "Compra" },
   "Captura de origem do Google Ads": { es: "Captura de origen de Google Ads" },
-  "Ao entrar na etapa escolhida, o negócio envia uma qualificação sem valor monetário. A compra continua sendo enviada ao ganhar o negócio com valor. Cada evento é contado uma vez por negócio.":
+  "Ao entrar na etapa escolhida, o lead envia uma qualificação sem valor monetário. A compra continua sendo enviada ao ganhar o lead com valor. Cada evento é contado uma vez por lead.":
     {
       es: "Al entrar en la etapa elegida, el negocio envía una calificación sin valor monetario. La compra se sigue enviando al ganar el negocio con un valor. Cada evento se cuenta una vez por negocio.",
     },
@@ -488,7 +487,7 @@ export const DICIONARIO: Traducoes = {
   "A plataforma não concluiu em 24 horas. Consulte o gerenciador e use o botão para verificar novamente.": { es: "La plataforma no terminó en 24 horas. Consulta el administrador y usa el botón para verificar de nuevo." },
   "Falha temporária. Uma nova tentativa foi agendada automaticamente.": { es: "Fallo temporal. Se programó automáticamente un nuevo intento." },
   "Evento recebido em modo de teste. Desative o teste antes de reportar a venda real.": { es: "Evento recibido en modo de prueba. Desactiva la prueba antes de reportar la venta real." },
-  "A venda fechou sem valor preenchido. A plataforma exige valor e moeda em uma compra — preencha o valor do negócio e use o botão de reprocessamento.": { es: "La venta se cerró sin importe. La plataforma exige importe y moneda en una compra: completa el valor del negocio y usa el botón para reprocesar." },
+  "A venda fechou sem valor preenchido. A plataforma exige valor e moeda em uma compra — preencha o valor do lead e use o botão de reprocessamento.": { es: "La venta se cerró sin importe. La plataforma exige importe y moneda en una compra: completa el valor del negocio y usa el botón para reprocesar." },
 
   // Conversões de anúncios: recebimento, diagnóstico e recuperação.
   "Autorizar nova integração do Google": { es: "Autorizar nueva integración de Google" },
@@ -565,7 +564,7 @@ export const DICIONARIO: Traducoes = {
   "Seu agente está tomando forma": { es: "Tu agente está tomando forma" },
   "definições preenchidas": { es: "ajustes completados" },
   "Vamos definir na conversa": { es: "Lo definiremos en la conversación" },
-  "Permissões: consultar contatos e atualizar negócios no funil escolhido.": { es: "Permisos: consultar contactos y actualizar negocios en el embudo elegido." },
+  "Permissões: consultar contatos e atualizar leads no funil escolhido.": { es: "Permisos: consultar contactos y actualizar negocios en el embudo elegido." },
   "Agente publicado e selecionado.": { es: "Agente publicado y seleccionado." },
   "Configurar por conversa": { es: "Configurar conversando" },
   "Usar agente existente / configurar manualmente": { es: "Usar un agente existente / configurar manualmente" },
@@ -631,7 +630,7 @@ export const DICIONARIO: Traducoes = {
   "Pronto para criar": { es: "Listo para crear" },
   "Como vai abordar": { es: "Cómo se acercará" },
   "Quando qualificar": { es: "Cuándo calificar" },
-  "Permissões: consultar contatos e atualizar negócios neste funil.": { es: "Permisos: consultar contactos y actualizar negocios en este embudo." },
+  "Permissões: consultar contatos e atualizar leads neste funil.": { es: "Permisos: consultar contactos y actualizar negocios en este embudo." },
   "Manter a continuidade do agente neste canal": { es: "Mantener la continuidad del agente en este canal" },
   "Dar continuidade com o mesmo agente, salvo mudança de assunto ou transferência. Esta configuração vale para as conversas deste canal.": { es: "Continuar con el mismo agente, salvo cambio de tema o transferencia. Esta configuración se aplica a las conversaciones de este canal." },
   "O agente será publicado e poderá atender mensagens recebidas neste canal. As abordagens só começam quando você iniciar a campanha.": { es: "El agente se publicará y podrá atender los mensajes que lleguen a este canal. El contacto con las empresas solo empieza cuando inicies la campaña." },
@@ -907,7 +906,7 @@ export const DICIONARIO: Traducoes = {
     es: "El agente lee la conversación, entiende el historial y responde al cliente sin pedirle que repita lo que ya dijo.",
   },
   "Vender e mover o funil": { es: "Vender y mover el embudo" },
-  "O agente registra a oportunidade, atualiza o negócio e move o cliente de etapa conforme a conversa avança.": {
+  "O agente registra o lead, atualiza o lead e move o cliente de etapa conforme a conversa avança.": {
     es: "El agente registra la oportunidad, actualiza el negocio y mueve al cliente de etapa a medida que avanza la conversación.",
   },
   "Não perder o cliente": { es: "No perder al cliente" },
@@ -1010,19 +1009,17 @@ export const DICIONARIO: Traducoes = {
   "preço do catálogo": { es: "precio del catálogo" },
   "Preço do catálogo": { es: "Precio del catálogo" },
   "Adicionando…": { es: "Agregando…" },
-  "O negócio muda para o funil e a etapa escolhidos — conversa, tarefas, campos e histórico vão junto.": { es: "El negocio pasa al embudo y la etapa elegidos — conversación, tareas, campos e historial van con él." },
+  "O lead muda para o funil e a etapa escolhidos — conversa, tarefas, campos e histórico vão junto.": { es: "El negocio pasa al embudo y la etapa elegidos — conversación, tareas, campos e historial van con él." },
   "Etapa de destino não encontrada.": { es: "Etapa de destino no encontrada." },
-  "O negócio já está neste funil.": { es: "El negocio ya está en este embudo." },
-  "Escolha uma etapa aberta. Para ganhar ou perder, use os botões do negócio.": { es: "Elige una etapa abierta. Para ganar o perder, usa los botones del negocio." },
-  "Só um negócio aberto muda de funil.": { es: "Solo un negocio abierto cambia de embudo." },
-  "Selecionar Oportunidade": { es: "Seleccionar oportunidad" },
-  "Buscar por oportunidade...": { es: "Buscar oportunidad..." },
-  Oportunidades: { es: "Oportunidades" },
-  "Nenhuma oportunidade encontrada.": { es: "No se encontró ninguna oportunidad." },
-  Oportunidade: { es: "Oportunidad" },
-  "Oportunidade (opcional)": { es: "Oportunidad (opcional)" },
-  "Remover oportunidade": { es: "Quitar oportunidad" },
-  "Vincular a uma oportunidade": { es: "Vincular a una oportunidad" },
+  "O lead já está neste funil.": { es: "El negocio ya está en este embudo." },
+  "Escolha uma etapa aberta. Para ganhar ou perder, use os botões do lead.": { es: "Elige una etapa abierta. Para ganar o perder, usa los botones del negocio." },
+  "Só um lead aberto muda de funil.": { es: "Solo un negocio abierto cambia de embudo." },
+  "Selecionar Lead": { es: "Seleccionar oportunidad" },
+  "Buscar por lead...": { es: "Buscar oportunidad..." },
+  "Nenhuma lead encontrada.": { es: "No se encontró ninguna oportunidad." },
+  "Lead (opcional)": { es: "Oportunidad (opcional)" },
+  "Remover lead": { es: "Quitar oportunidad" },
+  "Vincular a um lead": { es: "Vincular a una oportunidad" },
   "Buscar ou criar tag…": { es: "Buscar o crear etiqueta…" },
   "Buscar tags": { es: "Buscar etiquetas" },
   "Cor da Tag": { es: "Color de la etiqueta" },
@@ -1045,7 +1042,6 @@ export const DICIONARIO: Traducoes = {
   "Tag atualizada.": { es: "Etiqueta actualizada." },
   "Tag criada.": { es: "Etiqueta creada." },
   "Tag excluída.": { es: "Etiqueta eliminada." },
-  "Tags da oportunidade": { es: "Etiquetas de la oportunidad" },
   "em uso, fora do cadastro": { es: "en uso, fuera del registro" },
   "registro": { es: "registro" },
   "registro(s) perdem esta tag. Não dá para desfazer.": { es: "registro(s) pierden esta etiqueta. No se puede deshacer." },
@@ -1057,7 +1053,7 @@ export const DICIONARIO: Traducoes = {
   "Agenda ligada.": { es: "Agenda activada." },
   "Agenda desligada.": { es: "Agenda desactivada." },
   "Compromissos, horários livres e agendamento pelo agente de IA. Desligada, some do menu e o agente não marca horários.": { es: "Citas, horarios libres y agendamiento por el agente de IA. Desactivada, desaparece del menú y el agente no agenda." },
-  "Os dados extras do negócio e do contato — onde aparecem e quando são obrigatórios.": { es: "Los datos extra del negocio y del contacto: dónde aparecen y cuándo son obligatorios." },
+  "Os dados extras do lead e do contato — onde aparecem e quando são obrigatórios.": { es: "Los datos extra del negocio y del contacto: dónde aparecen y cuándo son obligatorios." },
   "Buscar campos": { es: "Buscar campos" },
   "Novo Campo": { es: "Nuevo campo" },
   "Visibilidade": { es: "Visibilidad" },
@@ -1077,7 +1073,7 @@ export const DICIONARIO: Traducoes = {
   "Funis e etapas escolhidos": { es: "Embudos y etapas elegidos" },
   "Em toda a empresa": { es: "En toda la empresa" },
   "Em etapas escolhidas": { es: "En etapas elegidas" },
-  "O negócio só sai da primeira etapa, e só é ganho, com o campo preenchido.": { es: "El negocio solo sale de la primera etapa, y solo se gana, con el campo completado." },
+  "O lead só sai da primeira etapa, e só é ganho, com o campo preenchido.": { es: "El negocio solo sale de la primera etapa, y solo se gana, con el campo completado." },
   "Exigir ao ganhar": { es: "Exigir al ganar" },
   "Exigir ao perder": { es: "Exigir al perder" },
   "Some dos formulários sem apagar o que já foi preenchido.": { es: "Desaparece de los formularios sin borrar lo que ya se completó." },
@@ -1154,7 +1150,7 @@ export const DICIONARIO: Traducoes = {
   "Este agente precisa concluir a configuração para atender.": {
     es: "Este agente necesita completar la configuración para atender.",
   },
-  "O prompt e o conhecimento serão preservados. Nenhuma permissão para alterar negócios ou agenda será adicionada.":
+  "O prompt e o conhecimento serão preservados. Nenhuma permissão para alterar leads ou agenda será adicionada.":
     {
       es: "Se conservarán las instrucciones y el conocimiento. No se añadirán permisos para cambiar negocios o calendario.",
     },
@@ -1308,7 +1304,7 @@ export const DICIONARIO: Traducoes = {
   "Sem telefone no contato: cadastre um telefone para abrir a conversa.": {
     es: "Sin teléfono en el contacto: agrega un teléfono para abrir la conversación.",
   },
-  "Abrir negócio": { es: "Abrir negocio" },
+  "Abrir lead": { es: "Abrir negocio" },
   "Abrir acompanhamento": { es: "Abrir seguimiento" },
   "Revisar conexão": { es: "Revisar conexión" },
   "Configurar canal do lembrete": { es: "Configurar canal del recordatorio" },
@@ -1334,9 +1330,9 @@ export const DICIONARIO: Traducoes = {
   "Na evolução do assistente, confira a avaliação de qualidade. Este aviso não identifica uma avaliação específica.": { es: "En la evolución del asistente, revisa la evaluación de calidad. Este aviso no identifica una evaluación específica." },
   "Peça ao gestor para revisar o acompanhamento que parou.": { es: "Pide al responsable que revise el seguimiento que se detuvo." },
   "Confira se cabe retomar o atendimento descrito neste aviso.": { es: "Revisa si corresponde retomar la atención descrita en este aviso." },
-  "Confira os negócios do contato e escolha a qual deles pertence a próxima ação.": { es: "Revisa los negocios del contacto y elige a cuál pertenece la siguiente acción." },
-  "Revise os negócios parados no Radar e defina o próximo passo.": { es: "Revisa los negocios detenidos en el Radar y define el siguiente paso." },
-  "Revise no Radar se ainda cabe retomar os negócios indicados.": { es: "Revisa en el Radar si todavía corresponde retomar los negocios indicados." },
+  "Confira os leads do contato e escolha a qual deles pertence a próxima ação.": { es: "Revisa los negocios del contacto y elige a cuál pertenece la siguiente acción." },
+  "Revise os leads parados no Radar e defina o próximo passo.": { es: "Revisa los negocios detenidos en el Radar y define el siguiente paso." },
+  "Revise no Radar se ainda cabe retomar os leads indicados.": { es: "Revisa en el Radar si todavía corresponde retomar los negocios indicados." },
   "Peça ao gestor para revisar as ferramentas habilitadas para o assistente deste atendimento.": { es: "Pide al responsable que revise las herramientas habilitadas para el asistente de esta atención." },
   "Confira a resposta que não chegou antes de decidir se precisa enviar novamente.": { es: "Revisa la respuesta que no llegó antes de decidir si debes enviarla de nuevo." },
   "Peça ao gestor para revisar o provedor e as credenciais de leitura de fotos e áudios.": { es: "Pide al responsable que revise el proveedor y las credenciales para leer fotos y audios." },
@@ -2145,8 +2141,8 @@ export const DICIONARIO: Traducoes = {
   "Digite uma expressão e aperte Enter": { es: "Escribe una expresión y presiona Enter" },
   Adicionar: { es: "Agregar" },
   // ─── Agentes de IA: funis do agente, fluxos de follow-up ───
-  "Em que negócios ele pode mexer": { es: "En qué negocios puede intervenir" },
-  "Marque os funis que este assistente cuida. Ele conversa com qualquer cliente, mas só move, edita ou encerra negócio dos funis marcados aqui.": {
+  "Em que leads ele pode mexer": { es: "En qué negocios puede intervenir" },
+  "Marque os funis que este assistente cuida. Ele conversa com qualquer cliente, mas só move, edita ou encerra lead dos funis marcados aqui.": {
     es: "Marca los embudos que este asistente gestiona. Conversa con cualquier cliente, pero solo mueve, edita o cierra negocios de los embudos marcados aquí.",
   },
   "Você ainda não tem nenhum funil. Crie um em Funis para poder liberar o assistente.": {
@@ -2158,23 +2154,23 @@ export const DICIONARIO: Traducoes = {
   "— ele não sabe organizar este funil ainda": {
     es: "— todavía no sabe organizar este embudo",
   },
-  "Sem nenhum funil marcado, ele conversa com os clientes normalmente, mas não mexe em negócio nenhum — nem move, nem encerra, nem marca.": {
+  "Sem nenhum funil marcado, ele conversa com os clientes normalmente, mas não mexe em lead nenhum — nem move, nem encerra, nem marca.": {
     es: "Sin ningún embudo marcado, conversa con los clientes con normalidad, pero no interviene en ningún negocio — no mueve, no cierra, no marca.",
   },
   "Você marcou": { es: "Marcaste" },
-  ", mas ninguém disse ao assistente o que cada etapa desse funil significa — ele vai atender e deixar os negócios parados onde estão.": {
+  ", mas ninguém disse ao assistente o que cada etapa desse funil significa — ele vai atender e deixar os leads parados onde estão.": {
     es: ", pero nadie le ha explicado al asistente qué significa cada etapa de ese embudo. Atenderá y dejará los negocios parados donde están.",
   },
-  "funis em que ninguém disse ao assistente o que cada etapa significa — ele vai atender e deixar os negócios parados onde estão.": {
+  "funis em que ninguém disse ao assistente o que cada etapa significa — ele vai atender e deixar os leads parados onde estão.": {
     es: "embudos en los que nadie le ha explicado al asistente qué significa cada etapa. Atenderá y dejará los negocios parados donde están.",
   },
   " Isso se configura em Configurações › Funis.": {
     es: " Esto se configura en Configuración › Embudos.",
   },
-  "As conversas novas viram negócio em": {
+  "As conversas novas viram lead em": {
     es: "Las conversaciones nuevas se convierten en negocio en",
   },
-  ", que não está marcado. O assistente vai atender e os negócios vão se acumular ali sem que ele possa organizá-los.": {
+  ", que não está marcado. O assistente vai atender e os leads vão se acumular ali sem que ele possa organizá-los.": {
     es: ", que no está marcado. El asistente atenderá y los negocios se acumularán ahí sin que pueda organizarlos.",
   },
   "Carregando fluxos publicados…": { es: "Cargando flujos publicados…" },
@@ -2590,19 +2586,19 @@ export const DICIONARIO: Traducoes = {
   "Todas as versões": { es: "Todas las versiones" },
   "Mapear dados": { es: "Mapear datos" },
   "Atribuir responsável": { es: "Asignar responsable" },
-  "Acrescenta ou tira um produto do catálogo no negócio.": { es: "Agrega o quita un producto del catálogo en el negocio." },
+  "Acrescenta ou tira um produto do catálogo no lead.": { es: "Agrega o quita un producto del catálogo en el negocio." },
   "Acrescentar produto": { es: "Agregar producto" },
   "Tirar produto": { es: "Quitar producto" },
   "Produto do catálogo": { es: "Producto del catálogo" },
-  "O nome e o preço vêm do catálogo; o valor do negócio é recalculado.": { es: "El nombre y el precio vienen del catálogo; el valor del negocio se recalcula." },
+  "O nome e o preço vêm do catálogo; o valor do lead é recalculado.": { es: "El nombre y el precio vienen del catálogo; el valor del negocio se recalcula." },
   "sem produto escolhido": { es: "sin producto elegido" },
-  "tira o produto do negócio": { es: "quita el producto del negocio" },
+  "tira o produto do lead": { es: "quita el producto del negocio" },
   "produto do catálogo": { es: "producto del catálogo" },
   "Id do item criado": { es: "Id del ítem creado" },
-  "O negócio vai para esta etapa. Se ela for de outro funil, o mesmo negócio muda de funil — só negócio aberto, e só para etapa aberta.": {
+  "O lead vai para esta etapa. Se ela for de outro funil, o mesmo lead muda de funil — só lead aberto, e só para etapa aberta.": {
     es: "El negocio va a esta etapa. Si es de otro embudo, el mismo negocio cambia de embudo — solo un negocio abierto, y solo a una etapa abierta.",
   },
-  "Para trocar de funil, escolha uma etapa aberta. Ganho e perda se marcam dentro do funil do negócio.": { es: "Para cambiar de embudo, elija una etapa abierta. Ganado y perdido se marcan dentro del embudo del negocio." },
+  "Para trocar de funil, escolha uma etapa aberta. Ganho e perda se marcam dentro do funil do lead.": { es: "Para cambiar de embudo, elija una etapa abierta. Ganado y perdido se marcan dentro del embudo del negocio." },
   "Adicionar tags": { es: "Agregar etiquetas" },
   "Remover tags": { es: "Quitar etiquetas" },
   "Separe por vírgula. Só as tags listadas saem; as outras ficam.": { es: "Separe con comas. Solo salen las etiquetas listadas; las demás se quedan." },
@@ -2610,7 +2606,7 @@ export const DICIONARIO: Traducoes = {
   "Simular caminho": { es: "Simular camino" },
   "Simulação com dados de exemplo: nada é gravado no CRM e nenhuma mensagem é enviada.": { es: "Simulación con datos de ejemplo: nada se graba en el CRM y no se envía ningún mensaje." },
   "Complete o fluxo para simular.": { es: "Complete el flujo para simular." },
-  "Etiquetas do negócio (exemplo)": { es: "Etiquetas del negocio (ejemplo)" },
+  "Etiquetas do lead (exemplo)": { es: "Etiquetas del negocio (ejemplo)" },
   "Resposta em": { es: "Respuesta en" },
   "Primeiro caminho ligado": { es: "Primer camino conectado" },
   "Pararia": { es: "Se detendría" },
@@ -2662,15 +2658,15 @@ export const DICIONARIO: Traducoes = {
   "Buscar bloco…": { es: "Buscar bloque…" },
   "Nenhum bloco encontrado.": { es: "Ningún bloque encontrado." },
   "Buscar bloco": { es: "Buscar bloque" },
-  "Atualizar campo do negócio": { es: "Actualizar campo del negocio" },
-  "Grava um campo personalizado ou o valor do negócio.": { es: "Graba un campo personalizado o el valor del negocio." },
+  "Atualizar campo do lead": { es: "Actualizar campo del negocio" },
+  "Grava um campo personalizado ou o valor do lead.": { es: "Graba un campo personalizado o el valor del negocio." },
   "Campo personalizado": { es: "Campo personalizado" },
   "O que gravar": { es: "Qué grabar" },
-  "Campo do negócio": { es: "Campo del negocio" },
+  "Campo do lead": { es: "Campo del negocio" },
   "Escolha um campo": { es: "Elija un campo" },
   "Valor a gravar": { es: "Valor a grabar" },
   "Convertido pelo tipo do campo. Opção que não existe, data ou número inválidos fazem a execução falhar com a explicação.": { es: "Convertido según el tipo del campo. Una opción inexistente, fecha o número inválidos hacen fallar la ejecución con la explicación." },
-  "valor do negócio": { es: "valor del negocio" },
+  "valor do lead": { es: "valor del negocio" },
   "sem campo escolhido": { es: "sin campo elegido" },
   "Valor gravado": { es: "Valor grabado" },
   "Dado de um bloco anterior": { es: "Dato de un bloque anterior" },
@@ -2686,25 +2682,25 @@ export const DICIONARIO: Traducoes = {
       es: "En la zona horaria de la organización. Sin fecha, espera hasta la próxima vez que el reloj marque esa hora. Con una fecha ya pasada, sigue directo al próximo bloque.",
     },
   "até as": { es: "hasta las" },
-  "Registra uma nota interna no negócio ou na conversa.": { es: "Registra una nota interna en el negocio o en la conversación." },
-  "No negócio (linha do tempo)": { es: "En el negocio (línea de tiempo)" },
+  "Registra uma nota interna no lead ou na conversa.": { es: "Registra una nota interna en el negocio o en la conversación." },
+  "No lead (linha do tempo)": { es: "En el negocio (línea de tiempo)" },
   "Na conversa (notas internas)": { es: "En la conversación (notas internas)" },
   "Onde registrar": { es: "Dónde registrar" },
   "Texto da nota": { es: "Texto de la nota" },
   "A nota é interna: o cliente nunca a vê.": { es: "La nota es interna: el cliente nunca la ve." },
   "sem texto": { es: "sin texto" },
   "nota na conversa": { es: "nota en la conversación" },
-  "nota no negócio": { es: "nota en el negocio" },
+  "nota no lead": { es: "nota en el negocio" },
   "Id da nota": { es: "Id de la nota" },
-  "Troca o responsável pelo negócio (não transfere o atendimento).": {
+  "Troca o responsável pelo lead (não transfere o atendimento).": {
     es: "Cambia el responsable del negocio (no transfiere la atención).",
   },
-  "Novo responsável pelo negócio": { es: "Nuevo responsable del negocio" },
+  "Novo responsável pelo lead": { es: "Nuevo responsable del negocio" },
   "Escolha um atendente": { es: "Elija un agente" },
-  "Troca só o responsável pelo negócio. A conversa continua com quem a atende.": {
+  "Troca só o responsável pelo lead. A conversa continua com quem a atende.": {
     es: "Cambia solo el responsable del negocio. La conversación sigue con quien la atiende.",
   },
-  "troca o responsável do negócio": { es: "cambia el responsable del negocio" },
+  "troca o responsável do lead": { es: "cambia el responsable del negocio" },
   "sem responsável escolhido": { es: "sin responsable elegido" },
   "Id do novo responsável": { es: "Id del nuevo responsable" },
   "Id do responsável anterior": { es: "Id del responsable anterior" },
@@ -2901,7 +2897,7 @@ export const DICIONARIO: Traducoes = {
   "Etiqueta do contato": { es: "Etiqueta del contacto" },
   "Passos já dados no fluxo": { es: "Pasos ya dados en el flujo" },
   "Desfecho do passo anterior": { es: "Resultado del paso anterior" },
-  "Produto do negócio": { es: "Producto del negocio" },
+  "Produto do lead": { es: "Producto del negocio" },
   "Extrair dados no fluxo": { es: "Extraer datos en el flujo" },
   "No passo «Extrair dados por IA» de um fluxo, lê um texto (por exemplo, a resposta do cliente) e devolve os campos que você definiu, conferidos pelo tipo.": { es: "En el paso «Extraer datos con IA» de un flujo, lee un texto (por ejemplo, la respuesta del cliente) y devuelve los campos que usted definió, verificados por el tipo." },
   "O fluxo para no passo de extração e a execução mostra a falha, sem seguir com dado inventado.": { es: "El flujo se detiene en el paso de extracción y la ejecución muestra la falla, sin seguir con un dato inventado." },
@@ -2915,34 +2911,34 @@ export const DICIONARIO: Traducoes = {
   "Aplicar em": { es: "Aplicar a" },
   "Contato de": { es: "Contacto de" },
   "Criar o contato se não achar": { es: "Crear el contacto si no lo encuentra" },
-  "Criar o negócio se não achar": { es: "Crear el negocio si no lo encuentra" },
+  "Criar o lead se não achar": { es: "Crear el negocio si no lo encuentra" },
   "E-mail procurado": { es: "Correo buscado" },
   "Escolha um funil": { es: "Elija un embudo" },
   "Escolha uma etapa": { es: "Elija una etapa" },
   "Etapa de entrada": { es: "Etapa de entrada" },
-  "Negócio de": { es: "Negocio de" },
+  "Lead de": { es: "Negocio de" },
   "Nome do contato novo": { es: "Nombre del contacto nuevo" },
   "O contato desta execução": { es: "El contacto de esta ejecución" },
-  "O negócio e o contato desta execução": { es: "El negocio y el contacto de esta ejecución" },
+  "O lead e o contato desta execução": { es: "El negocio y el contacto de esta ejecución" },
   "Os blocos seguintes podem agir sobre este contato pela opção «Aplicar em».": { es: "Los bloques siguientes pueden actuar sobre este contacto con la opción «Aplicar a»." },
-  "Os blocos seguintes podem agir sobre este negócio pela opção «Aplicar em».": { es: "Los bloques siguientes pueden actuar sobre este negocio con la opción «Aplicar a»." },
+  "Os blocos seguintes podem agir sobre este lead pela opção «Aplicar em».": { es: "Los bloques siguientes pueden actuar sobre este negocio con la opción «Aplicar a»." },
   "Procurar por": { es: "Buscar por" },
   "Telefone procurado": { es: "Teléfono buscado" },
-  "Título do negócio novo": { es: "Título del negocio nuevo" },
+  "Título do lead novo": { es: "Título del negocio nuevo" },
   "Vazio = nome do contato": { es: "Vacío = nombre del contacto" },
   "procura e cria se não achar": { es: "busca y crea si no encuentra" },
   "sem funil escolhido": { es: "sin embudo elegido" },
   "sem valor para procurar": { es: "sin valor para buscar" },
   "só procura": { es: "solo busca" },
   "Buscar ou criar contato": { es: "Buscar o crear contacto" },
-  "Buscar ou criar negócio": { es: "Buscar o crear negocio" },
+  "Buscar ou criar lead": { es: "Buscar o crear negocio" },
   "Acha um contato pelo telefone ou e-mail e, se pedido, cria quando não existe.": { es: "Encuentra un contacto por teléfono o correo y, si se pide, lo crea cuando no existe." },
-  "Acha o negócio aberto de um contato num funil e, se pedido, cria quando não existe.": { es: "Encuentra el negocio abierto de un contacto en un embudo y, si se pide, lo crea cuando no existe." },
+  "Acha o lead aberto de um contato num funil e, se pedido, cria quando não existe.": { es: "Encuentra el negocio abierto de un contacto en un embudo y, si se pide, lo crea cuando no existe." },
   "Contato já existia": { es: "El contacto ya existía" },
   "Contato foi criado": { es: "El contacto fue creado" },
-  "Id do contato do negócio": { es: "Id del contacto del negocio" },
-  "Negócio já existia": { es: "El negocio ya existía" },
-  "Negócio foi criado": { es: "El negocio fue creado" },
+  "Id do contato do lead": { es: "Id del contacto del negocio" },
+  "Lead já existia": { es: "El negocio ya existía" },
+  "Lead foi criado": { es: "El negocio fue creado" },
   "GET — consultar": { es: "GET — consultar" },
   "POST — criar ou enviar": { es: "POST — crear o enviar" },
   "PUT — substituir": { es: "PUT — sustituir" },
@@ -3057,10 +3053,9 @@ export const DICIONARIO: Traducoes = {
   "Esconder o desenho do fluxo": { es: "Ocultar el dibujo del flujo" },
   "Fluxo com o caminho percorrido": { es: "Flujo con el camino recorrido" },
   "Inserir variável": { es: "Insertar variable" },
-  "Contato e negócio": { es: "Contacto y negocio" },
+  "Contato e lead": { es: "Contacto y negocio" },
   "Primeiro nome": { es: "Primer nombre" },
-  "Título do negócio": { es: "Título del negocio" },
-  "Id do negócio": { es: "Id del negocio" },
+  "Id do lead": { es: "Id del negocio" },
   "Id do contato": { es: "Id del contacto" },
   "Saída escolhida": { es: "Salida elegida" },
   "Etiquetas depois da alteração": { es: "Etiquetas después del cambio" },
@@ -3094,7 +3089,7 @@ export const DICIONARIO: Traducoes = {
   "Identidade do produto": { es: "Identidad del producto" },
   "A identidade visual da plataforma e os dados da sua empresa.": { es: "La identidad visual de la plataforma y los datos de su empresa." },
   "Conheça os planos demonstrativos; contratação disponível em breve.": { es: "Conozca los planes demostrativos; contratación disponible pronto." },
-  "As etiquetas de oportunidade e de contato: nome, cor e onde estão em uso.": { es: "Las etiquetas de oportunidad y de contacto: nombre, color y dónde se usan." },
+  "As etiquetas de lead e de contato: nome, cor e onde estão em uso.": { es: "Las etiquetas de oportunidad y de contacto: nombre, color y dónde se usan." },
   "Planos em demonstração": { es: "Planes en demostración" },
   "Os preços e limites abaixo são ilustrativos. Nenhuma cobrança será feita e esses limites ainda não são aplicados à sua conta.": { es: "Los precios y límites de abajo son ilustrativos. No se realizará ningún cobro y estos límites aún no se aplican a su cuenta." },
   "Para crescer": { es: "Para crecer" },
@@ -3125,7 +3120,7 @@ export const DICIONARIO: Traducoes = {
   "Escolha o produto": { es: "Elige el producto" },
   "Não consegui carregar os produtos agora. O que estava escolhido continua salvo — recarregue a página para escolher outro.": { es: "No pude cargar los productos ahora. Lo que estaba elegido sigue guardado: recarga la página para elegir otro." },
   "Nenhum produto no catálogo — cadastre em Produtos antes de usar esta regra.": { es: "No hay ningún producto en el catálogo: regístralo en Productos antes de usar esta regla." },
-  "Este produto não está mais no catálogo. A regra só vale para negócios com exatamente este nome — escolha outro da lista se ele foi renomeado.": { es: "Este producto ya no está en el catálogo. La regla solo vale para negocios con exactamente este nombre: elige otro de la lista si fue renombrado." },
+  "Este produto não está mais no catálogo. A regra só vale para leads com exatamente este nome — escolha outro da lista se ele foi renomeado.": { es: "Este producto ya no está en el catálogo. La regla solo vale para negocios con exactamente este nombre: elige otro de la lista si fue renombrado." },
   "Envie o arquivo de cada anexo (ou remova o envio) para salvar o bloco.": { es: "Sube el archivo de cada adjunto (o quita el envío) para guardar el bloque." },
   "Tipo do envio": { es: "Tipo de envío" },
   "Remover envio": { es: "Quitar envío" },
@@ -3169,7 +3164,7 @@ export const DICIONARIO: Traducoes = {
   "Nenhuma etapa ativa encontrada — crie o funil antes de armar este gatilho.": {
     es: "No hay ninguna etapa activa. Crea el embudo antes de configurar este disparador.",
   },
-  "O fluxo começa quando um negócio entra nesta etapa, por arrasto no quadro ou por automação. A entrada na fila leva poucos minutos, não é instantânea.":
+  "O fluxo começa quando um lead entra nesta etapa, por arrasto no quadro ou por automação. A entrada na fila leva poucos minutos, não é instantânea.":
     {
       es: "El flujo empieza cuando un negocio entra a esta etapa, ya sea porque lo arrastras en el tablero o por una automatización. Entrar a la cola tarda unos minutos; no es instantáneo.",
     },
@@ -4105,8 +4100,8 @@ export const DICIONARIO: Traducoes = {
   "Mensagem técnica do provedor": { es: "Mensaje técnico del proveedor" },
   "Mostrando só as falhas": { es: "Mostrando solo las fallas" },
   "Mudanças de passo no atendimento": { es: "Cambios de paso en la atención" },
-  "Negócios fechados pelo agente": { es: "Negocios cerrados por el agente" },
-  "Negócios perdidos pelo agente": { es: "Negocios perdidos por el agente" },
+  "Leads fechados pelo agente": { es: "Negocios cerrados por el agente" },
+  "Leads perdidos pelo agente": { es: "Negocios perdidos por el agente" },
   "Nenhum aprendizado ainda. Use \"+ Novo aprendizado\" para ensinar algo que os agentes devem lembrar em toda conversa — ou aguarde o sistema sugerir aprendizados automaticamente a partir do atendimento real.": {
     es: "Todavía no hay aprendizajes. Usa \"+ Nuevo aprendizaje\" para enseñar algo que los agentes deban recordar en todas las conversaciones, o espera a que el sistema sugiera aprendizajes automáticamente a partir de la atención real.",
   },
@@ -4357,10 +4352,10 @@ export const DICIONARIO: Traducoes = {
   "⚠️ Atenção: o produto ainda não sabe o preço do modelo em uso, então o gasto medido é menor que o real e esta parada pode não disparar.": {
     es: "⚠️ Atención: el producto todavía no conoce el precio del modelo en uso. Por eso el gasto medido es menor que el real y es posible que esta detención no se active.",
   },
-  "O que aconteceu com os seus negócios neste período. Para saber se melhorou, mude as datas acima e compare com o mês anterior.": {
+  "O que aconteceu com os seus leads neste período. Para saber se melhorou, mude as datas acima e compare com o mês anterior.": {
     es: "Lo que pasó con tus negocios en este período. Para saber si mejoró, cambia las fechas de arriba y compara con el mes anterior.",
   },
-  "Clientes que o agente marcou como fechados. Negócio que a sua equipe fechou na mão, movendo o cartão no quadro, não entra aqui.": {
+  "Clientes que o agente marcou como fechados. Lead que a sua equipe fechou na mão, movendo o cartão no quadro, não entra aqui.": {
     es: "Clientes que el agente marcó como cerrados. Los negocios que tu equipo cerró a mano, moviendo la tarjeta en el tablero, no se cuentan aquí.",
   },
   "Clientes que o agente marcou como perdidos — contraponto necessário, porque ganhos sem perdidos ao lado enganam. Também não conta o que a sua equipe marcou na mão.": {
@@ -4387,7 +4382,7 @@ export const DICIONARIO: Traducoes = {
   "Entender a conversa": {
     es: "Entender la conversación",
   },
-  "Ler o que chegou e decidir o que aquilo significa para o negócio.": {
+  "Ler o que chegou e decidir o que aquilo significa para o lead.": {
     es: "Leer lo que llegó y decidir qué significa eso para el negocio.",
   },
   "Proteger a operação": {
@@ -4474,7 +4469,7 @@ export const DICIONARIO: Traducoes = {
   "O que cada etapa do funil informa à Meta": {
     es: "Qué informa cada etapa del embudo a Meta",
   },
-  "Além da venda, a Meta pode saber de quem recebeu orçamento ou agendou. Cada etapa ligada envia o seu evento uma vez por negócio, quando ele entra ali, e o anúncio aprende antes de a venda fechar.": {
+  "Além da venda, a Meta pode saber de quem recebeu orçamento ou agendou. Cada etapa ligada envia o seu evento uma vez por lead, quando ele entra ali, e o anúncio aprende antes de a venda fechar.": {
     es: "Además de la venta, Meta puede saber quién recibió un presupuesto o agendó. Cada etapa activada envía su evento una vez por negocio, cuando entra en ella, y el anuncio aprende antes de que se cierre la venta.",
   },
   "não envia evento": {
@@ -4495,16 +4490,16 @@ export const DICIONARIO: Traducoes = {
   "Viu o conteúdo": {
     es: "Vio el contenido",
   },
-  "Os eventos só saem quando o negócio muda de etapa — pela equipe, pela IA ou por automação — e só para quem veio de anúncio da Meta. Saem sem valor: o valor vai na compra. Movimentos anteriores a ligar a regra não são enviados.": {
+  "Os eventos só saem quando o lead muda de etapa — pela equipe, pela IA ou por automação — e só para quem veio de anúncio da Meta. Saem sem valor: o valor vai na compra. Movimentos anteriores a ligar a regra não são enviados.": {
     es: "Los eventos solo salen cuando el negocio cambia de etapa — por el equipo, por la IA o por automatización — y solo para quien vino de un anuncio de Meta. Salen sin valor: el valor va en la compra. Los movimientos anteriores a activar la regla no se envían.",
   },
   "Ler o valor da venda na conversa": {
     es: "Leer el valor de la venta en la conversación",
   },
-  "Quando um negócio vindo de anúncio da Meta é ganho sem valor preenchido, lê a conversa e acha o valor e o produto vendidos, para a compra ser reportada à Meta. Só aceita valor que aparece escrito na conversa.": {
+  "Quando um lead vindo de anúncio da Meta é ganho sem valor preenchido, lê a conversa e acha o valor e o produto vendidos, para a compra ser reportada à Meta. Só aceita valor que aparece escrito na conversa.": {
     es: "Cuando un negocio que vino de un anuncio de Meta se gana sin valor completado, lee la conversación y encuentra el valor y el producto vendidos, para reportar la compra a Meta. Solo acepta un valor que aparece escrito en la conversación.",
   },
-  "A venda vinda de anúncio fica como pendência 'sem valor' em Configurações › Conversões, e a Meta não recebe a compra até alguém preencher o valor do negócio.": {
+  "A venda vinda de anúncio fica como pendência 'sem valor' em Configurações › Conversões, e a Meta não recebe a compra até alguém preencher o valor do lead.": {
     es: "La venta que vino de un anuncio queda como pendiente 'sin valor' en Configuración › Conversiones, y Meta no recibe la compra hasta que alguien complete el valor del negocio.",
   },
   "Transformar proposta da empresa em modelo": {
@@ -5211,22 +5206,22 @@ export const DICIONARIO: Traducoes = {
   "Conferir o campo antes de a IA gravar": {
     es: "Verificar el campo antes de que la IA lo guarde",
   },
-  "Lê o que o cliente disse nas mensagens ainda sem resposta do turno e confere se o valor que a IA quer gravar no campo personalizado do negócio foi ele quem informou.": {
+  "Lê o que o cliente disse nas mensagens ainda sem resposta do turno e confere se o valor que a IA quer gravar no campo personalizado do lead foi ele quem informou.": {
     es: "Lee lo que el cliente dijo en los mensajes aún sin respuesta del turno y verifica si el valor que la IA quiere guardar en el campo personalizado del negocio lo informó él.",
   },
   "O Jev confere, nas mensagens que o cliente deixou sem resposta neste turno, se foi ele quem disse o valor do campo. O valor que ele não disse deixa de ser gravado e o assistente é mandado perguntar para ele; os outros campos da mesma chamada seguem gravando.": {
     es: "Jev verifica, en los mensajes que el cliente dejó sin respuesta en este turno, si fue él quien dijo el valor del campo. El valor que no dijo deja de guardarse y se le indica al asistente que se lo pregunte; los demás campos de la misma llamada se siguen guardando.",
   },
-  "Antes de a IA gravar um campo personalizado do negócio, o Jev vai conferir nas mensagens do cliente se foi ele quem informou aquele valor. Ele não disse: o campo não é gravado e a IA pergunta ao cliente.": {
+  "Antes de a IA gravar um campo personalizado do lead, o Jev vai conferir nas mensagens do cliente se foi ele quem informou aquele valor. Ele não disse: o campo não é gravado e a IA pergunta ao cliente.": {
     es: "Antes de que la IA guarde un campo personalizado del negocio, Jev verificará en los mensajes del cliente si fue él quien informó ese valor. Si no lo dijo, el campo no se guarda y la IA se lo pregunta al cliente.",
   },
   "dias, o Jev e o jeito de hoje deram o mesmo destino a": {
     es: "días, Jev y la forma actual le dieron el mismo destino a",
   },
-  "campos do negócio.": {
+  "campos do lead.": {
     es: "campos del negocio.",
   },
-  "O Jev foi perguntado se o cliente disse, nas mensagens ainda sem resposta deste turno, o valor do campo personalizado do negócio que a IA ia gravar.": {
+  "O Jev foi perguntado se o cliente disse, nas mensagens ainda sem resposta deste turno, o valor do campo personalizado do lead que a IA ia gravar.": {
     es: "Se le preguntó a Jev si el cliente dijo, en los mensajes aún sin respuesta de este turno, el valor del campo personalizado del negocio que la IA iba a guardar.",
   },
   "O Jev não respondeu: o campo foi gravado como antes, sem a conferência.": {
@@ -6199,7 +6194,7 @@ export const DICIONARIO: Traducoes = {
   },
   // Motivo do 403 quando o negócio novo cairia no cliente de outro vendedor
   // (rota de criação, modo "Só os seus").
-  "Este cliente pertence à carteira de outro vendedor. O negócio novo nasce com o dono da carteira.": {
+  "Este cliente pertence à carteira de outro vendedor. O lead novo nasce com o dono da carteira.": {
     es: "Este cliente pertenece a la cartera de otro vendedor. El negocio nuevo nace con el dueño de la cartera.",
   },
   // Respostas da porta dedicada `PATCH /contacts/[id]/carteira`.
@@ -6290,10 +6285,10 @@ export const DICIONARIO: Traducoes = {
   "Os dados chegaram, mas o lead não pôde ser criado — confira se o funil e a etapa da fonte ainda existem.": {
     es: "Los datos llegaron, pero no se pudo crear el lead. Revisa que el embudo y la etapa de la fuente sigan existiendo.",
   },
-  "Os dados chegaram, mas a régua de campos obrigatórios recusou o negócio: a etapa do funil exige um campo que o formulário não trouxe.": {
+  "Os dados chegaram, mas a régua de campos obrigatórios recusou o lead: a etapa do funil exige um campo que o formulário não trouxe.": {
     es: "Los datos llegaron, pero la regla de campos obligatorios rechazó el negocio: la etapa del embudo exige un campo que el formulario no trajo.",
   },
-  "Os dados chegaram, mas a criação do negócio falhou por outro motivo — não é nem o funil nem a etapa da fonte.": {
+  "Os dados chegaram, mas a criação do lead falhou por outro motivo — não é nem o funil nem a etapa da fonte.": {
     es: "Los datos llegaron, pero la creación del negocio falló por otro motivo: no es el embudo ni la etapa de la fuente.",
   },
   "Virou lead": { es: "Se convirtió en lead" },
@@ -6454,7 +6449,7 @@ export const DICIONARIO: Traducoes = {
   "sem tag escolhida": { es: "sin etiqueta elegida" },
   "Tags para gravar": { es: "Etiquetas para grabar" },
   "Onde gravar": { es: "Dónde grabar" },
-  "No negócio": { es: "En el negocio" },
+  "No lead": { es: "En el negocio" },
   "No contato": { es: "En el contacto" },
   "no contato": { es: "en el contacto" },
   "ex.: vip, orcamento-aberto": { es: "ej.: vip, presupuesto-abierto" },
@@ -6475,8 +6470,8 @@ export const DICIONARIO: Traducoes = {
   "Quando entrar um contato novo (webhook)": { es: "Cuando entre un contacto nuevo (webhook)" },
   "Quando um lead mudar de etapa": { es: "Cuando un lead cambie de etapa" },
   // #1528 — os quatro gatilhos de encerramento/reabertura/atribuição.
-  "Quando um negócio for ganho": { es: "Cuando un negocio se cierre como ganado" },
-  "Quando um negócio for perdido": { es: "Cuando un negocio se cierre como perdido" },
+  "Quando um lead for ganho": { es: "Cuando un negocio se cierre como ganado" },
+  "Quando um lead for perdido": { es: "Cuando un negocio se cierre como perdido" },
   "Quando um lead encerrado for reaberto": { es: "Cuando se reabra un lead cerrado" },
   "Quando o responsável do lead mudar": { es: "Cuando cambie el responsable del lead" },
   "Neste gatilho esta ação não roda: atribuir responsável ou mover o lead dispararia a automação de novo, sem fim. Abra a automação e tire a ação.": {
@@ -7150,7 +7145,7 @@ export const DICIONARIO: Traducoes = {
     es: "Cada cliente nuevo cae con quien tiene MENOR número de conversaciones abiertas. En caso de empate vale la rotación — quien lleva más tiempo sin recibir la lleva. Entre quienes están disponibles y dentro del horario, como en los demás modos. Es el modo para equipos grandes, donde dejar a una persona con todo y a otra parada sale caro.",
   },
   "Todos veem tudo": { es: "Todos ven todo" },
-  "Qualquer atendente abre a conversa e o negócio de qualquer colega.": {
+  "Qualquer atendente abre a conversa e o lead de qualquer colega.": {
     es: "Cualquier asesor puede abrir la conversación y el negocio de cualquier colega.",
   },
   "Os seus, mais os que ainda não têm dono": {
@@ -7617,8 +7612,7 @@ export const DICIONARIO: Traducoes = {
     es: "La selección volvió a lo que está guardado ahora. Revísala y elige de nuevo.",
   },
   "Salvar estas escolhas": { es: "Guardar selección" },
-  negócio: { es: "negocio" },
-  negócios: { es: "negocios" },
+  lead: { es: "lead" },
   "Etapa atualizada.": { es: "Etapa actualizada." },
   "Atual": { es: "Actual" },
   "Ver etapas anteriores": { es: "Ver etapas anteriores" },
@@ -7637,7 +7631,7 @@ export const DICIONARIO: Traducoes = {
   },
   "Duas colunas têm papel especial: a": { es: "Dos columnas tienen un rol especial: la" },
   "de fechamento": { es: "de cierre" },
-  "é onde o negócio vira venda, e a": { es: "es donde el negocio se convierte en venta, y la" },
+  "é onde o lead vira venda, e a": { es: "es donde el negocio se convierte en venta, y la" },
   "de perda": { es: "de pérdida" },
   "é onde ele se perde. Cada funil precisa de uma de cada — por isso a marcação se muda de lugar, não se apaga.": {
     es: "es donde se pierde. Cada embudo necesita una de cada — por eso la marca se cambia de lugar, no se borra.",
@@ -7649,7 +7643,7 @@ export const DICIONARIO: Traducoes = {
   "O assistente usa esta etapa para": { es: "El asistente usa esta etapa para" },
   "Mudar isso": { es: "Cambiar esto" },
   "Marcar mesmo assim": { es: "Marcar de todas formas" },
-  "A coluna sai do quadro e para de receber negócios novos. Nada é apagado — o histórico de quem passou por ela continua guardado —, mas": {
+  "A coluna sai do quadro e para de receber leads novos. Nada é apagado — o histórico de quem passou por ela continua guardado —, mas": {
     es: "La columna sale del tablero y deja de recibir negocios nuevos. Nada se borra (el historial de quien pasó por ella sigue guardado), pero",
   },
   "não dá para trazer a coluna de volta por aqui": {
@@ -7664,12 +7658,12 @@ export const DICIONARIO: Traducoes = {
   "Crie uma etapa antes de arquivar": { es: "Crea una etapa antes de archivar" },
   "está nesta etapa. Para onde ele vai?": { es: "está en esta etapa. ¿Adónde va?" },
   "estão nesta etapa. Para onde eles vão?": { es: "están en esta etapa. ¿Adónde van?" },
-  "Para onde vão os negócios de": { es: "Adónde van los negocios de" },
+  "Para onde vão os leads de": { es: "Adónde van los negocios de" },
   "Esta etapa é a que o assistente usa para": { es: "Esta es la etapa que el asistente usa para" },
   "Arquivando, ele para de mover o card nesse passo até você escolher outra etapa em": {
     es: "Al archivar, deja de mover la tarjeta en ese paso hasta que elijas otra etapa en",
   },
-  "Mover os negócios e arquivar": { es: "Mover los negocios y archivar" },
+  "Mover os leads e arquivar": { es: "Mover los negocios y archivar" },
   "Ir para o mapeamento do assistente": { es: "Ir al mapeo del asistente" },
   "Acrescentar etapa ao fim": { es: "Agregar etapa al final" },
   "Nome da nova coluna": { es: "Nombre de la nueva columna" },
@@ -8362,7 +8356,7 @@ export const DICIONARIO: Traducoes = {
   "Continuar sem publicar": { es: "Continuar sin publicar" },
   "— e rascunho não responde mensagem.": { es: "— y un borrador no responde mensajes." },
   "Os modelos": { es: "Los modelos" },
-  "que esta instalação conhece não sabem usar ferramentas — sem isso ele conversaria bem e nunca criaria um cliente nem moveria um negócio no funil. Escolha outra empresa de IA em": {
+  "que esta instalação conhece não sabem usar ferramentas — sem isso ele conversaria bem e nunca criaria um cliente nem moveria um lead no funil. Escolha outra empresa de IA em": {
     es: "que conoce esta instalación no saben usar herramientas. Sin eso, conversaría bien, pero nunca crearía un cliente ni movería un negocio en el embudo. Elige otra empresa de IA en",
   },
   "IA › Provedores": { es: "IA › Proveedores" },
@@ -8429,7 +8423,7 @@ export const DICIONARIO: Traducoes = {
   "Cada cliente vira um cartão que anda por essas colunas. Ele mesmo move o cartão conforme a conversa avança — por isso cada coluna diz também quando ele deve usá-la.": {
     es: "Cada cliente se convierte en una tarjeta que avanza por estas columnas. Él mismo mueve la tarjeta a medida que avanza la conversación, por eso cada columna indica también cuándo debe usarla.",
   },
-  "Seu funcionário montou este quadro olhando o que você me contou sobre o negócio. Ajuste o que quiser.": {
+  "Seu funcionário montou este quadro olhando o que você me contou sobre o lead. Ajuste o que quiser.": {
     es: "Tu empleado armó este tablero a partir de lo que me contaste sobre el negocio. Ajusta lo que quieras.",
   },
   "Não consegui pedir uma sugestão para o seu funcionário agora": {
@@ -8593,7 +8587,7 @@ export const DICIONARIO: Traducoes = {
   "Quem esfriou e ainda está aberto, para você agir antes de perder.": {
     es: "Quienes se enfriaron y siguen abiertos, para que actúes antes de perderlos.",
   },
-  "Ele observa há quanto tempo cada negócio em aberto não tem resposta": {
+  "Ele observa há quanto tempo cada lead em aberto não tem resposta": {
     es: "Revisa cuánto tiempo lleva sin respuesta cada negocio abierto",
   },
   "Os que estão esfriando sobem para o topo desta lista": {
@@ -8669,12 +8663,12 @@ export const DICIONARIO: Traducoes = {
   "Outro tipo de negócio": { es: "Otro tipo de negocio" },
 
   // ─── Onboarding: tool catalog (capacidades) usadas em "Ele já vem sabendo" ───
-  "Listar oportunidades do funil": { es: "Listar oportunidades del embudo" },
-  "Ver uma oportunidade": { es: "Ver una oportunidad" },
+  "Listar leads do funil": { es: "Listar leads del embudo" },
+  "Ver um lead": { es: "Ver una oportunidad" },
   "Listar funis": { es: "Listar embudos" },
-  "Criar oportunidade no funil": { es: "Crear oportunidad en el embudo" },
-  "Atualizar uma oportunidade": { es: "Actualizar una oportunidad" },
-  "Mover oportunidade de etapa": { es: "Mover oportunidad de etapa" },
+  "Criar lead no funil": { es: "Crear oportunidad en el embudo" },
+  "Atualizar um lead": { es: "Actualizar una oportunidad" },
+  "Mover lead de etapa": { es: "Mover oportunidad de etapa" },
   "Ver as compras do cliente": { es: "Ver las compras del cliente" },
   "Procurar produto na loja": { es: "Buscar producto en la tienda" },
   "Anotar dado que o cliente informou": { es: "Anotar dato que informó el cliente" },
@@ -8692,7 +8686,7 @@ export const DICIONARIO: Traducoes = {
   "Conferir promessas em texto livre": { es: "Verificar promesas en texto libre" },
   "Não fazer afirmação clínica": { es: "No hacer afirmaciones clínicas" },
   "Barra a mensagem em que o assistente diz o que a pessoa tem, indica remédio ou dose, garante resultado ou afirma que uma lesão é câncer.": { es: "Bloquea el mensaje en el que el asistente dice lo que la persona tiene, indica un medicamento o una dosis, garantiza un resultado o afirma que una lesión es cáncer." },
-  "Não custa nada e reconhece frases em português e espanhol. Só serve para saúde: em outros negócios pode barrar frases normais, como \"passe o creme hidratante\".": { es: "No cuesta nada y reconoce frases en portugués y español. Solo sirve para salud: en otros negocios puede bloquear frases normales, como \"aplica la crema hidratante\"." },
+  "Não custa nada e reconhece frases em português e espanhol. Só serve para saúde: em outros leads pode barrar frases normais, como \"passe o creme hidratante\".": { es: "No cuesta nada y reconoce frases en portugués y español. Solo sirve para salud: en otros negocios puede bloquear frases normales, como \"aplica la crema hidratante\"." },
   "Não prometer atendimento humano que não existe": { es: "No prometer atención humana que no existe" },
   "Não falar a nossa língua com o seu cliente": { es: "No hablar nuestro idioma con tu cliente" },
   "Dizer que é um assistente quando perguntam": { es: "Decir que es un asistente cuando preguntan" },
@@ -8774,9 +8768,9 @@ export const DICIONARIO: Traducoes = {
   "Voltou para o atendimento automático": { es: "Volvió a la atención automática" },
   "Próxima ação aprovada": { es: "Próxima acción aprobada" },
   "Próxima ação descartada": { es: "Próxima acción descartada" },
-  "Dados do negócio alterados": { es: "Datos del negocio modificados" },
-  "Negócio esfriou": { es: "El negocio se enfrió" },
-  "Negócio voltou a andar": { es: "El negocio volvió a avanzar" },
+  "Dados do lead alterados": { es: "Datos del negocio modificados" },
+  "Lead esfriou": { es: "El negocio se enfrió" },
+  "Lead voltou a andar": { es: "El negocio volvió a avanzar" },
   "Retomada de contato aprovada": { es: "Reactivación de contacto aprobada" },
   "Retomada de contato descartada": { es: "Reactivación de contacto descartada" },
   "Sugestão de retomada venceu sem decisão": { es: "La sugerencia de reactivación caducó sin decisión" },
@@ -8849,8 +8843,8 @@ export const DICIONARIO: Traducoes = {
   "Retomado por uma pessoa da equipe": { es: "Reanudado por una persona del equipo" },
   "Adiado por uma pessoa da equipe": { es: "Pospuesto por una persona del equipo" },
   "Passo pulado por uma pessoa da equipe": { es: "Paso saltado por una persona del equipo" },
-  "Começou porque o negócio entrou numa etapa": { es: "Empezó porque el negocio entró en una etapa" },
-  "Começou porque o negócio nasceu": { es: "Empezó porque el negocio nació" },
+  "Começou porque o lead entrou numa etapa": { es: "Empezó porque el negocio entró en una etapa" },
+  "Começou porque o lead nasceu": { es: "Empezó porque el negocio nació" },
   "o card acabou de ser criado": { es: "la tarjeta acaba de crearse" },
   "Começou porque o agente pediu ajuda de um humano": {
     es: "Empezó porque el agente pidió ayuda a un humano",
@@ -8933,14 +8927,14 @@ export const DICIONARIO: Traducoes = {
   "Manter este cadastro": { es: "Conservar este registro" },
   "Este fica": { es: "Este se queda" },
   "Será absorvido por quem fica": { es: "Será absorbido por el que se queda" },
-  "Conversas, mensagens, negócios e histórico passam para quem fica. O cadastro antigo não é apagado — vira registro de fusão. Não há como desfazer.": {
+  "Conversas, mensagens, leads e histórico passam para quem fica. O cadastro antigo não é apagado — vira registro de fusão. Não há como desfazer.": {
     es: "Conversaciones, mensajes, negocios e historial pasan al registro que se queda. El registro anterior no se borra: se conserva como constancia de la fusión. No se puede deshacer.",
   },
   "Juntar": { es: "Juntar" },
   "Juntar contatos": { es: "Juntar contactos" },
   "Juntar estes cadastros?": { es: "¿Juntar estos registros?" },
   "fica.": { es: "se queda." },
-  "será absorvido e sai da lista de contatos. Mensagens, negócios e histórico passam para quem fica. Não há como desfazer.": {
+  "será absorvido e sai da lista de contatos. Mensagens, leads e histórico passam para quem fica. Não há como desfazer.": {
     es: "será absorbido y sale de la lista de contactos. Mensajes, negocios e historial pasan al que se queda. No se puede deshacer.",
   },
   "Juntando…": { es: "Juntando…" },
@@ -9133,7 +9127,7 @@ export const DICIONARIO: Traducoes = {
   },
   "2. Que dados são tratados": { es: "2. Qué datos se tratan" },
   "De quem é atendido:": { es: "De quien recibe atención:" },
-  "nome, telefone, e-mail quando informado, conteúdo das conversas, arquivos enviados (imagens, áudios, documentos) e o histórico de negócios.": {
+  "nome, telefone, e-mail quando informado, conteúdo das conversas, arquivos enviados (imagens, áudios, documentos) e o histórico de leads.": {
     es: "nombre, teléfono, correo electrónico si se proporciona, contenido de las conversaciones, archivos enviados (imágenes, audios, documentos) e historial de negocios.",
   },
   "De quem usa o sistema:": { es: "De quien usa el sistema:" },
@@ -9205,7 +9199,7 @@ export const DICIONARIO: Traducoes = {
     es: "Los autores y mantenedores del software no operan esta instalación, no tienen acceso a este servidor ni a los datos almacenados en él, y no forman parte de la relación entre el operador y tú. Cualquier solicitud sobre uso, cobro, soporte o datos debe dirigirse al operador.",
   },
   "2. O que o sistema faz": { es: "2. Qué hace el sistema" },
-  "organiza atendimento e vendas: recebe e envia mensagens pelos canais que o operador conectar, registra contatos e negócios, e permite que agentes de inteligência artificial atendam junto com pessoas, sob as regras que o operador configurar.": {
+  "organiza atendimento e vendas: recebe e envia mensagens pelos canais que o operador conectar, registra contatos e leads, e permite que agentes de inteligência artificial atendam junto com pessoas, sob as regras que o operador configurar.": {
     es: "organiza atención y ventas: recibe y envía mensajes por los canales que el operador conecte, registra contactos y negocios, y permite que agentes de inteligencia artificial atiendan junto con personas, bajo las reglas que el operador configure.",
   },
   "3. Sua conta": { es: "3. Tu cuenta" },
@@ -9230,7 +9224,7 @@ export const DICIONARIO: Traducoes = {
     es: "El sistema respeta cuando un cliente pide dejar de recibir mensajes: esa persona queda bloqueada automáticamente para los envíos.",
   },
   "5. Conteúdo e dados": { es: "5. Contenido y datos" },
-  "Os dados inseridos aqui — contatos, conversas, negócios, arquivos — pertencem ao operador e às pessoas a que se referem. O tratamento desses dados é descrito na": {
+  "Os dados inseridos aqui — contatos, conversas, leads, arquivos — pertencem ao operador e às pessoas a que se referem. O tratamento desses dados é descrito na": {
     es: "Los datos ingresados aquí — contactos, conversaciones, negocios, archivos — pertenecen al operador y a las personas a las que se refieren. El tratamiento de esos datos se describe en la",
   },
   "Respostas geradas por inteligência artificial podem conter erros. Elas não substituem conferência humana em decisões que envolvam preço, prazo, saúde, crédito ou obrigação legal.": {
@@ -9501,17 +9495,17 @@ export const DICIONARIO: Traducoes = {
   "1 contato perdeu a etiqueta “cliente”: enquanto a regra estava desligada, os horários dele foram cancelados, marcados como falta ou apagados.": { es: "1 contacto perdió la etiqueta “cliente”: mientras la regla estaba desactivada, sus citas se cancelaron, se marcaron como ausencia o se eliminaron." },
   "Para separar quem já é cliente, ligue “Clientes pela agenda” em Configurações › Tipos de agendamento. Enquanto estiver desligado, todo contato novo entra pelo funil padrão.": { es: "Para separar a los clientes actuales, activa “Clientes por la agenda” en Configuración › Tipos de cita. Mientras esté desactivado, todo contacto nuevo entra por el embudo predeterminado." },
   "Abrir Tipos de agendamento": { es: "Abrir Tipos de cita" },
-  "Ele sai desta lista e para de receber negócio novo. O histórico continua guardado, e nada é apagado.": {
+  "Ele sai desta lista e para de receber lead novo. O histórico continua guardado, e nada é apagado.": {
     es: "Sale de esta lista y deja de recibir negocios nuevos. El historial se conserva y no se borra nada.",
   },
   "Excluir de vez": { es: "Eliminar definitivamente" },
   // A gaveta do arquivo (#979) — a porta de volta do funil arquivado.
   "Funis arquivados": { es: "Embudos archivados" },
   "Tirar do arquivo": { es: "Desarchivar" },
-  "Funil arquivado não aparece na lista nem recebe negócio novo. Traga de volta para usar outra vez, ou exclua de vez para liberar o nome.": {
+  "Funil arquivado não aparece na lista nem recebe lead novo. Traga de volta para usar outra vez, ou exclua de vez para liberar o nome.": {
     es: "El embudo archivado no aparece en la lista ni recibe negocios nuevos. Desarchívalo para usarlo otra vez, o elimínalo definitivamente para liberar el nombre.",
   },
-  "Isso não tem volta: o funil e as etapas dele somem. Se ele já recebeu negócio, a exclusão é recusada e ele continua arquivado.": {
+  "Isso não tem volta: o funil e as etapas dele somem. Se ele já recebeu lead, a exclusão é recusada e ele continua arquivado.": {
     es: "Esta acción no se puede deshacer: el embudo y sus etapas desaparecen. Si ya recibió negocios, no se puede eliminar y sigue archivado.",
   },
   // #2559 — as duas recusas novas, ambas com `{nome}` por preencher: a rota
@@ -9570,12 +9564,12 @@ export const DICIONARIO: Traducoes = {
   "Marcar como ganho": { es: "Marcar como ganado" },
   "Marcar como perdido": { es: "Marcar como perdido" },
   "Probabilidade recalculada automaticamente": { es: "Probabilidad recalculada automáticamente" },
-  "Dados do negócio": { es: "Datos del negocio" },
+  "Dados do lead": { es: "Datos del negocio" },
   "Carregando a linha do tempo…": { es: "Cargando la línea de tiempo…" },
   "Não consegui carregar a linha do tempo. Tente de novo em instantes.": {
     es: "No pude cargar la línea de tiempo. Intenta de nuevo en unos instantes.",
   },
-  "Nada aconteceu com este negócio ainda.": { es: "Todavía no ha pasado nada con este negocio." },
+  "Nada aconteceu com este lead ainda.": { es: "Todavía no ha pasado nada con este negocio." },
   "Informe o motivo. Essa informação ajuda a melhorar o funil.": {
     es: "Indica el motivo. Esta información ayuda a mejorar el embudo.",
   },
@@ -9589,7 +9583,7 @@ export const DICIONARIO: Traducoes = {
   "Ex: Cliente desistiu por X motivo": { es: "Ej: El cliente desistió por X motivo" },
   "Confirmar": { es: "Confirmar" },
   "Lead criado": { es: "Lead creado" },
-  "O fluxo começa quando um negócio nasce: a primeira mensagem que abre o card, um formulário ou o cadastro manual. Negócios importados por planilha não entram. A entrada na fila leva poucos minutos, não é instantânea.":
+  "O fluxo começa quando um lead nasce: a primeira mensagem que abre o card, um formulário ou o cadastro manual. Leads importados por planilha não entram. A entrada na fila leva poucos minutos, não é instantânea.":
     {
       es: "El flujo empieza cuando nace un negocio: el primer mensaje que abre la tarjeta, un formulario o el alta manual. Los negocios importados por planilla no entran. La entrada en la fila tarda unos minutos, no es instantánea.",
     },
@@ -9604,7 +9598,7 @@ export const DICIONARIO: Traducoes = {
   "Criar lead": { es: "Crear lead" },
   "Criar mesmo assim": { es: "Crear de todos modos" },
   "Não criar": { es: "No crear" },
-  "Este contato já tem um negócio aberto neste funil.": {
+  "Este contato já tem um lead aberto neste funil.": {
     es: "Este contacto ya tiene un negocio abierto en este embudo.",
   },
   "Abrir mesmo assim?": { es: "¿Abrir uno de todos modos?" },
@@ -9612,15 +9606,15 @@ export const DICIONARIO: Traducoes = {
   "Aprovar:": { es: "Aprobar:" },
   "Ignorar:": { es: "Ignorar:" },
   "vencendo": { es: "por vencer" },
-  "Este negócio parou de responder": { es: "Este negocio dejó de responder" },
+  "Este lead parou de responder": { es: "Este negocio dejó de responder" },
   "Retomar contato?": { es: "¿Retomar contacto?" },
   "A sugestão vence em": { es: "La sugerencia vence en" },
-  "Retomar contato com este negócio": { es: "Retomar contacto con este negocio" },
-  "Encerrar: não retomar este negócio": { es: "Cerrar: no retomar este negocio" },
+  "Retomar contato com este lead": { es: "Retomar contacto con este negocio" },
+  "Encerrar: não retomar este lead": { es: "Cerrar: no retomar este negocio" },
   "Encerrar": { es: "Cerrar" },
   "Probabilidade": { es: "Probabilidad" },
   // ─── Taxa histórica de ganho por etapa (#1753) ───────────────────────────
-  "Sem dados no período — nenhum negócio encerrado passou por esta etapa.": {
+  "Sem dados no período — nenhum lead encerrado passou por esta etapa.": {
     es: "Sin datos en el período: ningún negocio cerrado pasó por esta etapa.",
   },
   "encerrado passou por esta etapa": { es: "cerrado pasó por esta etapa" },
@@ -9634,13 +9628,13 @@ export const DICIONARIO: Traducoes = {
     es: "Muestra limitada: esta cifra cubre solo una parte del período.",
   },
   "Falha ao ler o histórico de etapas.": { es: "Error al leer el historial de etapas." },
-  "Falha ao ler os negócios das etapas.": { es: "Error al leer los negocios de las etapas." },
+  "Falha ao ler os leads das etapas.": { es: "Error al leer los negocios de las etapas." },
   // ─── Tempo na etapa ATUAL (#2032), ao lado da taxa da #1753 ──────────────
   "nesta etapa agora": { es: "en esta etapa ahora" },
   "mediana de {horas} h desde a entrada (stage_changed_at)": {
     es: "mediana de {horas} h desde la entrada (stage_changed_at)",
   },
-  "Amostra limitada: este número cobre só parte dos negócios abertos do funil.": {
+  "Amostra limitada: este número cobre só parte dos leads abertos do funil.": {
     es: "Muestra limitada: esta cifra cubre solo una parte de los negocios abiertos del embudo.",
   },
   "Ver o porquê.": { es: "Ver el porqué." },
@@ -10201,7 +10195,6 @@ export const DICIONARIO: Traducoes = {
   },
   "Atrito, funil e performance por atendente nos últimos 30 dias.": { es: "Fricción, embudo y rendimiento por asesor en los últimos 30 días." },
   "Nenhuma perda na janela.": { es: "Ninguna pérdida en la ventana." },
-  "Negócios": { es: "Negocios" },
   "Erro ao carregar o relatório de perdas.": { es: "Error al cargar el informe de pérdidas." },
   "Perdas": { es: "Pérdidas" },
   "Por motivo, categoria e etapa de saída — quantidade e valor por moeda.": { es: "Por motivo, categoría y etapa de salida — cantidad y valor por moneda." },
@@ -10278,7 +10271,7 @@ export const DICIONARIO: Traducoes = {
   "Mensagens enviadas por integração": { es: "Mensajes enviados por integración" },
   "Envios feitos por um sistema de fora com token de servidor. Como a automação, não entram no número do agente — e é por isso que ele cai onde há integração.": { es: "Envíos que hace un sistema externo con un token de servidor. Igual que los de la automatización, no cuentan en la cifra del agente, y por eso esa cifra baja donde hay integraciones." },
   "Mensagens enviadas pelo agente": { es: "Mensajes enviados por el agente" },
-  "Negócios ganhos": { es: "Negocios ganados" },
+  "Leads ganhos": { es: "Negocios ganados" },
   "O cliente que mais recebeu retornos. A média esconde o exagero pontual.": { es: "El cliente que más seguimientos recibió. El promedio oculta los excesos aislados." },
   "O time respondeu pelo celular, contornando a ferramenta.": { es: "El equipo respondió desde el celular, sin pasar por la herramienta." },
   "Passagens para humano": { es: "Transferencias a humano" },
@@ -10407,7 +10400,7 @@ export const DICIONARIO: Traducoes = {
   ". Email ainda não está disponível.": { es: ". El email todavía no está disponible." },
   "sem responsável — definir quem atende": { es: "sin responsable — definir quién atiende" },
   "Campos do lead neste funil": { es: "Campos del lead en este embudo" },
-  "Aparecem no dossiê do negócio. No follow-up, você escolhe em qual campo gravar a resposta.": { es: "Aparecen en el expediente del negocio. En el seguimiento, eliges en qué campo guardar la respuesta." },
+  "Aparecem no dossiê do lead. No follow-up, você escolhe em qual campo gravar a resposta.": { es: "Aparecen en el expediente del negocio. En el seguimiento, eliges en qué campo guardar la respuesta." },
   "Rótulo (Endereço)": { es: "Etiqueta (Dirección)" },
   "Opções, separadas por vírgula": { es: "Opciones, separadas por comas" },
   "Sem janelas, o roteamento aceita conversa a qualquer hora — mas a Agenda não oferece NENHUM horário para marcar. Adicione janelas para publicar seus horários de atendimento.": { es: "Sin franjas, el enrutamiento acepta conversaciones a cualquier hora, pero la Agenda no ofrece NINGÚN horario para agendar citas. Agrega franjas para publicar tus horarios de atención." },
@@ -10882,8 +10875,7 @@ export const DICIONARIO: Traducoes = {
   "Não é possível revogar o próprio acesso.": { es: "No puedes revocar tu propio acceso." },
   "Não foi possível gravar o dado.": { es: "No fue posible guardar el dato." },
   "Não há agenda do Google conectada para esta pessoa.": { es: "Esta persona no tiene un Google Calendar conectado." },
-  "Não há proposta pendente para este negócio.": { es: "No hay una propuesta pendiente para este negocio." },
-  "Negócio não encontrado.": { es: "Negocio no encontrado." },
+  "Não há proposta pendente para este lead.": { es: "No hay una propuesta pendiente para este negocio." },
   "Nenhuma conexão de parceiro ativa.": { es: "No hay ninguna conexión de partner activa." },
   "nenhuma organização ativa": { es: "no hay ninguna organización activa" },
   "Nenhuma organização ativa.": { es: "No hay ninguna organización activa." },
@@ -11062,10 +11054,10 @@ export const DICIONARIO: Traducoes = {
   "O lead não respondeu no prazo que você definiu": {
     es: "El lead no respondió en el plazo que definiste",
   },
-  "Próxima ação sem negócio definido — precisa da sua escolha": {
+  "Próxima ação sem lead definido — precisa da sua escolha": {
     es: "Próxima acción sin negocio definido — necesita que elijas",
   },
-  "Negócios que já estavam parados — precisam de uma decisão": {
+  "Leads que já estavam parados — precisam de uma decisão": {
     es: "Negocios que ya estaban estancados: necesitan una decisión",
   },
   "A sugestão de retomar contato venceu — decida": {
@@ -11107,21 +11099,21 @@ export const DICIONARIO: Traducoes = {
   "Transferência para o funil da intenção recusada": {
     es: "Transferencia al embudo de la intención rechazada",
   },
-  "O negócio continua ABERTO no funil de origem: a recusa não encerra nem move nada.": {
+  "O lead continua ABERTO no funil de origem: a recusa não encerra nem move nada.": {
     es: "El negocio sigue ABIERTO en el embudo de origen: el rechazo no lo cierra ni lo mueve.",
   },
-  "A etapa de destino exige campos obrigatórios que este negócio não tem. Abra o negócio, preencha o que falta e refaça a ação.": {
+  "A etapa de destino exige campos obrigatórios que este lead não tem. Abra o lead, preencha o que falta e refaça a ação.": {
     es: "La etapa de destino exige campos obligatorios que este negocio no tiene. Abre el negocio, completa lo que falta y repite la acción.",
   },
   // ─── lib/leads/aviso-de-etapa.ts + editor de etapas (migration 0440) ───
-  "Negócio entrou em": { es: "Negocio entró en" },
-  "Abra o negócio para dar o próximo passo. Este aviso foi pedido na configuração da etapa.": {
+  "Lead entrou em": { es: "Negocio entró en" },
+  "Abra o lead para dar o próximo passo. Este aviso foi pedido na configuração da etapa.": {
     es: "Abre el negocio para dar el siguiente paso. Este aviso se pidió en la configuración de la etapa.",
   },
-  "Avisar a equipe na Central quando um negócio entrar aqui": {
+  "Avisar a equipe na Central quando um lead entrar aqui": {
     es: "Avisar al equipo en la Central cuando un negocio entre aquí",
   },
-  "Avisar a equipe na Central quando um negócio entrar em": {
+  "Avisar a equipe na Central quando um lead entrar em": {
     es: "Avisar al equipo en la Central cuando un negocio entre en",
   },
   // ─── sons dos avisos (migration 0441; app/app/settings/notifications/_sons.tsx) ───
@@ -11130,7 +11122,7 @@ export const DICIONARIO: Traducoes = {
     es: "Suenan con el sitio abierto cuando el aviso llega a la Central. MP3, OGG o WAV de hasta 1 MB.",
   },
   "Etapa que avisa": { es: "Etapa que avisa" },
-  "Quando um negócio entra numa etapa marcada para avisar na Central (por exemplo, o pedido confirmado).": {
+  "Quando um lead entra numa etapa marcada para avisar na Central (por exemplo, o pedido confirmado).": {
     es: "Cuando un negocio entra en una etapa marcada para avisar en la Central (por ejemplo, el pedido confirmado).",
   },
   "Precisa de uma pessoa": { es: "Necesita una persona" },
@@ -11801,7 +11793,7 @@ export const DICIONARIO: Traducoes = {
   // ⚠️ `Conversões` também é o rótulo no menu lateral (`lib/navigation/registry.ts`),
   // e é a MESMA chave: mudar a tradução aqui muda os dois lugares.
   "Conversões": { es: "Conversiones" },
-  "Quando um negócio que veio de anúncio é marcado como ganho, o valor da venda volta para a plataforma que trouxe o cliente. É esse retorno que ensina o anúncio a procurar mais gente parecida com quem comprou.":
+  "Quando um lead que veio de anúncio é marcado como ganho, o valor da venda volta para a plataforma que trouxe o cliente. É esse retorno que ensina o anúncio a procurar mais gente parecida com quem comprou.":
     { es: "Cuando un negocio que llegó por un anuncio se marca como ganado, el valor de la venta se envía de vuelta a la plataforma que trajo al cliente. Así el anuncio aprende a buscar más personas parecidas a quienes compraron." },
   "O envio está pausado. As vendas continuam sendo registradas aqui, mas não vão para a plataforma enquanto isto estiver desligado.":
     { es: "El envío está en pausa. Las ventas se siguen registrando aquí, pero no se envían a la plataforma mientras esta opción esté desactivada." },
@@ -11811,7 +11803,6 @@ export const DICIONARIO: Traducoes = {
   "reportadas com sucesso": { es: "reportadas con éxito" },
   "Nenhuma pendência. Ou tudo que veio de anúncio foi reportado, ou ainda não fechou nenhuma venda com origem em anúncio.":
     { es: "No hay pendientes. Todo lo que llegó de anuncios ya se reportó, o todavía no se ha cerrado ninguna venta que venga de un anuncio." },
-  "Negócio": { es: "Negocio" },
   "O que houve": { es: "Qué pasó" },
   "(sem título)": { es: "(sin título)" },
 
@@ -11895,7 +11886,7 @@ export const DICIONARIO: Traducoes = {
 
   // ─── Tarefas (extraídas do PR #418) ───
   "Tarefas": { es: "Tareas" },
-  "O que ficou combinado, com prazo. Tarefa presa a um negócio aparece na linha do tempo dele.": {
+  "O que ficou combinado, com prazo. Tarefa presa a um lead aparece na linha do tempo dele.": {
     es: "Lo que quedó acordado, con plazo. Una tarea vinculada a un negocio aparece en su línea de tiempo.",
   },
   "O que ficou combinado, com prazo — e o que já venceu sem ninguém fazer.": {
@@ -11916,7 +11907,7 @@ export const DICIONARIO: Traducoes = {
   "atrasadas": { es: "atrasadas" },
   "tarefa aberta": { es: "tarea abierta" },
   "tarefas abertas": { es: "tareas abiertas" },
-  "Nenhuma tarefa neste negócio. Anote o próximo passo combinado, com prazo e responsável.": { es: "Ninguna tarea en este negocio. Anota el próximo paso acordado, con plazo y responsable." },
+  "Nenhuma tarefa neste lead. Anote o próximo passo combinado, com prazo e responsável.": { es: "Ninguna tarea en este negocio. Anota el próximo paso acordado, con plazo y responsable." },
   "Editar tarefa": { es: "Editar tarea" },
   "Atrasadas": { es: "Atrasadas" },
   "Esta semana": { es: "Esta semana" },
@@ -11944,7 +11935,7 @@ export const DICIONARIO: Traducoes = {
 
   // ─── app/api/v1/tasks/**/route.ts (mensagens que chegam cruas ao formulário — sem showApiError) ───
   "Tarefa não encontrada.": { es: "Tarea no encontrada." },
-  "O negócio ou contato vinculado não existe.": {
+  "O lead ou contato vinculado não existe.": {
     es: "El negocio o contacto vinculado no existe.",
   },
   "Erro ao salvar a tarefa.": { es: "Error al guardar la tarea." },
@@ -11957,7 +11948,7 @@ export const DICIONARIO: Traducoes = {
   "mais": { es: "más" },
   // ─── Configurações › Organização — zona de perigo (extraído do PR #556) ───
   "Zona de perigo": { es: "Zona de peligro" },
-  "Apaga de vez as mensagens, conversas, negócios, contatos, agendamentos e pedidos desta organização. Serve para recomeçar os testes do zero antes de atender de verdade.":
+  "Apaga de vez as mensagens, conversas, leads, contatos, agendamentos e pedidos desta organização. Serve para recomeçar os testes do zero antes de atender de verdade.":
     {
       es: "Borra definitivamente los mensajes, conversaciones, negocios, contactos, citas y pedidos de esta organización. Sirve para volver a empezar las pruebas desde cero antes de atender de verdad.",
     },
@@ -11967,7 +11958,7 @@ export const DICIONARIO: Traducoes = {
     },
   "Apagar todos os dados de atendimento": { es: "Borrar todos los datos de atención" },
   "Apagar todos os dados de atendimento?": { es: "¿Borrar todos los datos de atención?" },
-  "Esta ação é irreversível. Mensagens, conversas, negócios, contatos, agendamentos e pedidos de":
+  "Esta ação é irreversível. Mensagens, conversas, leads, contatos, agendamentos e pedidos de":
     {
       es: "Esta acción es irreversible. Mensajes, conversaciones, negocios, contactos, citas y pedidos de",
     },
@@ -12022,14 +12013,14 @@ export const DICIONARIO: Traducoes = {
   "contatos novos": { es: "contactos nuevos" },
   "Colunas que não reconheci:": { es: "Columnas que no reconocí:" },
   // Mensagens de erro de lib/leads/planilha.ts e app/api/v1/leads/import/route.ts
-  "A planilha precisa de uma coluna com o nome do negócio ou do contato. Encontrei: ": {
+  "A planilha precisa de uma coluna com o nome do lead ou do contato. Encontrei: ": {
     es: "La hoja de cálculo necesita una columna con el nombre del negocio o del contacto. Encontré: ",
   },
-  "sem nome do negócio nem do contato": { es: "sin nombre del negocio ni del contacto" },
+  "sem nome do lead nem do contato": { es: "sin nombre del negocio ni del contacto" },
   "valor não reconhecido (": { es: "valor no reconocido (" },
   " — escreva assim: 1.200,00": { es: " — escríbelo así: 1.200,00" },
   "telefone não reconhecido (": { es: "teléfono no reconocido (" },
-  " — o negócio entrou sem contato": { es: " — el negocio entró sin contacto" },
+  " — o lead entrou sem contato": { es: " — el negocio entró sin contacto" },
   "Envie o arquivo como multipart/form-data.": {
     es: "Envía el archivo como multipart/form-data.",
   },
@@ -12039,7 +12030,7 @@ export const DICIONARIO: Traducoes = {
   "A planilha tem": { es: "La hoja de cálculo tiene" },
   "linhas; o limite é": { es: "filas; el límite es" },
   "por importação.": { es: "por importación." },
-  "o contato não pôde ser criado — o negócio entrou sem ele": {
+  "o contato não pôde ser criado — o lead entrou sem ele": {
     es: "no se pudo crear el contacto — el negocio entró sin él",
   },
   "linha recusada pelo banco": { es: "fila rechazada por la base de datos" },
@@ -12121,7 +12112,7 @@ export const DICIONARIO: Traducoes = {
   "Esta sugestão já foi decidida.": { es: "Ya se tomó una decisión sobre esta sugerencia." },
   "Esta sugestão venceu pelo prazo.": { es: "Esta sugerencia venció al cumplirse el plazo." },
   "Este canal é o oficial (API da plataforma): ele não tem sessão de WhatsApp para reiniciar. Se parou de entregar, atualize a credencial na tela do canal oficial.": { es: "Este es el canal oficial (API de la plataforma) y no tiene una sesión de WhatsApp que reiniciar. Si dejó de entregar mensajes, actualiza la credencial en la pantalla del canal oficial." },
-  "Este negócio não tem contato, então não há proposta do agente.": { es: "Este negocio no tiene contacto, así que no hay propuesta del agente." },
+  "Este lead não tem contato, então não há proposta do agente.": { es: "Este negocio no tiene contacto, así que no hay propuesta del agente." },
   "Este número foi excluído da Central de Conexões — reconectar não o traz de volta. Conecte um número para voltar a atender.": { es: "Este número se eliminó de la Central de Conexiones y reconectarlo no lo recupera. Conecta un número para volver a atender." },
   "Falha ao processar o envio do arquivo.": { es: "Error al procesar el envío del archivo." },
   "O arquivo não está mais guardado. Envie de novo.": { es: "El archivo ya no está guardado. Envíalo de nuevo." },
@@ -12142,7 +12133,7 @@ export const DICIONARIO: Traducoes = {
   "Liberou a conversa de volta para a fila": { es: "Devolvió la conversación a la cola" },
   "Atendente revogado da organização": { es: "Asesor revocado de la organización" },
   "Material não encontrado.": { es: "Material no encontrado." },
-  "Move cross-pipeline não é permitido. Use POST /api/v1/leads/[id]/clone para levar o negócio a outro funil.": { es: "No se permite mover entre embudos. Usa POST /api/v1/leads/[id]/clone para llevar el negocio a otro embudo." },
+  "Move cross-pipeline não é permitido. Use POST /api/v1/leads/[id]/clone para levar o lead a outro funil.": { es: "No se permite mover entre embudos. Usa POST /api/v1/leads/[id]/clone para llevar el negocio a otro embudo." },
   "Nada para alterar.": { es: "No hay nada que modificar." },
   "Nenhum arquivo foi enviado.": { es: "No se envió ningún archivo." },
   "Nenhum lead acessível na operação.": { es: "No hay ningún lead accesible en la operación." },
@@ -12209,7 +12200,7 @@ export const DICIONARIO: Traducoes = {
   // ─── Fase B: handlers compartidos REST/MCP (leads/_handler.ts) ───
   // A recusa da policy `crm_leads` (SQLSTATE 42501) traduzida em 403 — ver
   // `recusaDaGuardaDoBanco`.
-  "Sem permissão para salvar este negócio: pela visibilidade definida na organização, ele ficaria fora do que você pode ver.": {
+  "Sem permissão para salvar este lead: pela visibilidade definida na organização, ele ficaria fora do que você pode ver.": {
     es: "Sin permiso para guardar este negocio: por la visibilidad definida en la organización, quedaría fuera de lo que puedes ver.",
   },
   "Um lead tem um dono: informe owner_user_id OU owner_agent_id.": {
@@ -12237,7 +12228,7 @@ export const DICIONARIO: Traducoes = {
     es: "El embudo no tiene una etapa de cierre para negocios perdidos.",
   },
   "Perdido —": { es: "Perdido —" },
-  "(negócio removido)": { es: "(negocio eliminado)" },
+  "(lead removido)": { es: "(negocio eliminado)" },
   // Troca de funil (POST /api/v1/leads/[id]/clone): o rótulo da linha do negócio
   // novo e as duas razões que não dependem do nome do funil.
   "Veio de outro funil": { es: "Vino de otro embudo" },
@@ -12245,17 +12236,17 @@ export const DICIONARIO: Traducoes = {
   // A TELA que faltava para a troca de funil — menu do card e o diálogo.
   "Levar para outro funil": { es: "Llevar a otro embudo" },
   // ── Retomada como novo negócio (issue #1538) ──
-  "Retomar como novo negócio": { es: "Retomar como negocio nuevo" },
+  "Retomar como novo lead": { es: "Retomar como negocio nuevo" },
   "Retomando…": { es: "Retomando…" },
-  "Este funil não reabre negócios encerrados. Retomar cria um negócio novo com o mesmo contato, copiando campos e tags, e guarda a ligação com este — o negócio original fica intacto, com o motivo dele.":
+  "Este funil não reabre leads encerrados. Retomar cria um lead novo com o mesmo contato, copiando campos e tags, e guarda a ligação com este — o lead original fica intacto, com o motivo dele.":
     {
       es: "Este embudo no reabre negocios cerrados. Retomar crea un negocio nuevo con el mismo contacto, copiando campos y etiquetas, y guarda el vínculo con este — el negocio original queda intacto, con su motivo.",
     },
-  "Este funil retoma como novo negócio: mover um negócio encerrado para uma etapa aberta não o reabre. Use POST /api/v1/leads/{id}/retomar para criar a nova tentativa.":
+  "Este funil retoma como novo lead: mover um lead encerrado para uma etapa aberta não o reabre. Use POST /api/v1/leads/{id}/retomar para criar a nova tentativa.":
     {
       es: "Este embudo retoma como negocio nuevo: mover un negocio cerrado a una etapa abierta no lo reabre. Usa POST /api/v1/leads/{id}/retomar para crear el nuevo intento.",
     },
-  "Este negócio já está aberto: a retomada cria um negócio NOVO a partir de um encerrado. Para mudar de etapa, mova o negócio que já existe.":
+  "Este lead já está aberto: a retomada cria um lead NOVO a partir de um encerrado. Para mudar de etapa, mova o lead que já existe.":
     {
       es: "Este negocio ya está abierto: la retoma crea un negocio NUEVO a partir de uno cerrado. Para cambiar de etapa, mueve el negocio que ya existe.",
     },
@@ -12268,17 +12259,17 @@ export const DICIONARIO: Traducoes = {
       es: "Este embudo no tiene etapa abierta para recibir el nuevo intento.",
     },
   "Escolha o funil de destino": { es: "Elige el embudo de destino" },
-  "Este é o único funil. Crie outro funil para poder levar o negócio até ele.": {
+  "Este é o único funil. Crie outro funil para poder levar o lead até ele.": {
     es: "Este es el único embudo. Crea otro embudo para poder llevar el negocio hasta él.",
   },
-  'O negócio é recriado no funil escolhido e este encerra como perdido, com o motivo "Levado para outro funil" — o histórico dos dois lados fica registrado na linha do tempo.': {
+  'O lead é recriado no funil escolhido e este encerra como perdido, com o motivo "Levado para outro funil" — o histórico dos dois lados fica registrado na linha do tempo.': {
     es: 'El negocio se recrea en el embudo elegido y este se cierra como perdido, con el motivo "Movido a otro embudo" — el historial de los dos lados queda registrado en la línea de tiempo.',
   },
   // As recusas da troca de funil (lib/leads/clonar-para-funil.ts e a rota).
-  "O negócio já está neste funil. Para trocar de etapa use /api/v1/leads/[id]/move.": {
+  "O lead já está neste funil. Para trocar de etapa use /api/v1/leads/[id]/move.": {
     es: "El negocio ya está en este embudo. Para cambiar de etapa, usa /api/v1/leads/[id]/move.",
   },
-  "Só um negócio aberto pode ser levado para outro funil.": {
+  "Só um lead aberto pode ser levado para outro funil.": {
     es: "Solo un negocio abierto puede moverse a otro embudo.",
   },
   "A etapa não pertence ao funil de destino.": {
@@ -12287,11 +12278,11 @@ export const DICIONARIO: Traducoes = {
   "A etapa de destino é de fechamento: escolha uma etapa aberta do funil.": {
     es: "La etapa de destino es de cierre: elige una etapa abierta del embudo.",
   },
-  "O funil de destino não tem etapa aberta para receber o negócio.": {
+  "O funil de destino não tem etapa aberta para receber o lead.": {
     es: "El embudo de destino no tiene etapa abierta para recibir el negocio.",
   },
   "Funil de destino não encontrado.": { es: "Embudo de destino no encontrado." },
-  "O funil de origem não tem etapa de perda para encerrar o negócio.": {
+  "O funil de origem não tem etapa de perda para encerrar o lead.": {
     es: "El embudo de origen no tiene etapa de pérdida para cerrar el negocio.",
   },
 
@@ -12342,10 +12333,10 @@ export const DICIONARIO: Traducoes = {
     es: "Esa etapa no forma parte de este embudo. Recarga la página e intenta de nuevo.",
   },
   "Etapa não encontrada.": { es: "Etapa no encontrada." },
-  "Uma pessoa devolveu o negócio para onde ele estava antes do assistente": {
+  "Uma pessoa devolveu o lead para onde ele estava antes do assistente": {
     es: "Una persona regresó el negocio a donde estaba antes de que actuara el asistente",
   },
-  "Uma pessoa levou o negócio para outra etapa, diferente da que o assistente escolheu": {
+  "Uma pessoa levou o lead para outra etapa, diferente da que o assistente escolheu": {
     es: "Una persona movió el negocio a otra etapa, distinta de la que eligió el asistente",
   },
 
@@ -12403,7 +12394,7 @@ export const DICIONARIO: Traducoes = {
   "Abre os detalhes de uma conversa: quem está atendendo, marcadores aplicados e há quanto tempo o cliente espera.": {
     es: "Abre los detalles de una conversación: quién está atendiendo, etiquetas aplicadas y cuánto tiempo lleva esperando el cliente.",
   },
-  "Abre os detalhes de uma oportunidade de venda: etapa atual, responsável, marcadores e valor do negócio.": {
+  "Abre os detalhes de um lead: etapa atual, responsável, marcadores e valor do lead.": {
     es: "Abre los detalles de una oportunidad de venta: etapa actual, responsable, etiquetas y valor del negocio.",
   },
   "Abre um chamado e mostra tudo que aconteceu nele, inclusive a decisão que a pessoa tomou e o texto que ela escreveu ao decidir.": {
@@ -12415,12 +12406,12 @@ export const DICIONARIO: Traducoes = {
   "Acrescenta uma coluna nova no fim do funil, quando o jeito de trabalhar da empresa tem um passo que ainda não está no quadro.": {
     es: "Agrega una columna nueva al final del embudo cuando la forma de trabajar de la empresa incluye un paso que todavía no aparece en el tablero.",
   },
-  "Adiciona ou remove marcadores numa conversa, cliente ou oportunidade, para organizar e filtrar a operação depois.": {
+  "Adiciona ou remove marcadores numa conversa, cliente ou lead, para organizar e filtrar a operação depois.": {
     es: "Agrega o quita etiquetas en una conversación, cliente u oportunidad, para organizar y filtrar la operación después.",
   },
   "Agenda da equipe": { es: "Agenda del equipo" },
   "Agendar um retorno para o cliente": { es: "Programar un seguimiento para el cliente" },
-  "Altera dados de uma oportunidade de venda: valor do negócio, responsável e informações colhidas na conversa.": {
+  "Altera dados de um lead: valor do lead, responsável e informações colhidas na conversa.": {
     es: "Modifica datos de una oportunidad de venta: valor del negocio, responsable e información obtenida en la conversación.",
   },
   "Anota o que aconteceu num horário que já passou: a pessoa foi atendida, ou não apareceu.": {
@@ -12464,7 +12455,7 @@ export const DICIONARIO: Traducoes = {
     es: "Devuelve la conversación a la atención automática una vez que una persona terminó de atender, junto con lo que se acordó con el cliente. Solo una persona puede hacerlo.",
   },
   "Direcionar conversa para alguém": { es: "Asignar conversación a alguien" },
-  "Encerrar o negócio como ganho ou perdido": { es: "Cerrar el negocio como ganado o perdido" },
+  "Encerrar o lead como ganho ou perdido": { es: "Cerrar el negocio como ganado o perdido" },
   "Encerrar um chamado com o desfecho": { es: "Cerrar un caso con el desenlace" },
   "Encontra um cliente pelo nome, telefone ou e-mail, para o agente saber com quem está falando antes de responder.": {
     es: "Busca un cliente por nombre, teléfono o correo, para que el agente sepa con quién habla antes de responder.",
@@ -12480,7 +12471,7 @@ export const DICIONARIO: Traducoes = {
   "Faz uma regra passar a rodar sozinha, sempre que o gatilho dela acontecer, ou parar de rodar. Ligada, ela pode falar com clientes de verdade.": {
     es: "Activa una regla para que se ejecute sola cada vez que ocurra su disparador, o la detiene. Mientras esté activa, puede hablar con clientes de verdad.",
   },
-  "Fecha a oportunidade dizendo se ela foi ganha ou perdida e por quê, para o que já acabou parar de ser cobrado.": {
+  "Fecha o lead dizendo se ele foi ganho ou perdido e por quê, para o que já acabou parar de ser cobrado.": {
     es: "Cierra la oportunidad indicando si se ganó o se perdió y por qué, para que lo que ya terminó deje de aparecer como pendiente.",
   },
   "Fecha um chamado deixando registrado como ele terminou, para ele parar de ocupar a fila de quem atende. Não dá para reabrir por aqui.": {
@@ -12500,11 +12491,11 @@ export const DICIONARIO: Traducoes = {
   "Ler um chamado e o que a pessoa decidiu": { es: "Leer un caso y lo que la persona decidió" },
   "Ligar ou desligar uma entrada de contatos": { es: "Activar o desactivar una entrada de contactos" },
   "Ligar ou desligar uma regra automática": { es: "Activar o desactivar una regla automática" },
-  "Lista as oportunidades abertas que passaram do prazo sem movimento, das mais críticas para as menos urgentes — e, junto, as pessoas que estão esperando sem que nada esteja marcado para acontecer.": {
-    es: "Lista las oportunidades abiertas que pasaron el plazo sin movimiento, de las más críticas a las menos urgentes. Incluye también a las personas que están esperando sin que haya nada programado.",
+  "Lista os leads abertos que passaram do prazo sem movimento, dos mais críticos para os menos urgentes — e, junto, as pessoas que estão esperando sem que nada esteja marcado para acontecer.": {
+    es: "Lista las leads abiertas que pasaron el plazo sin movimiento, de las más críticas a las menos urgentes. Incluye también a las personas que están esperando sin que haya nada programado.",
   },
-  "Lista as oportunidades de venda de um funil, com a etapa em que cada uma está e quem é o responsável por ela.": {
-    es: "Lista las oportunidades de venta de un embudo, con su etapa actual y su responsable.",
+  "Lista os leads de um funil, com a etapa em que cada um está e quem é o responsável por ele.": {
+    es: "Lista las leads de venta de un embudo, con su etapa actual y su responsable.",
   },
   "Lista as pessoas do time e o que cada uma pode fazer aqui dentro, para o agente saber para quem passar um atendimento.": {
     es: "Lista a las personas del equipo y lo que cada una puede hacer en el sistema, para que el agente sepa a quién transferir una atención.",
@@ -12529,7 +12520,7 @@ export const DICIONARIO: Traducoes = {
     es: "Programa un seguimiento con hora fija para que el agente vuelva a hablar con el cliente y la conversación no se quede sin respuesta.",
   },
   "Marcar consulta ou sessão": { es: "Programar consulta o sesión" },
-  "Mostra as colunas de um funil na ordem em que aparecem no quadro, para o agente saber onde pode colocar cada negócio.": {
+  "Mostra as colunas de um funil na ordem em que aparecem no quadro, para o agente saber onde pode colocar cada lead.": {
     es: "Muestra las columnas de un embudo en el orden en que aparecen en el tablero, para que el agente sepa dónde puede poner cada negocio.",
   },
   "Mostra as conversas em andamento, quem está cuidando de cada uma e a posição de cada cliente na fila de espera.": {
@@ -12547,7 +12538,7 @@ export const DICIONARIO: Traducoes = {
   "Mostra o que rodou sozinho nos últimos tempos e o que deu errado, para descobrir o que parou de funcionar sem ninguém perceber.": {
     es: "Muestra lo que se ejecutó automáticamente hace poco y lo que salió mal, para descubrir qué dejó de funcionar sin que nadie lo notara.",
   },
-  "Mostra os funis de venda existentes e suas etapas, para o agente saber onde pode colocar uma oportunidade.": {
+  "Mostra os funis de venda existentes e suas etapas, para o agente saber onde pode colocar um lead.": {
     es: "Muestra los embudos de venta existentes y sus etapas, para que el agente sepa dónde puede poner una oportunidad.",
   },
   "Mostra os horários em que um atendente pode receber, já descontando as folgas dele, o que ele tem marcado e os compromissos da agenda pessoal.": {
@@ -12583,7 +12574,7 @@ export const DICIONARIO: Traducoes = {
   "Mostra quem pediu para exportar ou apagar os próprios dados e qual o prazo, para o assistente parar de insistir com quem pediu para sair.": {
     es: "Muestra quién pidió exportar o borrar sus propios datos y cuál es el plazo, para que el asistente deje de insistir con quien pidió salir.",
   },
-  "Move a oportunidade para outra etapa do funil, registrando o avanço da negociação ou a perda do negócio.": {
+  "Move o lead para outra etapa do funil, registrando o avanço da negociação ou a perda do lead.": {
     es: "Mueve la oportunidad a otra etapa del embudo, registrando el avance de la negociación o la pérdida del negocio.",
   },
   "Move um compromisso já marcado para outro horário, mantendo o mesmo cliente e o mesmo tipo de atendimento.": {
@@ -12607,7 +12598,7 @@ export const DICIONARIO: Traducoes = {
   "Quando o cliente diz o e-mail, o nome ou o telefone dele na conversa, guarda essa informação para uma pessoa conferir antes de entrar na ficha.": {
     es: "Cuando el cliente da su correo electrónico, nombre o teléfono en la conversación, guarda esa información para que una persona la revise antes de pasarla a la ficha.",
   },
-  "Registra uma nova oportunidade de venda no funil, para que o interesse demonstrado pelo cliente não se perca.": {
+  "Registra um novo lead no funil, para que o interesse demonstrado pelo cliente não se perca.": {
     es: "Registra una nueva oportunidad de venta en el embudo para que no se pierda el interés que mostró el cliente.",
   },
   "Registrar o que aconteceu num chamado": { es: "Registrar lo que pasó en un caso" },
@@ -12624,10 +12615,10 @@ export const DICIONARIO: Traducoes = {
   "Retornos e acompanhamento": { es: "Seguimientos" },
   "Sugerir retomar contato com quem sumiu": { es: "Sugerir retomar el contacto con quien dejó de responder" },
   "Time de atendimento": { es: "Equipo de atención" },
-  "Tira uma coluna do quadro e leva os negócios que estavam nela para outra coluna que você escolher. O histórico continua guardado.": {
+  "Tira uma coluna do quadro e leva os leads que estavam nela para outra coluna que você escolher. O histórico continua guardado.": {
     es: "Quita una columna del tablero y pasa sus negocios a otra columna que elijas. El historial se conserva.",
   },
-  "Troca o nome de uma coluna do funil, muda o lugar dela na ordem ou define em qual delas o negócio é dado como fechado ou perdido.": {
+  "Troca o nome de uma coluna do funil, muda o lugar dela na ordem ou define em qual delas o lead é dado como fechado ou perdido.": {
     es: "Cambia el nombre de una columna del embudo, su posición en el orden, o define en cuál se marca un negocio como cerrado o perdido.",
   },
   "Ver a fila de atendimento": { es: "Ver la fila de atención" },
@@ -13540,7 +13531,7 @@ export const DICIONARIO: Traducoes = {
   "Um dia inteiro sem o paciente responder, com a marcação em aberto.": {
     es: "Un día entero sin que el paciente responda, con la cita pendiente.",
   },
-  "O negócio entrar na etapa do funil que você escolher.": {
+  "O lead entrar na etapa do funil que você escolher.": {
     es: "Que el negocio entre en la etapa del embudo que elijas.",
   },
   "Alguém confirmar na agenda que o paciente não compareceu.": {
@@ -13563,7 +13554,7 @@ export const DICIONARIO: Traducoes = {
   "Campo de data": { es: "Campo de fecha" },
   "Escolha o campo": { es: "Elige el campo" },
   "Faltam N dias": { es: "Faltan N días" },
-  "O aviso sai no dia em que faltarem N dias para a data, uma vez por negócio. Para avisar DEPOIS da data, use N negativo — -60 confirma a entrega 60 dias após o casamento.": {
+  "O aviso sai no dia em que faltarem N dias para a data, uma vez por lead. Para avisar DEPOIS da data, use N negativo — -60 confirma a entrega 60 dias após o casamento.": {
     es: "El aviso se envía cuando faltan N días para la fecha, una sola vez por negocio. Para avisar DESPUÉS de la fecha, usa un N negativo: con -60 se confirma la entrega 60 días después de la boda.",
   },
   "Este funil ainda não tem campo de data. Cadastre um em Funis → Campos personalizados para poder escolhê-lo aqui.": {
@@ -13684,7 +13675,7 @@ export const DICIONARIO: Traducoes = {
   "(percebido pelo Jev)": { es: "(detectado por Jev)" },
   "O assistente não teve confiança suficiente para responder":
     { es: "El asistente no estaba lo bastante seguro para responder" },
-  "O negócio chegou a uma etapa que pede uma pessoa":
+  "O lead chegou a uma etapa que pede uma pessoa":
     { es: "El negocio llegó a una etapa que requiere una persona" },
   "A conversa tocou em assunto jurídico":
     { es: "La conversación tocó un tema legal" },
@@ -14071,7 +14062,7 @@ export const DICIONARIO: Traducoes = {
   },
 
   // ─── Funil: dados do cliente (telefone, e-mail e links) no card e no dossiê ───
-  "Este negócio não tem contato vinculado.": { es: "Este negocio no tiene contacto vinculado." },
+  "Este lead não tem contato vinculado.": { es: "Este negocio no tiene contacto vinculado." },
   "Não consegui carregar o contato.": { es: "No pude cargar el contacto." },
   Dados: { es: "Datos" },
   Links: { es: "Enlaces" },
@@ -14354,7 +14345,7 @@ export const DICIONARIO: Traducoes = {
   "Fluxos de retorno para cobrança vencida": { es: "Flujos de retorno para cobro vencido" },
   "Fluxo removido ou desativado": { es: "Flujo eliminado o desactivado" },
   "Desmarque para poder salvar.": { es: "Desmárquelo para poder guardar." },
-  "Um por número. Quem cobra é o agente publicado naquele número — a cobrança de um negócio não sai pela linha do outro.": {
+  "Um por número. Quem cobra é o agente publicado naquele número — a cobrança de um lead não sai pela linha do outro.": {
     es: "Uno por número. Quien cobra es el agente publicado en ese número — el cobro de un negocio no sale por la línea del otro.",
   },
   "Nenhum fluxo com gatilho de sistema externo. Crie um em Follow-ups.": {
@@ -14632,7 +14623,7 @@ export const DICIONARIO: Traducoes = {
     es: "personas? El envío sigue el ritmo del número y puede llevar horas.",
   },
   "podem receber": { es: "pueden recibir" },
-  "O recorte bateu o teto de 20.000 negócios desta prévia — a lista pode estar incompleta. Refine o filtro para ver o todo.": { es: "El recorte alcanzó el techo de 20.000 negocios de esta vista previa — la lista puede estar incompleta. Ajusta el filtro para ver el total." },
+  "O recorte bateu o teto de 20.000 leads desta prévia — a lista pode estar incompleta. Refine o filtro para ver o todo.": { es: "El recorte alcanzó el techo de 20.000 negocios de esta vista previa — la lista puede estar incompleta. Ajusta el filtro para ver el total." },
   "Preparar lista": { es: "Preparar lista" },
   "Progresso do envio": { es: "Progreso del envío" },
   "Público": { es: "Público" },
@@ -14674,7 +14665,7 @@ export const DICIONARIO: Traducoes = {
   "funil removido": { es: "embudo eliminado" },
   "agente indisponível": { es: "agente no disponible" },
   "Agente publicado no número (padrão)": { es: "Agente publicado en el número (predeterminado)" },
-  "Com negócio no funil": { es: "Con negocio en el embudo" },
+  "Com lead no funil": { es: "Con negocio en el embudo" },
   "Em branco, tudo segue como hoje: o card nasce no funil do número e quem atende é o agente publicado nele.": {
     es: "En blanco, todo sigue como hoy: la tarjeta nace en el embudo del número y quien atiende es el agente publicado en él.",
   },
@@ -14923,7 +14914,7 @@ export const DICIONARIO: Traducoes = {
   "Abrir proposta": {"es": "Abrir propuesta"},
   "A validade passou sem decisão do cliente. Confirme se ainda vale a pena manter a oferta ou revise o preço.": {"es": "La validez venció sin decisión del cliente. Confirma si todavía vale la pena mantener la oferta o revisa el precio."},
   "A proporção de propostas aceitas caiu de forma sustentada — revise preço, prazo ou o texto padrão.": {"es": "La proporción de propuestas aceptadas cayó de forma sostenida — revisa precio, plazo o el texto estándar."},
-  "Uma promessa de proposta venceu sem que a proposta tenha sido criada. Abra o negócio e monte o rascunho.": {"es": "Una promesa de propuesta venció sin que la propuesta haya sido creada. Abre el negocio y arma el borrador."},
+  "Uma promessa de proposta venceu sem que a proposta tenha sido criada. Abra o lead e monte o rascunho.": {"es": "Una promesa de propuesta venció sin que la propuesta haya sido creada. Abre el negocio y arma el borrador."},
   "proposta vencida sem retomada": {"es": "propuesta vencida sin retomar"},
   "propostas vencidas sem retomada": {"es": "propuestas vencidas sin retomar"},
   "O cliente recebeu e não decidiu. Retome antes que esfrie de vez.": {"es": "El cliente la recibió y no decidió. Retómala antes de que se enfríe del todo."},
@@ -14985,18 +14976,18 @@ export const DICIONARIO: Traducoes = {
   },
   "Proposta": { es: "Propuesta" },
   "Condições padrão": {"es": "Condiciones predeterminadas"},
-  "Por favor, selecione o negócio associado à proposta.": {"es": "Selecciona el negocio asociado a la propuesta."},
+  "Por favor, selecione o lead associado à proposta.": {"es": "Selecciona el negocio asociado a la propuesta."},
   "Por favor, informe o título da proposta.": {"es": "Indica el título de la propuesta."},
   "Voltar às propostas": {"es": "Volver a las propuestas"},
   "Nova Proposta Comercial": {"es": "Nueva Propuesta Comercial"},
   "Preencha as informações básicas para iniciar o rascunho da proposta. Os itens, produtos e valores poderão ser adicionados no editor a seguir.": {"es": "Completa la información básica para iniciar el borrador de la propuesta. Los ítems, productos y valores se podrán agregar en el editor siguiente."},
-  "Nenhum negócio elegível encontrado": {"es": "No se encontró ningún negocio elegible"},
-  "Para criar uma proposta, é necessário ter pelo menos um negócio ativo com um contato vinculado na organização.": {"es": "Para crear una propuesta, necesitas al menos un negocio activo con un contacto vinculado en la organización."},
-  "Negócio (Lead)": {"es": "Negocio (Lead)"},
-  "Filtrar negócio por título, cliente ou telefone…": {"es": "Filtrar negocios por título, cliente o teléfono…"},
-  "Selecione o negócio...": {"es": "Selecciona el negocio..."},
-  "Nenhum negócio encontrado com este filtro.": {"es": "No se encontró ningún negocio con este filtro."},
-  "A proposta será vinculada ao negócio e ao contato correspondente.": {"es": "La propuesta se vinculará al negocio y al contacto correspondiente."},
+  "Nenhum lead elegível encontrado": {"es": "No se encontró ningún negocio elegible"},
+  "Para criar uma proposta, é necessário ter pelo menos um lead ativo com um contato vinculado na organização.": {"es": "Para crear una propuesta, necesitas al menos un negocio activo con un contacto vinculado en la organización."},
+  "Lead (Lead)": {"es": "Negocio (Lead)"},
+  "Filtrar lead por título, cliente ou telefone…": {"es": "Filtrar negocios por título, cliente o teléfono…"},
+  "Selecione o lead...": {"es": "Selecciona el negocio..."},
+  "Nenhum lead encontrado com este filtro.": {"es": "No se encontró ningún negocio con este filtro."},
+  "A proposta será vinculada ao lead e ao contato correspondente.": {"es": "La propuesta se vinculará al negocio y al contacto correspondiente."},
   "Ex.: Proposta de Prestação de Serviços, Orçamento Especial": {"es": "Ej.: Propuesta de Prestación de Servicios, Presupuesto Especial"},
   "Identificação que aparecerá para o cliente e na lista de propostas.": {"es": "Identificación que verá el cliente y que aparecerá en la lista de propuestas."},
   "Validade da proposta": {"es": "Validez de la propuesta"},
@@ -15009,7 +15000,7 @@ export const DICIONARIO: Traducoes = {
   "Na fila do WhatsApp — sai assim que o canal conectar.": {"es": "En la cola de WhatsApp — sale en cuanto el canal se conecte."},
   "Enviando": {"es": "Enviando"},
   "Propostas já enviadas continuam disponíveis em Propostas.": {"es": "Las propuestas ya enviadas siguen disponibles en Propuestas."},
-  "O negócio some; a proposta": {"es": "El negocio desaparece; la propuesta"},
+  "O lead some; a proposta": {"es": "El negocio desaparece; la propuesta"},
   "continua em Propostas": {"es": "sigue disponible en Propuestas"},
   "Confira a proposta antes de decidir se precisa enviar novamente.": {"es": "Revisa la propuesta antes de decidir si necesitas enviarla de nuevo."},
   "Uma proposta ficou presa em envio e voltou a rascunho": {"es": "Una propuesta quedó atascada en el envío y volvió a borrador"},
@@ -15124,7 +15115,7 @@ export const DICIONARIO: Traducoes = {
   "Ligar para {{contact.name}} sobre {{lead.title}}": { es: "Llamar a {{contact.name}} sobre {{lead.title}}" },
   "Vence em (dias)": { es: "Vence en (días)" },
   "Atribuir a": { es: "Asignar a" },
-  "Dono do negócio": { es: "Dueño del negocio" },
+  "Dono do lead": { es: "Dueño del negocio" },
   "Este nó cria uma tarefa para a equipe — nenhuma mensagem sai para o cliente.":
     { es: "Este nodo crea una tarea para el equipo — ningún mensaje sale al cliente." },
   "Somente interno": { es: "Solo interno" },
@@ -15221,7 +15212,7 @@ export const DICIONARIO: Traducoes = {
   "Chance vinda da inteligência artificial quando existe, e da etapa quando não.": {
     es: "Probabilidad que viene de la inteligencia artificial cuando existe, y de la etapa cuando no.",
   },
-  "Nenhum negócio aberto com valor neste funil.": {
+  "Nenhum lead aberto com valor neste funil.": {
     es: "Ningún negocio abierto con valor en este embudo.",
   },
   "Sem data prevista — entram, mas sem mês no cronograma": {
@@ -15288,8 +15279,8 @@ export const DICIONARIO: Traducoes = {
   "Devolve a conversa ao agente depois de um tempo sem resposta de uma pessoa.": { es: "Devuelve la conversación al agente después de un tiempo sin respuesta de una persona." },
   "Atendente só vê os seus": { es: "El agente solo ve los suyos" },
   "Restringe o que cada atendente enxerga nas conversas e no funil.": { es: "Restringe lo que cada agente ve en las conversaciones y en el embudo." },
-  "Diz ao agente para qual etapa do funil levar o negócio quando qualifica ou agenda.": { es: "Le dice al agente a qué etapa del embudo llevar el negocio cuando califica o agenda." },
-  "Avisar a equipe quando o negócio entra na etapa": { es: "Avisar al equipo cuando el negocio entra en la etapa" },
+  "Diz ao agente para qual etapa do funil levar o lead quando qualifica ou agenda.": { es: "Le dice al agente a qué etapa del embudo llevar el negocio cuando califica o agenda." },
+  "Avisar a equipe quando o lead entra na etapa": { es: "Avisar al equipo cuando el negocio entra en la etapa" },
   "Abre um aviso na Central quando um card entra naquela etapa.": { es: "Abre un aviso en la Central cuando una tarjeta entra en esa etapa." },
   "Reportar vendas à Meta": { es: "Reportar ventas a Meta" },
   "Devolve ao anúncio da Meta as vendas que ele trouxe.": { es: "Devuelve al anuncio de Meta las ventas que trajo." },
@@ -15486,7 +15477,7 @@ export const DICIONARIO: Traducoes = {
   "Só quando for abordada (recomendado)": { es: "Solo cuando se la contacte (recomendado)" },
   "O funil mostra só quem já recebeu a primeira mensagem.": { es: "El embudo muestra solo a quien ya recibió el primer mensaje." },
   "Todas ao iniciar": { es: "Todas al iniciar" },
-  "Contato, negócio e conversa de toda a fila são criados na hora de iniciar.": { es: "Contacto, negocio y conversación de toda la cola se crean al iniciar." },
+  "Contato, lead e conversa de toda a fila são criados na hora de iniciar.": { es: "Contacto, negocio y conversación de toda la cola se crean al iniciar." },
   "Ao iniciar, as empresas com telefone entram na fila. Cada uma entra no funil só quando for abordada. Contatos já existentes são preservados. A fila faz uma primeira abordagem; respostas seguem no Inbox. Uma mensagem já em transmissão pode concluir após a pausa.": { es: "Al iniciar, las empresas con teléfono entran a la cola. Cada una entra al embudo solo cuando se la contacta. Los contactos que ya existen se conservan. La cola hace un primer contacto y las respuestas llegan al Inbox. Un mensaje que ya está en transmisión puede completarse tras la pausa." },
   "Com a campanha pausada, marque ou desmarque as empresas que ainda estão na fila. Quem já foi abordado não muda.": { es: "Con la campaña en pausa, marca o desmarca las empresas que aún están en la cola. A quien ya se contactó no se le cambia nada." },
   "Mostrar desmarcadas": { es: "Mostrar desmarcadas" },
@@ -15495,7 +15486,7 @@ export const DICIONARIO: Traducoes = {
   "Confirmar exclusão": { es: "Confirmar eliminación" },
   "Excluir tira essas empresas da lista. Em outra busca, elas podem aparecer de novo como novas.": { es: "Eliminar quita estas empresas de la lista. En otra búsqueda pueden aparecer de nuevo como nuevas." },
   "Empresas desmarcadas excluídas.": { es: "Empresas desmarcadas eliminadas." },
-  "Esta campanha já criou o contato e o negócio dessas empresas ao iniciar. Desmarcar só impede o envio: elas continuam no funil.": { es: "Esta campaña ya creó el contacto y el negocio de estas empresas al iniciar. Desmarcar solo impide el envío: siguen en el embudo." },
+  "Esta campanha já criou o contato e o lead dessas empresas ao iniciar. Desmarcar só impede o envio: elas continuam no funil.": { es: "Esta campaña ya creó el contacto y el negocio de estas empresas al iniciar. Desmarcar solo impide el envío: siguen en el embudo." },
   // Exportação da conversa em PDF (#2229)
   "Celular": { es: "Móvil" },
   "Mensagem apagada pelo autor.": { es: "Mensaje eliminado por el autor." },
@@ -15708,7 +15699,7 @@ export const DICIONARIO: Traducoes = {
   "Pipelines ilimitados com até {e} etapas": { es: "Pipelines ilimitados con hasta {e} etapas" },
   "Até {n} pipelines": { es: "Hasta {n} pipelines" },
   "Até {n} pipelines com até {e} etapas": { es: "Hasta {n} pipelines con hasta {e} etapas" },
-  "Gestão de negócios e produtos": { es: "Gestión de negocios y productos" },
+  "Gestão de leads e produtos": { es: "Gestión de negocios y productos" },
   "Até {n} leads": { es: "Hasta {n} leads" },
   "Leads ilimitados": { es: "Leads ilimitados" },
   "{n} automações": { es: "{n} automatizaciones" },
@@ -15903,10 +15894,10 @@ export const DICIONARIO: Traducoes = {
   // Tarefas › Planos (#1752) — a porta nova de cadastro de planos.
   "Planos de tarefa": { es: "Planes de tareas" },
   // A descrição da porta no hub e no ⌘K (catálogo do menu).
-  "Sequências reutilizáveis de tarefas — montar uma vez e aplicar a cada negócio.": {
+  "Sequências reutilizáveis de tarefas — montar uma vez e aplicar a cada lead.": {
     es: "Secuencias reutilizables de tareas: se arman una vez y se aplican a cada negocio.",
   },
-  "Monte a sequência uma vez; a ação Aplicar um plano de tarefas aplica o plano ao negócio.": {
+  "Monte a sequência uma vez; a ação Aplicar um plano de tarefas aplica o plano ao lead.": {
     es: "Arma la secuencia una vez; la acción Aplicar un plan de tareas aplica el plan al negocio.",
   },
   "Novo plano": { es: "Nuevo plan" },
@@ -15925,7 +15916,7 @@ export const DICIONARIO: Traducoes = {
     es: "Lo que se guarda aquí es lo que el editor de reglas ofrece en la acción Aplicar un plan de tareas.",
   },
   // O editor de regras (#1752) — a ação `apply_task_plan` e o seletor de planos.
-  "Aplicar um plano de tarefas ao negócio": { es: "Aplicar un plan de tareas al negocio" },
+  "Aplicar um plano de tarefas ao lead": { es: "Aplicar un plan de tareas al negocio" },
   "Plano de tarefa": { es: "Plan de tareas" },
   "Escolha um plano cadastrado": { es: "Elige un plan registrado" },
   "Nenhum plano cadastrado ainda. Cadastre em Tarefas › Planos.": {
@@ -16017,10 +16008,10 @@ export const DICIONARIO: Traducoes = {
   "Este funil não tem campo de data para montar o calendário.": {
     es: "Este embudo no tiene campo de fecha con el cual armar el calendario.",
   },
-  "Nenhum negócio com este campo de data.": {
+  "Nenhum lead com este campo de data.": {
     es: "Ningún negocio con este campo de fecha.",
   },
-  "Nenhum negócio com este campo de data neste período.": {
+  "Nenhum lead com este campo de data neste período.": {
     es: "Ningún negocio con este campo de fecha en este período.",
   },
   "Pendentes": { es: "Pendientes" },
@@ -16043,7 +16034,7 @@ export const DICIONARIO: Traducoes = {
   "prazo mais recente primeiro": { es: "plazo más reciente primero" },
   "Excluir lead": { es: "Eliminar lead" },
   "Excluir lead?": { es: "¿Eliminar lead?" },
-  "O negócio e seu histórico de atividades serão excluídos. O contato e as conversas continuam disponíveis.": { es: "El negocio y su historial de actividades se eliminarán. El contacto y las conversaciones siguen disponibles." },
+  "O lead e seu histórico de atividades serão excluídos. O contato e as conversas continuam disponíveis.": { es: "El negocio y su historial de actividades se eliminarán. El contacto y las conversaciones siguen disponibles." },
   "Conversa encerrada volta para quem atendeu?": { es: "¿La conversación cerrada vuelve a quien la atendió?" },
   "Responder pelo Inbox numa conversa sem responsável sempre a passa para quem respondeu. Desligado, a conversa encerrada que recebe mensagem nova volta para a fila.": { es: "Responder desde el Inbox en una conversación sin responsable siempre la asigna a quien respondió. Si está desactivado, la conversación cerrada que recibe un mensaje nuevo vuelve a la fila." },
   "Quando o cliente escreve numa conversa encerrada, ela volta direto para o último atendente, sem passar pela distribuição, se ele ainda faz parte da equipe.": { es: "Cuando el cliente escribe en una conversación cerrada, vuelve directo al último asesor, sin pasar por la distribución, si todavía forma parte del equipo." },
@@ -16159,12 +16150,12 @@ export const DICIONARIO: Traducoes = {
   "Mover lead existente": { es: "Mover lead existente" },
   "Criar novo lead": { es: "Crear nuevo lead" },
   // Dashboard de vendas (`/app/dashboard`)
-  "Funil, conversão, ranking da equipe e negócios esfriando, com comparação ao período anterior.": {
+  "Funil, conversão, ranking da equipe e leads esfriando, com comparação ao período anterior.": {
     es: "Embudo, conversión, ranking del equipo y negocios enfriándose, comparados con el período anterior.",
   },
   "Dashboard de vendas": { es: "Dashboard de ventas" },
   "Funil, conversão e desempenho da equipe no período.": { es: "Embudo, conversión y desempeño del equipo en el período." },
-  "Seu funil, sua conversão e seus negócios no período.": { es: "Tu embudo, tu conversión y tus negocios en el período." },
+  "Seu funil, sua conversão e seus leads no período.": { es: "Tu embudo, tu conversión y tus negocios en el período." },
   "O período máximo é de um ano.": { es: "El período máximo es de un año." },
   "sem base anterior": { es: "sin base anterior" },
   "vs. período anterior": { es: "vs. período anterior" },
@@ -16198,38 +16189,38 @@ export const DICIONARIO: Traducoes = {
   "Ciclo de vendas": { es: "Ciclo de ventas" },
   "mediana entre criar e ganhar": { es: "mediana entre crear y ganar" },
   "Receita ganha": { es: "Ingreso ganado" },
-  "negócios ganhos": { es: "negocios ganados" },
-  "negócio ganho": { es: "negocio ganado" },
+  "leads ganhos": { es: "negocios ganados" },
+  "lead ganho": { es: "negocio ganado" },
   "Fluxo do funil": { es: "Flujo del embudo" },
-  "Dos negócios criados no período, quantos chegaram a cada etapa": {
+  "Dos leads criados no período, quantos chegaram a cada etapa": {
     es: "De los negocios creados en el período, cuántos llegaron a cada etapa",
   },
-  "Nenhum negócio criado no período.": { es: "Ningún negocio creado en el período." },
+  "Nenhum lead criado no período.": { es: "Ningún negocio creado en el período." },
   "Gargalo": { es: "Cuello de botella" },
   "chegaram": { es: "llegaron" },
   "avançaram": { es: "avanzaron" },
   "etapa final": { es: "etapa final" },
   "agora na etapa": { es: "ahora en la etapa" },
   "O gargalo só é apontado em etapa com pelo menos": { es: "El cuello de botella solo se señala en etapas con al menos" },
-  "negócios.": { es: "negocios." },
+  "leads.": { es: "negocios." },
   "Ranking da equipe": { es: "Ranking del equipo" },
-  "Negócios ganhos no período": { es: "Negocios ganados en el período" },
-  "Nenhum negócio ganho no período.": { es: "Ningún negocio ganado en el período." },
+  "Leads ganhos no período": { es: "Negocios ganados en el período" },
+  "Nenhum lead ganho no período.": { es: "Ningún negocio ganado en el período." },
   "Produtos vendidos": { es: "Productos vendidos" },
-  "Receita dos produtos nos negócios ganhos": { es: "Ingreso de los productos en los negocios ganados" },
-  "Nenhum produto nos negócios ganhos do período.": { es: "Ningún producto en los negocios ganados del período." },
+  "Receita dos produtos nos leads ganhos": { es: "Ingreso de los productos en los negocios ganados" },
+  "Nenhum produto nos leads ganhos do período.": { es: "Ningún producto en los negocios ganados del período." },
   "un.": { es: "u." },
   "Motivos de perda": { es: "Motivos de pérdida" },
-  "Por que os negócios foram perdidos no período": { es: "Por qué se perdieron los negocios en el período" },
+  "Por que os leads foram perdidos no período": { es: "Por qué se perdieron los negocios en el período" },
   "Nenhuma perda registrada no período.": { es: "Ninguna pérdida registrada en el período." },
   "Evolução mensal": { es: "Evolución mensual" },
-  "Negócios criados nos últimos 12 meses, pelo status de hoje": {
+  "Leads criados nos últimos 12 meses, pelo status de hoje": {
     es: "Negocios creados en los últimos 12 meses, por su estado de hoy",
   },
   "Medida da evolução": { es: "Medida de la evolución" },
-  "Negócios esfriando": { es: "Negocios enfriándose" },
+  "Leads esfriando": { es: "Negocios enfriándose" },
   "Os abertos parados há mais tempo na mesma etapa": { es: "Los abiertos detenidos hace más tiempo en la misma etapa" },
-  "Nenhum negócio em aberto neste funil.": { es: "Ningún negocio abierto en este embudo." },
+  "Nenhum lead em aberto neste funil.": { es: "Ningún negocio abierto en este embudo." },
   "Como estes números foram contados": { es: "Cómo se contaron estos números" },
   "Ganho e perdido contam pela data de fechamento dentro do período. Em aberto é a carteira de agora.": {
     es: "Ganado y perdido cuentan por la fecha de cierre dentro del período. Abierto es la cartera de ahora.",
@@ -16237,20 +16228,20 @@ export const DICIONARIO: Traducoes = {
   "A comparação é contra o período anterior de mesma duração.": {
     es: "La comparación es contra el período anterior de la misma duración.",
   },
-  "Taxa de conversão é ganhos sobre fechados (ganhos + perdidos). Sem negócio fechado, aparece “—”.": {
+  "Taxa de conversão é ganhos sobre fechados (ganhos + perdidos). Sem lead fechado, aparece “—”.": {
     es: "La tasa de conversión es ganados sobre cerrados (ganados + perdidos). Sin negocio cerrado, aparece “—”.",
   },
-  "Ciclo de vendas é a mediana entre a criação e o ganho, para um negócio esquecido não distorcer a conta.": {
+  "Ciclo de vendas é a mediana entre a criação e o ganho, para um lead esquecido não distorcer a conta.": {
     es: "El ciclo de ventas es la mediana entre la creación y la ganancia, para que un negocio olvidado no distorsione la cuenta.",
   },
-  "Fluxo do funil: um negócio conta como tendo chegado a todas as etapas até a atual (ou até aquela em que foi perdido). Quem foi criado no meio do funil conta as anteriores.": {
+  "Fluxo do funil: um lead conta como tendo chegado a todas as etapas até a atual (ou até aquela em que foi perdido). Quem foi criado no meio do funil conta as anteriores.": {
     es: "Flujo del embudo: un negocio cuenta como si hubiera llegado a todas las etapas hasta la actual (o hasta aquella en que se perdió). Quien fue creado en medio del embudo cuenta las anteriores.",
   },
-  "Negócio transferido para outro funil não conta como perda.": {
+  "Lead transferido para outro funil não conta como perda.": {
     es: "Un negocio transferido a otro embudo no cuenta como pérdida.",
   },
   "Valores em moedas diferentes nunca são somados.": { es: "Los valores en monedas diferentes nunca se suman." },
-  "Você vê apenas os negócios que pode ver no CRM.": { es: "Solo ves los negocios que puedes ver en el CRM." },
+  "Você vê apenas os leads que pode ver no CRM.": { es: "Solo ves los negocios que puedes ver en el CRM." },
   // Inbox › mensagem agendada (0720)
   "Mensagem agendada.": { es: "Mensaje programado." },
   "Alterar horário do agendamento": { es: "Cambiar la hora de la programación" },

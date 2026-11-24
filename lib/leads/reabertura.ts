@@ -44,11 +44,11 @@ export const CODIGO_REABERTURA_CRIA_NOVO = "reabertura_cria_novo";
  * defeito que esta issue relata no clone.
  */
 export const RECUSA_REABERTURA_CRIA_NOVO =
-  "Este funil retoma como novo negócio: mover um negócio encerrado para uma etapa aberta não o reabre. Use POST /api/v1/leads/{id}/retomar para criar a nova tentativa.";
+  "Este funil retoma como novo lead: mover um lead encerrado para uma etapa aberta não o reabre. Use POST /api/v1/leads/{id}/retomar para criar a nova tentativa.";
 
 /** A retomada recusa quem aponta para um negócio que NÃO está encerrado. */
 export const RECUSA_RETOMADA_LEAD_ABERTO =
-  "Este negócio já está aberto: a retomada cria um negócio NOVO a partir de um encerrado. Para mudar de etapa, mova o negócio que já existe.";
+  "Este lead já está aberto: a retomada cria um lead NOVO a partir de um encerrado. Para mudar de etapa, mova o lead que já existe.";
 
 /** Etapa de fechamento ou arquivada não recebe a nova tentativa. */
 export const RECUSA_RETOMADA_ETAPA_INDISPONIVEL =

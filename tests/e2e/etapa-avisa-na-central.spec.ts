@@ -136,7 +136,7 @@ test("a etapa marcada avisa a equipe na Central; a vizinha, sem a marca, não", 
   await expect(chave, "vem desligada").toHaveAttribute("aria-checked", "false");
   await expect(page.getByTestId(`avisar-${etapaEnviado}`)).toHaveAttribute("aria-checked", "false");
   await expect(page.getByTestId(`etapa-${etapaConfirmado}`)).toContainText(
-    "Avisar a equipe na Central quando um negócio entrar aqui",
+    "Avisar a equipe na Central quando um lead entrar aqui",
   );
   await chave.click();
   await expect(chave).toHaveAttribute("aria-checked", "true", { timeout: ESPERA });
@@ -153,9 +153,9 @@ test("a etapa marcada avisa a equipe na Central; a vizinha, sem a marca, não", 
 
   // ---- 3. a Central mostra o aviso, sem dado do cliente, e o botão leva ao negócio ----
   await page.goto("/app/ai/inbox");
-  const aviso = page.getByTestId("inbox-item").filter({ hasText: "Negócio entrou em «Pedido confirmado»" });
+  const aviso = page.getByTestId("inbox-item").filter({ hasText: "Lead entrou em «Pedido confirmado»" });
   await expect(aviso).toHaveCount(1, { timeout: ESPERA });
-  await expect(aviso).toContainText("Abra o negócio para dar o próximo passo.");
+  await expect(aviso).toContainText("Abra o lead para dar o próximo passo.");
   await expect(aviso).not.toContainText(CLIENTE);
   await page.screenshot({ path: path.join(EVIDENCIA, "02-aviso-na-central.png"), fullPage: true });
 
@@ -163,10 +163,10 @@ test("a etapa marcada avisa a equipe na Central; a vizinha, sem a marca, não", 
   await mover(page, etapaEnviado);
   await drenar(page);
   await page.reload();
-  await expect(page.getByTestId("inbox-item").filter({ hasText: "Negócio entrou em" })).toHaveCount(1);
+  await expect(page.getByTestId("inbox-item").filter({ hasText: "Lead entrou em" })).toHaveCount(1);
   await expect(page.getByTestId("inbox-item").filter({ hasText: "«Enviado»" })).toHaveCount(0);
 
-  await aviso.getByRole("link", { name: "Abrir negócio" }).click();
+  await aviso.getByRole("link", { name: "Abrir lead" }).click();
   await expect(page).toHaveURL(new RegExp(`/app/pipelines/${funilId}\\?lead=${negocioId}`), { timeout: ESPERA });
   await expect(page.getByRole("dialog").getByText(CLIENTE, { exact: true }).first()).toBeVisible({ timeout: ESPERA });
   await page.screenshot({ path: path.join(EVIDENCIA, "03-abrir-negocio.png"), fullPage: true });

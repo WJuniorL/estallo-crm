@@ -353,7 +353,7 @@ describe("a varredura da data do funil", () => {
     expect(entidadeQueOCronEmite()).not.toBeNull();
   });
 
-  it("⭐ emite UMA vez para o negócio que casa com o dia, e nada para o vizinho", async () => {
+  it("⭐ emite UMA vez para o lead que casa com o dia, e nada para o vizinho", async () => {
     mundo.linhas("crm_leads").push(
       leadDoFunil("dddddddd-0000-4000-8000-000000000002", "2026-10-11"),
     );

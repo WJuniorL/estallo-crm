@@ -51,14 +51,14 @@ export function prepararMovimentacaoDeLead(input: {
   const { lead, etapa, settings, idioma } = input;
   if (etapa.pipeline_id !== lead.pipeline_id && input.permitirTrocaDeFunil) {
     if ((lead.status ?? "open") !== "open")
-      return { ok: false, status: 422, codigo: "lead_not_open", mensagem: traduzir("Só um negócio aberto muda de funil.", idioma ?? "pt-BR") };
+      return { ok: false, status: 422, codigo: "lead_not_open", mensagem: traduzir("Só um lead aberto muda de funil.", idioma ?? "pt-BR") };
     if (etapa.is_won || etapa.is_lost)
       return {
         ok: false,
         status: 422,
         codigo: "destino_fechado",
         mensagem: traduzir(
-          "Para trocar de funil, escolha uma etapa aberta. Ganho e perda se marcam dentro do funil do negócio.",
+          "Para trocar de funil, escolha uma etapa aberta. Ganho e perda se marcam dentro do funil do lead.",
           idioma ?? "pt-BR",
         ),
       };

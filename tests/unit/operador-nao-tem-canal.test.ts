@@ -128,12 +128,12 @@ describe("cardDoFunil — o lead_id que o briefing leva", () => {
   const pool = (rows: unknown[]) => ({ query: vi.fn(async () => ({ rows })) });
   const log = () => ({ warn: vi.fn() });
 
-  it("é o negócio ABERTO — não o mais recente, que pode estar perdido", async () => {
+  it("é o lead ABERTO — não o mais recente, que pode estar perdido", async () => {
     const p = pool([lead("aberto", "open", "2026-09-10T00:00:00Z"), lead("perdido", "lost", "2026-09-20T00:00:00Z")]);
     expect(await cardDoFunil(p as never, ORG, "ct-1", log())).toBe("aberto");
   });
 
-  it("só negócio fechado: sem card", async () => {
+  it("só lead fechado: sem card", async () => {
     const p = pool([lead("ganho", "won", "2026-09-20T00:00:00Z")]);
     expect(await cardDoFunil(p as never, ORG, "ct-1", log())).toBeNull();
   });

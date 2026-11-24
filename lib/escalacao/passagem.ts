@@ -130,7 +130,7 @@ export const FRASE_DO_MOTIVO = {
   orcamento_de_ia: "O limite de gasto com IA foi atingido — o cliente não pediu uma pessoa",
   low_sentiment: "O cliente demonstrou irritação na conversa",
   low_confidence: "O assistente não teve confiança suficiente para responder",
-  critical_stage: "O negócio chegou a uma etapa que pede uma pessoa",
+  critical_stage: "O lead chegou a uma etapa que pede uma pessoa",
   legal_mention: "A conversa tocou em assunto jurídico",
   refund_mention: "A conversa tocou em reembolso",
   caso_escalado: "Uma pessoa da equipe escalou um atendimento",

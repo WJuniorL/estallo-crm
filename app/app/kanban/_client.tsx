@@ -293,7 +293,7 @@ export function FunisClient({
         <>
           <p className="text-xs text-muted-foreground" data-testid="arquivados-explicacao">
             {t(
-              "Funil arquivado não aparece na lista nem recebe negócio novo. Traga de volta para usar outra vez, ou exclua de vez para liberar o nome.",
+              "Funil arquivado não aparece na lista nem recebe lead novo. Traga de volta para usar outra vez, ou exclua de vez para liberar o nome.",
             )}
           </p>
           <ul
@@ -374,7 +374,7 @@ export function FunisClient({
                         </AlertDialogTitle>
                         <AlertDialogDescription>
                           {t(
-                            "Isso não tem volta: o funil e as etapas dele somem. Se ele já recebeu negócio, a exclusão é recusada e ele continua arquivado.",
+                            "Isso não tem volta: o funil e as etapas dele somem. Se ele já recebeu lead, a exclusão é recusada e ele continua arquivado.",
                           )}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
@@ -661,7 +661,7 @@ export function FunisClient({
                     <p className="text-sm leading-relaxed">
                       {t("Arquivar")} «{funil.name}»?{" "}
                       {t(
-                        "Ele sai desta lista e para de receber negócio novo. O histórico continua guardado, e nada é apagado.",
+                        "Ele sai desta lista e para de receber lead novo. O histórico continua guardado, e nada é apagado.",
                       )}
                     </p>
                   )}

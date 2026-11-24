@@ -76,7 +76,7 @@ describe("nomeAindaEhPlaceholder", () => {
     );
   });
 
-  it("não acusa quem já deu um nome ao negócio", () => {
+  it("não acusa quem já deu um nome ao lead", () => {
     expect(nomeAindaEhPlaceholder({ slug: "clinica-vida", display_name: "Clínica Vida" })).toBe(
       false,
     );

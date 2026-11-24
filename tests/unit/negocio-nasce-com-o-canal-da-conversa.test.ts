@@ -21,7 +21,7 @@ import type { SocialMessage } from "@/lib/channels/social/parser";
  * canal. Qualquer uma que falhe volta a gravar WhatsApp.
  */
 
-describe("a origem do negócio sai do canal da conversa", () => {
+describe("a origem do lead sai do canal da conversa", () => {
   it("sem canal, é WhatsApp — o caminho do QR e do número oficial", () => {
     expect(origemDoNegocioPeloCanal(undefined)).toEqual({
       rotulo: "WhatsApp",
@@ -194,7 +194,7 @@ beforeEach(() => {
   aplicarEfeitosPosEntrada.mockClear();
 });
 
-describe("a mensagem de rede social leva o canal até o nascimento do negócio", () => {
+describe("a mensagem de rede social leva o canal até o nascimento do lead", () => {
   it("conversa NOVA do Instagram: o canal é instagram", async () => {
     const r = await ingerir("instagram");
     expect(r.status).toBe("ingested");

@@ -174,7 +174,7 @@ describe("a visão de mês", () => {
 });
 
 describe("a visão de semana", () => {
-  it("mostra o mesmo negócio e continua sem inventar o sem data", async () => {
+  it("mostra o mesmo lead e continua sem inventar o sem data", async () => {
     const hoje = diaDeHoje();
     montar([
       negocio("l1", "Retorno de hoje", { data_inicio: hoje }),
@@ -191,7 +191,7 @@ describe("a visão de semana", () => {
 });
 
 describe("a escolha do campo de data", () => {
-  it("trocar o campo troca os negócios que aparecem", async () => {
+  it("trocar o campo troca os leads que aparecem", async () => {
     const dia = diaDozeDoMes();
     montar([
       negocio("l1", "Tem data de início", { data_inicio: dia }),
@@ -210,7 +210,7 @@ describe("a escolha do campo de data", () => {
   });
 });
 
-describe("clicar no negócio", () => {
+describe("clicar no lead", () => {
   it("abre a ficha dele", async () => {
     const dia = diaDozeDoMes();
     montar([negocio("l1", "Embarque da Silva", { data_inicio: dia })]);

@@ -90,7 +90,7 @@ test.describe("Lote 12 — #936 a troca de funil", () => {
       organization_id: c.org_id,
       pipeline_id: origemId,
       stage_id: etapaOrigem,
-      title: `Negócio ${S}`,
+      title: `Lead ${S}`,
       position_in_stage: 1000,
       source: "manual",
       custom_fields: { orcamento: "R$ 42.000", bairro: "Savassi" },
@@ -108,14 +108,14 @@ test.describe("Lote 12 — #936 a troca de funil", () => {
     }
   });
 
-  test("o negócio chega ao outro funil com os campos personalizados, e as DUAS linhas do tempo contam", async ({
+  test("o lead chega ao outro funil com os campos personalizados, e as DUAS linhas do tempo contam", async ({
     page,
   }) => {
     await login(page, c.users.manager!.email, c.password);
 
     // Estado de partida, pela tela.
     await page.goto(`/app/pipelines/${origemId}`);
-    await expect(page.getByRole("group", { name: `Lead: Negócio ${S}` })).toBeVisible({
+    await expect(page.getByRole("group", { name: `Lead: Lead ${S}` })).toBeVisible({
       timeout: 60_000,
     });
     await captura(page, "936-01-origem-antes");
@@ -131,7 +131,7 @@ test.describe("Lote 12 — #936 a troca de funil", () => {
 
     // ── O DESTINO, pela tela ──────────────────────────────────────────────
     await page.goto(`/app/pipelines/${destinoId}`);
-    const cardNovo = page.getByRole("group", { name: `Lead: Negócio ${S}` });
+    const cardNovo = page.getByRole("group", { name: `Lead: Lead ${S}` });
     await expect(cardNovo).toBeVisible({ timeout: 60_000 });
     await captura(page, "936-02-destino-com-o-card");
 
@@ -184,7 +184,7 @@ test.describe("Lote 12 — #936 a troca de funil", () => {
     expect(JSON.stringify(origem)).toContain(destinoId);
 
     // Abrir o card da origem pela tela, para ver a linha do tempo com os olhos.
-    const cardVelho = page.getByRole("group", { name: `Lead: Negócio ${S}` }).first();
+    const cardVelho = page.getByRole("group", { name: `Lead: Lead ${S}` }).first();
     if (await cardVelho.count()) {
       await cardVelho.click();
       await page.waitForLoadState("networkidle").catch(() => {});
@@ -225,7 +225,7 @@ test.describe("Lote 12 — #936 a troca de funil", () => {
     await admin.from("crm_leads").delete().eq("id", outro);
   });
 
-  test("pelo BOTÃO: o atendente leva o negócio pelo menu do card, e ele sai deste funil", async ({
+  test("pelo BOTÃO: o atendente leva o lead pelo menu do card, e ele sai deste funil", async ({
     page,
   }) => {
     const titulo = `Pelo botão ${S}`;
@@ -277,8 +277,8 @@ test.describe("Lote 12 — #936 a troca de funil", () => {
       .select("id")
       .eq("pipeline_id", destinoId)
       .eq("title", titulo);
-    registra(`#1578 · negócios com o título no destino = ${JSON.stringify(noDestino)}`);
-    expect(noDestino, "exatamente UM negócio com o título no destino (o próprio, movido)").toHaveLength(1);
+    registra(`#1578 · leads com o título no destino = ${JSON.stringify(noDestino)}`);
+    expect(noDestino, "exatamente UM lead com o título no destino (o próprio, movido)").toHaveLength(1);
 
     // Efeito na TELA do destino: o card está lá.
     await page.goto(`/app/pipelines/${destinoId}`);

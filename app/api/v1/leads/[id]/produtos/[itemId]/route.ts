@@ -51,7 +51,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx): Promise<Response> 
     .eq("organization_id", authz.org.orgId)
     .select(COLUNAS_DO_PRODUTO_DO_NEGOCIO)
     .maybeSingle();
-  if (error) return fail("internal_error", "Erro ao alterar o produto do negócio.", 500, { requestId });
+  if (error) return fail("internal_error", "Erro ao alterar o produto do lead.", 500, { requestId });
   if (!data) return fail("not_found", t("Produto não encontrado."), 404, { requestId });
 
   await audit({
@@ -85,7 +85,7 @@ export async function DELETE(_req: NextRequest, ctx: RouteCtx): Promise<Response
     .eq("organization_id", authz.org.orgId)
     .select("id")
     .maybeSingle();
-  if (error) return fail("internal_error", "Erro ao tirar o produto do negócio.", 500, { requestId });
+  if (error) return fail("internal_error", "Erro ao tirar o produto do lead.", 500, { requestId });
   if (!data) return fail("not_found", t("Produto não encontrado."), 404, { requestId });
 
   await audit({

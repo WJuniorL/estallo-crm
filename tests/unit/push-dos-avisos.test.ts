@@ -61,7 +61,7 @@ describe("aviso da Central → celular", () => {
     expect(webPushInboundHandler.events).toContain("central.aviso_criado");
   });
 
-  it("etapa que avisa: o texto do aviso, sem o nome do cliente, abrindo o negócio no funil", async () => {
+  it("etapa que avisa: o texto do aviso, sem o nome do cliente, abrindo o lead no funil", async () => {
     vi.mocked(createAdminClient).mockReturnValue(banco({
       agent_inbox_items: {
         id: "i1", kind: "other", ref_kind: "lead", ref_id: "l1",
@@ -182,11 +182,11 @@ describe("aviso da Central → celular", () => {
     expect(enviarPushDaOrg).not.toHaveBeenCalled();
   });
 
-  it("o espelho de etapa recusado (também `other` + negócio) NÃO vira push de etapa", async () => {
+  it("o espelho de etapa recusado (também `other` + lead) NÃO vira push de etapa", async () => {
     vi.mocked(createAdminClient).mockReturnValue(banco({
       agent_inbox_items: {
         id: "i6", kind: "other", ref_kind: "lead", ref_id: "l1",
-        title: "O assistente quis mover um negócio — o funil exige campos antes", body: "…",
+        title: "O assistente quis mover um lead — o funil exige campos antes", body: "…",
       },
       organizations: { locale: "pt-BR" },
     }) as never);

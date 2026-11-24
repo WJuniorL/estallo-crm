@@ -440,7 +440,7 @@ export function TriggerConfigControl({ flowId, triggerConfig }: Props) {
                 </p>
               )}
               <p className="text-xs text-muted-foreground">
-                {t("O fluxo começa quando um negócio entra nesta etapa, por arrasto no quadro ou por automação. A entrada na fila leva poucos minutos, não é instantânea.")}
+                {t("O fluxo começa quando um lead entra nesta etapa, por arrasto no quadro ou por automação. A entrada na fila leva poucos minutos, não é instantânea.")}
               </p>
             </div>
           )}
@@ -473,7 +473,7 @@ export function TriggerConfigControl({ flowId, triggerConfig }: Props) {
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">
                 {t(
-                  "O fluxo começa quando um negócio nasce: a primeira mensagem que abre o card, um formulário ou o cadastro manual. Negócios importados por planilha não entram. A entrada na fila leva poucos minutos, não é instantânea.",
+                  "O fluxo começa quando um lead nasce: a primeira mensagem que abre o card, um formulário ou o cadastro manual. Leads importados por planilha não entram. A entrada na fila leva poucos minutos, não é instantânea.",
                 )}
               </p>
               <p className="text-xs text-muted-foreground">

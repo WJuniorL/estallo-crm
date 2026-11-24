@@ -167,7 +167,7 @@ export async function negocioDaEscritaDoTurno(
     return {
       ok: false,
       motivo: "indisponivel",
-      mensagem: "não consegui conferir o negócio desta conversa agora; tente de novo.",
+      mensagem: "não consegui conferir o lead desta conversa agora; tente de novo.",
     };
   }
   const negocios = (data ?? []) as Array<{ id: string; status: string }>;
@@ -178,14 +178,14 @@ export async function negocioDaEscritaDoTurno(
     return {
       ok: false,
       motivo: "sem_negocio",
-      mensagem: "esta pessoa ainda não tem um negócio aberto — siga a conversa normalmente.",
+      mensagem: "esta pessoa ainda não tem um lead aberto — siga a conversa normalmente.",
     };
   }
   return {
     ok: false,
     motivo: "negocio_ambiguo",
     mensagem:
-      "esta pessoa tem mais de um negócio aberto e o id enviado não é de nenhum deles — " +
+      "esta pessoa tem mais de um lead aberto e o id enviado não é de nenhum deles — " +
       "siga a conversa e deixe que alguém da equipe registre.",
   };
 }
@@ -243,7 +243,7 @@ function wrapMcpTool(
           argsRecord.lead_id,
         );
         if (traduzido) {
-          logger.info("lead_id era o contato do turno — traduzido para o negócio aberto", {
+          logger.info("lead_id era o contato do turno — traduzido para o lead aberto", {
             tool: def.name,
           });
           argsRecord.lead_id = traduzido;
@@ -330,7 +330,7 @@ function wrapMcpTool(
           if (alvo.trocado) {
             // Não é cosmético: é a única forma de saber que o modelo chuta, e
             // com que frequência.
-            logger.info("lead_id fora do contato do turno — trocado pelo negócio aberto dele", {
+            logger.info("lead_id fora do contato do turno — trocado pelo lead aberto dele", {
               tool: def.name,
             });
             argsRecord.lead_id = alvo.leadId;
@@ -493,7 +493,7 @@ function wrapMcpTool(
           errorMessage: message,
         });
         if (err instanceof EscritaDoNegocioSemDesfechoError) {
-          logger.error("escrita do negócio sem desfecho; novas escritas recusadas", {
+          logger.error("escrita do lead sem desfecho; novas escritas recusadas", {
             tool_name: def.name,
             organization_id: input.ctx.organizationId,
             request_id: input.ctx.requestId,
@@ -502,7 +502,7 @@ function wrapMcpTool(
           return {
             error: message,
             resultado_incerto: true,
-            mensagem: "Há uma escrita deste negócio ainda sem desfecho confirmado. Não confirme sucesso, não repita nem tente outra escrita: peça à equipe para conferir. A operação em andamento não foi cancelada.",
+            mensagem: "Há uma escrita deste lead ainda sem desfecho confirmado. Não confirme sucesso, não repita nem tente outra escrita: peça à equipe para conferir. A operação em andamento não foi cancelada.",
           };
         }
         // Recusa por papel/scope NAO e erro de execucao — e defeito de

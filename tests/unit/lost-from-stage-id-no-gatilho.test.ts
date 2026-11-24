@@ -60,7 +60,7 @@ describe("lost_from_stage_id gravado pelo gatilho (#1537)", () => {
     }
   });
 
-  it("reabrir zera a origem — negócio aberto não tem etapa de perda", () => {
+  it("reabrir zera a origem — lead aberto não tem etapa de perda", () => {
     // Pelo corpo JÁ sem comentários: o texto entre `closed_at` e a limpeza é
     // comentário, e um teste que casa comentário quebra quando alguém explica
     // melhor a linha.

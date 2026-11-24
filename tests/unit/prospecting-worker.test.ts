@@ -337,7 +337,7 @@ describe("funil só no envio: a checagem do canal vem ANTES de criar qualquer co
     data: { name: "Example", socials: [] },
   };
 
-  it("canal que recusa a abordagem: a campanha pausa SEM ter deixado contato, negócio nem conversa", async () => {
+  it("canal que recusa a abordagem: a campanha pausa SEM ter deixado contato, lead nem conversa", async () => {
     mocks.preflight.mockResolvedValue({ permite: false, motivo: "telefone fora da lista liberada" });
     const db = database(undefined, naFila);
     await expect(

@@ -133,7 +133,7 @@ export function DialogoDeTag({
                   )}
                 >
                   {e === "lead" ? <Target size={16} aria-hidden /> : <User size={16} aria-hidden />}
-                  {e === "lead" ? t("Oportunidade") : t("Contato")}
+                  {e === "lead" ? t("Lead") : t("Contato")}
                 </button>
               ))}
             </div>

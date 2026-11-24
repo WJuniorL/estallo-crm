@@ -170,7 +170,7 @@ export async function canalDoLead(
     .eq("lead_id", leadId)
     .eq("target_kind", "conversation")
     .limit(1);
-  if (error) throw new Error("Não foi possível ler o canal de entrada do negócio.");
+  if (error) throw new Error("Não foi possível ler o canal de entrada do lead.");
   return (data ?? []).length > 0 ? "whatsapp" : "outros";
 }
 

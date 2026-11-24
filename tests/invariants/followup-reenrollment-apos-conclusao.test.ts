@@ -297,7 +297,7 @@ async function seedFunilComNegocio(
     [org, pipe[0]!.id, `red-${marca}`.slice(0, 40)],
   );
   const { rows: lead } = await pool.query<{ id: string }>(
-    `insert into crm_leads (organization_id, pipeline_id, stage_id, contact_id, title) values ($1, $2, $3, $4, 'Negócio') returning id`,
+    `insert into crm_leads (organization_id, pipeline_id, stage_id, contact_id, title) values ($1, $2, $3, $4, 'Lead') returning id`,
     [org, pipe[0]!.id, destino[0]!.id, contactId],
   );
   return { etapaOrigem: origem[0]!.id, etapaDestino: destino[0]!.id, leadId: lead[0]!.id };

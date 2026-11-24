@@ -44,7 +44,7 @@ beforeAll(() => {
   seedGov();
 });
 
-describe("eventos de desfecho do negócio são do gatilho do negócio", () => {
+describe("eventos de desfecho do lead são do gatilho do lead", () => {
   it.each(RESERVADOS)("um membro NÃO emite %s por emit_event — 42501", (tipo) => {
     const erro = erroDe(comoSessao(GOV_VIEWER, emitePorEmitEvent(tipo)));
     expect(erro, `um viewer emitiu ${tipo} SEM erro`).not.toBeNull();
@@ -70,7 +70,7 @@ describe("eventos de desfecho do negócio são do gatilho do negócio", () => {
     expect(sql(comoSessao(GOV_VIEWER, emitePorEmitEvent("lead.stage_changed")))).toContain("EMITIU:");
   });
 
-  it("ganhar o negócio pela sessão segue emitindo lead.won — e a janela fecha em seguida", () => {
+  it("ganhar o lead pela sessão segue emitindo lead.won — e a janela fecha em seguida", () => {
     const saida = sql(
       comoSessao(
         GOV_MANAGER,

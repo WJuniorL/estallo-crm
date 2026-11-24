@@ -58,7 +58,7 @@ export function LeadProductForm({
           />
         </>
       )}
-      <p className="text-xs text-text-muted">{t("O nome e o preço vêm do catálogo; o valor do negócio é recalculado.")}</p>
+      <p className="text-xs text-text-muted">{t("O nome e o preço vêm do catálogo; o valor do lead é recalculado.")}</p>
     </div>
   );
 }

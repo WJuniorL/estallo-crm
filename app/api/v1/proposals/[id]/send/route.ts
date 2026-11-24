@@ -34,8 +34,8 @@ function motivoDaRecusa(codigo: string): string {
   if (codigo === "instante_fora_da_janela") return "a data calculada cai fora da janela de agendamento permitida";
   if (codigo === "instante_no_passado") return "a data calculada já passou";
   if (codigo === "instante_invalido") return "a data calculada é inválida";
-  if (codigo === "negocio_nao_encontrado") return "o negócio não foi encontrado";
-  if (codigo === "negocio_sem_contato") return "o negócio está sem contato vinculado";
+  if (codigo === "negocio_nao_encontrado") return "o lead não foi encontrado";
+  if (codigo === "negocio_sem_contato") return "o lead está sem contato vinculado";
   if (codigo === "cliente_nao_encontrado") return "o contato não foi encontrado";
   return codigo;
 }
@@ -364,7 +364,7 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
       organizationId: authz.org.orgId, leadId: proposta.lead_id, contactId: proposta.contact_id,
       type: "proposal_value_changed", sourceModule: "proposals", sourceId: propostaAlvo.id,
       actor: { type: "user", id: authz.user.id },
-      reason: `Valor do negócio atualizado de ${valorAntes ?? "—"} para ${totalDoLead} centavos (proposta enviada)`,
+      reason: `Valor do lead atualizado de ${valorAntes ?? "—"} para ${totalDoLead} centavos (proposta enviada)`,
     });
 
     // N2 — ao enviar, agenda o retorno automático (nunca bloqueia o envio:

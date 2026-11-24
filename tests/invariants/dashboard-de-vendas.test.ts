@@ -166,7 +166,7 @@ describe("fn_dashboard_vendas — a conta de um funil, no banco real", () => {
     expect(mensal.some((m) => m.status === "lost" && m.quantidade > 1)).toBe(false);
   });
 
-  it("agent no modo 'só os seus' vê só os próprios negócios (a RLS escopa)", () => {
+  it("agent no modo 'só os seus' vê só os próprios leads (a RLS escopa)", () => {
     const d = painel(AGENT_A, ORG, P);
     expect(d.periodo.atual.ganhos).toBe(1);
     expect(d.carteira).toEqual([{ moeda: "BRL", quantidade: 1, valor_cents: 7000 }]);

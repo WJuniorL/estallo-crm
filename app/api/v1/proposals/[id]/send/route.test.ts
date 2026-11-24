@@ -793,7 +793,7 @@ describe("POST /api/v1/proposals/[id]/send", () => {
     );
   });
 
-  it("proposta órfã (lead_id nulo, D10): não tenta agendar retorno (não há negócio para retomar)", async () => {
+  it("proposta órfã (lead_id nulo, D10): não tenta agendar retorno (não há lead para retomar)", async () => {
     const mundo = montarMundoDeEnvio({ papel: "manager", leadIdNulo: true });
     const res = await mundo.POST();
     expect(res.status).toBe(200);

@@ -127,7 +127,7 @@ export async function buscarCandidatos(
       let pagina = consultaDeNegocios().limit(PAGINA_DO_POSTGREST);
       if (cursor) pagina = pagina.or(filtroDepoisDoCursor(cursor, "asc"));
       const { data, error } = await pagina;
-      if (error) throw new Error(`audiência: negócios — ${error.message}`);
+      if (error) throw new Error(`audiência: leads — ${error.message}`);
       const lidas = (data ?? []) as unknown as typeof linhasDeNegocio;
       if (lidas.length === 0) break;
       const ultima = lidas[lidas.length - 1]!;
@@ -146,7 +146,7 @@ export async function buscarCandidatos(
         const { data: sobra, error: erroSobra } = await consultaDeNegocios()
           .or(filtroDepoisDoCursor({ created_at: ultimaDoTeto.created_at, id: ultimaDoTeto.id }, "asc"))
           .limit(1);
-        if (erroSobra) throw new Error(`audiência: negócios — ${erroSobra.message}`);
+        if (erroSobra) throw new Error(`audiência: leads — ${erroSobra.message}`);
         truncado = (sobra ?? []).length > 0;
         break;
       }
@@ -391,7 +391,7 @@ async function leadsMaisRecentes(
       linhas.push(...lidas);
     }
   });
-  if (error) throw new Error(`audiência: negócios dos contatos — ${error.message}`);
+  if (error) throw new Error(`audiência: leads dos contatos — ${error.message}`);
   for (const linha of data) {
     if (mapa.has(linha.contact_id)) continue; // ordem decrescente: o primeiro é o mais novo
     mapa.set(linha.contact_id, mapaDeJson(linha.custom_fields));

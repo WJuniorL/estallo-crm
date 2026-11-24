@@ -171,7 +171,7 @@ describe("GET /api/v1/ai/followups/queue — filtros do histórico", () => {
     expect(createClient).not.toHaveBeenCalled();
   });
 
-  it("aplica período, modo, versão e negócio na consulta das execuções e não lê promessas", async () => {
+  it("aplica período, modo, versão e lead na consulta das execuções e não lê promessas", async () => {
     sessao();
     const chamadas: Array<[string, ...unknown[]]> = [];
     const tabelasLidas: string[] = []; // só as que foram de fato AGUARDADAS (consultadas)

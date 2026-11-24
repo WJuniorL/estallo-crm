@@ -82,7 +82,7 @@ describe("MoveToOtherPipelineDialog", () => {
     expect(post).not.toHaveBeenCalled();
   });
 
-  it("escolhe funil e etapa e move o MESMO negócio (/move-pipeline), e fecha", async () => {
+  it("escolhe funil e etapa e move o MESMO lead (/move-pipeline), e fecha", async () => {
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
     renderDialog(onOpenChange);
@@ -109,7 +109,7 @@ describe("MoveToOtherPipelineDialog", () => {
 
     expect(
       await screen.findByText(
-        "Este é o único funil. Crie outro funil para poder levar o negócio até ele.",
+        "Este é o único funil. Crie outro funil para poder levar o lead até ele.",
       ),
     ).toBeTruthy();
     expect(screen.queryByRole("combobox", { name: "Funil de destino" })).toBeNull();

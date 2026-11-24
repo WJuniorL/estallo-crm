@@ -661,7 +661,7 @@ function CardDoNegocio({
             <p className="text-sm font-medium text-text">{l.title}</p>
             <AlertDialogDescription>
               {t(
-                "O negócio e seu histórico de atividades serão excluídos. O contato e as conversas continuam disponíveis.",
+                "O lead e seu histórico de atividades serão excluídos. O contato e as conversas continuam disponíveis.",
               )}
             </AlertDialogDescription>
             <p className="text-xs text-muted-foreground">{t("Esta ação não pode ser desfeita.")}</p>
@@ -943,7 +943,7 @@ export function CRMSidePanel({ conversation }: Props) {
       </BlocoRecolhivel>
 
       <BlocoRecolhivel
-        id="inbox-oportunidades"
+        id="inbox-leads"
         data-testid="inbox-campos-lead"
         titulo={t("Leads recentes")}
         icone={<Funnel size={14} aria-hidden />}

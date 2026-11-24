@@ -42,7 +42,7 @@ async function montar(org: string, sufixo: string) {
 
 async function nascer(org: string, f: { funil: string; etapa: string; contato: string }) {
   const { rows } = await pool.query<{ id: string }>(
-    `select public.fn_nascer_lead_da_conversa($1, $2, $3, $4, 'Negócio', 'whatsapp') as id`,
+    `select public.fn_nascer_lead_da_conversa($1, $2, $3, $4, 'Lead', 'whatsapp') as id`,
     [org, f.contato, f.funil, f.etapa],
   );
   const { rows: l } = await pool.query<{ currency: string }>("select currency from crm_leads where id = $1", [rows[0]!.id]);
@@ -64,8 +64,8 @@ afterAll(async () => {
   await pool.end();
 });
 
-describe("fn_nascer_lead_da_conversa — a moeda do negócio", () => {
-  it("organização em guarani: o negócio nasce em PYG", async () => {
+describe("fn_nascer_lead_da_conversa — a moeda do lead", () => {
+  it("organização em guarani: o lead nasce em PYG", async () => {
     expect(await nascer(ORG_PYG, await montar(ORG_PYG, "1"))).toBe("PYG");
   });
 

@@ -46,7 +46,7 @@ describe("a lista da tela casa com a cadeia que roda", () => {
     const invisiveis = naCadeia.filter((n) => !naTela.includes(n));
     expect(
       invisiveis,
-      "estas conferências acontecem e o dono do negócio não sabe — quando barrarem, " +
+      "estas conferências acontecem e o dono do lead não sabe — quando barrarem, " +
         "ele não vai entender o que barrou.\n",
     ).toEqual([]);
   });

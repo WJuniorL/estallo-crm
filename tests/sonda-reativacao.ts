@@ -74,7 +74,7 @@ async function main(): Promise<void> {
     .from("crm_lead_reactivations")
     .select("*", { count: "exact", head: true })
     .eq("lead_id", leadId);
-  console.info(`2. segunda passada · propostas criadas: ${r2.propostas} · total no negócio: ${count} (tem que ser 1)`);
+  console.info(`2. segunda passada · propostas criadas: ${r2.propostas} · total no lead: ${count} (tem que ser 1)`);
 
   // ── 3. o PRAZO vence ─────────────────────────────────────────────────────
   // Puxa a proposta INTEIRA para o passado — o experimento é sobre o que

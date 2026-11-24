@@ -1005,13 +1005,13 @@ export function validateFlowForPublish(
       errors.push({
         node_id: node.id,
         code: 'negocio_sem_funil',
-        message: `A caixa "${node.label}" precisa do funil onde procurar o negócio.`,
+        message: `A caixa "${node.label}" precisa do funil onde procurar o lead.`,
       });
     if (node.type === 'find_or_create_lead' && node.config.criar && !node.config.stage_id)
       errors.push({
         node_id: node.id,
         code: 'negocio_sem_etapa',
-        message: `A caixa "${node.label}" cria negócio e precisa da etapa de entrada.`,
+        message: `A caixa "${node.label}" cria lead e precisa da etapa de entrada.`,
       });
     {
       const alvo =
@@ -1024,7 +1024,7 @@ export function validateFlowForPublish(
         errors.push({
           node_id: node.id,
           code: 'aplicar_em_invalido',
-          message: `Em "${node.label}", «Aplicar em» precisa ser o negócio ou o contato entregue por um bloco anterior.`,
+          message: `Em "${node.label}", «Aplicar em» precisa ser o lead ou o contato entregue por um bloco anterior.`,
         });
     }
     if (node.type === 'http_request' && !node.config.connection_id)

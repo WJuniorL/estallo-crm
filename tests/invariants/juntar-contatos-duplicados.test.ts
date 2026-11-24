@@ -97,7 +97,7 @@ afterAll(async () => {
 });
 
 describe("fn_mesclar_contatos — o histórico segue o vencedor", () => {
-  it("reponta conversa, mensagem, negócio do funil e atividade; a lápide fica", async () => {
+  it("reponta conversa, mensagem, lead do funil e atividade; a lápide fica", async () => {
     const vencedor = await contato("d0208001-0000-4000-8000-000000000001", {
       nome: "Maria",
       telefone: "+5531998966301",
@@ -122,7 +122,7 @@ describe("fn_mesclar_contatos — o histórico segue o vencedor", () => {
     const negocio = "d0208001-0000-4000-8000-00000000000c";
     await pool.query(
       `insert into crm_leads (id, organization_id, pipeline_id, stage_id, title, contact_id)
-       values ($1, $2, $3, $4, 'Negócio do perdedor', $5)`,
+       values ($1, $2, $3, $4, 'Lead do perdedor', $5)`,
       [negocio, ORG, FUNIL, ETAPA, perdedor],
     );
     await pool.query(

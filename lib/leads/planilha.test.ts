@@ -12,14 +12,14 @@ import { lerPlanilhaDeLeads } from "./planilha";
  */
 const DICIONARIO_FAKE: Record<string, string> = {
   "A planilha está vazia.": "LA PLANILLA ESTÁ VACÍA.",
-  "A planilha precisa de uma coluna com o nome do negócio ou do contato. Encontrei: ":
+  "A planilha precisa de uma coluna com o nome do lead ou do contato. Encontrei: ":
     "LA PLANILLA NECESITA UNA COLUMNA CON EL NOMBRE DEL NEGOCIO O DEL CONTACTO. ENCONTRÉ: ",
   "nenhuma coluna": "NINGUNA COLUMNA",
-  "sem nome do negócio nem do contato": "SIN NOMBRE DEL NEGOCIO NI DEL CONTACTO",
+  "sem nome do lead nem do contato": "SIN NOMBRE DEL NEGOCIO NI DEL CONTACTO",
   "valor não reconhecido (": "VALOR NO RECONOCIDO (",
   " — escreva assim: 1.200,00": " — ESCRÍBALO ASÍ: 1.200,00",
   "telefone não reconhecido (": "TELÉFONO NO RECONOCIDO (",
-  " — o negócio entrou sem contato": " — EL NEGOCIO ENTRÓ SIN CONTACTO",
+  " — o lead entrou sem contato": " — EL NEGOCIO ENTRÓ SIN CONTACTO",
 };
 const gritar = (texto: string): string => DICIONARIO_FAKE[texto] ?? texto;
 
@@ -37,7 +37,7 @@ describe("lerPlanilhaDeLeads — mensagens de erro passam por t()", () => {
     });
   });
 
-  it("linha sem nome de negócio nem de contato", () => {
+  it("linha sem nome de lead nem de contato", () => {
     const csv = "nome,telefone\n,11999999999\n";
     const resultado = lerPlanilhaDeLeads(csv, gritar);
     if ("erro" in resultado) throw new Error("não deveria ser erro de planilha inteira");
@@ -45,14 +45,14 @@ describe("lerPlanilhaDeLeads — mensagens de erro passam por t()", () => {
   });
 
   it("valor não reconhecido — traduz por completo, incluindo o texto após o valor cru", () => {
-    const csv = "nome,valor\nNegócio,abc\n";
+    const csv = "nome,valor\nLead,abc\n";
     const resultado = lerPlanilhaDeLeads(csv, gritar);
     if ("erro" in resultado) throw new Error("não deveria ser erro de planilha inteira");
     expect(resultado.erros[0]!.motivo).toBe('VALOR NO RECONOCIDO ("abc") — ESCRÍBALO ASÍ: 1.200,00');
   });
 
   it("telefone não reconhecido — traduz por completo", () => {
-    const csv = "nome,telefone\nNegócio,abc\n";
+    const csv = "nome,telefone\nLead,abc\n";
     const resultado = lerPlanilhaDeLeads(csv, gritar);
     if ("erro" in resultado) throw new Error("não deveria ser erro de planilha inteira");
     expect(resultado.erros[0]!.motivo).toBe(
@@ -63,7 +63,7 @@ describe("lerPlanilhaDeLeads — mensagens de erro passam por t()", () => {
   });
 
   it("sem função t: comportamento idêntico ao de antes (degrada para o texto original)", () => {
-    const csv = "nome,valor\nNegócio,abc\n";
+    const csv = "nome,valor\nLead,abc\n";
     const resultado = lerPlanilhaDeLeads(csv);
     if ("erro" in resultado) throw new Error("não deveria ser erro de planilha inteira");
     expect(resultado.erros[0]!.motivo).toBe('valor não reconhecido ("abc") — escreva assim: 1.200,00');
@@ -94,7 +94,7 @@ describe("lerPlanilhaDeLeads — todo apelido de coluna cai no seu campo", () =>
 
   const APELIDOS: ReadonlyArray<readonly [campo: string, apelido: string]> = [
     // pt-BR / en (o que já existia)
-    ...["nome", "titulo", "título", "lead", "negocio", "negócio", "oportunidade", "empresa", "assunto"].map(
+    ...["nome", "titulo", "título", "lead", "negocio", "lead", "lead", "empresa", "assunto"].map(
       (a) => ["titulo", a] as const,
     ),
     ...["nome do contato", "contato", "responsavel", "responsável", "pessoa"].map((a) => ["contato", a] as const),
@@ -121,7 +121,7 @@ describe("lerPlanilhaDeLeads — todo apelido de coluna cai no seu campo", () =>
     // Sem âncora nas colunas de nome, o campo testado é a única coluna; nos
     // demais, uma coluna `titulo` nomeia o card e o apelido vai ao lado.
     const nomeia = campo === "titulo" || campo === "contato";
-    const csv = nomeia ? `${apelido}\n${celula}\n` : `titulo,${apelido}\nNegócio,${celula}\n`;
+    const csv = nomeia ? `${apelido}\n${celula}\n` : `titulo,${apelido}\nLead,${celula}\n`;
     const resultado = lerPlanilhaDeLeads(csv);
     if ("erro" in resultado) throw new Error(`planilha recusada: ${resultado.erro}`);
     expect(resultado.colunasIgnoradas).toEqual([]);
@@ -185,10 +185,10 @@ describe("lerPlanilhaDeLeads — planilha em espanhol", () => {
     expect(resultado.colunasIgnoradas).toEqual(["Asunto"]);
   });
 
-  it("só teléfono e correo, sem nome do negócio nem do contato, segue recusada", () => {
+  it("só teléfono e correo, sem nome do lead nem do contato, segue recusada", () => {
     const resultado = lerPlanilhaDeLeads("Teléfono,Correo\n11999998888,a@b.co\n");
     expect(resultado).toEqual({
-      erro: "A planilha precisa de uma coluna com o nome do negócio ou do contato. Encontrei: Teléfono, Correo.",
+      erro: "A planilha precisa de uma coluna com o nome do lead ou do contato. Encontrei: Teléfono, Correo.",
     });
   });
 });

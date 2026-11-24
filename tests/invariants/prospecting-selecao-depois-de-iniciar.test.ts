@@ -303,7 +303,7 @@ describe("excluir as desmarcadas", () => {
     expect(await estado(54), "marcada e na fila").toBeDefined();
   });
 
-  it("empresa que já tem CONTATO, mesmo sem conversa nem negócio, também não é apagada", async () => {
+  it("empresa que já tem CONTATO, mesmo sem conversa nem lead, também não é apagada", async () => {
     const contato = "0b120000-6666-4000-8000-000000000099";
     await pool.query(
       "insert into contacts(id,organization_id,display_name) values($1,$2,'Empresa com contato')",

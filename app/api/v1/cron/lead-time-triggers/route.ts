@@ -174,7 +174,7 @@ async function handle(req: NextRequest): Promise<Response> {
 
           const { data: leads, error } = await consulta;
           if (error) {
-            logger.error("[lead-time-triggers] consulta de negócios falhou", {
+            logger.error("[lead-time-triggers] consulta de leads falhou", {
               organization_id: org,
               rule_id: regra.id,
               error: error.message,
@@ -263,7 +263,7 @@ async function handle(req: NextRequest): Promise<Response> {
 
           const { data: leads, error } = await consulta;
           if (error) {
-            logger.error("[lead-time-triggers] consulta de negócios falhou", {
+            logger.error("[lead-time-triggers] consulta de leads falhou", {
               organization_id: org,
               rule_id: regra.id,
               error: error.message,

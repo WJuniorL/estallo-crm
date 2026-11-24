@@ -340,14 +340,14 @@ export const TAREFA_DA_CONFERENCIA_DE_CAMPO = {
   aoDecidir:
     "O Jev confere, nas mensagens que o cliente deixou sem resposta neste turno, se foi ele quem disse o valor do campo. O valor que ele não disse deixa de ser gravado e o assistente é mandado perguntar para ele; os outros campos da mesma chamada seguem gravando.",
   aoConfirmarDecidir:
-    "Antes de a IA gravar um campo personalizado do negócio, o Jev vai conferir nas mensagens do cliente se foi ele quem informou aquele valor. Ele não disse: o campo não é gravado e a IA pergunta ao cliente.",
+    "Antes de a IA gravar um campo personalizado do lead, o Jev vai conferir nas mensagens do cliente se foi ele quem informou aquele valor. Ele não disse: o campo não é gravado e a IA pergunta ao cliente.",
   concordancia: {
     antes: "dias, o Jev e o jeito de hoje deram o mesmo destino a",
-    depois: "campos do negócio.",
+    depois: "campos do lead.",
   },
   rotulo: "Conferir o campo antes de a IA gravar",
   oQueFaz:
-    "Lê o que o cliente disse nas mensagens ainda sem resposta do turno e confere se o valor que a IA quer gravar no campo personalizado do negócio foi ele quem informou.",
+    "Lê o que o cliente disse nas mensagens ainda sem resposta do turno e confere se o valor que a IA quer gravar no campo personalizado do lead foi ele quem informou.",
 } as const satisfies TarefaDoJev;
 
 /**
@@ -363,7 +363,7 @@ export const TAREFA_DA_CONFERENCIA_DE_CAMPO = {
 export const AFIRMACAO_DE_FATO = {
   purpose: "afirmacao_de_fato",
   rotulo: "Conferir afirmações de fato na resposta",
-  porQue: "O Jev foi perguntado se o que a resposta afirma sobre o negócio está escrito nas evidências consultadas neste turno.",
+  porQue: "O Jev foi perguntado se o que a resposta afirma sobre o lead está escrito nas evidências consultadas neste turno.",
   porQueNaFalha: "O Jev não respondeu: a mensagem foi como estava, sem a conferência de fato.",
 } as const;
 
@@ -381,7 +381,7 @@ export const TAREFA_DA_AFIRMACAO_DE_FATO = {
   },
   rotulo: "Conferir afirmações de fato na resposta",
   oQueFaz:
-    "Lê a resposta que o assistente vai enviar e confere, nas evidências consultadas neste turno, se o que ele afirma sobre o negócio está escrito ali — ou se o material diz o contrário.",
+    "Lê a resposta que o assistente vai enviar e confere, nas evidências consultadas neste turno, se o que ele afirma sobre o lead está escrito ali — ou se o material diz o contrário.",
 } as const satisfies TarefaDoJev;
 
 export const TAREFAS_DO_JEV: readonly TarefaDoJev[] = [
@@ -414,7 +414,7 @@ export const CONFERENCIA_DE_CAMPO = {
   purpose: "jev_campo_do_negocio",
   rotulo: "Conferir o campo antes de a IA gravar",
   porQue:
-    "O Jev foi perguntado se o cliente disse, nas mensagens ainda sem resposta deste turno, o valor do campo personalizado do negócio que a IA ia gravar.",
+    "O Jev foi perguntado se o cliente disse, nas mensagens ainda sem resposta deste turno, o valor do campo personalizado do lead que a IA ia gravar.",
   porQueNaFalha: "O Jev não respondeu: o campo foi gravado como antes, sem a conferência.",
 } as const;
 

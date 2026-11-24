@@ -282,7 +282,7 @@ export async function sincronizaEstagioDoAgente(
         detalhe:
           veredito.motivo === "escopo_vazio"
             ? "nenhum funil liberado para este assistente"
-            : "o negócio está num funil que este assistente não cuida",
+            : "o lead está num funil que este assistente não cuida",
       };
     }
   }

@@ -31,14 +31,14 @@ const proposta: EstadoDoContato = {
   updated_at: "2026-07-24T19:48:12Z",
 };
 
-describe("roteamento da próxima ação (contato → negócio)", () => {
-  it("um único negócio aberto recebe a proposta", () => {
+describe("roteamento da próxima ação (contato → lead)", () => {
+  it("um único lead aberto recebe a proposta", () => {
     const { porLead: mapa } = roteiaProximasAcoes([proposta], [lead("L1")]);
     expect(mapa.get("L1")?.label).toBe("ligar para o Carlos amanhã");
     expect(mapa.size).toBe(1);
   });
 
-  it("dois negócios ambíguos: não aparece em nenhum, MAS avisa", () => {
+  it("dois leads ambíguos: não aparece em nenhum, MAS avisa", () => {
     // Uma ação, dois botões seria pior que nenhum botão: aprovar num executaria
     // pelo outro. Mas recusar o palpite não pode virar silêncio — sem o aviso,
     // a IA propõe, ninguém vê, e a demanda apodrece.
@@ -52,7 +52,7 @@ describe("roteamento da próxima ação (contato → negócio)", () => {
     expect(ambiguas[0]!.candidateIds.sort()).toEqual(["L1", "L2"]);
   });
 
-  it("sem negócio aberto NÃO entra na lista de ambíguas", () => {
+  it("sem lead aberto NÃO entra na lista de ambíguas", () => {
     // Não há o que desambiguar: um item pedindo escolha entre zero negócios
     // seria ruído. Este caso tem pendência própria (reportada ao orquestrador).
     const { porLead: mapa, ambiguas } = roteiaProximasAcoes(
@@ -83,7 +83,7 @@ describe("roteamento da próxima ação (contato → negócio)", () => {
     expect(roteiaProximasAcoes([proposta], daOrgInteira).porLead.size).toBe(0); // visão real: ambíguo
   });
 
-  it("negócio fechado não recebe proposta", () => {
+  it("lead fechado não recebe proposta", () => {
     const { porLead: mapa } = roteiaProximasAcoes([proposta], [lead("L1", { status: "won" })]);
     expect(mapa.size).toBe(0);
   });
@@ -98,7 +98,7 @@ describe("roteamento da próxima ação (contato → negócio)", () => {
     }
   });
 
-  it("estado de um contato não vaza para o negócio de outro", () => {
+  it("estado de um contato não vaza para o lead de outro", () => {
     const { porLead: mapa } = roteiaProximasAcoes(
       [proposta],
       [lead("L1", { contact_id: OUTRO_CONTATO })],

@@ -73,7 +73,7 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("ContatoNoCard", () => {
-  it("não renderiza nada quando o negócio não tem dado de contato", () => {
+  it("não renderiza nada quando o lead não tem dado de contato", () => {
     const { container } = render(<ContatoNoCard lead={{}} />);
     expect(container).toBeEmptyDOMElement();
   });
@@ -139,10 +139,10 @@ describe("ContatoNoCard", () => {
 });
 
 describe("ContatoDoNegocio — as abas do dossiê", () => {
-  it("negócio sem contato vinculado avisa, sem consultar nada", () => {
+  it("lead sem contato vinculado avisa, sem consultar nada", () => {
     comQuery(<ContatoDoNegocio contactId={null} pipelineId="p-1" />);
 
-    expect(screen.getByText("Este negócio não tem contato vinculado.")).toBeInTheDocument();
+    expect(screen.getByText("Este lead não tem contato vinculado.")).toBeInTheDocument();
     expect(useContact).not.toHaveBeenCalled();
   });
 

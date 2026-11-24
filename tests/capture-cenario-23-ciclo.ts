@@ -157,14 +157,14 @@ async function main(): Promise<void> {
     const linhasFrias = ((esfriou ?? []) as unknown[]).length;
     record(
       "E1.esfria",
-      "o negócio parado é reconhecido como esfriado, pela passada do produto",
+      "o lead parado é reconhecido como esfriado, pela passada do produto",
       linhasFrias > 0,
       status !== 200
         ? `INCONCLUSIVO: a passada do risco respondeu ${status} — sem ela rodar, "não esfriou" ` +
           `não distingue produto de ambiente`
         : linhasFrias > 0
           ? `a passada registrou ${linhasFrias} linha(s) de esfriamento na timeline`
-          : `a passada rodou (200) e o negócio parado há 45 dias NÃO foi marcado como esfriado`,
+          : `a passada rodou (200) e o lead parado há 45 dias NÃO foi marcado como esfriado`,
       status !== 200 ? "INCONCLUSIVO" : undefined,
     );
 
@@ -272,7 +272,7 @@ async function main(): Promise<void> {
     const apareceNaTimeline = /retomad|reativa|retomar/i.test(txtPainel);
     record(
       "E5.atividade-registrada",
-      "a decisão vira linha na timeline do negócio, visível",
+      "a decisão vira linha na timeline do lead, visível",
       registrou && apareceNaTimeline,
       !registrou
         ? "nenhuma atividade de retomada foi gravada"
@@ -318,12 +318,12 @@ async function main(): Promise<void> {
     const houveEnvio = (turnos ?? []).length > 0;
     record(
       "E6.estado-volta",
-      "depois da retomada, a passada seguinte tira o negócio do risco",
+      "depois da retomada, a passada seguinte tira o lead do risco",
       bucket === "em_dia",
       status2 !== 200
         ? `INCONCLUSIVO: a segunda passada respondeu ${status2}`
         : !houveEnvio
-          ? `BLOQUEADO pelo mesmo elo do E4: o estado só volta quando o negócio recebe MOVIMENTO, e ` +
+          ? `BLOQUEADO pelo mesmo elo do E4: o estado só volta quando o lead recebe MOVIMENTO, e ` +
             `a lista positiva do gatilho não inclui reactivation_accepted — inclui ai_turn, que é o ` +
             `turno do agente. Sem worker não houve envio, sem envio não há ai_turn, e sem ai_turn a ` +
             `última atividade continua em ${String(ultima).slice(0, 10)} e o bucket em "${bucket}". ` +

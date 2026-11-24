@@ -55,7 +55,7 @@ describe("mapRespondiPayload — o bug real (payload aninhado)", () => {
     expect(generico.email).toBeNull();
   });
 
-  it("mapeia os campos de negócio pedidos pro custom_fields", () => {
+  it("mapeia os campos de lead pedidos pro custom_fields", () => {
     const m = mapRespondiPayload(FIXTURE);
     expect(m.custom_fields).toMatchObject({
       company_name: "Exemplo Incorporadora",

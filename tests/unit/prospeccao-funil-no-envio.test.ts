@@ -159,7 +159,7 @@ describe("enfileirarCandidatos: o que acontece ao iniciar", () => {
     ).toBe(false);
   });
 
-  it("`on_start`: contato, negócio e conversa nascem para cada empresa elegível (comportamento de sempre)", async () => {
+  it("`on_start`: contato, lead e conversa nascem para cada empresa elegível (comportamento de sempre)", async () => {
     const { db } = bancoFalso();
     await enfileirarCandidatos(db, {} as never, ORG, campanha, configOnStart, fila());
     expect(m.contato).toHaveBeenCalledTimes(2);
@@ -235,7 +235,7 @@ describe("triarCandidato", () => {
 });
 
 describe("criarPegadaDoCandidato", () => {
-  it("cria contato (com a base legal), negócio na etapa de entrada e conversa, e devolve a linha já na fila", async () => {
+  it("cria contato (com a base legal), lead na etapa de entrada e conversa, e devolve a linha já na fila", async () => {
     const { db } = bancoFalso();
     const linha = await criarPegadaDoCandidato(
       db,
@@ -260,7 +260,7 @@ describe("criarPegadaDoCandidato", () => {
     expect(linha).toMatchObject({ status: "queued", conversation_id: CONVERSA });
   });
 
-  it("idempotente: contato da campanha e negócio que já existem não são criados de novo", async () => {
+  it("idempotente: contato da campanha e lead que já existem não são criados de novo", async () => {
     const { db } = bancoFalso({ negocioExistente: { id: NEGOCIO } });
     await criarPegadaDoCandidato(
       db,
@@ -332,7 +332,7 @@ describe("prepararCandidatoNoEnvio: a preparação na vez da empresa", () => {
 });
 
 describe("prepararCandidatoNoEnvio: os casos de borda que o revisor cego apontou", () => {
-  it("empresa PARCIALMENTE preparada (contato já ligado, negócio ainda não): reaproveita o contato e cria só o negócio", async () => {
+  it("empresa PARCIALMENTE preparada (contato já ligado, lead ainda não): reaproveita o contato e cria só o lead", async () => {
     // Execução anterior caiu depois de criar o contato: o candidato guarda `contact_id`, e o
     // telefone já aparece como contato conhecido do CRM — que é o dele, não de um terceiro.
     const { db } = bancoFalso({ contatosConhecidos: [{ id: CONTATO }] });
@@ -358,10 +358,10 @@ describe("prepararCandidatoNoEnvio: os casos de borda que o revisor cego apontou
     const falhou = chamadas.findIndex((c) => c.sql.includes("set status='failed'"));
     expect(ligou, "o vínculo é gravado assim que o contato nasce").toBeGreaterThanOrEqual(0);
     expect(falhou).toBeGreaterThan(ligou);
-    expect(m.fronteira, "sem negócio não se abre conversa").not.toHaveBeenCalled();
+    expect(m.fronteira, "sem lead não se abre conversa").not.toHaveBeenCalled();
   });
 
-  it("nome de UMA letra (o schema do negócio exige duas): falha só essa empresa, e NADA é criado antes", async () => {
+  it("nome de UMA letra (o schema do lead exige duas): falha só essa empresa, e NADA é criado antes", async () => {
     const { db, chamadas } = bancoFalso();
     const curto = candidato(1);
     curto.data = { ...curto.data, name: "A" };

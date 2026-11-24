@@ -119,7 +119,7 @@ describe("aplicaGatilhoDeLead — o que não dispara", () => {
     expect(reg.contatoConsultado).toBe(0);
   });
 
-  it("negócio que entrou por planilha não inscreve — importação não vira disparo em massa", async () => {
+  it("lead que entrou por planilha não inscreve — importação não vira disparo em massa", async () => {
     const reg = registro();
     const s = await aplicaGatilhoDeLead(
       {
@@ -135,7 +135,7 @@ describe("aplicaGatilhoDeLead — o que não dispara", () => {
     expect(reg.contatoConsultado).toBe(0);
   });
 
-  it("sem fluxo armado, não consulta o negócio", async () => {
+  it("sem fluxo armado, não consulta o lead", async () => {
     const reg = registro();
     const s = await aplicaGatilhoDeLead(
       { db: fakeDb({ pointers: [], registro: reg }), gateDb: fakeGate([]), clock: CLOCK },
@@ -220,7 +220,7 @@ describe("aplicaGatilhoDeLead — o enrollment", () => {
     expect(s.skipped_existing).toBe(0);
   });
 
-  it("negócio sem contato é contado", async () => {
+  it("lead sem contato é contado", async () => {
     const reg = registro();
     const s = await aplicaGatilhoDeLead(
       {

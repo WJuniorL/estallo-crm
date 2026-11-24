@@ -108,7 +108,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     if (etapa.is_archived) {
       return fail(
         "trigger_stage_archived",
-        `A etapa «${etapa.name}» está arquivada e nunca receberia um negócio — escolha uma etapa ativa.`,
+        `A etapa «${etapa.name}» está arquivada e nunca receberia um lead — escolha uma etapa ativa.`,
         422,
         { requestId },
       );

@@ -43,7 +43,7 @@ async function rodar(config: { acao: "add" | "remove"; product_id: string; quant
   await pool.query("insert into crm_pipelines(id,organization_id,name,slug) values($1,$2,'Vendas',$3)", [pipeline, GOV_ORG, `v-${slug}`]);
   await pool.query("insert into crm_stages(id,organization_id,pipeline_id,name,slug,position) values($1,$2,$3,'Novo',$4,1000)", [stage, GOV_ORG, pipeline, `n-${slug}`]);
   await pool.query(
-    "insert into crm_leads(id,organization_id,contact_id,pipeline_id,stage_id,title,position_in_stage) values($1,$2,$3,$4,$5,'Negócio',500)",
+    "insert into crm_leads(id,organization_id,contact_id,pipeline_id,stage_id,title,position_in_stage) values($1,$2,$3,$4,$5,'Lead',500)",
     [lead, GOV_ORG, contact, pipeline, stage],
   );
   for (let k = 0; k < itensIniciais; k++)
@@ -78,7 +78,7 @@ async function rodar(config: { acao: "add" | "remove"; product_id: string; quant
   return { itens, valor, passo };
 }
 
-describe("produto do negócio (motor novo, Postgres real)", () => {
+describe("produto do lead (motor novo, Postgres real)", () => {
   const produto = randomUUID();
   beforeAll(async () => {
     await pool.query(
@@ -87,7 +87,7 @@ describe("produto do negócio (motor novo, Postgres real)", () => {
     );
   });
 
-  it("acrescentar copia nome e preço do catálogo, com a quantidade do bloco, e o valor do negócio é recalculado", async () => {
+  it("acrescentar copia nome e preço do catálogo, com a quantidade do bloco, e o valor do lead é recalculado", async () => {
     const { itens, valor, passo } = await rodar({ acao: "add", product_id: produto, quantidade: 2 });
     expect(passo.status).toBe("succeeded");
     expect(itens).toEqual([{ nome: "Coleta na Prática", preco_unitario_cents: "25000", quantidade: 2 }]);

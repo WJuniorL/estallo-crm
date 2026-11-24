@@ -57,7 +57,7 @@ export default async function TermsPage() {
         <p>
           {t("O")} {op.sistema}{" "}
           {t(
-            "organiza atendimento e vendas: recebe e envia mensagens pelos canais que o operador conectar, registra contatos e negócios, e permite que agentes de inteligência artificial atendam junto com pessoas, sob as regras que o operador configurar.",
+            "organiza atendimento e vendas: recebe e envia mensagens pelos canais que o operador conectar, registra contatos e leads, e permite que agentes de inteligência artificial atendam junto com pessoas, sob as regras que o operador configurar.",
           )}
         </p>
       </section>
@@ -93,7 +93,7 @@ export default async function TermsPage() {
         <h2 className="text-base font-semibold">{t("5. Conteúdo e dados")}</h2>
         <p>
           {t(
-            "Os dados inseridos aqui — contatos, conversas, negócios, arquivos — pertencem ao operador e às pessoas a que se referem. O tratamento desses dados é descrito na",
+            "Os dados inseridos aqui — contatos, conversas, leads, arquivos — pertencem ao operador e às pessoas a que se referem. O tratamento desses dados é descrito na",
           )}{" "}
           <a className="underline underline-offset-2" href="/legal/privacy">
             {t("Política de Privacidade")}

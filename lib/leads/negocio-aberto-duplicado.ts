@@ -104,7 +104,7 @@ export async function negocioAbertoExistente(
     .maybeSingle();
 
   if (error) {
-    console.error("[leads.duplicado] falha ao procurar negócio aberto", error.message);
+    console.error("[leads.duplicado] falha ao procurar lead aberto", error.message);
     return null;
   }
   if (!data) return null;

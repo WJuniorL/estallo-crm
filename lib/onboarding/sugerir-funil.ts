@@ -92,20 +92,20 @@ export function pedidoDeSugestao(
 
   return {
     system:
-      "Você monta o quadro de clientes de um negócio brasileiro que atende por WhatsApp. " +
+      "Você monta o quadro de clientes de um lead brasileiro que atende por WhatsApp. " +
       "Escreva do jeito que o DONO fala, não como um manual de vendas: nada de " +
       '"prospecção", "MQL", "nutrição" ou "fundo de funil". ' +
       "Cada coluna é um momento concreto do atendimento dele. " +
       "Responda APENAS com o JSON, sem comentário e sem crases.",
     prompt: [
-      `Negócio: ${ctx.nome}`,
+      `Lead: ${ctx.nome}`,
       `O que faz: ${ctx.oQueFaz}`,
       "",
       "Monte de 5 a 7 colunas, na ordem em que o cliente passa por elas.",
       'Cada coluna tem "nome" (o que aparece no topo) e "passo", que diz quando o atendente move o cliente para lá:',
       `- ${passos}`,
       "",
-      `Exemplo do formato (é de outro negócio — não copie os nomes, adapte ao "${ctx.nome}"):`,
+      `Exemplo do formato (é de outro lead — não copie os nomes, adapte ao "${ctx.nome}"):`,
       JSON.stringify({ nome: exemplo.proposta.nome, etapas: exemplo.proposta.etapas }, null, 2),
     ].join("\n"),
   };

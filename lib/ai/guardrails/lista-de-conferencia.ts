@@ -133,7 +133,7 @@ export const CONFERENCIAS_DE_SAIDA: readonly ConferenciaDeSaida[] = [
     nome: "factual_claim",
     rotulo: "Conferir afirmações de fato na resposta",
     oQueProtege:
-      "Confere se o que o assistente afirma sobre o negócio (horário, preço, endereço) está no material que ele consultou para responder.",
+      "Confere se o que o assistente afirma sobre o lead (horário, preço, endereço) está no material que ele consultou para responder.",
     escolha: null,
     escolhaEmOutraTela: "Liga-se no cartão do Jev, em Provedores de IA.",
     porQueNaoSeDesliga:
@@ -169,7 +169,7 @@ export const CONFERENCIAS_DE_SAIDA: readonly ConferenciaDeSaida[] = [
     escolha: {
       custo:
         "Não custa nada e reconhece frases em português e espanhol. Só serve para " +
-        "saúde: em outros negócios pode barrar frases normais, como \"passe o creme hidratante\".",
+        "saúde: em outros leads pode barrar frases normais, como \"passe o creme hidratante\".",
       consultaModelo: false,
     },
     porQueNaoSeDesliga: "",

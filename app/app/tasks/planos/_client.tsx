@@ -147,7 +147,7 @@ export function PlanosDeTarefa() {
           <h1 className="text-2xl font-semibold tracking-tight">{t("Planos de tarefa")}</h1>
           <p className="text-sm text-muted-foreground">
             {t(
-              "Monte a sequência uma vez; a ação Aplicar um plano de tarefas aplica o plano ao negócio.",
+              "Monte a sequência uma vez; a ação Aplicar um plano de tarefas aplica o plano ao lead.",
             )}
           </p>
         </div>
@@ -345,10 +345,10 @@ function Editor({
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={t("Dono do negócio")} />
+                    <SelectValue placeholder={t("Dono do lead")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="dono_do_lead">{t("Dono do negócio")}</SelectItem>
+                    <SelectItem value="dono_do_lead">{t("Dono do lead")}</SelectItem>
                     {(members ?? []).map((m) => (
                       <SelectItem key={m.user_id} value={m.user_id}>
                         {m.full_name ?? m.user_id.slice(0, 8)}

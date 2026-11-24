@@ -25,7 +25,7 @@ const grafo = flowGraphSchema.parse({
 describe("gruposDeVariaveis", () => {
   it("oferece o contato e, dos blocos ANTERIORES, só os que declaram saída — com o nome que a pessoa deu", () => {
     const grupos = gruposDeVariaveis(grafo, "m");
-    expect(grupos.map((g) => g.rotulo)).toEqual(["Contato e negócio", "Início", "Etiqueta Cliente"]);
+    expect(grupos.map((g) => g.rotulo)).toEqual(["Contato e lead", "Início", "Etiqueta Cliente"]);
     expect(grupos[2]!.itens.map((i) => i.marca)).toEqual(["{{nodes.tag.tags}}", "{{nodes.tag.added_tags}}"]);
   });
 

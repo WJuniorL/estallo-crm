@@ -598,7 +598,7 @@ describe("match_reply no diário do contrato 1", () => {
       expect((await f.contato()).custom_fields).toEqual({ origem: "site", cidade: "Salvador" });
     });
 
-    it("campo do negócio vai para o Lead EXPLÍCITO da inscrição, nunca para o mais recente", async () => {
+    it("campo do lead vai para o Lead EXPLÍCITO da inscrição, nunca para o mais recente", async () => {
       const f = await fixture({
         saveTo: { kind: "lead_custom", key: "orcamento" },
         withLead: true,
@@ -611,7 +611,7 @@ describe("match_reply no diário do contrato 1", () => {
       expect((await f.scope()).current_node_id).toBe("fim_else");
     });
 
-    it("campo do negócio sem Lead explícito: falha fechada, não grava em Lead nenhum nem avança", async () => {
+    it("campo do lead sem Lead explícito: falha fechada, não grava em Lead nenhum nem avança", async () => {
       const f = await fixture({
         saveTo: { kind: "lead_custom", key: "orcamento" },
         withLead: false,

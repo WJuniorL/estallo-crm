@@ -946,7 +946,7 @@ export function ProspectingClient() {
                                 {t("Todas ao iniciar")}
                                 <span className="block text-xs text-muted-foreground">
                                   {t(
-                                    "Contato, negócio e conversa de toda a fila são criados na hora de iniciar.",
+                                    "Contato, lead e conversa de toda a fila são criados na hora de iniciar.",
                                   )}
                                 </span>
                               </span>
@@ -1098,7 +1098,7 @@ export function ProspectingClient() {
                           {naFilaPausada && !criaSoNoEnvio && (
                             <span className="basis-full text-xs text-muted-foreground">
                               {t(
-                                "Esta campanha já criou o contato e o negócio dessas empresas ao iniciar. Desmarcar só impede o envio: elas continuam no funil.",
+                                "Esta campanha já criou o contato e o lead dessas empresas ao iniciar. Desmarcar só impede o envio: elas continuam no funil.",
                               )}
                             </span>
                           )}

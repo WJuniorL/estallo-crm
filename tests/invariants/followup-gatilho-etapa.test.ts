@@ -310,7 +310,7 @@ async function seedFunilComNegocio(
     [org, pipelineId, `proposta-${marca}`.slice(0, 40)],
   );
   const { rows: lead } = await pool.query<{ id: string }>(
-    `insert into crm_leads (organization_id, pipeline_id, stage_id, contact_id, title) values ($1, $2, $3, $4, 'Negócio') returning id`,
+    `insert into crm_leads (organization_id, pipeline_id, stage_id, contact_id, title) values ($1, $2, $3, $4, 'Lead') returning id`,
     [org, pipelineId, destino[0]!.id, contactId],
   );
   return { etapaOrigem: origem[0]!.id, etapaDestino: destino[0]!.id, leadId: lead[0]!.id };
@@ -390,7 +390,7 @@ const deps = () => ({ db: gatilhoDb(), gateDb: pgGateDb(), clock: CLOCK });
 
 // ---- 1. enrolla + não duplica -------------------------------------------
 
-describe("gatilho de etapa — enrolla o negócio que entrou na etapa armada", () => {
+describe("gatilho de etapa — enrolla o lead que entrou na etapa armada", () => {
   it("fluxo armado na etapa + agente publicado → 1 enrollment no nó trigger; reprocessar o evento não duplica", async () => {
     const org = nextOrgId();
     await seedOrg(org);
@@ -425,7 +425,7 @@ describe("gatilho de etapa — enrolla o negócio que entrou na etapa armada", (
     expect(Number(depois[0]!.n)).toBe(1);
   });
 
-  it("grava a proveniência na timeline do enrollment (de que negócio e de qual etapa para qual)", async () => {
+  it("grava a proveniência na timeline do enrollment (de que lead e de qual etapa para qual)", async () => {
     const org = nextOrgId();
     await seedOrg(org);
     const contactId = await seedContact(org);
@@ -532,7 +532,7 @@ describe("gatilho de etapa — não dispara no que não é dele", () => {
     expect(s.enrolled).toBe(0);
   });
 
-  it("negócio SEM contato não enrolla — e o desfecho é contado, não engolido", async () => {
+  it("lead SEM contato não enrolla — e o desfecho é contado, não engolido", async () => {
     const org = nextOrgId();
     await seedOrg(org);
     const { etapaOrigem, etapaDestino, leadId } = await seedFunilComNegocio(org, null);

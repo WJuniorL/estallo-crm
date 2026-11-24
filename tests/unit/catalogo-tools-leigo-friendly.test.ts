@@ -37,7 +37,8 @@ const JARGAO_PROIBIDO = [
   "handoff",
   "pipeline",
   "stage",
-  "lead",
+  // "lead" saiu da lista em 24/11/2026: é o termo oficial do produto para o
+  // que antes aparecia como "negócio" ou "oportunidade" (contato × leads).
   "tag",
   "backend",
   "json",

@@ -160,7 +160,7 @@ async function montaCenario(page: Page, tag: string, grafo?: object): Promise<Ce
   }>;
   const pipelineId = funil.pipeline.id;
   const stageId = funil.stages[0]?.id;
-  if (!stageId) throw new Error("funil padrão sem etapas — não há onde criar o negócio");
+  if (!stageId) throw new Error("funil padrão sem etapas — não há onde criar o lead");
 
   const leadRes = await page.request.post("/api/v1/leads", {
     data: { pipeline_id: pipelineId, stage_id: stageId, title: contactName, contact_id: contactId },

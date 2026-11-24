@@ -44,7 +44,7 @@ async function rodar(usuario: string) {
   await pool.query("insert into crm_pipelines(id,organization_id,name,slug) values($1,$2,'Vendas',$3)", [pipeline, GOV_ORG, `v-${slug}`]);
   await pool.query("insert into crm_stages(id,organization_id,pipeline_id,name,slug,position) values($1,$2,$3,'Novo',$4,1000)", [stage, GOV_ORG, pipeline, `n-${slug}`]);
   await pool.query(
-    "insert into crm_leads(id,organization_id,contact_id,pipeline_id,stage_id,title,position_in_stage,owner_user_id,owner_kind) values($1,$2,$3,$4,$5,'Negócio',500,$6,'user')",
+    "insert into crm_leads(id,organization_id,contact_id,pipeline_id,stage_id,title,position_in_stage,owner_user_id,owner_kind) values($1,$2,$3,$4,$5,'Lead',500,$6,'user')",
     [lead, GOV_ORG, contact, pipeline, stage, GOV_AGENT_A],
   );
   const origin = await criarOrigemDeFollowup(pool, GOV_ORG, contact);
@@ -96,7 +96,7 @@ async function rodar(usuario: string) {
 }
 
 describe("Atribuir responsável no diário (motor novo, Postgres real)", () => {
-  it("troca o dono do negócio, uma atividade só, e a saída diz de quem para quem", async () => {
+  it("troca o dono do lead, uma atividade só, e a saída diz de quem para quem", async () => {
     const { negocio, atividades, passo, lead } = await rodar(GOV_AGENT_B);
     expect(negocio).toEqual({ owner_user_id: GOV_AGENT_B, owner_kind: "user" });
     expect(atividades).toBe(1);

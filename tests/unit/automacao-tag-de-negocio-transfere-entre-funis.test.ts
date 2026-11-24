@@ -215,8 +215,8 @@ function limpaOsSpies(): void {
   spies.encerraDemanda.mockReset();
 }
 
-describe("create_or_move_lead — o gatilho lead.tag_added transfere o negócio de funil", () => {
-  it("O DEFEITO (#2155): negócio no funil A + gatilho lead.tag_added transfere para o funil B", async () => {
+describe("create_or_move_lead — o gatilho lead.tag_added transfere o lead de funil", () => {
+  it("O DEFEITO (#2155): lead no funil A + gatilho lead.tag_added transfere para o funil B", async () => {
     limpaOsSpies();
     spies.createLeadHandler.mockResolvedValue({
       id: "clone-tag-0001",
@@ -265,7 +265,7 @@ describe("create_or_move_lead — o gatilho lead.tag_added transfere o negócio 
     expect(resultado.detail).toMatchObject({ origem: NEGOCIO_NO_FUNIL_A.id });
   });
 
-  it("CONTROLE: negócio já no funil da regra continua sendo movido de etapa — igual a hoje", async () => {
+  it("CONTROLE: lead já no funil da regra continua sendo movido de etapa — igual a hoje", async () => {
     limpaOsSpies();
     spies.moveLeadHandler.mockResolvedValue({ id: NEGOCIO_NO_FUNIL_A.id, pipeline_id: FUNIL_B });
 
@@ -284,7 +284,7 @@ describe("create_or_move_lead — o gatilho lead.tag_added transfere o negócio 
     expect(spies.encerraDemanda).not.toHaveBeenCalled();
   });
 
-  it("CONTROLE: sem negócio no evento, o comportamento de hoje não muda — cria", async () => {
+  it("CONTROLE: sem lead no evento, o comportamento de hoje não muda — cria", async () => {
     limpaOsSpies();
     spies.createLeadHandler.mockResolvedValue({ id: "novo-tag-0001", contact_id: CONTATO });
 
@@ -303,7 +303,7 @@ describe("create_or_move_lead — o gatilho lead.tag_added transfere o negócio 
     expect(spies.encerraDemanda).not.toHaveBeenCalled();
   });
 
-  it("CONTROLE: outro gatilho com o negócio em outro funil segue recusando (escopo da #2155)", async () => {
+  it("CONTROLE: outro gatilho com o lead em outro funil segue recusando (escopo da #2155)", async () => {
     limpaOsSpies();
     spies.createLeadHandler.mockResolvedValue({ id: "clone-fora-de-escopo" });
 

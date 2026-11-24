@@ -319,12 +319,12 @@ const LEAD_DE_PESSOAL = {
   contact_id: CONTATO_PESSOAL,
   pipeline_id: "p-1",
   status: "open",
-  title: "Negócio",
+  title: "Lead",
   owner_user_id: null,
 };
 
 describe("crm_get_lead recusa pessoal; escrita de lead recusa no handler", () => {
-  it("ficha de negócio de pessoal devolve contato_pessoal", async () => {
+  it("ficha de lead de pessoal devolve contato_pessoal", async () => {
     const r = (await crmGetLead.handler(
       { lead_id: "lead-1" },
       ctxMcp(bancoLeads(LEAD_DE_PESSOAL, true)),
@@ -332,7 +332,7 @@ describe("crm_get_lead recusa pessoal; escrita de lead recusa no handler", () =>
     expect(r).toMatchObject({ permitido: false, motivo: "contato_pessoal" });
   });
 
-  it("negócio normal abre (sem turno, mesma org)", async () => {
+  it("lead normal abre (sem turno, mesma org)", async () => {
     const leadLivre = { ...LEAD_DE_PESSOAL, contact_id: CONTATO_LIVRE };
     const r = (await crmGetLead.handler(
       { lead_id: "lead-1" },
@@ -363,7 +363,7 @@ describe("crm_get_lead recusa pessoal; escrita de lead recusa no handler", () =>
     expect((err as ApiError).status).toBe(404);
   });
 
-  it("mover negócio de pessoal leva 403 antes de ler a etapa", async () => {
+  it("mover lead de pessoal leva 403 antes de ler a etapa", async () => {
     const err = await moveLeadHandler(
       bancoLeads(LEAD_DE_PESSOAL, true) as never,
       ctxHandler(),
@@ -374,7 +374,7 @@ describe("crm_get_lead recusa pessoal; escrita de lead recusa no handler", () =>
     expect((err as ApiError).status).toBe(403);
   });
 
-  it("retomar negócio de pessoal leva 403", async () => {
+  it("retomar lead de pessoal leva 403", async () => {
     const origem = { ...LEAD_DE_PESSOAL, status: "lost" };
     const err = await retomarLeadHandler(
       bancoLeads(origem, true) as never,
@@ -446,7 +446,7 @@ describe("listLeadsHandler exclui pessoal no banco (leitura exclui)", () => {
     } as never;
   }
 
-  it("negócio de pessoal não sai na lista; o normal sai", async () => {
+  it("lead de pessoal não sai na lista; o normal sai", async () => {
     const r = await listLeadsHandler(bancoLista(), ctxHandler(), {});
     const ids = r.leads.map((l) => String(l.id));
     expect(ids).not.toContain("lead-p");
@@ -543,7 +543,7 @@ describe("envio e chamadas: herança e cercas no código", () => {
 });
 
 describe("getLeadHandler some com pessoal até por link direto", () => {
-  it("ficha de negócio de pessoal dá 404 (não 403, para não revelar)", async () => {
+  it("ficha de lead de pessoal dá 404 (não 403, para não revelar)", async () => {
     const err = await getLeadHandler(
       bancoLeads(LEAD_DE_PESSOAL, true) as never,
       ctxHandler(),

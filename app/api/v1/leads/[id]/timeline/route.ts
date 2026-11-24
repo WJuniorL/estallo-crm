@@ -84,7 +84,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx): Promise<Response> {
     .eq("id", leadId)
     .maybeSingle();
   if (leadErr) return fail("internal_error", leadErr.message, 500, { requestId });
-  if (!lead) return fail("not_found", t("Negócio não encontrado."), 404, { requestId });
+  if (!lead) return fail("not_found", t("Lead não encontrado."), 404, { requestId });
 
   const contactId = (lead as { contact_id: string | null }).contact_id;
 

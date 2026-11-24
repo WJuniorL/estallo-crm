@@ -52,7 +52,7 @@ const DO_CONTATO: VariavelOferecida[] = [
   { marca: "{{primeiro_nome}}", rotulo: "Primeiro nome" },
   { marca: "{{telefone}}", rotulo: "Telefone" },
   { marca: "{{email}}", rotulo: "E-mail" },
-  { marca: "{{lead.title}}", rotulo: "Título do negócio" },
+  { marca: "{{lead.title}}", rotulo: "Título do lead" },
 ];
 
 /**
@@ -64,7 +64,7 @@ export function gruposDeVariaveis(
   noId: string | null,
   soBlocos = false,
 ): GrupoDeVariaveis[] {
-  const grupos: GrupoDeVariaveis[] = soBlocos ? [] : [{ rotulo: "Contato e negócio", itens: DO_CONTATO }];
+  const grupos: GrupoDeVariaveis[] = soBlocos ? [] : [{ rotulo: "Contato e lead", itens: DO_CONTATO }];
   if (!grafo || !noId) return grupos;
   const anteriores = ancestrais(grafo, noId);
   for (const no of grafo.nodes) {
@@ -231,11 +231,11 @@ export function AlvoDoBloco({
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="__execucao">
-          {so === "contato" ? t("O contato desta execução") : t("O negócio e o contato desta execução")}
+          {so === "contato" ? t("O contato desta execução") : t("O lead e o contato desta execução")}
         </SelectItem>
         {opcoes.map((o) => (
           <SelectItem key={o.marca} value={o.marca}>
-            {o.negocio ? t("Negócio de") : t("Contato de")} «{o.rotulo}»
+            {o.negocio ? t("Lead de") : t("Contato de")} «{o.rotulo}»
           </SelectItem>
         ))}
       </SelectContent>

@@ -127,7 +127,7 @@ describe("aplicaGatilhoDeEtapa — o que NÃO dispara", () => {
     expect(s.matched).toBe(false);
   });
 
-  it("evento sem o negócio (entity_id nulo) não é reconhecido", async () => {
+  it("evento sem o lead (entity_id nulo) não é reconhecido", async () => {
     const reg = registro();
     const s = await aplicaGatilhoDeEtapa(
       { db: fakeDb({ pointers: [pointerArmado], registro: reg }), gateDb: fakeGate([]), clock: CLOCK },
@@ -233,7 +233,7 @@ describe("aplicaGatilhoDeEtapa — o enrollment que nasce", () => {
     ]);
   });
 
-  it("grava a proveniência: de que negócio, de qual etapa para qual, e por qual linha do event_log", async () => {
+  it("grava a proveniência: de que lead, de qual etapa para qual, e por qual linha do event_log", async () => {
     const reg = registro();
     await aplicaGatilhoDeEtapa(
       {
@@ -272,7 +272,7 @@ describe("aplicaGatilhoDeEtapa — o enrollment que nasce", () => {
     expect(reg.eventos).toHaveLength(0);
   });
 
-  it("negócio sem contato é CONTADO, não engolido — não há a quem escrever", async () => {
+  it("lead sem contato é CONTADO, não engolido — não há a quem escrever", async () => {
     const reg = registro();
     const s = await aplicaGatilhoDeEtapa(
       {

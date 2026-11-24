@@ -89,7 +89,7 @@ export const MODELOS_DE_CLINICA: readonly ModeloDeFollowup[] = [
     jornada: "Exame",
     resumo:
       "Saiu o pedido de exame e o paciente ainda não marcou. O fluxo cobra por duas semanas e sai de cena.",
-    oQueDispara: "O negócio entrar na etapa do funil que você escolher.",
+    oQueDispara: "O lead entrar na etapa do funil que você escolher.",
     pedeEtapa: true,
     handoffPolicy: "pause",
     gatilho: ({ stageId }) => ({
@@ -133,7 +133,7 @@ export const MODELOS_DE_CLINICA: readonly ModeloDeFollowup[] = [
     jornada: "Cirurgia",
     resumo:
       "Quem foi avaliado e não marcou não desistiu: está decidindo. O fluxo acompanha por quase três meses, sem pressionar.",
-    oQueDispara: "O negócio entrar na etapa do funil que você escolher.",
+    oQueDispara: "O lead entrar na etapa do funil que você escolher.",
     pedeEtapa: true,
     // `pause` também aqui: a decisão de uma cirurgia passa por conversa com
     // médico e família, e essa conversa é sempre humana. O fluxo espera.

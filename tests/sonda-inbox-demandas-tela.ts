@@ -249,7 +249,7 @@ async function main(): Promise<void> {
     ["diz a ausência por escrito, não só por cor", m.diz_por_escrito === true],
     ["NÃO afirma 'nenhuma demanda' havendo demanda", m.afirma_nenhuma === false],
     ["não confessa falha de leitura (a RLS deixou ler)", m.confessa_falha === false],
-    ["vem antes dos negócios", m.antes_dos_leads === true],
+    ["vem antes dos leads", m.antes_dos_leads === true],
     ["sem scroll horizontal", m.scroll_horizontal === false],
     ["sem erro de console", errosFeliz.length === 0],
     ["sob falha: a seção continua na tela", falha.presente === true],

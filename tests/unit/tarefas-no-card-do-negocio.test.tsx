@@ -89,7 +89,7 @@ beforeEach(() => {
 });
 
 describe("TarefasDoNegocio — a seção Tarefas do dossiê", () => {
-  it("⭐ 'Nova tarefa' cria a tarefa presa ao negócio e ao contato, com quem criou como responsável", async () => {
+  it("⭐ 'Nova tarefa' cria a tarefa presa ao lead e ao contato, com quem criou como responsável", async () => {
     render(<TarefasDoNegocio leadId="l-1" contactId="c-1" podeEditar aberto />);
 
     await userEvent.click(screen.getByRole("button", { name: "Nova tarefa" }));
@@ -107,7 +107,7 @@ describe("TarefasDoNegocio — a seção Tarefas do dossiê", () => {
     );
   });
 
-  it("consulta só as tarefas DESTE negócio, e só com o dossiê aberto", () => {
+  it("consulta só as tarefas DESTE lead, e só com o dossiê aberto", () => {
     const { rerender } = render(
       <TarefasDoNegocio leadId="l-1" contactId={null} podeEditar aberto={false} />,
     );

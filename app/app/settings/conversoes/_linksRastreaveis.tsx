@@ -135,7 +135,7 @@ export function LinksRastreaveis({
         <table className="w-full text-sm">
           <thead>
             <tr>
-              {[t("Nome"), t("Cliques"), t("Contatos"), t("Negócios"), t("Estado"), t("Ação")].map(
+              {[t("Nome"), t("Cliques"), t("Contatos"), t("Leads"), t("Estado"), t("Ação")].map(
                 (h) => (
                   <th key={h} className="p-2 text-left">
                     {t(h)}
@@ -175,7 +175,7 @@ export function LinksRastreaveis({
       </div>
       <p className="text-xs text-muted-foreground">
         {t(
-          "As contagens usam os registros ainda retidos no CRM. Cliques incluem acessos repetidos; contatos e negócios são distintos por link. Não representam pessoas únicas nem o total histórico após o expurgo.",
+          "As contagens usam os registros ainda retidos no CRM. Cliques incluem acessos repetidos; contatos e leads são distintos por link. Não representam pessoas únicas nem o total histórico após o expurgo.",
         )}
       </p>
       <form

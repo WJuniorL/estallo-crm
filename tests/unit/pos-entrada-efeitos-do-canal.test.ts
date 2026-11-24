@@ -346,8 +346,8 @@ describe("opt-out", () => {
   });
 });
 
-describe("opt-out fecha o negócio aberto como perdido", () => {
-  it("quem pede para sair tem cada negócio aberto encerrado como perda pedida pelo cliente", async () => {
+describe("opt-out fecha o lead aberto como perdido", () => {
+  it("quem pede para sair tem cada lead aberto encerrado como perda pedida pelo cliente", async () => {
     leadsAbertos = [{ id: "lead-a" }, { id: "lead-b" }];
 
     await rodar({ texto: "PARAR" });
@@ -377,7 +377,7 @@ describe("opt-out fecha o negócio aberto como perdido", () => {
     }
   });
 
-  it("lê só os negócios ABERTOS do contato, na organização certa", async () => {
+  it("lê só os leads ABERTOS do contato, na organização certa", async () => {
     await rodar({ texto: "PARAR" });
 
     expect(filtrosDeLeads).toEqual(
@@ -406,7 +406,7 @@ describe("opt-out fecha o negócio aberto como perdido", () => {
     const encerra = sequencia.indexOf("encerra:lead-a");
     const nasce = sequencia.indexOf("lead-nasce");
     expect(bloqueio, "o bloqueio não foi gravado").toBeGreaterThanOrEqual(0);
-    expect(encerra, "o negócio não foi encerrado").toBeGreaterThan(bloqueio);
+    expect(encerra, "o lead não foi encerrado").toBeGreaterThan(bloqueio);
     expect(nasce, "o lead nasceu antes do fechamento").toBeGreaterThan(encerra);
   });
 
@@ -419,7 +419,7 @@ describe("opt-out fecha o negócio aberto como perdido", () => {
     expect(sequencia).not.toContain("select:crm_leads");
   });
 
-  it("falha ao gravar o bloqueio NÃO fecha o negócio de quem o sistema não protegeu", async () => {
+  it("falha ao gravar o bloqueio NÃO fecha o lead de quem o sistema não protegeu", async () => {
     updateErro = { message: "boom" };
     leadsAbertos = [{ id: "lead-a" }];
 
@@ -428,7 +428,7 @@ describe("opt-out fecha o negócio aberto como perdido", () => {
     expect(encerraDemanda).not.toHaveBeenCalled();
   });
 
-  it("um negócio que não fecha não impede o seguinte nem o resto da ingestão", async () => {
+  it("um lead que não fecha não impede o seguinte nem o resto da ingestão", async () => {
     leadsAbertos = [{ id: "lead-a" }, { id: "lead-b" }];
     encerraDemanda.mockRejectedValueOnce(new Error("pipeline_no_lost_stage"));
 
@@ -439,7 +439,7 @@ describe("opt-out fecha o negócio aberto como perdido", () => {
     expect(sequencia).toContain("rpc:ai_agent.dispatch_requested");
   });
 
-  it("falha na leitura dos negócios não impede o resto da ingestão", async () => {
+  it("falha na leitura dos leads não impede o resto da ingestão", async () => {
     leadsErro = { message: "leitura falhou" };
 
     await rodar({ texto: "PARAR" });
@@ -491,7 +491,7 @@ describe("nascimento do lead", () => {
     );
   });
 
-  it("o negócio da conversa do Instagram nasce com origem Instagram, não WhatsApp", async () => {
+  it("o lead da conversa do Instagram nasce com origem Instagram, não WhatsApp", async () => {
     // Sem isto, `garantirLeadDaConversa` cai no padrão: `source = 'whatsapp'`
     // e "primeira mensagem recebida no WhatsApp" para quem escreveu no direct.
     await rodar({ canal: "instagram" });

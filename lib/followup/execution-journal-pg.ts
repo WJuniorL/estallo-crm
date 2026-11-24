@@ -375,7 +375,7 @@ export class PgExecutionJournal implements ExecutionJournal {
     if (r.sem_valor.length > 0 || !z.uuid().safeParse(id).success)
       throw new ExecutionTaskConfigurationError(
         "aplicar_em_sem_valor",
-        `«Aplicar em» cita ${marca}, mas o bloco citado não entregou um negócio ou contato nesta execução.`,
+        `«Aplicar em» cita ${marca}, mas o bloco citado não entregou um lead ou contato nesta execução.`,
       );
     const lead = (
       await client.query<{ id: string; contact_id: string | null }>(
@@ -384,7 +384,7 @@ export class PgExecutionJournal implements ExecutionJournal {
       )
     ).rows[0];
     if (lead && !lead.contact_id)
-      throw new ExecutionTaskConfigurationError("aplicar_em_sem_contato", "O negócio de «Aplicar em» não tem contato vinculado.");
+      throw new ExecutionTaskConfigurationError("aplicar_em_sem_contato", "O lead de «Aplicar em» não tem contato vinculado.");
     const contactId = lead ? lead.contact_id! : id;
     const contato = (
       await client.query<{ is_anonymized: boolean; kind: string | null }>(
@@ -393,7 +393,7 @@ export class PgExecutionJournal implements ExecutionJournal {
       )
     ).rows[0];
     if (!contato)
-      throw new ExecutionTaskConfigurationError("aplicar_em_inexistente", "O negócio ou contato de «Aplicar em» não existe nesta organização.");
+      throw new ExecutionTaskConfigurationError("aplicar_em_inexistente", "O lead ou contato de «Aplicar em» não existe nesta organização.");
     if (contato.is_anonymized || contato.kind === "whatsapp_group")
       throw new ExecutionTaskConfigurationError("aplicar_em_indisponivel", "O contato de «Aplicar em» foi anonimizado ou é um grupo.");
     return { ...row, contact_id: contactId, lead_id: lead ? lead.id : null, conversation_id: null };
@@ -576,7 +576,7 @@ export class PgExecutionJournal implements ExecutionJournal {
         resolved: {
           ...base,
           valor: null,
-          erro: `O campo «${node.config.chave}» não existe mais no cadastro de campos do ${node.config.alvo === "contact_field" ? "contato" : "negócio"}.`,
+          erro: `O campo «${node.config.chave}» não existe mais no cadastro de campos do ${node.config.alvo === "contact_field" ? "contato" : "lead"}.`,
         },
       };
     const c = converterValorDoCampo(def as Parameters<typeof converterValorDoCampo>[0], r.texto);
@@ -1614,7 +1614,7 @@ export class PgExecutionJournal implements ExecutionJournal {
         sourceModule: "crm",
         sourceId: lead.id,
         actor: { type: "webhook_source", id: `followup:${row.id}` },
-        reason: reads.alvo === "deal_value" ? "Atualizou o valor do negócio" : "Atualizou um campo do negócio",
+        reason: reads.alvo === "deal_value" ? "Atualizou o valor do lead" : "Atualizou um campo do lead",
         payload: { fields: [campo] },
       });
       await client.query(
@@ -1668,7 +1668,7 @@ export class PgExecutionJournal implements ExecutionJournal {
         if (!row.lead_id)
           throw new ExecutionTaskConfigurationError(
             "execution_lead_required",
-            "Esta execução não tem negócio para receber a nota. Escolha a conversa como destino ou use um gatilho com negócio.",
+            "Esta execução não tem lead para receber a nota. Escolha a conversa como destino ou use um gatilho com lead.",
           );
         const lead = (
           await client.query<{ id: string }>(
@@ -1715,7 +1715,7 @@ export class PgExecutionJournal implements ExecutionJournal {
         if (!row.conversation_id)
           throw new ExecutionTaskConfigurationError(
             "execution_conversation_required",
-            "Esta execução não tem conversa para receber a nota. Escolha o negócio como destino.",
+            "Esta execução não tem conversa para receber a nota. Escolha o lead como destino.",
           );
         const conversa = (
           await client.query<{ id: string }>(
@@ -1862,7 +1862,7 @@ export class PgExecutionJournal implements ExecutionJournal {
         )
       ).rows[0];
       if (!contato || contato.is_anonymized || contato.kind === "whatsapp_group")
-        throw new ExecutionTaskConfigurationError("contato_indisponivel", "O contato do negócio não existe nesta organização, foi anonimizado ou é um grupo.");
+        throw new ExecutionTaskConfigurationError("contato_indisponivel", "O contato do lead não existe nesta organização, foi anonimizado ou é um grupo.");
       const funil = (
         await client.query<{ id: string; settings: unknown }>(
           "select id,settings from crm_pipelines where organization_id=$1 and id=$2",
@@ -1897,9 +1897,9 @@ export class PgExecutionJournal implements ExecutionJournal {
         if (faltando.length)
           throw new ExecutionTaskConfigurationError(
             "campos_obrigatorios",
-            `O funil exige ${faltando.map((f) => f.rotulo).join(", ")} para criar o negócio nesta etapa.`,
+            `O funil exige ${faltando.map((f) => f.rotulo).join(", ")} para criar o lead nesta etapa.`,
           );
-        const titulo = (reads.titulo || nomeDoContato(contato) || "Negócio").slice(0, 200);
+        const titulo = (reads.titulo || nomeDoContato(contato) || "Lead").slice(0, 200);
         leadId = randomUUID();
         await client.query(
           `insert into crm_leads (id,organization_id,pipeline_id,stage_id,title,contact_id,currency,status,source,source_metadata,position_in_stage)

@@ -24,8 +24,8 @@ export const TRIGGER_LABELS: Record<TriggerEvent, string> = {
   // automação). Criar já ganho/perdido ou já com dono NÃO emite: o trigger
   // retorna cedo no INSERT. A frase diz o DESFECHO, que é
   // o que quem integra escuta — não o botão que a pessoa apertou.
-  "lead.won": "Quando um negócio for ganho",
-  "lead.lost": "Quando um negócio for perdido",
+  "lead.won": "Quando um lead for ganho",
+  "lead.lost": "Quando um lead for perdido",
   "lead.reopened": "Quando um lead encerrado for reaberto",
   "lead.assigned": "Quando o responsável do lead mudar",
   "message.received": "Quando chegar mensagem no WhatsApp",
@@ -71,5 +71,5 @@ export const ACTION_LABELS: Record<ActionType, string> = {
   create_task: "Criar tarefa interna (sem mensagem ao cliente)",
   // #1752 — a SEQUÊNCIA em vez do lembrete único: aplica um plano salvo em
   // Tarefas › Planos ao negócio, criando as N tarefas de uma vez e na ordem.
-  apply_task_plan: "Aplicar um plano de tarefas ao negócio",
+  apply_task_plan: "Aplicar um plano de tarefas ao lead",
 };

@@ -294,7 +294,7 @@ export function LeadFieldsForm({ lead, pipelineId, fieldDefs: todosOsCampos = []
             setTags(novas);
             salvar({ tags: novas }, () => setTags(antes));
           }}
-          rotulo={t("Tags da oportunidade")}
+          rotulo={t("Tags do lead")}
         />
       </Grupo>
 

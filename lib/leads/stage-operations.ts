@@ -621,7 +621,7 @@ export async function arquivarEtapa(
         "internal_error",
         { erro: error.message },
         deps.requestId,
-        `Não consegui mover os negócios de «${alvo.name}». A etapa continua no quadro — tente de novo.`,
+        `Não consegui mover os leads de «${alvo.name}». A etapa continua no quadro — tente de novo.`,
       );
     }
   }
@@ -673,7 +673,7 @@ export async function arquivarEtapa(
         organizationId: deps.organizationId,
         leadId: (movidos[0] as Record<string, unknown>).id as string,
         tipo: "stage_changed",
-        origem: `pipelines/${pipelineId}/stages/${stageId} arquivar (${movidos.length} negócios)`,
+        origem: `pipelines/${pipelineId}/stages/${stageId} arquivar (${movidos.length} leads)`,
         erro: ativErr.message,
         requestId: deps.requestId,
       });

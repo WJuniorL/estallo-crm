@@ -248,7 +248,7 @@ export async function semeiaEstadosDeRisco(
         severity: emRisco > 10 ? "warn" : "info",
         // A AÇÃO VAI NO TÍTULO. "48 negócios em risco" é um número e não move
         // ninguém; o item precisa dizer o que fazer com ele.
-        title: `Revise ${emRisco} ${emRisco === 1 ? "negócio parado" : "negócios parados"} e decida quais encerrar`,
+        title: `Revise ${emRisco} ${emRisco === 1 ? "lead parado" : "leads parados"} e decida quais encerrar`,
         body:
           `${porBucket.critico} sem resposta há muito tempo e ${porBucket.em_risco} esfriando. ` +
           `Eles já estavam assim antes de o sistema passar a acompanhar — por isso ` +

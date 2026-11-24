@@ -25,7 +25,7 @@ const ROTULO: Record<TipoDeSom, { titulo: string; quando: string }> = {
   venda: {
     titulo: "Etapa que avisa",
     quando:
-      "Quando um negócio entra numa etapa marcada para avisar na Central (por exemplo, o pedido confirmado).",
+      "Quando um lead entra numa etapa marcada para avisar na Central (por exemplo, o pedido confirmado).",
   },
   pessoa: {
     titulo: "Precisa de uma pessoa",

@@ -52,8 +52,8 @@ describe("painel de previsão em Métricas", () => {
 
     // Os dois baldes de fora do cronograma usam a mesma régua.
     const texto = semNbsp(document.body.textContent ?? "");
-    expect(texto).toContain("PYG: Gs. 125.000 · bruto Gs. 250.000 · 2 negócios");
-    expect(texto).toContain("PYG: Gs. 250.000 · 2 negócios");
+    expect(texto).toContain("PYG: Gs. 125.000 · bruto Gs. 250.000 · 2 leads");
+    expect(texto).toContain("PYG: Gs. 250.000 · 2 leads");
     expect(texto).not.toContain("12.500.000");
     expect(texto).not.toContain("25.000.000");
   });
@@ -63,6 +63,6 @@ describe("painel de previsão em Métricas", () => {
     render(<PrevisaoPanel />);
 
     const texto = semNbsp(document.body.textContent ?? "");
-    expect(texto).toContain("BRL: R$ 124,95 · bruto R$ 249,90 · 2 negócios");
+    expect(texto).toContain("BRL: R$ 124,95 · bruto R$ 249,90 · 2 leads");
   });
 });

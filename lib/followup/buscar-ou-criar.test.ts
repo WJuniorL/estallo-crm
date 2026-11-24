@@ -16,7 +16,7 @@ function grafo(aplicarEm: string | undefined, lookup: Record<string, unknown> = 
   const busca = {
     id: "neg",
     type: "find_or_create_lead",
-    label: "Negócio",
+    label: "Lead",
     position: pos,
     config: { contato: "", pipeline_id: FUNIL, stage_id: ETAPA, titulo: "", criar: true, ...lookup },
   };
@@ -49,7 +49,7 @@ const codigos = (g: ReturnType<typeof grafo>) => {
 };
 
 describe("buscar ou criar e «Aplicar em» na publicação", () => {
-  it("aceita o negócio ou o contato de um Buscar ou criar anterior", () => {
+  it("aceita o lead ou o contato de um Buscar ou criar anterior", () => {
     expect(codigos(grafo("{{nodes.neg.lead_id}}"))).toEqual([]);
     expect(codigos(grafo("{{nodes.neg.contact_id}}"))).toEqual([]);
     expect(codigos(grafo(undefined))).toEqual([]);
@@ -57,11 +57,11 @@ describe("buscar ou criar e «Aplicar em» na publicação", () => {
 
   it("recusa marca que não é lead_id/contact_id, texto solto, e bloco que vem depois", () => {
     expect(codigos(grafo("{{nodes.neg.criado}}"))).toContain("aplicar_em_invalido");
-    expect(codigos(grafo("negócio do João"))).toContain("aplicar_em_invalido");
+    expect(codigos(grafo("lead do João"))).toContain("aplicar_em_invalido");
     expect(codigos(grafo("{{nodes.neg.lead_id}}", {}, "depois")).length).toBeGreaterThan(0);
   });
 
-  it("negócio exige funil; criar exige etapa", () => {
+  it("lead exige funil; criar exige etapa", () => {
     expect(codigos(grafo(undefined, { pipeline_id: "" }))).toContain("negocio_sem_funil");
     expect(codigos(grafo(undefined, { stage_id: "" }))).toContain("negocio_sem_etapa");
     expect(codigos(grafo(undefined, { stage_id: "", criar: false }))).toEqual([]);

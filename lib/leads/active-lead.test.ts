@@ -25,7 +25,7 @@ const lead = (over: Partial<LeadCandidate> & { id: string }): LeadCandidate => (
 });
 
 describe("resolveActiveLeadForContact — quando roteia", () => {
-  it("um único negócio aberto: rota óbvia", () => {
+  it("um único lead aberto: rota óbvia", () => {
     expect(resolveActiveLeadForContact([lead({ id: "l-1" })], { defaultPipelineId: DEFAULT_PIPE }))
       .toEqual({ routed: true, leadId: "l-1" });
   });
@@ -60,7 +60,7 @@ describe("resolveActiveLeadForContact — quando roteia", () => {
     expect(r).toEqual({ routed: true, leadId: "default-antigo" });
   });
 
-  it("negócio sem atividade cai para a data de criação", () => {
+  it("lead sem atividade cai para a data de criação", () => {
     const r = resolveActiveLeadForContact(
       [
         lead({ id: "sem-atividade", last_activity_at: null, created_at: "2026-07-24T10:00:00.000Z" }),
@@ -71,7 +71,7 @@ describe("resolveActiveLeadForContact — quando roteia", () => {
     expect(r).toEqual({ routed: true, leadId: "sem-atividade" });
   });
 
-  it("fechados não contam — o negócio ganho/perdido saiu de jogo", () => {
+  it("fechados não contam — o lead ganho/perdido saiu de jogo", () => {
     const r = resolveActiveLeadForContact(
       [
         lead({ id: "ganho", status: "won", last_activity_at: "2026-07-24T10:00:00.000Z" }),
@@ -94,7 +94,7 @@ describe("resolveActiveLeadForContact — quando roteia", () => {
 });
 
 describe("resolveActiveLeadForContact — quando SE RECUSA a escolher", () => {
-  it("nenhum negócio aberto: no_open_lead (a atividade vai para o event_log)", () => {
+  it("nenhum lead aberto: no_open_lead (a atividade vai para o event_log)", () => {
     expect(
       resolveActiveLeadForContact([lead({ id: "l-1", status: "lost" })], {
         defaultPipelineId: DEFAULT_PIPE,
@@ -102,7 +102,7 @@ describe("resolveActiveLeadForContact — quando SE RECUSA a escolher", () => {
     ).toEqual({ routed: false, reason: "no_open_lead", candidateIds: [] });
   });
 
-  it("contato sem negócio nenhum: no_open_lead", () => {
+  it("contato sem lead nenhum: no_open_lead", () => {
     expect(resolveActiveLeadForContact([])).toEqual({
       routed: false,
       reason: "no_open_lead",

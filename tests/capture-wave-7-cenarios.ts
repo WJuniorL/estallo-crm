@@ -281,7 +281,7 @@ async function main(): Promise<void> {
           ? ""
           : ehJanela
             ? " — é JANELA: a classificação de risco vem de uma SEGUNDA consulta e, enquanto ela " +
-              "não chega, o card AFIRMA que o negócio está saudável em vez de dizer que não sabe. " +
+              "não chega, o card AFIRMA que o lead está saudável em vez de dizer que não sabe. " +
               "Desconhecido virando normal, que é a afirmação que este épico existe para impedir"
             : " — é PERMANENTE nesta janela de observação: a faixa não apareceu nem depois de 18s"),
       estadoObservavel ? undefined : "INCONCLUSIVO",
@@ -303,7 +303,7 @@ async function main(): Promise<void> {
       faixaRecarregada !== "" || !estadoObservavel,
       faixaRecarregada === "" && estadoObservavel
         ? `logo após recarregar a faixa está vazia e a borda "${corRecarregada}" — o mesmo que um ` +
-          `negócio em dia. O estado era ESFRIANDO (apareceu ${faixaConvergiu ? "depois" : "nunca"}), ` +
+          `lead em dia. O estado era ESFRIANDO (apareceu ${faixaConvergiu ? "depois" : "nunca"}), ` +
           `e no intervalo a tela afirmou saúde em vez de representar o desconhecido`
         : "o card distingue desconhecido de saudável",
     );
@@ -388,7 +388,7 @@ async function main(): Promise<void> {
       source_module: "qa",
       type: "note",
       actor_kind: "system",
-      reason: `${RUN} · faz de conta que esta atividade diz "este negócio esfriou"`,
+      reason: `${RUN} · faz de conta que esta atividade diz "este lead esfriou"`,
       evidence: {},
       performed_at: new Date().toISOString(),
     } as never);

@@ -92,7 +92,7 @@ test.describe("automações — blocos de integração (Fase 5)", () => {
     await negocio.click();
     const painel = page.getByTestId("node-config-panel");
     await expect(painel.getByLabel("Funil")).toBeVisible();
-    await expect(painel.getByLabel("Criar o negócio se não achar")).toBeChecked();
+    await expect(painel.getByLabel("Criar o lead se não achar")).toBeChecked();
     await expect(negocio).toContainText("sem funil escolhido");
     await page.screenshot({ path: path.join(EVIDENCIA, "buscar-ou-criar-negocio.png"), fullPage: true });
 
@@ -108,7 +108,7 @@ test.describe("automações — blocos de integração (Fase 5)", () => {
     await page.locator('[data-testid^="node-card-edit_lead_tag-"]').click();
     const aplicarEm = painel.getByLabel("Aplicar em");
     await expect(aplicarEm).toBeVisible();
-    await expect(aplicarEm).toContainText("O negócio e o contato desta execução");
+    await expect(aplicarEm).toContainText("O lead e o contato desta execução");
     await page.screenshot({ path: path.join(EVIDENCIA, "aplicar-em.png"), fullPage: true });
   });
 });

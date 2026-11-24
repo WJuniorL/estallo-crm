@@ -116,14 +116,14 @@ beforeAll(() => {
       insert into public.conversations (id, organization_id, contact_id, channel_session_id, status, is_group, channel)
         values ('${conversaDe(c.lead)}', '${c.org}', '${contatoDe(c.lead)}', '${sessao(c.org)}', 'open', false, '${c.canal}');
       insert into public.crm_leads (id, organization_id, pipeline_id, stage_id, contact_id, title, source)
-        values ('${c.lead}', '${c.org}', '${funil(c.org)}', '${etapa(c.org)}', '${contatoDe(c.lead)}', 'Negócio', '${c.source}');
+        values ('${c.lead}', '${c.org}', '${funil(c.org)}', '${etapa(c.org)}', '${contatoDe(c.lead)}', 'Lead', '${c.source}');
       insert into public.crm_lead_activities (organization_id, lead_id, contact_id, source_module, source_id, type)
         values ('${c.org}', '${c.lead}', '${contatoDe(c.lead)}', '${c.modulo}', '${conversaDe(c.lead)}', 'lead_created');
     `;
   }
   seed += `
     insert into public.crm_leads (id, organization_id, pipeline_id, stage_id, title, source)
-      values ('${LEAD_B_APONTA_PARA_A}', '${ORG_B}', '${FUNIL_B}', '${ETAPA_B}', 'Negócio', 'whatsapp');
+      values ('${LEAD_B_APONTA_PARA_A}', '${ORG_B}', '${FUNIL_B}', '${ETAPA_B}', 'Lead', 'whatsapp');
     insert into public.crm_lead_activities (organization_id, lead_id, source_module, source_id, type)
       values ('${ORG_B}', '${LEAD_B_APONTA_PARA_A}', 'canal.ingest', '${conversaDe(CASOS.instagram.lead)}', 'lead_created');
   `;
@@ -134,15 +134,15 @@ afterAll(() => {
   limpar();
 });
 
-describe("correção da origem do negócio pelo canal da conversa (0531)", () => {
+describe("correção da origem do lead pelo canal da conversa (0531)", () => {
   it("troca só o que estava errado, e não atravessa organização", () => {
     sql(CORRECAO);
 
     expect(sourceDe(CASOS.instagram.lead), "Instagram continuou WhatsApp").toBe("instagram");
     expect(sourceDe(CASOS.facebook.lead), "Facebook continuou WhatsApp").toBe("facebook");
-    expect(sourceDe(CASOS.whatsapp.lead), "o negócio do WhatsApp mudou").toBe("whatsapp");
+    expect(sourceDe(CASOS.whatsapp.lead), "o lead do WhatsApp mudou").toBe("whatsapp");
     expect(sourceDe(CASOS.anuncio.lead), "a origem de anúncio foi atropelada").toBe("meta_ads");
-    expect(sourceDe(CASOS.outroModulo.lead), "tocou negócio que não nasceu da conversa").toBe(
+    expect(sourceDe(CASOS.outroModulo.lead), "tocou lead que não nasceu da conversa").toBe(
       "whatsapp",
     );
     expect(

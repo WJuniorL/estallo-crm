@@ -108,7 +108,7 @@ beforeEach(() => {
 });
 
 describe("webhook de captação numa etapa que exige campo", () => {
-  it("o formulário sem o campo cria o negócio como antes", async () => {
+  it("o formulário sem o campo cria o lead como antes", async () => {
     const req = new NextRequest("http://localhost/api/v1/webhooks/in/token-da-fonte-0001", {
       method: "POST",
       body: JSON.stringify({ nome: "Dora", email: "dora@example.com" }),
@@ -122,7 +122,7 @@ describe("webhook de captação numa etapa que exige campo", () => {
       expect.objectContaining({ outcome: "recusado" }),
     );
     expect(res.status).toBe(200);
-    expect(h.leadsInseridos, "o negócio não nasceu").toHaveLength(1);
+    expect(h.leadsInseridos, "o lead não nasceu").toHaveLength(1);
     expect(h.leadsInseridos[0]).toMatchObject({ pipeline_id: FUNIL, stage_id: ETAPA });
   });
 });

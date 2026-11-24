@@ -302,7 +302,7 @@ export function EditorDeCampo({
             </div>
             {obrigatorio === "empresa" && (
               <p className="text-xs text-muted-foreground">
-                {t("O negócio só sai da primeira etapa, e só é ganho, com o campo preenchido.")}
+                {t("O lead só sai da primeira etapa, e só é ganho, com o campo preenchido.")}
               </p>
             )}
             {obrigatorio === "etapas" && (

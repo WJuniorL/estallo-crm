@@ -29,7 +29,7 @@ export function itensDoPlano(l: LimitesDoNivel): ItemDoPlano[] {
         : { frase: "Até {n} pipelines com até {e} etapas", n: l.max_pipelines, e: l.max_etapas_por_pipeline },
     );
   }
-  itens.push({ frase: "Gestão de negócios e produtos" });
+  itens.push({ frase: "Gestão de leads e produtos" });
   contavel(l.max_leads, "Até {n} leads", "Leads ilimitados");
   contavel(l.max_automacoes, "{n} automações", "Automações ilimitadas");
   contavel(l.max_webhooks, "{n} integrações via webhook", "Integrações via webhook ilimitadas");

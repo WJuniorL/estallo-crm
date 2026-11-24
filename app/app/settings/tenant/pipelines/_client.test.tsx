@@ -94,7 +94,7 @@ describe("tipos de campo que a tela do funil oferece", () => {
 // Estallo: o editor de campos por funil saiu desta tela e virou o cadastro
 // central (/app/crm/campos); os casos dele moram em app/app/crm/campos.
 
-describe("retomada de negócio encerrado (#1538)", () => {
+describe("retomada de lead encerrado (#1538)", () => {
   beforeEach(() => vi.mocked(updatePipelineConfig).mockClear());
   const salvar = () =>
     fireEvent.click(screen.getByRole("button", { name: "Salvar vocabulário e campos" }));
@@ -105,7 +105,7 @@ describe("retomada de negócio encerrado (#1538)", () => {
   it("a opção de reabertura não existe mais no funil e salvar não a grava", () => {
     const ligado: PipelineRow = { ...FUNIL, settings: { ...FUNIL.settings, reabertura: "novo_negocio" } };
     render(<PipelinesClient pipelines={[ligado]} etapas={{}} podeEditarConfig />);
-    expect(screen.queryByLabelText("Negócio encerrado que volta abre um negócio novo")).toBeNull();
+    expect(screen.queryByLabelText("Lead encerrado que volta abre um lead novo")).toBeNull();
 
     salvar();
 
@@ -117,7 +117,7 @@ describe("comanda do ganho (#1477)", () => {
   beforeEach(() => vi.mocked(updatePipelineConfig).mockClear());
   const salvar = () =>
     fireEvent.click(screen.getByRole("button", { name: "Salvar vocabulário e campos" }));
-  const ROTULO = "Abrir comanda ao ganhar um negócio neste funil";
+  const ROTULO = "Abrir comanda ao ganhar um lead neste funil";
 
   it("nasce desligada e ligar grava `comanda_no_ganho: true` na porta única de escrita", () => {
     render(<PipelinesClient pipelines={[FUNIL]} etapas={{}} podeEditarConfig comandaDisponivel />);

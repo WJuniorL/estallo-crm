@@ -152,7 +152,7 @@ beforeEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("negócio de anúncio da Meta entra numa etapa com regra", () => {
+describe("lead de anúncio da Meta entra numa etapa com regra", () => {
   it("vindo da página: o evento padrão sai pelo telefone, sem valor, e fica registrado", async () => {
     base(daPaginaComUtmMeta);
     const spy = aceito();

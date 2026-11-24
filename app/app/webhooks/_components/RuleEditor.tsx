@@ -502,7 +502,7 @@ export function RuleEditor({ open, onOpenChange, rule }: Props) {
               <div className="space-y-3 rounded-sm border border-border p-3">
                 <p className="text-sm text-muted-foreground">
                   {t(
-                    "O aviso sai no dia em que faltarem N dias para a data, uma vez por negócio. Para avisar DEPOIS da data, use N negativo — -60 confirma a entrega 60 dias após o casamento.",
+                    "O aviso sai no dia em que faltarem N dias para a data, uma vez por lead. Para avisar DEPOIS da data, use N negativo — -60 confirma a entrega 60 dias após o casamento.",
                   )}
                 </p>
                 <div className="flex flex-wrap items-end gap-3">

@@ -272,7 +272,7 @@ function leadSilencioso(n: number, agoraMs: number, over: Linha = {}): Linha {
     pipeline_id: FUNIL,
     stage_id: ETAPA,
     status: "open",
-    title: `Negócio ${n}`,
+    title: `Lead ${n}`,
     tags: [],
     contact_id: idDe("dddddddd", n),
     owner_user_id: DONO,
@@ -352,7 +352,7 @@ afterEach(() => {
 });
 
 describe("a janela de 200 dos gatilhos por tempo (item 1)", () => {
-  it("⭐ silêncio: o 201º negócio recebe o evento mesmo com os 200 mais antigos já emitidos", async () => {
+  it("⭐ silêncio: o 201º lead recebe o evento mesmo com os 200 mais antigos já emitidos", async () => {
     const agora = Date.now();
     const leads = Array.from({ length: 201 }, (_, i) => leadSilencioso(i + 1, agora));
     mundo.linhas("crm_leads").push(...leads);
@@ -444,7 +444,7 @@ describe("os critérios de aceite da #1540 no nível da rota (item 4)", () => {
         actor_kind: a.actor_kind,
         lead_id: a.lead_id,
       })),
-      "a tarefa automática não aparece na linha do tempo do lead (item 3): o card do negócio ficaria parado sem sinal de que o sistema marcou um retorno",
+      "a tarefa automática não aparece na linha do tempo do lead (item 3): o card do lead ficaria parado sem sinal de que o sistema marcou um retorno",
     ).toEqual([{ type: "task_created", actor_kind: "system", lead_id: lead.id }]);
   });
 
@@ -461,7 +461,7 @@ describe("os critérios de aceite da #1540 no nível da rota (item 4)", () => {
 
     expect(
       eventosDoCron(GATILHO_SILENCIO),
-      "o negócio tem compromisso marcado e mesmo assim o lembrete saiu — `proteger_pela_agenda` é opt-in e estava ligado",
+      "o lead tem compromisso marcado e mesmo assim o lembrete saiu — `proteger_pela_agenda` é opt-in e estava ligado",
     ).toEqual([]);
     expect(resposta.data.emitidos).toBe(0);
     expect(resposta.data.pulados).toMatchObject({ agenda: 1 });
@@ -484,7 +484,7 @@ describe("os critérios de aceite da #1540 no nível da rota (item 4)", () => {
 
     expect(
       eventosDoCron(GATILHO_DE_DATA_DO_FUNIL).map((e) => (e.p_payload as Linha).valor),
-      "a data mudou e o aviso não rearma: a trava antiga (regra+negócio) era para sempre, e a cobrança remarcada nunca saía",
+      "a data mudou e o aviso não rearma: a trava antiga (regra+lead) era para sempre, e a cobrança remarcada nunca saía",
     ).toEqual(["2026-10-10", "2026-10-11"]);
     expect(segunda.data.emitidos).toBe(1);
   });

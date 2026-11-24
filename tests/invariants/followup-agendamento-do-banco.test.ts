@@ -101,7 +101,7 @@ async function cenario(): Promise<{
     [org, pipe[0]!.id, `rele-${marca}`.slice(0, 40)],
   );
   const { rows: lead } = await pool.query<{ id: string }>(
-    `insert into crm_leads (organization_id, pipeline_id, stage_id, contact_id, title) values ($1, $2, $3, $4, 'Negócio') returning id`,
+    `insert into crm_leads (organization_id, pipeline_id, stage_id, contact_id, title) values ($1, $2, $3, $4, 'Lead') returning id`,
     [org, pipe[0]!.id, etapa[0]!.id, contato[0]!.id],
   );
   const graph: FlowGraph = {

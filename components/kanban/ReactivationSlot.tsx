@@ -60,7 +60,7 @@ export function ReactivationSlot({
     <>
       <span
         className="min-w-0 flex-1 truncate text-warning-fg"
-        title={t("Este negócio parou de responder")}
+        title={t("Este lead parou de responder")}
       >
         {t("Retomar contato?")}{" "}
         <span className="text-text-muted" title={`${t("A sugestão vence em")} ${resta}`}>
@@ -72,7 +72,7 @@ export function ReactivationSlot({
           type="button"
           disabled={decidir.isPending}
           onClick={(e) => decide(e, "accept")}
-          aria-label={t("Retomar contato com este negócio")}
+          aria-label={t("Retomar contato com este lead")}
           className={cn(
             "rounded-md px-1.5 py-0.5 text-[11px] font-medium transition-colors",
             "bg-warning-fg/10 text-warning-fg hover:bg-warning-fg/20",
@@ -88,7 +88,7 @@ export function ReactivationSlot({
           // "Encerrar" e não "Ignorar": ignorar não é decisão, e a recusa AQUI é
           // decisão registrada — o que distingue negócio encerrado com critério
           // de negócio esquecido.
-          aria-label={t("Encerrar: não retomar este negócio")}
+          aria-label={t("Encerrar: não retomar este lead")}
           className={cn(
             "rounded-md px-1.5 py-0.5 text-[11px] transition-colors",
             "text-text-muted hover:bg-surface-muted hover:text-text",

@@ -55,14 +55,14 @@ export function tituloDoAvisoDeDestinoRecusado(idioma: Idioma): string {
 /** Sem PII: diz o que aconteceu com o negócio, nunca quem é o cliente. */
 export function corpoDoAvisoDeDestinoRecusado(motivo: string, idioma: Idioma = "pt-BR"): string {
   const base = traduzir(
-    "O negócio continua ABERTO no funil de origem: a recusa não encerra nem move nada.",
+    "O lead continua ABERTO no funil de origem: a recusa não encerra nem move nada.",
     idioma,
   );
   // O motivo da régua vem como código (`required_fields_missing`) e é o caso
   // nomeado pela issue — a frase dele é a que a pessoa lê ao abrir o aviso.
   if (motivo === "required_fields_missing") {
     return `${base} ${traduzir(
-      "A etapa de destino exige campos obrigatórios que este negócio não tem. Abra o negócio, preencha o que falta e refaça a ação.",
+      "A etapa de destino exige campos obrigatórios que este lead não tem. Abra o lead, preencha o que falta e refaça a ação.",
       idioma,
     )}`;
   }

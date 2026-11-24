@@ -230,7 +230,7 @@ export async function POST(req: NextRequest): Promise<Response> {
               // vez de reimportar a planilha inteira.
               resumo.erros.push({
                 linha: linha.linha,
-                motivo: t("o contato não pôde ser criado — o negócio entrou sem ele"),
+                motivo: t("o contato não pôde ser criado — o lead entrou sem ele"),
               });
             } else {
               contactId = (criado as { id: string }).id;

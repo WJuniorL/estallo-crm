@@ -398,14 +398,14 @@ describe("trava contra laço infinito pelo passo novo (#1528)", () => {
     metadata,
   });
 
-  it("negócio movido → a IA move: o movimento volta marcado e o motor NÃO roda a regra de novo", async () => {
+  it("lead movido → a IA move: o movimento volta marcado e o motor NÃO roda a regra de novo", async () => {
     decidir.mockResolvedValue({ ok: true, escolha: "mover" });
     const regras = [{ id: REGRA, name: "Regra de teste", conditions: [], actions: [AI_DECIDE_MOVE] }];
 
     const primeira = adminFake({ rules: regras, lead: LEAD_NO_FUNIL });
     await runAutomationForEvent(primeira.admin, eventoDeLead("lead.stage_changed"));
 
-    expect(mover, "a ação-alvo escolhida tem que ter movido o negócio").toHaveBeenCalledTimes(1);
+    expect(mover, "a ação-alvo escolhida tem que ter movido o lead").toHaveBeenCalledTimes(1);
     const requestId = (mover.mock.calls[0]![1] as HandlerCtx).requestId;
     expect(requestId).toBe(`rule:${REGRA}`);
 

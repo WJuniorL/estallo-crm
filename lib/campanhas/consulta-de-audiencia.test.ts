@@ -220,7 +220,7 @@ async function candidatos(sb: ReturnType<typeof bancoFalso>["sb"]) {
   ).candidatos;
 }
 
-describe("negócios dos contatos para {{lead.x}}", () => {
+describe("leads dos contatos para {{lead.x}}", () => {
   it("a sonda ENXERGA o estouro: os 500 ids numa URL só passam do muro — controle positivo", async () => {
     const { sb, urls } = bancoFalso([], []);
     const ids = Array.from({ length: 500 }, (_, i) => uuid(i));
@@ -248,7 +248,7 @@ describe("negócios dos contatos para {{lead.x}}", () => {
     expect(lista[499]!.lead?.gancho).toBe("gancho 499");
   });
 
-  it("contato com muitos negócios no mesmo lote não esconde o mais novo do vizinho", async () => {
+  it("contato com muitos leads no mesmo lote não esconde o mais novo do vizinho", async () => {
     // A tem 1.500 negócios recentes; o único negócio de B é mais antigo que todos.
     // Um `.limit` global, ou o corte de `max_rows` sem paginar, devolve só os de A.
     const [a, b] = [uuid(1), uuid(2)];
@@ -358,7 +358,7 @@ describe("recorte de funil grande não estoura a URL (#2358)", () => {
     cercaDeOrganizacao(banco);
   });
 
-  it("o mesmo corte com exclusão vale sem filtro de negócio (consulta por keyset)", async () => {
+  it("o mesmo corte com exclusão vale sem filtro de lead (consulta por keyset)", async () => {
     const contatos = Array.from({ length: 200 }, (_, i) => uuid(i));
     const banco = bancoFalso(contatos, []);
 
@@ -448,7 +448,7 @@ describe("keyset: página curta não encerra a leitura (#2404)", () => {
     ...extra,
   });
 
-  it("max_rows=500: a consulta de ids de negócio segue até a página VAZIA (1.200 negócios)", async () => {
+  it("max_rows=500: a consulta de ids de lead segue até a página VAZIA (1.200 leads)", async () => {
     const contatos = Array.from({ length: 1200 }, (_, i) => uuid(i));
     // Inserção na ordem REVERSA do `created_at`: sem o `.order(…)` da consulta,
     // cada página vem na ordem de inserção e termina no negócio MAIS VELHO dela;
@@ -475,7 +475,7 @@ describe("keyset: página curta não encerra a leitura (#2404)", () => {
     cercaDeOrganizacao(banco);
   });
 
-  it("max_rows=500: sem recorte de negócio, a leitura de contatos segue até a página VAZIA", async () => {
+  it("max_rows=500: sem recorte de lead, a leitura de contatos segue até a página VAZIA", async () => {
     const contatos = Array.from({ length: 1200 }, (_, i) => uuid(i));
     // Também em ordem reversa: a ordem da resposta tem de vir do `.order(…)`.
     const contatosRev = [...contatos].reverse();
@@ -515,7 +515,7 @@ describe("keyset: página curta não encerra a leitura (#2404)", () => {
     cercaDeOrganizacao(banco);
   });
 
-  it("max_rows=500: o negócio antigo do contato B não fica de fora da leitura de {{lead.x}}", async () => {
+  it("max_rows=500: o lead antigo do contato B não fica de fora da leitura de {{lead.x}}", async () => {
     // A tem 600 negócios recentes; o único de B é mais antigo que todos. Com a
     // leitura parando na primeira página curta (500), B ficava sem negócio — e
     // saía da campanha com `variavel_ausente`.
@@ -612,7 +612,7 @@ describe("teto de 20.000 e o aviso de truncamento (#2404)", () => {
   });
 });
 
-describe("#2402: funil com 2.500 negócios e max_rows=1.000", () => {
+describe("#2402: funil com 2.500 leads e max_rows=1.000", () => {
   const comFunil = (extra: Partial<FiltroDeAudiencia>) => ({
     ...FILTRO_VAZIO,
     funis: [uuid(900, "8888")],
@@ -646,7 +646,7 @@ describe("#2402: funil com 2.500 negócios e max_rows=1.000", () => {
     cercaDeOrganizacao(banco);
   });
 
-  it("900 negócios: abaixo do max_rows, uma página só — o comportamento não muda", async () => {
+  it("900 leads: abaixo do max_rows, uma página só — o comportamento não muda", async () => {
     const contatos = Array.from({ length: 900 }, (_, i) => uuid(i));
     const banco = bancoFalso(contatos, negociosDe(contatos));
 

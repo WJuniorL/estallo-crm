@@ -43,7 +43,7 @@ let etapaComum = "";
 async function doisNegociosAbertos(): Promise<[string, string]> {
   const { rows } = await pool.query<{ id: string }>(
     `insert into crm_leads (organization_id, pipeline_id, stage_id, title, status)
-     values ($1, $2, $3, 'Negócio A', 'open'), ($1, $2, $3, 'Negócio B', 'open')
+     values ($1, $2, $3, 'Lead A', 'open'), ($1, $2, $3, 'Lead B', 'open')
      returning id`,
     [ORG, funil, etapaAberta],
   );

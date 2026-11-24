@@ -155,7 +155,7 @@ function contexto(cenarios: Parameters<typeof adminFalso>[0] = {}) {
     admin: adminFalso(cenarios),
     organizationId: ORG,
     ruleId: "r0r0r0r0-0000-0000-0000-000000000001",
-    ruleName: "Novo negócio no funil A",
+    ruleName: "Novo lead no funil A",
     event: {},
     context: {
       contact: { id: CONTATO, name: "Marina Prado", phone_number: "+5511900000000" },
@@ -177,8 +177,8 @@ function argumentoDaChamada(
   return (chamada as unknown[])[2] as Record<string, unknown>;
 }
 
-describe("create_or_move_lead — a regra transfere o negócio entre funis", () => {
-  it("O DEFEITO: contato com negócio aberto em OUTRO funil transfere, não cria um segundo", async () => {
+describe("create_or_move_lead — a regra transfere o lead entre funis", () => {
+  it("O DEFEITO: contato com lead aberto em OUTRO funil transfere, não cria um segundo", async () => {
     spies.createLeadHandler.mockReset();
     spies.moveLeadHandler.mockReset();
     spies.encerraDemanda.mockReset();
@@ -223,7 +223,7 @@ describe("create_or_move_lead — a regra transfere o negócio entre funis", () 
     expect(spies.moveLeadHandler).not.toHaveBeenCalled();
   });
 
-  it("CONTROLE: negócio aberto no MESMO funil continua sendo movido de etapa", async () => {
+  it("CONTROLE: lead aberto no MESMO funil continua sendo movido de etapa", async () => {
     spies.createLeadHandler.mockReset();
     spies.moveLeadHandler.mockReset();
     spies.encerraDemanda.mockReset();
@@ -239,7 +239,7 @@ describe("create_or_move_lead — a regra transfere o negócio entre funis", () 
     expect(spies.encerraDemanda).not.toHaveBeenCalled();
   });
 
-  it("CONTROLE: sem negócio aberto, a ação cria — como sempre criou", async () => {
+  it("CONTROLE: sem lead aberto, a ação cria — como sempre criou", async () => {
     spies.createLeadHandler.mockReset();
     spies.moveLeadHandler.mockReset();
     spies.encerraDemanda.mockReset();

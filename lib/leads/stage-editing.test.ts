@@ -159,7 +159,7 @@ describe('posicaoEntre', () => {
 });
 
 describe('validarArquivamento', () => {
-  it('exige destino quando a etapa tem negócios', () => {
+  it('exige destino quando a etapa tem leads', () => {
     const r = validarArquivamento(etapas, 'e2', { negocios: 7, destinoId: null });
     expect(r.ok).toBe(false);
     expect(r.ok === false && r.erro).toMatch(/7/);
@@ -183,7 +183,7 @@ describe('validarArquivamento', () => {
     expect(r.ok).toBe(false);
   });
 
-  it('recusa mandar os negócios para a etapa de GANHO — seria fechar negócio por configuração', () => {
+  it('recusa mandar os leads para a etapa de GANHO — seria fechar lead por configuração', () => {
     // `fn_crm_lead_close_on_stage` marca `status='won'` com `closed_at=now()`
     // por estágio: N negócios virariam receita porque alguém arrumou o quadro.
     const r = validarArquivamento(etapas, 'e2', { negocios: 3, destinoId: 'e3' });
@@ -191,7 +191,7 @@ describe('validarArquivamento', () => {
     expect(r.ok === false && r.erro).toMatch(/encerrados/);
   });
 
-  it('recusa mandar os negócios para a etapa de PERDA — o banco levantaria 22023', () => {
+  it('recusa mandar os leads para a etapa de PERDA — o banco levantaria 22023', () => {
     const comPerdido = [
       ...etapas,
       { ...etapas[0]!, id: 'e4', name: 'Perdido', slug: 'perdido', is_lost: true },

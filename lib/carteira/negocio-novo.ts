@@ -41,4 +41,4 @@ export function recusaNegocioNaCarteiraDeOutro(entrada: PedidoDeNegocioNovo): bo
 }
 
 /** O motivo, na forma que a rota traduz antes de devolver o 403. */
-export const MOTIVO_DA_RECUSA = "Este cliente pertence à carteira de outro vendedor. O negócio novo nasce com o dono da carteira.";
+export const MOTIVO_DA_RECUSA = "Este cliente pertence à carteira de outro vendedor. O lead novo nasce com o dono da carteira.";

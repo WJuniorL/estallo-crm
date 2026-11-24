@@ -311,7 +311,7 @@ export async function lerDiagnosticoGoogle(
           saude: "atencao",
           titulo: "Nenhuma conversão aceita ainda",
           detalhe:
-            "Pode ser falta de negócios vindos de anúncio do Google, ou a captura do clique ainda não configurada no site.",
+            "Pode ser falta de leads vindos de anúncio do Google, ou a captura do clique ainda não configurada no site.",
         },
   );
 
@@ -347,7 +347,7 @@ export async function lerDiagnosticoGoogle(
     titulo: `${cobertas} de ${totalDeMomentos} momentos do funil com conversão configurada`,
     detalhe: entrada.temAcaoDeVenda
       ? "A venda está configurada. Etapas ligadas dão mais sinal ao Google antes da venda."
-      : "A venda (negócio ganho) não tem ação de conversão: é ela que ensina o Google a buscar quem compra.",
+      : "A venda (lead ganho) não tem ação de conversão: é ela que ensina o Google a buscar quem compra.",
   });
 
   return itens;

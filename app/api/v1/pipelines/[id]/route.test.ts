@@ -265,7 +265,7 @@ describe("DELETE /api/v1/pipelines/[id]", () => {
     expect(audit).toHaveBeenCalledWith(expect.objectContaining({ action: "pipeline.archived" }));
   });
 
-  it("arquiva funil COM negócios — o histórico continua de pé", async () => {
+  it("arquiva funil COM leads — o histórico continua de pé", async () => {
     authOk();
     const db = makeDb({
       pipelines: doisFunis(),
@@ -356,7 +356,7 @@ describe("DELETE /api/v1/pipelines/[id]", () => {
     expect(db.escritas[0]?.patch).toEqual({ is_archived: true });
   });
 
-  it("?definitivo=1 com negócios → 422 oferecendo arquivar, e nenhuma escrita", async () => {
+  it("?definitivo=1 com leads → 422 oferecendo arquivar, e nenhuma escrita", async () => {
     authOk();
     const db = makeDb({
       pipelines: doisFunis(),
@@ -396,7 +396,7 @@ describe("DELETE /api/v1/pipelines/[id]", () => {
    * o que faltava era ele ser ALCANÇÁVEL para um funil que está no arquivo, que é
    * exatamente o estado em que ele nunca esteve no escopo de teste.
    */
-  it("?definitivo=1 num funil ARQUIVADO sem negócios → apaga e emite pipeline.deleted", async () => {
+  it("?definitivo=1 num funil ARQUIVADO sem leads → apaga e emite pipeline.deleted", async () => {
     authOk();
     const db = makeDb({
       pipelines: [doisFunis()[0]!, { ...doisFunis()[1]!, is_archived: true }],
@@ -415,7 +415,7 @@ describe("DELETE /api/v1/pipelines/[id]", () => {
    * recusa está dentro da gaveta do arquivo: mandar "arquive em vez de excluir"
    * para um funil que já está arquivado é o beco sem saída da issue.
    */
-  it("?definitivo=1 num funil ARQUIVADO com negócios → 422 que não manda arquivar de novo", async () => {
+  it("?definitivo=1 num funil ARQUIVADO com leads → 422 que não manda arquivar de novo", async () => {
     authOk();
     const db = makeDb({
       pipelines: [doisFunis()[0]!, { ...doisFunis()[1]!, is_archived: true }],
@@ -426,7 +426,7 @@ describe("DELETE /api/v1/pipelines/[id]", () => {
 
     expect(res.status).toBe(422);
     const msg = (await res.json()).error.message as string;
-    expect(msg).toMatch(/1 negócio/);
+    expect(msg).toMatch(/1 lead/);
     expect(msg).toMatch(/já está no arquivo/i);
     expect(msg).not.toMatch(/Arquive em vez de excluir/);
     expect(db.escritas).toEqual([]);

@@ -982,7 +982,7 @@ async function main(): Promise<void> {
       "leitura que FALHA aparece como falha, não como 'Sem leads'",
       avisou && !mentiu,
       mentiu
-        ? 'com a leitura falhando, o painel afirma "Sem leads/Sem atividade" — erro disfarçado de fato sobre o negócio'
+        ? 'com a leitura falhando, o painel afirma "Sem leads/Sem atividade" — erro disfarçado de fato sobre o lead'
         : avisou
           ? "painel sinaliza falha de leitura"
           : `painel não diz nada: "${comFalha.slice(0, 100)}"`,

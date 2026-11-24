@@ -16,13 +16,13 @@ import {
 const ADMIN = "u-admin";
 
 describe("destinatariosDaMensagem (regra pura)", () => {
-  it("sem atendente e sem negócio aberto com dono → todos", () => {
+  it("sem atendente e sem lead aberto com dono → todos", () => {
     expect(destinatariosDaMensagem({ atribuidoA: null, donosDeNegocioAberto: [], admins: [ADMIN] })).toEqual({
       tipo: "todos",
     });
   });
 
-  it("negócio aberto SEM dono não é atribuição → todos", () => {
+  it("lead aberto SEM dono não é atribuição → todos", () => {
     expect(
       destinatariosDaMensagem({ atribuidoA: null, donosDeNegocioAberto: [null, ""], admins: [ADMIN] }),
     ).toEqual({ tipo: "todos" });
@@ -34,12 +34,12 @@ describe("destinatariosDaMensagem (regra pura)", () => {
     ).toEqual({ tipo: "restrito", userIds: ["u-ana", ADMIN, "u-admin2"] });
   });
 
-  it("atendente da conversa VENCE o dono do negócio", () => {
+  it("atendente da conversa VENCE o dono do lead", () => {
     const d = destinatariosDaMensagem({ atribuidoA: "u-ana", donosDeNegocioAberto: ["u-bia"], admins: [ADMIN] });
     expect(d).toEqual({ tipo: "restrito", userIds: ["u-ana", ADMIN] });
   });
 
-  it("sem atendente: donos dos negócios abertos (todos eles, sem repetição) + admins", () => {
+  it("sem atendente: donos dos leads abertos (todos eles, sem repetição) + admins", () => {
     const d = destinatariosDaMensagem({
       atribuidoA: null,
       donosDeNegocioAberto: ["u-bia", null, "u-caio", "u-bia"],
@@ -89,7 +89,7 @@ function stub(tabelas: Record<string, { data: unknown; error?: { message: string
 }
 
 describe("carregarDestinatariosDaMensagem", () => {
-  it("conversa atribuída: não consulta negócio, lê admins ativos da org", async () => {
+  it("conversa atribuída: não consulta lead, lê admins ativos da org", async () => {
     const { db, consultas } = stub({
       conversations: { data: { assigned_to_user_id: "u-ana", contact_id: "ct-1", is_group: false } },
       user_organizations: { data: [{ user_id: ADMIN }] },
@@ -103,7 +103,7 @@ describe("carregarDestinatariosDaMensagem", () => {
     expect(admins).toContainEqual(["is", "revoked_at", null]);
   });
 
-  it("sem atendente: busca negócios ABERTOS do contato, filtrando a org", async () => {
+  it("sem atendente: busca leads ABERTOS do contato, filtrando a org", async () => {
     const { db, consultas } = stub({
       conversations: { data: { assigned_to_user_id: null, contact_id: "ct-1", is_group: false } },
       crm_leads: { data: [{ owner_user_id: "u-bia" }] },
@@ -126,7 +126,7 @@ describe("carregarDestinatariosDaMensagem", () => {
     expect(consultas.find((c) => c.tabela === "crm_leads")!.filtros).toContainEqual(["eq", "contact_id", "ct-evento"]);
   });
 
-  it("sem atendente e sem negócio com dono → todos, e nem lê os admins", async () => {
+  it("sem atendente e sem lead com dono → todos, e nem lê os admins", async () => {
     const { db, consultas } = stub({
       conversations: { data: { assigned_to_user_id: null, contact_id: "ct-1", is_group: false } },
       crm_leads: { data: [{ owner_user_id: null }] },

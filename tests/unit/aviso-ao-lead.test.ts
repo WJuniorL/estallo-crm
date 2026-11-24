@@ -67,7 +67,7 @@ describe("motivoDoAviso traduz o que o banco grava", () => {
 describe("o texto respeita o estado REAL da equipe", () => {
   it("instalação sem ninguém configurado: registra, não promete prazo", () => {
     const t = textoDoAviso("pediu_humano", { disponiveis: 0, total: 0 }, LEAD);
-    expect(t).toMatch(/registr|anotad|primeira oportunidade/i);
+    expect(t).toMatch(/registr|anotad|primeira lead/i);
     expect(t).not.toMatch(/aguard/i);
   });
 

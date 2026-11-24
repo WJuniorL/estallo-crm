@@ -22,7 +22,7 @@ export function AssignLeadOwnerForm({
   const { data: membros } = useAssignableMembers(true);
   return (
     <div className="space-y-2">
-      <Label htmlFor="assign-lead-owner">{t("Novo responsável pelo negócio")}</Label>
+      <Label htmlFor="assign-lead-owner">{t("Novo responsável pelo lead")}</Label>
       <Select value={config.usuario_id || undefined} onValueChange={(v) => onChange({ usuario_id: v })}>
         <SelectTrigger id="assign-lead-owner" aria-invalid={!config.usuario_id}>
           <SelectValue placeholder={t("Escolha um atendente")} />
@@ -36,7 +36,7 @@ export function AssignLeadOwnerForm({
         </SelectContent>
       </Select>
       <p className="text-xs text-text-muted">
-        {t("Troca só o responsável pelo negócio. A conversa continua com quem a atende.")}
+        {t("Troca só o responsável pelo lead. A conversa continua com quem a atende.")}
       </p>
     </div>
   );

@@ -74,7 +74,7 @@ const CURADORIA: {
     comoChamar: "O que está esfriando",
     porQue: "Quem esfriou e ainda está aberto, para você agir antes de perder.",
     comoFunciona: [
-      "Ele observa há quanto tempo cada negócio em aberto não tem resposta",
+      "Ele observa há quanto tempo cada lead em aberto não tem resposta",
       "Os que estão esfriando sobem para o topo desta lista",
       "Você decide quem merece um empurrão seu, em vez de descobrir tarde demais",
     ],

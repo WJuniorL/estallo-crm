@@ -218,7 +218,7 @@ describe("a razão é DERIVADA do cálculo, e isso é verificável", () => {
 });
 
 describe("os quatro deltas do contrato", () => {
-  it("negócio FECHADO não tem probabilidade de fechar", () => {
+  it("lead FECHADO não tem probabilidade de fechar", () => {
     // Sem isto, um lead ganho exibiria "72%" para sempre no card — número que
     // não muda decisão nenhuma, porque a pergunta já foi respondida.
     for (const status of ["won", "lost"] as const) {

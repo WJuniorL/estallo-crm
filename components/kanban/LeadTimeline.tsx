@@ -130,7 +130,7 @@ export function LeadTimeline({ itens, chegouAoVivo, isLoading, isError, onRetry 
   if (itens.length === 0) {
     return (
       <p className="py-4 text-xs text-text-muted">
-        {t("Nada aconteceu com este negócio ainda.")}
+        {t("Nada aconteceu com este lead ainda.")}
       </p>
     );
   }

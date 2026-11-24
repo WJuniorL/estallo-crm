@@ -125,7 +125,7 @@ function criarBody(sobrescreve: Record<string, unknown> = {}) {
   return {
     pipeline_id: FUNIL,
     stage_id: ETAPA,
-    title: "Segundo negócio da Michelle",
+    title: "Segundo lead da Michelle",
     contact_id: CONTATO,
     source: "manual",
     ...sobrescreve,
@@ -137,7 +137,7 @@ beforeEach(() => {
   authOk();
 });
 
-describe("POST /api/v1/leads — aviso de negócio aberto duplicado", () => {
+describe("POST /api/v1/leads — aviso de lead aberto duplicado", () => {
   it("mesmo contato E mesmo funil abertos → cria E devolve meta.avisos", async () => {
     const { cliente, filtros } = supabaseCom([negocio()]);
     vi.mocked(createClient).mockResolvedValue(cliente);
@@ -188,7 +188,7 @@ describe("POST /api/v1/leads — aviso de negócio aberto duplicado", () => {
     expect(body.meta?.avisos).toBeUndefined();
   });
 
-  it("negócio SEM contato → cria sem aviso (não há quem duplicar)", async () => {
+  it("lead SEM contato → cria sem aviso (não há quem duplicar)", async () => {
     const { cliente, filtros } = supabaseCom([negocio()]);
     vi.mocked(createClient).mockResolvedValue(cliente);
 

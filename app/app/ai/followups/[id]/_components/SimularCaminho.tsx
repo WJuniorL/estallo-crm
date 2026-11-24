@@ -55,7 +55,7 @@ export function SimularCaminho({ graph }: { graph: FlowGraph }) {
           ) : (
             <div className="space-y-3">
               <div className="space-y-1">
-                <Label htmlFor="simular-etiquetas">{t("Etiquetas do negócio (exemplo)")}</Label>
+                <Label htmlFor="simular-etiquetas">{t("Etiquetas do lead (exemplo)")}</Label>
                 <Input
                   id="simular-etiquetas"
                   value={etiquetas}

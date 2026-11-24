@@ -79,8 +79,8 @@ beforeAll(() => {
       ('${STAGE_B}', '${ORG_B}', '${PIPE_B}', 'Novo', 'novo', 1000)
       on conflict do nothing;
     insert into public.crm_leads (id, organization_id, pipeline_id, stage_id, title, owner_user_id, owner_kind, assigned_at) values
-      ('${LEAD_A}', '${ORG_A}', '${PIPE_A}', '${STAGE_A}', 'Negócio A', '${AGENT_A}', 'user', now()),
-      ('${LEAD_B}', '${ORG_B}', '${PIPE_B}', '${STAGE_B}', 'Negócio B', '${AGENT_B}', 'user', now())
+      ('${LEAD_A}', '${ORG_A}', '${PIPE_A}', '${STAGE_A}', 'Lead A', '${AGENT_A}', 'user', now()),
+      ('${LEAD_B}', '${ORG_B}', '${PIPE_B}', '${STAGE_B}', 'Lead B', '${AGENT_B}', 'user', now())
       on conflict do nothing;
     insert into public.catalog_products (id, organization_id, codigo, nome, preco_cents) values
       ('${PROD_A}', '${ORG_A}', 'PN-1', 'Plano anual', 100000)
@@ -88,7 +88,7 @@ beforeAll(() => {
   `);
 });
 
-describe("crm_lead_products — o valor do negócio é a soma dos itens", () => {
+describe("crm_lead_products — o valor do lead é a soma dos itens", () => {
   it("o agent A vincula dois itens e o valor vira a soma, com o desconto abatido", () => {
     comoUsuario(
       AGENT_A,
@@ -131,7 +131,7 @@ describe("crm_lead_products — isolamento entre organizações", () => {
     expect(comoUsuario(AGENT_B, `select count(*) from public.crm_lead_products where lead_id = '${LEAD_A}';`)).toBe("0");
   });
 
-  it("o agent A não pendura item no negócio da org B, nem dizendo que é da org dele", () => {
+  it("o agent A não pendura item no lead da org B, nem dizendo que é da org dele", () => {
     comoUsuario(
       AGENT_A,
       `do $$ begin

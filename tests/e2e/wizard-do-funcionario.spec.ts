@@ -114,7 +114,7 @@ test.describe("o wizard monta um funcionário", () => {
     }
   });
 
-  test("o nome do negócio chega ao cabeçalho do passo seguinte", async ({ page }) => {
+  test("o nome do lead chega ao cabeçalho do passo seguinte", async ({ page }) => {
     await login(page);
     await page.waitForURL(/\/onboarding\/welcome/, { timeout: 30_000 });
 

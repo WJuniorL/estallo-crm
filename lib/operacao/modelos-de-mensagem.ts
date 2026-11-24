@@ -233,7 +233,7 @@ function valoresDoIntegrador(
     }
     if (marcacaoDoCrm(chave)) {
       problemas.push(
-        `"${chave}" sai do contato ou do negócio — mande contact_id (ou lead_id) em vez de preenchê-la`,
+        `"${chave}" sai do contato ou do lead — mande contact_id (ou lead_id) em vez de preenchê-la`,
       );
       continue;
     }

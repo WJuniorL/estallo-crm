@@ -36,7 +36,7 @@ const NEGOCIO_FORA_DA_CONVERSA = {
   permitido: false,
   motivo: "fora_da_conversa",
   mensagem:
-    "esta conversa é com outra pessoa — um negócio que não é deste cliente não é seu para ver; " +
+    "esta conversa é com outra pessoa — um lead que não é deste cliente não é seu para ver; " +
     "siga a conversa com quem está falando.",
 } as const;
 
@@ -51,7 +51,7 @@ const NEGOCIO_CONTATO_PESSOAL = {
   permitido: false,
   motivo: "contato_pessoal",
   mensagem:
-    "este negócio é de um contato marcado como pessoal — fora da operação: não leia " +
+    "este lead é de um contato marcado como pessoal — fora da operação: não leia " +
     "nem escreva aqui; siga a conversa com quem está falando.",
 } as const;
 
@@ -86,7 +86,7 @@ async function recusaSeLeadDePessoal(
  * cada organização, e um prompt que esquecesse gravava o pedido cem vezes menor.
  */
 const VALOR_DO_NEGOCIO =
-  "valor do negócio × 100, em QUALQUER moeda (também guarani): R$ 249,90 → 24990; ₲125.000 → 12500000. " +
+  "valor do lead × 100, em QUALQUER moeda (também guarani): R$ 249,90 → 24990; ₲125.000 → 12500000. " +
   "O preço do catálogo (preco_cents) NÃO segue esta régua em moeda sem centavos: multiplique por 100.";
 
 /**
@@ -157,7 +157,7 @@ export const crmListLeads: McpToolDefinition<typeof listInputShape> = {
   description:
     "Lista leads do CRM filtrando por pipeline, stage, status e owner. Cursor base64 para paginação. " +
     "Governança por lead: owner_user_id + owner_user_name (só o nome do dono, sem email/telefone), stage ({ id, name } legível além do stage_id) e tags[]." +
-    " Em conversa de atendimento, lista apenas os negócios do contato desta conversa.",
+    " Em conversa de atendimento, lista apenas os leads do contato desta conversa.",
   inputSchema: listInputShape,
   category: "read",
   requiresRole: "agent",
@@ -205,7 +205,7 @@ export const crmGetLead: McpToolDefinition<typeof getInputShape> = {
   description:
     "Retorna um lead pelo UUID. Inclui pipeline_id, stage_id, status, owner. " +
     "Governança: owner_user_id + owner_user_name (só o nome, sem email/telefone), stage ({ id, name } legível) e tags[]." +
-    " Em conversa de atendimento, só abre negócio do contato desta conversa.",
+    " Em conversa de atendimento, só abre lead do contato desta conversa.",
   inputSchema: getInputShape,
   category: "read",
   requiresRole: "agent",
@@ -460,7 +460,7 @@ export const crmMoveLeadStage: McpToolDefinition<typeof moveInputShape> = {
     // sessão. Instrução que não pode ser cumprida faz o modelo prometer ao
     // cliente uma ação que nunca acontece — o mesmo defeito da #922, do outro
     // lado. A tool de clone é fatia própria; até lá, a saída honesta é o humano.
-    "Levar o negócio para OUTRO funil é proibido aqui e ainda não é uma ferramenta sua: " +
+    "Levar o lead para OUTRO funil é proibido aqui e ainda não é uma ferramenta sua: " +
     "não prometa ao cliente que você vai mudar o funil — diga que vai passar para a equipe.",
   inputSchema: moveInputShape,
   category: "write",
@@ -504,11 +504,11 @@ const retomarInputShape = {
 export const crmRetomarLead: McpToolDefinition<typeof retomarInputShape> = {
   name: "crm_retomar_lead",
   description:
-    "Retoma um negócio ENCERRADO (perdido ou ganho) como um negócio NOVO no mesmo funil, com o mesmo contato, " +
+    "Retoma um lead ENCERRADO (perdido ou ganho) como um lead NOVO no mesmo funil, com o mesmo contato, " +
     "source='retomada' e retomado_de_lead_id apontando para o original — que NÃO é alterado (status e motivo ficam intactos). " +
     "É o que fazer quando o cliente volta depois de uma venda fechada e a equipe quer uma nova tentativa registrada: " +
-    "já o crm_move_lead_stage para uma etapa aberta reabre o PRÓPRIO negócio encerrado. " +
-    "O negócio original precisa estar encerrado; um negócio ABERTO é recusado (reabertura_lead_aberto).",
+    "já o crm_move_lead_stage para uma etapa aberta reabre o PRÓPRIO lead encerrado. " +
+    "O lead original precisa estar encerrado; um lead ABERTO é recusado (reabertura_lead_aberto).",
   inputSchema: retomarInputShape,
   category: "write",
   requiresRole: "agent",

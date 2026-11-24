@@ -245,7 +245,7 @@ export async function validateConfig(db: pg.PoolClient, org: string, input: Camp
     !agent.pipeline_ids?.includes(config.pipeline_id)
   )
     throw new ProspectingError(
-      "Publique o agente com a ferramenta de mover negócios e acesso ao funil escolhido.",
+      "Publique o agente com a ferramenta de mover leads e acesso ao funil escolhido.",
     );
   const channel = (
     await db.query<{ provider: ChannelProvider; status: string }>(

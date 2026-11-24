@@ -779,7 +779,7 @@ describe('validateFlowForPublish — a regra precisa poder decidir', () => {
     expect(r.errors[0]!.message).not.toContain(ETAPA_APAGADA);
   });
 
-  it('etapa arquivada reprova — nenhum negócio fica nela, a regra nunca decide', () => {
+  it('etapa arquivada reprova — nenhum lead fica nela, a regra nunca decide', () => {
     const r = validateFlowForPublish(comRegras([{ field: 'lead_stage', op: 'eq', value: ETAPA_ARQUIVADA }]), { etapas });
     expect(codigos(r)).toEqual(['check_stage_archived']);
     if (r.ok) return;

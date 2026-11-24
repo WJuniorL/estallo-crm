@@ -152,7 +152,7 @@ describe("pós-entrada de contato pessoal não gera nada", () => {
     contatoPessoal = true;
     await rodar();
 
-    expect(garantirLeadDaConversa, "negócio não nasce de pessoal").not.toHaveBeenCalled();
+    expect(garantirLeadDaConversa, "lead não nasce de pessoal").not.toHaveBeenCalled();
     expect(acelerarFollowupDoInbound, "follow-up quente não acorda").not.toHaveBeenCalled();
     expect(drenarEventosDoInbound, "nem o dreno do inbound roda").not.toHaveBeenCalled();
     expect(

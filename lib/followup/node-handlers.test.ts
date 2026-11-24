@@ -1233,7 +1233,7 @@ describe("turno descartado pela suspensão (migration 0501)", () => {
   });
 });
 
-describe("processNode — condition por produto do negócio", () => {
+describe("processNode — condition por produto do lead", () => {
   const COLETA = { id: "chk_coleta", field: "product" as const, op: "contains" as const, value: "Coleta na Prática" };
   const MICRO = { id: "chk_micro", field: "product" as const, op: "contains" as const, value: "Micro na Prática" };
   const node = (): FlowNode => ({

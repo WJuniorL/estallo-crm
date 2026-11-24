@@ -65,7 +65,7 @@ describe("o que a tela EXPLICA", () => {
     render(<FunisDoAgente funis={TODOS} value={[]} onChange={() => {}} />);
     const aviso = screen.getByTestId("agente-sem-funil");
     expect(aviso.textContent).toMatch(/conversa.*normalmente/i);
-    expect(aviso.textContent).toMatch(/não mexe em negócio/i);
+    expect(aviso.textContent).toMatch(/não mexe em lead/i);
   });
 
   it("AVISA quando o funil de entrada ficou de fora — o caso silencioso", () => {
@@ -119,7 +119,7 @@ describe("linguagem", () => {
   it("o texto principal diz o que ACONTECE, não o nome do campo", () => {
     const { container } = render(<FunisDoAgente funis={TODOS} value={[]} onChange={() => {}} />);
     const texto = container.textContent ?? "";
-    expect(texto).toMatch(/move, edita ou encerra negócio/i);
+    expect(texto).toMatch(/move, edita ou encerra lead/i);
   });
 });
 
@@ -137,7 +137,7 @@ describe("a lacuna de tradução (passo 4)", () => {
     const bloco = screen.getByTestId("agente-funis-mudos");
     expect(bloco.textContent).toContain("Comercial - Andrea");
     // Diz a CONSEQUÊNCIA, não o nome da configuração que falta.
-    expect(bloco.textContent).toMatch(/deixar os negócios parados/i);
+    expect(bloco.textContent).toMatch(/deixar os leads parados/i);
   });
 
   it("funil NÃO marcado com a mesma lacuna fica quieto", () => {

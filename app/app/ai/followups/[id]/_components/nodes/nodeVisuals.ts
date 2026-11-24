@@ -194,7 +194,7 @@ export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
     icon: Package,
     chipClassName: "bg-accent-soft text-accent-text",
     borderClassName: "border-l-accent-500",
-    defaultLabel: "Produto do negócio",
+    defaultLabel: "Produto do lead",
     defaultConfig: () => ({ acao: "add", product_id: "", quantidade: 1 }),
   },
   ai_extract: {
@@ -221,7 +221,7 @@ export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
     icon: Target,
     chipClassName: "bg-accent-soft text-accent-text",
     borderClassName: "border-l-accent-500",
-    defaultLabel: "Buscar ou criar negócio",
+    defaultLabel: "Buscar ou criar lead",
     defaultConfig: () => ({ contato: "", pipeline_id: "", stage_id: "", titulo: "", criar: true }),
   },
   http_request: {
@@ -239,7 +239,7 @@ export const NODE_VISUALS: Record<NodeType, NodeVisual> = {
     icon: PencilSimple,
     chipClassName: "bg-accent-soft text-accent-text",
     borderClassName: "border-l-accent-500",
-    defaultLabel: "Atualizar campo do negócio",
+    defaultLabel: "Atualizar campo do lead",
     defaultConfig: () => ({ alvo: "custom_field", chave: "", valor: "" }),
   },
   add_note: {
@@ -418,22 +418,22 @@ export function describeNodeConfig(
     case "lead_product": {
       const c = config as ConfigOf<"lead_product">;
       if (!c.product_id) return t("sem produto escolhido");
-      return c.acao === "remove" ? t("tira o produto do negócio") : `+${c.quantidade} · ${t("produto do catálogo")}`;
+      return c.acao === "remove" ? t("tira o produto do lead") : `+${c.quantidade} · ${t("produto do catálogo")}`;
     }
     case "update_lead_field": {
       const c = config as ConfigOf<"update_lead_field">;
       if (!c.valor.trim()) return t("sem valor");
-      if (c.alvo === "deal_value") return t("valor do negócio");
+      if (c.alvo === "deal_value") return t("valor do lead");
       return c.chave ? (c.alvo === "contact_field" ? `${c.chave} (${t("no contato")})` : c.chave) : t("sem campo escolhido");
     }
     case "add_note": {
       const c = config as ConfigOf<"add_note">;
       if (!c.texto.trim()) return t("sem texto");
-      return c.destino === "conversation_notes" ? t("nota na conversa") : t("nota no negócio");
+      return c.destino === "conversation_notes" ? t("nota na conversa") : t("nota no lead");
     }
     case "assign_lead_owner": {
       const c = config as ConfigOf<"assign_lead_owner">;
-      return c.usuario_id ? t("troca o responsável do negócio") : t("sem responsável escolhido");
+      return c.usuario_id ? t("troca o responsável do lead") : t("sem responsável escolhido");
     }
     case "map_data": {
       const c = config as ConfigOf<"map_data">;

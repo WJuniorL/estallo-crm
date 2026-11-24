@@ -60,7 +60,7 @@ function lead(over: Partial<Lead>): Lead {
     organization_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     pipeline_id: etapa.pipeline_id,
     stage_id: etapa.id,
-    title: "Negócio",
+    title: "Lead",
     description: null,
     contact_id: null,
     value_cents: 24990,
@@ -160,7 +160,7 @@ describe("total da coluna do funil", () => {
     expect(semNbsp(document.body.textContent ?? "")).not.toMatch(/10[. ]000/);
   });
 
-  it("a moeda com mais negócios vem primeiro, mesmo que não seja a do primeiro card", () => {
+  it("a moeda com mais leads vem primeiro, mesmo que não seja a do primeiro card", () => {
     montar([
       lead({ id: "o1", currency: "BRL", value_cents: 100_000 }),
       lead({ id: "o2", currency: "EUR", value_cents: 300_000 }),
@@ -171,7 +171,7 @@ describe("total da coluna do funil", () => {
     expect(semNbsp(total.textContent ?? "")).toBe("5000,00 € + R$ 1.000,00");
   });
 
-  it("conta negócios, não soma valores: a moeda com mais negócios vem primeiro mesmo valendo menos", () => {
+  it("conta leads, não soma valores: a moeda com mais leads vem primeiro mesmo valendo menos", () => {
     // Ordenar pela soma compararia centavos de moedas diferentes — a regra
     // descartada. Aqui a moeda com mais negócios é a de MENOR soma, e só a
     // contagem põe o real na frente.
@@ -186,7 +186,7 @@ describe("total da coluna do funil", () => {
     expect(semNbsp(total.textContent ?? "")).toBe("R$ 300,00 + 9000,00 €");
   });
 
-  it("empate no número de negócios cai em ordem alfabética do código", () => {
+  it("empate no número de leads cai em ordem alfabética do código", () => {
     // A primeira no alfabeto é a de MENOR valor: desempatar pela soma daria
     // o dólar primeiro.
     montar([

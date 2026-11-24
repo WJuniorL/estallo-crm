@@ -74,7 +74,7 @@ async function rodar(produtos: string[]) {
   await pool.query("insert into crm_pipelines(id,organization_id,name,slug) values($1,$2,'Vendas',$3)", [pipeline, GOV_ORG, `v-${slug}`]);
   await pool.query("insert into crm_stages(id,organization_id,pipeline_id,name,slug,position) values($1,$2,$3,'Ganhos',$4,1000)", [stage, GOV_ORG, pipeline, `g-${slug}`]);
   await pool.query(
-    "insert into crm_leads(id,organization_id,contact_id,pipeline_id,stage_id,title,position_in_stage) values($1,$2,$3,$4,$5,'Negócio',500)",
+    "insert into crm_leads(id,organization_id,contact_id,pipeline_id,stage_id,title,position_in_stage) values($1,$2,$3,$4,$5,'Lead',500)",
     [lead, GOV_ORG, contact, pipeline, stage],
   );
   for (const nome of produtos) {
@@ -107,19 +107,19 @@ async function rodar(produtos: string[]) {
   return { depois, facts, contact, lead };
 }
 
-describe("condição por produto do negócio (motor novo, Postgres real)", () => {
-  it("negócio com Coleta na Prática (qualquer variante) segue pela mensagem X", async () => {
+describe("condição por produto do lead (motor novo, Postgres real)", () => {
+  it("lead com Coleta na Prática (qualquer variante) segue pela mensagem X", async () => {
     const { depois, facts } = await rodar(["Coleta na Prática SSA"]);
     expect(facts.products).toEqual(["Coleta na Prática SSA"]);
     expect(depois.current_node_id).toBe("msg_x");
   });
 
-  it("negócio com Micro na Prática segue pela mensagem Y", async () => {
+  it("lead com Micro na Prática segue pela mensagem Y", async () => {
     const { depois } = await rodar(["Micro na Prática"]);
     expect(depois.current_node_id).toBe("msg_y");
   });
 
-  it("negócio com outro produto, ou sem produto, cai no ramo 'nenhum'", async () => {
+  it("lead com outro produto, ou sem produto, cai no ramo 'nenhum'", async () => {
     expect((await rodar(["Hemato na Prática"])).depois.current_node_id).toBe("nenhum");
     expect((await rodar([])).depois.current_node_id).toBe("nenhum");
   });
@@ -131,7 +131,7 @@ describe("condição por produto do negócio (motor novo, Postgres real)", () =>
 
 // O adaptador de PRODUÇÃO lê pela REST (PostgREST). Só roda com o Supabase local de pé.
 const REST = Boolean(process.env.REST_URL && process.env.REST_SERVICE_KEY);
-(REST ? describe : describe.skip)("leitor REST (produção) devolve os produtos do negócio", () => {
+(REST ? describe : describe.skip)("leitor REST (produção) devolve os produtos do lead", () => {
   it("loadLeadFacts pela REST traz os nomes dos produtos do lead fixado", async () => {
     const { contact, lead } = await rodar(["Coleta na Prática SSA", "Micro na Prática"]);
     const rest = createClient(process.env.REST_URL!, process.env.REST_SERVICE_KEY!, { auth: { persistSession: false } });

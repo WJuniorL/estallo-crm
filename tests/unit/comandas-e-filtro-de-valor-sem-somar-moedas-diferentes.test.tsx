@@ -64,7 +64,7 @@ function lead(over: Partial<Lead>): Lead {
     organization_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     pipeline_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
     stage_id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
-    title: "Negócio",
+    title: "Lead",
     description: null,
     contact_id: null,
     value_cents: 0,

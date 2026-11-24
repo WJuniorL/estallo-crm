@@ -45,7 +45,7 @@ beforeAll(() => {
   `);
 });
 
-describe("#2547 — o Atendente cria negócio no modo 'Só os seus'", () => {
+describe("#2547 — o Atendente cria lead no modo 'Só os seus'", () => {
   it("sem dono, a regra recusa (a recusa original da issue)", () => {
     expect(
       writeCountAs(
@@ -56,7 +56,7 @@ describe("#2547 — o Atendente cria negócio no modo 'Só os seus'", () => {
     ).toBe(0);
   });
 
-  it("com ele mesmo de dono, a regra aceita sem migration, e ele vê o negócio", () => {
+  it("com ele mesmo de dono, a regra aceita sem migration, e ele vê o lead", () => {
     expect(
       writeCountAs(
         GOV_AGENT_A,
@@ -79,7 +79,7 @@ describe("#2547 — o Atendente cria negócio no modo 'Só os seus'", () => {
     ).toBe(0);
   });
 
-  it("o negócio do agent A não aparece para o colega nem para outra organização", () => {
+  it("o lead do agent A não aparece para o colega nem para outra organização", () => {
     // Depende do caso de criação acima (mesmo arquivo, ordem sequencial).
     expect(countAs(GOV_AGENT_B, `select count(*) from public.crm_leads where id = '${LEAD_DO_A}';`)).toBe(0);
     // Gerente do GOV_ORG, que não é membro desta org: isolamento entre organizações.

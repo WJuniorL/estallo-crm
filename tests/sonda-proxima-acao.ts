@@ -69,7 +69,7 @@ async function main(): Promise<void> {
     .eq("status", "open")
     .in("contact_id", contatos);
   const alvo = (leads ?? [])[0] as { id: string; title: string; contact_id: string } | undefined;
-  if (!alvo) throw new Error("nenhum negócio com próxima ação — nada a provar");
+  if (!alvo) throw new Error("nenhum lead com próxima ação — nada a provar");
   const proposta = (estados ?? []).find(
     (e) => (e as { contact_id: string }).contact_id === alvo.contact_id,
   ) as { next_action: string };

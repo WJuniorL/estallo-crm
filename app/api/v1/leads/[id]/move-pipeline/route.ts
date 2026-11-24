@@ -78,7 +78,7 @@ export async function POST(
   if (selErr) return fail("internal_error", selErr.message, 500, { requestId });
   if (!lead) return fail("not_found", t("Lead não encontrado."), 404, { requestId });
   if (lead.status !== "open") {
-    return fail("lead_not_open", t("Só um negócio aberto muda de funil."), 422, { requestId });
+    return fail("lead_not_open", t("Só um lead aberto muda de funil."), 422, { requestId });
   }
 
   const { data: stage, error: stageErr } = await supabase
@@ -93,12 +93,12 @@ export async function POST(
     return fail("not_found", t("Etapa de destino não encontrada."), 404, { requestId });
   }
   if (stage.pipeline_id === lead.pipeline_id) {
-    return fail("same_pipeline", t("O negócio já está neste funil."), 422, { requestId });
+    return fail("same_pipeline", t("O lead já está neste funil."), 422, { requestId });
   }
   if (stage.is_won || stage.is_lost) {
     return fail(
       "destino_fechado",
-      t("Escolha uma etapa aberta. Para ganhar ou perder, use os botões do negócio."),
+      t("Escolha uma etapa aberta. Para ganhar ou perder, use os botões do lead."),
       422,
       { requestId },
     );

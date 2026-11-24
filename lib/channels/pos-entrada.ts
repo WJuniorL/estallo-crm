@@ -369,7 +369,7 @@ async function fecharNegociosAbertosDeQuemPediuParar(
       .eq("contact_id", entrada.contactId)
       .eq("status", "open");
     if (error) {
-      logger.warn("pos-entrada: negócios do contato que pediu para parar não lidos", {
+      logger.warn("pos-entrada: leads do contato que pediu para parar não lidos", {
         organization_id: entrada.organizationId,
         contact_id: entrada.contactId,
         detail: error.message.slice(0, 160),
@@ -397,7 +397,7 @@ async function fecharNegociosAbertosDeQuemPediuParar(
           },
         );
       } catch (err) {
-        logger.warn("pos-entrada: negócio de quem pediu para parar não foi fechado", {
+        logger.warn("pos-entrada: lead de quem pediu para parar não foi fechado", {
           organization_id: entrada.organizationId,
           contact_id: entrada.contactId,
           lead_id: lead.id,
@@ -406,7 +406,7 @@ async function fecharNegociosAbertosDeQuemPediuParar(
       }
     }
   } catch (err) {
-    logger.warn("pos-entrada: fechamento dos negócios de quem pediu para parar falhou", {
+    logger.warn("pos-entrada: fechamento dos leads de quem pediu para parar falhou", {
       organization_id: entrada.organizationId,
       contact_id: entrada.contactId,
       detail: err instanceof Error ? err.message.slice(0, 160) : "desconhecido",

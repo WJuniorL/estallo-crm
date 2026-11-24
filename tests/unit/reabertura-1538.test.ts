@@ -75,7 +75,7 @@ describe("pedeEscolhaDeReabertura — quando a tela pergunta antes de mover", ()
 });
 
 describe("recusaReabertura — as três condições SÓ juntas recusam", () => {
-  it("funil novo_negocio + negócio encerrado + etapa aberta ⇒ reabertura_cria_novo", () => {
+  it("funil novo_negocio + lead encerrado + etapa aberta ⇒ reabertura_cria_novo", () => {
     const recusa = recusaReabertura({
       modo: "novo_negocio",
       statusAtual: "lost",
@@ -95,7 +95,7 @@ describe("recusaReabertura — as três condições SÓ juntas recusam", () => {
     ).toBeNull();
   });
 
-  it("negócio ABERTO nunca é recusado: mover o que já está no quadro é o de sempre", () => {
+  it("lead ABERTO nunca é recusado: mover o que já está no quadro é o de sempre", () => {
     for (const statusAtual of ["open", undefined, null]) {
       expect(
         recusaReabertura({ modo: "novo_negocio", statusAtual, etapaDestino: ABERTA }),

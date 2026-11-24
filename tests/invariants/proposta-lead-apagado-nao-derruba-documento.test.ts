@@ -8,7 +8,7 @@ import { GOV_CONTACT_1, GOV_ORG, GOV_PIPELINE, GOV_STAGE, seedGov, sql } from ".
  * tem valor fora do negócio, e vira `cancelada` (trigger
  * `trg_crm_leads_cancelar_propostas_rascunho`, migration 0401).
  */
-describe("apagar o negócio não apaga a proposta enviada", () => {
+describe("apagar o lead não apaga a proposta enviada", () => {
   beforeAll(() => seedGov());
 
   it("proposta enviada sobrevive; lead_id vira null", () => {
@@ -30,7 +30,7 @@ describe("apagar o negócio não apaga a proposta enviada", () => {
     sql(`delete from public.crm_proposals where id = '${propostaId}';`);
   });
 
-  it("rascunho vira cancelada quando o negócio é apagado", () => {
+  it("rascunho vira cancelada quando o lead é apagado", () => {
     const leadId = "cccccccc-9999-4000-8000-000000000412";
     const propostaId = "cccccccc-9999-4000-8000-000000000413";
     sql(`

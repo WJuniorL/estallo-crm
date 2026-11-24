@@ -12,7 +12,7 @@ import { listaLegivel, ACTIVITY_LABELS, activityLabel } from "@/lib/leads/activi
  */
 describe("a edição humana na timeline", () => {
   it("o tipo tem rótulo em português, e não o nome de máquina", () => {
-    expect(ACTIVITY_LABELS.lead_edited).toBe("Dados do negócio alterados");
+    expect(ACTIVITY_LABELS.lead_edited).toBe("Dados do lead alterados");
     expect(activityLabel("lead_edited")).not.toBe("lead_edited");
   });
 

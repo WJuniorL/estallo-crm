@@ -199,7 +199,7 @@ export function montarPares(
       titulo: t("Conversão"),
       eficiencia: {
         chave: "ganhos",
-        rotulo: t("Negócios ganhos"),
+        rotulo: t("Leads ganhos"),
         valor: eficiencia.ganhos,
         unidade: "contagem",
       },

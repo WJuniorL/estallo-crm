@@ -32,7 +32,7 @@ export function AddNoteForm({
         </SelectTrigger>
         <SelectContent>
           {/* Literais por ramo (cerca de i18n): os rótulos são os de `DESTINOS_DA_NOTA` (vocabulario.ts). */}
-          <SelectItem value="lead_timeline">{t("No negócio (linha do tempo)")}</SelectItem>
+          <SelectItem value="lead_timeline">{t("No lead (linha do tempo)")}</SelectItem>
           <SelectItem value="conversation_notes">{t("Na conversa (notas internas)")}</SelectItem>
         </SelectContent>
       </Select>

@@ -85,7 +85,7 @@ async function cenario(nodes: ReturnType<typeof no>[]) {
 }
 
 describe("buscar ou criar + «Aplicar em» (motor novo, Postgres real)", () => {
-  it("cria contato e negócio, e o bloco seguinte grava a tag no negócio NOVO — o da execução fica intacto", async () => {
+  it("cria contato e lead, e o bloco seguinte grava a tag no lead NOVO — o da execução fica intacto", async () => {
     const fone = telefone();
     const { lead, pipeline, stage, saidas } = await cenario([
       no("c", "find_or_create_contact", { busca: "phone", valor: fone, criar: true, nome: "Bruno" }),
@@ -104,7 +104,7 @@ describe("buscar ou criar + «Aplicar em» (motor novo, Postgres real)", () => {
     expect(atividade).toHaveLength(1);
   });
 
-  it("contato que já existe é achado, não duplicado; negócio aberto no funil é achado, não duplicado", async () => {
+  it("contato que já existe é achado, não duplicado; lead aberto no funil é achado, não duplicado", async () => {
     const fone = telefone();
     const existente = randomUUID();
     await pool.query("insert into contacts(id,organization_id,name,phone_number) values($1,$2,'Carla',$3)", [existente, GOV_ORG, canonicalPhoneBR(fone)]);

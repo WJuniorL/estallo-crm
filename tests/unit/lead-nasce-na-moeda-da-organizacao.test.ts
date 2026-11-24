@@ -177,7 +177,7 @@ describe("createLeadHandler — moeda", () => {
     const { cliente, inseridos } = supabaseCom("EUR");
 
     await crmCreateLead.handler(
-      { pipeline_id: PIPELINE, stage_id: ETAPA, title: "Negócio aberto pelo agente" },
+      { pipeline_id: PIPELINE, stage_id: ETAPA, title: "Lead aberto pelo agente" },
       { supabase: cliente, organizationId: ORG, actor: { type: "user", id: "user-1" }, requestId: "req-1" } as never,
     );
 

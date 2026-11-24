@@ -169,7 +169,7 @@ export function CamposPersonalizadosClient() {
             )}
           >
             {e === "lead" ? <Funnel size={14} aria-hidden /> : <Users size={14} aria-hidden />}
-            {e === "lead" ? t("Oportunidade") : t("Contato")}
+            {e === "lead" ? t("Lead") : t("Contato")}
             <span className="rounded-full bg-muted px-1.5 text-xs">{contagem(e)}</span>
           </button>
         ))}

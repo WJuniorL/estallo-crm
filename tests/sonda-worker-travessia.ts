@@ -79,7 +79,7 @@ async function main(): Promise<void> {
   };
 
   const r1 = await observaTravessias(admin, ORG);
-  console.info(`1. negócio novo · estado=${await estado()} · linhas=${(await linhas()).length}`);
+  console.info(`1. lead novo · estado=${await estado()} · linhas=${(await linhas()).length}`);
   console.info(`   worker: ${r1.travessias} travessias, ${r1.esfriaram} esfriaram`);
 
   // ── O GATILHO: o RELÓGIO anda. Ninguém toca o lead. ──────────────────────
@@ -119,7 +119,7 @@ async function main(): Promise<void> {
     source_module: "crm",
     source_id: leadId,
     actor_kind: "system",
-    reason: "alguém trabalhou no negócio",
+    reason: "alguém trabalhou no lead",
   });
   const r4 = await observaTravessias(admin, ORG);
   console.info(`4. após interação real · estado=${await estado()} · ${r4.reativaram} reativações`);

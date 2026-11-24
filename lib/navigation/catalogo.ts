@@ -233,7 +233,7 @@ export const NAV_CATALOG = [
     // por funil/etapa e obrigatoriedade. Substitui o editor por funil.
     href: "/app/crm/campos",
     label: "Campos personalizados",
-    description: "Os dados extras do negócio e do contato — onde aparecem e quando são obrigatórios.",
+    description: "Os dados extras do lead e do contato — onde aparecem e quando são obrigatórios.",
     icon: "ListChecks",
     group: "crm",
     section: "Preparar a venda",
@@ -245,7 +245,7 @@ export const NAV_CATALOG = [
     // `manager`, a mesma régua da rota e da função do banco.
     href: "/app/crm/tags",
     label: "Tags",
-    description: "As etiquetas de oportunidade e de contato: nome, cor e onde estão em uso.",
+    description: "As etiquetas de lead e de contato: nome, cor e onde estão em uso.",
     icon: "Tag",
     group: "crm",
     section: "Preparar a venda",
@@ -333,7 +333,7 @@ export const NAV_CATALOG = [
     // um pixel por isso.
     href: "/app/tasks/planos",
     label: "Planos de tarefa",
-    description: "Sequências reutilizáveis de tarefas — montar uma vez e aplicar a cada negócio.",
+    description: "Sequências reutilizáveis de tarefas — montar uma vez e aplicar a cada lead.",
     icon: "FlowArrow",
     group: "crm",
     section: "O dia a dia da venda",
@@ -847,7 +847,7 @@ export const NAV_CATALOG = [
     // de `fn_dashboard_vendas` (migration 0719).
     href: "/app/dashboard",
     label: "Dashboard",
-    description: "Funil, conversão, ranking da equipe e negócios esfriando, com comparação ao período anterior.",
+    description: "Funil, conversão, ranking da equipe e leads esfriando, com comparação ao período anterior.",
     icon: "Gauge",
     group: "analise",
     section: "Os números do período",

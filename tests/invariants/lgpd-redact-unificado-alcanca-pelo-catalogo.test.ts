@@ -170,7 +170,7 @@ const DECISOES: Record<string, Decisao> = {
   crm_leads: {
     decidida: "redigir",
     caminho: "cascata",
-    razao: "Passo 5: título vira o rótulo, descrição/custom_fields/source_metadata/tags zerados; funil, estágio e valor ficam (são do negócio, não da pessoa).",
+    razao: "Passo 5: título vira o rótulo, descrição/custom_fields/source_metadata/tags zerados; funil, estágio e valor ficam (são do lead, não da pessoa).",
   },
   orders: {
     decidida: "redigir",
@@ -290,7 +290,7 @@ const DECISOES: Record<string, Decisao> = {
   lead_state: {
     decidida: "redigir",
     caminho: "gatilho",
-    razao: "0494 (#1964): a LINHA e o estágio ficam (é o estado do negócio), mas next_action (texto) e qualification (jsonb) — texto livre que cita a pessoa — são zerados na virada de is_anonymized pelo gatilho fn_redigir_conversas_ao_anonimizar (a porta da 0391 que a app já usava em lib/lgpd/cascata.ts passo 7).",
+    razao: "0494 (#1964): a LINHA e o estágio ficam (é o estado do lead), mas next_action (texto) e qualification (jsonb) — texto livre que cita a pessoa — são zerados na virada de is_anonymized pelo gatilho fn_redigir_conversas_ao_anonimizar (a porta da 0391 que a app já usava em lib/lgpd/cascata.ts passo 7).",
   },
   // ── manter: a linha e o conteúdo ficam, por decisão ───────────────────────
   before_send_traces: {

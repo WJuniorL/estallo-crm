@@ -410,14 +410,14 @@ test.describe("Relatório de atividades — o período, pela tela", () => {
     ).toEqual(["30", "7", "90"]);
   });
 
-  test("da linha do relatório se chega ao negócio — a lista não é decorativa", async ({ page }) => {
+  test("da linha do relatório se chega ao lead — a lista não é decorativa", async ({ page }) => {
     await login(page, creds.users.manager!.email, creds.password);
     await page.goto("/app/activities");
     await expect(page.getByTestId("total-de-atividades")).toBeVisible({ timeout: 30_000 });
 
     const lista = page.getByTestId("lista-de-atividades");
     const atalho = lista.getByRole("link", { name: NEGOCIO_RECENTE }).first();
-    await expect(atalho, "cada linha aponta para o negócio de onde veio").toBeVisible();
+    await expect(atalho, "cada linha aponta para o lead de onde veio").toBeVisible();
     expect(await atalho.getAttribute("href")).toBe(`/app/leads/${leadRecenteId}`);
 
     await atalho.click();

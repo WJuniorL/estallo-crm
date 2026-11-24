@@ -258,7 +258,7 @@ export function LeadDossier({
       <div ref={campos}>
         <BlocoRecolhivel
           id="dossie-dados"
-          titulo={t("Dados do negócio")}
+          titulo={t("Dados do lead")}
           icone={<ListChecks size={14} aria-hidden />}
           // Recolher a ficha não desmonta o campo em edição (a gravação dele sai no blur).
           manterMontado

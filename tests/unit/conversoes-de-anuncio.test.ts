@@ -130,7 +130,7 @@ describe("as duas portas do fechamento", () => {
     expect(upserts.at(-1)?.valores.status).toBe("sent");
   });
 
-  it("sai barato quando a etapa mudou e o negócio não fechou", async () => {
+  it("sai barato quando a etapa mudou e o lead não fechou", async () => {
     vi.mocked(createAdminClient).mockReturnValue(
       fakeAdmin({ crm_leads: { ...leadGanho, status: "open" } }) as never,
     );
@@ -416,7 +416,7 @@ describe("confirmação e recuperação", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
   it.each(["won", "open"])(
-    "protocolo pendente consulta mesmo com negócio %s e origem alterada",
+    "protocolo pendente consulta mesmo com lead %s e origem alterada",
     async (status) => {
       const transporte = transporteDe("google_ads")!;
       const consultar = vi.spyOn(transporte, "consultar").mockResolvedValue({ tipo: "ok" });

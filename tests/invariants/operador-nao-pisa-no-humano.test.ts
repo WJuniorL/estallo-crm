@@ -234,7 +234,7 @@ beforeAll(async () => {
   );
   await pool.query(
     `insert into crm_leads (id, organization_id, pipeline_id, stage_id, contact_id, title, status)
-     values ($1, $2, $3, $4, $5, 'Negócio do handoff', 'open') on conflict (id) do nothing`,
+     values ($1, $2, $3, $4, $5, 'Lead do handoff', 'open') on conflict (id) do nothing`,
     [LEAD, ORG, PIPELINE, STAGE, CONTACT],
   );
   await pool.query(
@@ -357,14 +357,14 @@ describe("o desfecho do Operador vira registro", () => {
     expect(eventos[0]!.porque).toBe("handoff_humano");
   });
 
-  it("a promessa sem responsável aparece na TIMELINE do negócio, não só no banco", async () => {
+  it("a promessa sem responsável aparece na TIMELINE do lead, não só no banco", async () => {
     await rodarOperador();
     const { rows } = await pool.query<{ type: string; payload: Record<string, unknown> }>(
       `select a.type, a.payload from crm_lead_activities a
         where a.organization_id = $1 and a.type = 'promise_unowned'`,
       [ORG],
     );
-    expect(rows, "a linha não chegou à timeline — o dono do negócio não vê").toHaveLength(1);
+    expect(rows, "a linha não chegou à timeline — o dono do lead não vê").toHaveLength(1);
     expect(rows[0]!.payload.porque).toBe("operador_sem_ferramentas");
   });
 

@@ -84,7 +84,7 @@ async function criar(opts: { semLead?: boolean; tags?: string[]; dono?: string |
       contact,
       pipeline,
       stage,
-      opts.titulo ?? "Negócio",
+      opts.titulo ?? "Lead",
       opts.tags ?? [],
       opts.dono === undefined ? GOV_AGENT_A : opts.dono,
     ],
@@ -207,8 +207,8 @@ async function cenarioTag(inicio: Parameters<typeof criar>[0], tags: string[], e
   return { antigo: await tagPelaAntiga(a, tags, extra), novo: await tagPelaNova(b, tags, extra) };
 }
 
-suite("editar tag: motor antigo × motor novo (mesmo cenário, dois negócios idênticos)", () => {
-  it("negócio sem tag + uma tag nova: mesmas tags e mesmo evento", async () => {
+suite("editar tag: motor antigo × motor novo (mesmo cenário, dois leads idênticos)", () => {
+  it("lead sem tag + uma tag nova: mesmas tags e mesmo evento", async () => {
     const { antigo, novo } = await cenarioTag({}, ["vip"]);
     nota("[tag nova] antigo:", antigo, "| novo:", novo);
     expect(antigo.recusa).toBeNull();
@@ -218,7 +218,7 @@ suite("editar tag: motor antigo × motor novo (mesmo cenário, dois negócios id
     expect(novo.eventos).toEqual(antigo.eventos);
   });
 
-  it("negócio com tags + mistura de repetida e nova: merge idempotente igual, sem apagar as existentes", async () => {
+  it("lead com tags + mistura de repetida e nova: merge idempotente igual, sem apagar as existentes", async () => {
     const { antigo, novo } = await cenarioTag({ tags: ["a", "b"] }, ["b", "vip"]);
     expect(antigo.recusa).toBeNull();
     expect(novo.recusa).toBeNull();
@@ -227,7 +227,7 @@ suite("editar tag: motor antigo × motor novo (mesmo cenário, dois negócios id
     expect(novo.eventos).toEqual(antigo.eventos);
   });
 
-  it("tag que o negócio já tem: nenhum dos dois muda nada nem emite evento", async () => {
+  it("tag que o lead já tem: nenhum dos dois muda nada nem emite evento", async () => {
     const { antigo, novo } = await cenarioTag({ tags: ["vip"] }, ["vip"]);
     expect(novo.recusa).toBe(antigo.recusa);
     expect(novo.tagsDoLead).toEqual(antigo.tagsDoLead);
@@ -244,7 +244,7 @@ suite("editar tag: motor antigo × motor novo (mesmo cenário, dois negócios id
     expect(antigo.atividades).not.toContain("lead_edited");
   });
 
-  it("destino \"contato\" SEM negócio: os dois gravam a tag no contato (a divergência acima some com a opção)", async () => {
+  it("destino \"contato\" SEM lead: os dois gravam a tag no contato (a divergência acima some com a opção)", async () => {
     const { antigo, novo } = await cenarioTag({ semLead: true }, ["vip"], { destino: "contato" });
     expect(antigo.recusa).toBeNull();
     expect(novo.recusa).toBeNull();
@@ -254,7 +254,7 @@ suite("editar tag: motor antigo × motor novo (mesmo cenário, dois negócios id
     expect(novo.eventos).toEqual(["contact.tag_added"]);
   });
 
-  it("destino \"contato\" COM negócio: grava no contato e não toca nas tags do negócio, nos dois", async () => {
+  it("destino \"contato\" COM lead: grava no contato e não toca nas tags do lead, nos dois", async () => {
     const { antigo, novo } = await cenarioTag({ tags: ["a"] }, ["vip"], { destino: "contato" });
     expect(novo.recusa).toBe(antigo.recusa);
     expect(novo.tagsDoContato).toEqual(["vip"]);
@@ -263,9 +263,9 @@ suite("editar tag: motor antigo × motor novo (mesmo cenário, dois negócios id
     expect(antigo.tagsDoLead).toEqual(["a"]);
   });
 
-  it("DIVERGÊNCIA CONHECIDA — contato SEM negócio e destino padrão (negócio): o antigo grava a tag no contato; o novo recusa", async () => {
+  it("DIVERGÊNCIA CONHECIDA — contato SEM lead e destino padrão (lead): o antigo grava a tag no contato; o novo recusa", async () => {
     const { antigo, novo } = await cenarioTag({ semLead: true }, ["vip"]);
-    nota("[sem negócio] antigo:", antigo, "| novo:", novo);
+    nota("[sem lead] antigo:", antigo, "| novo:", novo);
     expect(antigo.recusa).toBeNull();
     expect(antigo.tagsDoContato).toEqual(["vip"]);
     expect(novo.recusa).not.toBeNull();
@@ -376,8 +376,8 @@ const base: ConfigTarefa = {
   prioridade: "high",
 };
 
-suite("tarefa interna: motor antigo × motor novo (mesmo cenário, dois negócios idênticos)", () => {
-  it("dono do negócio como responsável: mesma tarefa (título, prioridade, responsável, prazo, vínculos)", async () => {
+suite("tarefa interna: motor antigo × motor novo (mesmo cenário, dois leads idênticos)", () => {
+  it("dono do lead como responsável: mesma tarefa (título, prioridade, responsável, prazo, vínculos)", async () => {
     const { antigo, novo } = await cenarioTarefa({}, base);
     nota("[tarefa] antigo:", antigo, "| novo:", novo);
     expect(antigo.recusa).toBeNull();
@@ -409,7 +409,7 @@ suite("tarefa interna: motor antigo × motor novo (mesmo cenário, dois negócio
     expect(novo.atividades).toEqual(antigo.atividades);
   });
 
-  it("negócio SEM dono + 'dono do negócio': nenhuma tarefa nos dois (o antigo segue calado, o novo recusa)", async () => {
+  it("lead SEM dono + 'dono do lead': nenhuma tarefa nos dois (o antigo segue calado, o novo recusa)", async () => {
     const { antigo, novo } = await cenarioTarefa({ dono: null }, base);
     nota("[sem dono] antigo:", antigo.recusa, antigo.tarefas.length, "| novo:", novo.recusa, novo.tarefas.length);
     expect(antigo.tarefas).toHaveLength(0);
@@ -425,12 +425,12 @@ suite("tarefa interna: motor antigo × motor novo (mesmo cenário, dois negócio
     expect(novo.tarefas).toHaveLength(0);
   });
 
-  it("contato SEM negócio + responsável escolhido: medido", async () => {
+  it("contato SEM lead + responsável escolhido: medido", async () => {
     const { antigo, novo } = await cenarioTarefa(
       { semLead: true },
       { ...base, atribuir_a: { usuario_id: GOV_AGENT_A } },
     );
-    nota("[sem negócio] antigo:", antigo, "| novo:", novo);
+    nota("[sem lead] antigo:", antigo, "| novo:", novo);
     expect(novo.tarefas).toEqual(antigo.tarefas);
   });
 });

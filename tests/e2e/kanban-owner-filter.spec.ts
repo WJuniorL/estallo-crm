@@ -233,7 +233,7 @@ test.describe("arrastar o mesmo card duas vezes seguidas (#916)", () => {
  * `visibility_mode` é da ORGANIZAÇÃO e a suíte inteira compartilha uma: o modo
  * de antes volta no `afterAll` (molde de `conversa-do-caso.spec.ts`).
  */
-test.describe("Atendente cria negócio no modo 'Só os seus' (#2547)", () => {
+test.describe("Atendente cria lead no modo 'Só os seus' (#2547)", () => {
   const env = carregarEnvLocal();
   const admin = createClient(env.NEXT_PUBLIC_SUPABASE_URL!, env.SUPABASE_SERVICE_ROLE_KEY!, {
     auth: { autoRefreshToken: false, persistSession: false },
@@ -262,7 +262,7 @@ test.describe("Atendente cria negócio no modo 'Só os seus' (#2547)", () => {
     await gravarModo(modoOriginal);
   });
 
-  test("o botão 'Novo Lead' cria, e o negócio aparece no quadro do Atendente como dele", async ({ page }) => {
+  test("o botão 'Novo Lead' cria, e o lead aparece no quadro do Atendente como dele", async ({ page }) => {
     await login(page, creds.users.agent!.email);
     await page.goto(`/app/pipelines/${creds.kanban!.pipeline_id}`);
 

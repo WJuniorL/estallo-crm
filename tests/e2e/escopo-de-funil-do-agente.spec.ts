@@ -91,7 +91,7 @@ function agenteDeTeste(): string {
 async function abrirOperacao(): Promise<void> {
   await pagina.goto(`/app/ai/agents/${agenteDeTeste()}`);
   await pagina.getByTestId("papel-operacao").click();
-  await expect(pagina.getByText(/em que neg(ó|o)cios ele pode mexer/i)).toBeVisible({
+  await expect(pagina.getByText(/em que leads ele pode mexer/i)).toBeVisible({
     timeout: 20_000,
   });
 }
@@ -103,7 +103,7 @@ test.describe("a marcação de funis do assistente", () => {
     // Falha fechada: o agente do seed nunca marcou funil nenhum.
     const semFunil = pagina.getByTestId("agente-sem-funil");
     await expect(semFunil).toBeVisible();
-    await expect(semFunil).toContainText(/não mexe em negócio/i);
+    await expect(semFunil).toContainText(/não mexe em lead/i);
 
     // Controle de que o caso mede o estado vazio, e não uma tela que não
     // carregou: os funis da organização estão listados ao lado do aviso.
@@ -133,7 +133,10 @@ test.describe("a marcação de funis do assistente", () => {
     // O aviso de "nenhum funil" some assim que algo é marcado.
     await expect(pagina.getByTestId("agente-sem-funil")).toHaveCount(0);
 
-    await pagina.getByRole("button", { name: /salvar rascunho/i }).first().click();
+    await pagina
+      .getByRole("button", { name: /salvar rascunho/i })
+      .first()
+      .click();
 
     // ⚠️ RECARREGAR é o ponto do teste. O defeito que o gate de colunas existe
     // para pegar aparece exatamente aqui: o campo salva, a tela mostra certo, e
